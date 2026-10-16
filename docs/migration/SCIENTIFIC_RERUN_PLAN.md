@@ -32,7 +32,7 @@ is no acceptance for arbitrary grids, sites, station sets or continuous years.
 2. Use the original command sequence preserved byte-for-byte in
    `historical-workflows/integration-p1-p7-2022-c1-143h.yml.disabled`:
    audit source statements, regenerate the original 143h DGM oracle with
-   `native_cpp/modules/p7_calpuff/reference/original_precision_prepare.py`,
+   `native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/original_calcpf_receiver_oracle.py`,
    rebuild the P7 native receptor target, then execute the full 143h native
    replay against the pinned 2022 `met.dat`, `puff.inp` and `puff.con`.
 3. Preserve all preexisting strict H-3 comparison gates, field checks,

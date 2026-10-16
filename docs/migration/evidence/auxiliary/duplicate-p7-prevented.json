@@ -1,0 +1,6 @@
+{
+  "reason": "P7 full suite already executing in separate validated output root; stop the sequential runner after P6F to avoid a redundant P7 rebuild",
+  "stopped": [
+    109803
+  ]
+}

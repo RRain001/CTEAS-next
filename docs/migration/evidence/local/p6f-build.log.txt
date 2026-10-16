@@ -1,0 +1,26 @@
+COMMAND: ["cmake", "--build", "/tmp/cteas-next-gcc-validation/build-p6f", "--parallel", "4"]
+[ 11%] Building CXX object CMakeFiles/p6f_calmet_dat21.dir/src/sha256.cpp.o
+[ 11%] Building CXX object CMakeFiles/p6f_calmet_dat21.dir/src/calmet_dat21_writer.cpp.o
+[ 17%] Linking CXX static library libp6f_calmet_dat21.a
+[ 17%] Built target p6f_calmet_dat21
+[ 29%] Building CXX object CMakeFiles/p6f_p6d_fields.dir/src/p6d_fields.cpp.o
+[ 29%] Building CXX object CMakeFiles/cteas_p6f_geo_static_provenance.dir/src/p6f_geo_static_provenance_main.cpp.o
+[ 41%] Building CXX object CMakeFiles/cteas_p6f_calmet_dat21_perturb.dir/src/calmet_dat21_perturb_main.cpp.o
+[ 41%] Building CXX object CMakeFiles/cteas_p6f_p6e_source_metadata.dir/src/p6f_p6e_source_metadata_main.cpp.o
+[ 47%] Linking CXX executable cteas_p6f_calmet_dat21_perturb
+[ 47%] Built target cteas_p6f_calmet_dat21_perturb
+[ 52%] Building CXX object CMakeFiles/p6f_calmet_dat21_writer_tests.dir/tests/calmet_dat21_writer_tests.cpp.o
+[ 58%] Linking CXX static library libp6f_p6d_fields.a
+[ 58%] Built target p6f_p6d_fields
+[ 64%] Building CXX object CMakeFiles/p6f_calmet_dat21_e22_cross_read_tests.dir/tests/calmet_dat21_e22_cross_read_tests.cpp.o
+[ 70%] Linking CXX executable p6f_calmet_dat21_writer_tests
+[ 76%] Linking CXX executable cteas_p6f_p6e_source_metadata
+[ 76%] Built target p6f_calmet_dat21_writer_tests
+[ 82%] Building CXX object CMakeFiles/cteas_p6f_calmet_dat21_writer.dir/src/calmet_dat21_writer_main.cpp.o
+[ 88%] Linking CXX executable cteas_p6f_geo_static_provenance
+[ 88%] Built target cteas_p6f_p6e_source_metadata
+[ 88%] Built target cteas_p6f_geo_static_provenance
+[ 94%] Linking CXX executable p6f_calmet_dat21_e22_cross_read_tests
+[ 94%] Built target p6f_calmet_dat21_e22_cross_read_tests
+[100%] Linking CXX executable cteas_p6f_calmet_dat21_writer
+[100%] Built target cteas_p6f_calmet_dat21_writer

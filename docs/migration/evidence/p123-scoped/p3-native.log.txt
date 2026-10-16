@@ -1,0 +1,2 @@
+COMMAND: ["/tmp/cteas-next-gcc-validation/build-p3/cteas_p3_makegeo", "/tmp/cteas-next-p123-reference/p3/makegeo.inp", "/tmp/cteas-next-p123-reference/p2/lu.dat", "/tmp/cteas-next-p123-reference/p1/terrel.dat", "/tmp/cteas-next-p123-reference/p3_cpp_geophysical.csv", "/tmp/cteas-next-p123-reference/p3_cpp_geo.dat"]
+P3_SCOPED_CELLS=2500 FIELDS=8

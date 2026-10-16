@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/lhy/CTEAS-next/.venv/bin/python",
+    "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/tests/verify_real_reference_roundtrip.py",
+    "--tool",
+    "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_calmet_dat21_writer",
+    "--p7-decoder",
+    "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../p7_calpuff/reference/original_decode_calmet_hourly.py",
+    "--real-reference",
+    "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+    "--real-reference-sha256",
+    "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30",
+    "--report",
+    "/tmp/cteas-next-gcc-validation/build-p6f/p6f-real-reference-report.json"
+  ],
+  "timeout_seconds": 600,
+  "returncode": 0,
+  "seconds": 179.17838015407324
+}

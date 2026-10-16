@@ -1,0 +1,30 @@
+COMMAND ['./calpuff-cli', '--help'] RETURN_CODE 0
+usage: cli.py [-h] {run} ...
+
+CTEAS orchestration CLI
+
+positional arguments:
+  {run}
+    run       Run pipeline for a case
+
+options:
+  -h, --help  show this help message and exit
+
+
+COMMAND ['/home/lhy/CTEAS-next/.venv/bin/python', '-m', 'engine.gui_g5.pipeline', '--help'] RETURN_CODE 0
+usage: pipeline.py [-h] --case CASE --stage
+                   {all,met,preprocess,puff,surface,upperair} [--resume]
+                   {run,plan}
+
+CTEAS G5 explicit native-only stage dispatcher
+
+positional arguments:
+  {run,plan}
+
+options:
+  -h, --help            show this help message and exit
+  --case CASE
+  --stage {all,met,preprocess,puff,surface,upperair}
+  --resume
+
+

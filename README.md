@@ -40,7 +40,7 @@ sudo apt-get install cmake g++-12 gfortran-11 libgdal-dev
 CXX=/usr/bin/g++-12 FC=/usr/bin/gfortran-11 .venv/bin/python \
   scripts/migration/validate_ubuntu.py --out /tmp/cteas-next-validation --jobs 2
 .venv/bin/python -m unittest discover -s engine/gui_g5/tests -p 'test_*.py' -v
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m engine.gui_g5
+.venv/bin/python -m engine.gui_g5
 ```
 
 The validation script builds **nine separate upstream CMake projects**;
@@ -53,9 +53,15 @@ The full local software regression needs the external assets restored first:
 .venv/bin/python scripts/migration/configure_external_assets.py --check
 ```
 
-For a clean checkout without those assets, add `--portable` to the validation
-command. That builds every native target and runs an explicitly enumerated
-software subset; other registered tests are recorded as NOT_RUN. New CI uses
+The data-preparation/G5 Python regression is:
+
+```bash
+.venv/bin/python scripts/migration/validate_python.py --out /tmp/cteas-next-python
+```
+
+For a clean checkout without those assets, add `--portable` to both validation
+commands. The CMake runner builds every native target and runs an explicitly enumerated
+software subset; other registered tests are recorded as NOT_RUN. The Python runner also records the single vendor-source-dependent test as NOT_RUN. New CI uses
 this mode and never fetches or publishes excluded third-party assets.
 Its two excluded historical P7 receptor diagnostics and the complete C1/C2
 143h scientific workflows are **NOT_RUN** by this software-check command.

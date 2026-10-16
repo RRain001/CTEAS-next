@@ -1,0 +1,17 @@
+[
+  {
+    "name": "cteas_p1_input_contracts",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p2_input_contracts",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p2_gen_fraction_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  }
+]

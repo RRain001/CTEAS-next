@@ -65,9 +65,7 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
-          python -m unittest discover -s native_cpp/modules/p4_read62/data_prep/tests -p 'test_*.py' -v
-          python -m unittest discover -s native_cpp/modules/p5_smerge/data_prep/tests -p 'test_*.py' -v
-          python -m unittest discover -s engine/gui_g5/tests -p 'test_*.py' -v
+          python scripts/migration/validate_python.py --portable --out '${{ runner.temp }}/cteas-next-python'
       - name: Start separate G5 GUI offscreen and assert execution boundaries
         env:
           QT_QPA_PLATFORM: offscreen
@@ -87,3 +85,10 @@ jobs:
           app.quit()
           print('G5_GUI_AND_FAIL_CLOSED_BOUNDARY=PASS_SOFTWARE')
           PY
+      - name: Archive Python selection and execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-g5-software-regression
+          path: ${{ runner.temp }}/cteas-next-python/
+          if-no-files-found: warn

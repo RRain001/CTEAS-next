@@ -1,0 +1,257 @@
+COMMAND: ["cmake", "--build", "/tmp/cteas-next-clean-validation/build-p6", "--parallel", "8"]
+[  2%] Building CXX object CMakeFiles/cteas_p6g_station_set_tests.dir/tests/p6g_station_set_tests.cpp.o
+[  2%] Building CXX object CMakeFiles/cteas_p6g_surface_dynamic_tests.dir/tests/p6g_surface_dynamic_tests.cpp.o
+[  3%] Building CXX object CMakeFiles/cteas_p6g_g9_multi_wind1_tests.dir/tests/p6g_g9_multi_wind1_tests.cpp.o
+[  3%] Building CXX object CMakeFiles/cteas_p6g_g11_terrain_tests.dir/tests/p6g_g11_source_terrain_tests.cpp.o
+[  3%] Building CXX object CMakeFiles/cteas_p6g_observation_input_tests.dir/tests/p6g_observation_input_tests.cpp.o
+[  3%] Building CXX object CMakeFiles/cteas_p6g_dynamic_geo_tests.dir/tests/p6g_dynamic_geo_tests.cpp.o
+[  4%] Building CXX object CMakeFiles/cteas_p6g_upper_dynamic_tests.dir/tests/p6g_upper_dynamic_tests.cpp.o
+[  4%] Building CXX object CMakeFiles/cteas_p6g_g8_10km_year_tests.dir/tests/p6g_g8_10km_year_stress_tests.cpp.o
+[  5%] Linking CXX executable cteas_p6g_g9_multi_wind1_tests
+[  5%] Linking CXX executable cteas_p6g_surface_dynamic_tests
+[  5%] Built target cteas_p6g_g9_multi_wind1_tests
+[  6%] Building CXX object CMakeFiles/cteas_p6g_g12_thermal_tests.dir/tests/p6g_g12_observed_p6e_thermal_tests.cpp.o
+[  7%] Linking CXX executable cteas_p6g_dynamic_geo_tests
+[  7%] Built target cteas_p6g_surface_dynamic_tests
+[  7%] Building CXX object CMakeFiles/cteas_p6g_g13_surfvar_10km_reference.dir/src/p6g_g13_surfvar_10km_reference_main.cpp.o
+[  7%] Built target cteas_p6g_dynamic_geo_tests
+[  8%] Building CXX object CMakeFiles/cteas_p6g_g10_diagno_reference.dir/src/p6g_g10_10km_diagno_reference_main.cpp.o
+[  8%] Linking CXX executable cteas_p6g_g11_terrain_tests
+[  8%] Built target cteas_p6g_g11_terrain_tests
+[  8%] Building CXX object CMakeFiles/cteas_p6g_g14_unified_hourly_tests.dir/tests/p6g_g14_unified_hourly_tests.cpp.o
+[  9%] Linking CXX executable cteas_p6g_upper_dynamic_tests
+[  9%] Linking CXX executable cteas_p6g_g10_diagno_reference
+[  9%] Built target cteas_p6g_upper_dynamic_tests
+[  9%] Building CXX object CMakeFiles/cteas_p6g_g34b_six_hour_selected_gate.dir/src/p6g_g34b_six_hour_selected_gate_main.cpp.o
+[  9%] Built target cteas_p6g_g10_diagno_reference
+[ 10%] Building CXX object CMakeFiles/cteas_p6g_g34b_six_hour_selected_gate.dir/p6f/src/calmet_dat21_writer.cpp.o
+[ 11%] Linking CXX executable cteas_p6g_g13_surfvar_10km_reference
+[ 11%] Built target cteas_p6g_g13_surfvar_10km_reference
+[ 11%] Building CXX object CMakeFiles/cteas_p6g_g19_file_backed_case_tests.dir/tests/p6g_g19_file_backed_case_tests.cpp.o
+[ 11%] Linking CXX executable cteas_p6g_station_set_tests
+[ 11%] Built target cteas_p6g_station_set_tests
+[ 11%] Building CXX object CMakeFiles/cteas_p6g_g19_source_case_preflight.dir/src/p6g_g19_source_case_preflight_main.cpp.o
+[ 12%] Linking CXX executable cteas_p6g_g12_thermal_tests
+[ 12%] Built target cteas_p6g_g12_thermal_tests
+[ 12%] Building CXX object CMakeFiles/cteas_p6g_g20_source_wind1_probe.dir/src/p6g_g20_source_wind1_probe_main.cpp.o
+[ 13%] Building CXX object CMakeFiles/cteas_p6g_g21_source_fradj_probe.dir/src/p6g_g21_source_fradj_probe_main.cpp.o
+[ 14%] Linking CXX executable cteas_p6g_observation_input_tests
+[ 14%] Built target cteas_p6g_observation_input_tests
+[ 14%] Building CXX object CMakeFiles/cteas_p6g_g21_source_fradj_probe.dir/p6f/src/calmet_dat21_writer.cpp.o
+[ 14%] Building CXX object CMakeFiles/cteas_p6g_g15_original_controls_tests.dir/tests/p6g_g15_original_wind_controls_tests.cpp.o
+[ 15%] Linking CXX executable cteas_p6g_g8_10km_year_tests
+[ 16%] Linking CXX executable cteas_p6g_g14_unified_hourly_tests
+[ 16%] Built target cteas_p6g_g8_10km_year_tests
+[ 17%] Building CXX object CMakeFiles/cteas_p6g_g16_staged_wind_tests.dir/tests/p6g_g16_staged_wind_tests.cpp.o
+[ 18%] Linking CXX executable cteas_p6g_g20_source_wind1_probe
+[ 18%] Built target cteas_p6g_g14_unified_hourly_tests
+[ 19%] Building CXX object CMakeFiles/cteas_p6g_g17_staged_terrain_tests.dir/tests/p6g_g17_staged_terrain_tests.cpp.o
+[ 19%] Built target cteas_p6g_g20_source_wind1_probe
+[ 20%] Linking CXX executable cteas_p6g_g15_original_controls_tests
+[ 21%] Building CXX object CMakeFiles/cteas_p6g_g17b_observed_solar_heat_tests.dir/tests/p6g_g17b_observed_solar_heat_tests.cpp.o
+[ 21%] Built target cteas_p6g_g15_original_controls_tests
+[ 22%] Building CXX object CMakeFiles/cteas_p6g_g17b_setcom_airden_reference.dir/src/p6g_g17b_setcom_airden_reference_main.cpp.o
+[ 23%] Linking CXX executable cteas_p6g_g19_source_case_preflight
+[ 23%] Built target cteas_p6g_g19_source_case_preflight
+[ 23%] Building CXX object CMakeFiles/cteas_p6g_g18b6_setcom_nearu_reference.dir/src/p6g_g18b6_setcom_nearu_reference_main.cpp.o
+[ 24%] Linking CXX executable cteas_p6g_g17b_setcom_airden_reference
+[ 25%] Linking CXX executable cteas_p6g_g21_source_fradj_probe
+[ 25%] Built target cteas_p6g_g17b_setcom_airden_reference
+[ 25%] Building CXX object CMakeFiles/cteas_p6g_g18b8_gamma_grid_reference.dir/src/p6g_g18b8_gamma_grid_reference_main.cpp.o
+[ 25%] Built target cteas_p6g_g21_source_fradj_probe
+[ 25%] Building CXX object CMakeFiles/cteas_p6g_g18c1_avemix_reference.dir/src/p6g_g18c1_avemix_reference_main.cpp.o
+[ 25%] Linking CXX executable cteas_p6g_g16_staged_wind_tests
+[ 25%] Built target cteas_p6g_g16_staged_wind_tests
+[ 26%] Building CXX object CMakeFiles/cteas_p6g_g18d3_hflux_defaults_reference.dir/src/p6g_g18d3_heat_source_defaults_reference_main.cpp.o
+[ 26%] Linking CXX executable cteas_p6g_g17_staged_terrain_tests
+[ 26%] Built target cteas_p6g_g17_staged_terrain_tests
+[ 27%] Building CXX object CMakeFiles/cteas_p6g_g18d6_nearu_reference.dir/src/p6g_g18d6_nearu_reference_main.cpp.o
+[ 27%] Linking CXX executable cteas_p6g_g17b_observed_solar_heat_tests
+[ 28%] Linking CXX executable cteas_p6g_g18c1_avemix_reference
+[ 28%] Built target cteas_p6g_g18c1_avemix_reference
+[ 29%] Linking CXX executable cteas_p6g_g34b_six_hour_selected_gate
+[ 30%] Building CXX object CMakeFiles/cteas_p6g_g18d7_diagi_cell_reference.dir/src/p6g_g18d7_diagi_cell_reference_main.cpp.o
+[ 30%] Built target cteas_p6g_g17b_observed_solar_heat_tests
+[ 30%] Building CXX object CMakeFiles/cteas_p6g_g17b4_iavet_two_pass_tests.dir/tests/p6g_g17b4_iavet_two_pass_tests.cpp.o
+[ 30%] Built target cteas_p6g_g34b_six_hour_selected_gate
+[ 31%] Linking CXX executable cteas_p6g_g18b8_gamma_grid_reference
+[ 32%] Building CXX object CMakeFiles/cteas_p6g_g17b4_avetmp_reference.dir/p6e/src/avetmp_reference_main.cpp.o
+[ 32%] Built target cteas_p6g_g18b8_gamma_grid_reference
+[ 33%] Building CXX object CMakeFiles/cteas_p6g_g17b4_iavet_two_pass_tests.dir/p6f/src/calmet_dat21_writer.cpp.o
+[ 33%] Linking CXX executable cteas_p6g_g18d3_hflux_defaults_reference
+[ 34%] Linking CXX executable cteas_p6g_g18b6_setcom_nearu_reference
+[ 34%] Built target cteas_p6g_g18d3_hflux_defaults_reference
+[ 34%] Building CXX object CMakeFiles/cteas_p6a_contract_tests.dir/tests/p6_contract_tests.cpp.o
+[ 34%] Built target cteas_p6g_g18b6_setcom_nearu_reference
+[ 35%] Building CXX object CMakeFiles/cteas_p6_terset.dir/src/terrain_envelope_main.cpp.o
+[ 36%] Linking CXX executable cteas_p6g_g18d7_diagi_cell_reference
+[ 37%] Linking CXX executable cteas_p6g_g17b4_avetmp_reference
+[ 37%] Built target cteas_p6g_g18d7_diagi_cell_reference
+[ 38%] Linking CXX executable cteas_p6g_g19_file_backed_case_tests
+[ 39%] Building CXX object CMakeFiles/cteas_p6_terrain_envelope_tests.dir/tests/p6_terrain_envelope_tests.cpp.o
+[ 39%] Built target cteas_p6g_g17b4_avetmp_reference
+[ 40%] Building CXX object CMakeFiles/cteas_p6_fradj.dir/src/froude_adjust_main.cpp.o
+[ 40%] Built target cteas_p6g_g19_file_backed_case_tests
+[ 40%] Building CXX object CMakeFiles/cteas_p6_fradj_tests.dir/tests/p6_froude_adjust_tests.cpp.o
+[ 41%] Linking CXX executable cteas_p6a_contract_tests
+[ 41%] Built target cteas_p6a_contract_tests
+[ 41%] Building CXX object CMakeFiles/cteas_p6_stations.dir/src/station_geometry_main.cpp.o
+[ 41%] Linking CXX executable cteas_p6_terset
+[ 41%] Built target cteas_p6_terset
+[ 42%] Building CXX object CMakeFiles/cteas_p6_station_tests.dir/tests/p6_station_geometry_tests.cpp.o
+[ 42%] Linking CXX executable cteas_p6_terrain_envelope_tests
+[ 43%] Linking CXX executable cteas_p6_fradj
+[ 44%] Linking CXX executable cteas_p6_fradj_tests
+[ 45%] Building CXX object CMakeFiles/cteas_p6_read_geo.dir/src/read_geo_main.cpp.o
+[ 45%] Built target cteas_p6_terrain_envelope_tests
+[ 45%] Built target cteas_p6_fradj
+[ 46%] Building CXX object CMakeFiles/cteas_p6_geo_tests.dir/tests/p6_read_geo_tests.cpp.o
+[ 46%] Built target cteas_p6_fradj_tests
+[ 47%] Building CXX object CMakeFiles/cteas_p6_read_surface.dir/src/read_surface_main.cpp.o
+[ 48%] Linking CXX executable cteas_p6_stations
+[ 48%] Building CXX object CMakeFiles/cteas_p6_surface_tests.dir/tests/p6_read_surface_tests.cpp.o
+[ 49%] Linking CXX executable cteas_p6_station_tests
+[ 49%] Built target cteas_p6_stations
+[ 49%] Linking CXX executable cteas_p6g_g18d6_nearu_reference
+[ 49%] Building CXX object CMakeFiles/cteas_p6_read_upper.dir/src/read_upper_main.cpp.o
+[ 49%] Built target cteas_p6_station_tests
+[ 49%] Building CXX object CMakeFiles/cteas_p6_upper_tests.dir/tests/p6_read_upper_tests.cpp.o
+[ 49%] Built target cteas_p6g_g18d6_nearu_reference
+[ 49%] Building CXX object CMakeFiles/cteas_p6_vertav.dir/src/vertical_wind_average_main.cpp.o
+[ 49%] Linking CXX executable cteas_p6_geo_tests
+[ 49%] Built target cteas_p6_geo_tests
+[ 50%] Building CXX object CMakeFiles/cteas_p6_vertav_tests.dir/tests/p6_vertical_wind_average_tests.cpp.o
+[ 51%] Linking CXX executable cteas_p6_upper_tests
+[ 52%] Linking CXX executable cteas_p6_read_surface
+[ 52%] Linking CXX executable cteas_p6_read_geo
+[ 52%] Built target cteas_p6_upper_tests
+[ 53%] Linking CXX executable cteas_p6_surface_tests
+[ 53%] Built target cteas_p6_read_surface
+[ 53%] Building CXX object CMakeFiles/cteas_p6_upper_hourly.dir/src/upper_hourly_wind_main.cpp.o
+[ 54%] Building CXX object CMakeFiles/cteas_p6_hourly_tests.dir/tests/p6_upper_hourly_wind_tests.cpp.o
+[ 54%] Built target cteas_p6_surface_tests
+[ 54%] Built target cteas_p6_read_geo
+[ 54%] Building CXX object CMakeFiles/cteas_p6_facet.dir/src/temperature_faces_main.cpp.o
+[ 55%] Building CXX object CMakeFiles/cteas_p6_facet_tests.dir/tests/p6_temperature_faces_tests.cpp.o
+[ 56%] Linking CXX executable cteas_p6_read_upper
+[ 56%] Built target cteas_p6_read_upper
+[ 57%] Building CXX object CMakeFiles/cteas_p6_comp_joint.dir/src/comp_joint_main.cpp.o
+[ 57%] Linking CXX executable cteas_p6_vertav_tests
+[ 58%] Linking CXX executable cteas_p6_vertav
+[ 58%] Built target cteas_p6_vertav_tests
+[ 58%] Building CXX object CMakeFiles/cteas_p6_comp_buffered_tests.dir/tests/p6_comp_buffered_tests.cpp.o
+[ 58%] Built target cteas_p6_vertav
+[ 59%] Building CXX object CMakeFiles/cteas_p6_rdsn_buffered_tests.dir/tests/p6_rdsn_buffered_tests.cpp.o
+[ 59%] Linking CXX executable cteas_p6_hourly_tests
+[ 60%] Linking CXX executable cteas_p6_facet
+[ 60%] Built target cteas_p6_hourly_tests
+[ 60%] Building CXX object CMakeFiles/cteas_p6_cgamma.dir/src/cgamma_main.cpp.o
+[ 60%] Built target cteas_p6_facet
+[ 61%] Building CXX object CMakeFiles/cteas_p6_native_cgamma_grid_143h.dir/src/cgamma_from_p6e_143h_main.cpp.o
+[ 61%] Linking CXX executable cteas_p6_facet_tests
+[ 61%] Built target cteas_p6_facet_tests
+[ 61%] Building CXX object CMakeFiles/cteas_p6_cgamma_tests.dir/tests/p6_cgamma_tests.cpp.o
+[ 61%] Linking CXX executable cteas_p6_rdsn_buffered_tests
+[ 61%] Built target cteas_p6_rdsn_buffered_tests
+[ 62%] Building CXX object CMakeFiles/cteas_p6_slope.dir/src/slope_flow_main.cpp.o
+[ 63%] Linking CXX executable cteas_p6_upper_hourly
+[ 64%] Linking CXX executable cteas_p6_comp_buffered_tests
+[ 64%] Built target cteas_p6_upper_hourly
+[ 64%] Building CXX object CMakeFiles/cteas_p6_slope_tests.dir/tests/p6_slope_flow_tests.cpp.o
+[ 64%] Built target cteas_p6_comp_buffered_tests
+[ 65%] Building CXX object CMakeFiles/cteas_p6_divcel.dir/src/divcel_main.cpp.o
+[ 65%] Linking CXX executable cteas_p6_slope
+[ 66%] Linking CXX executable cteas_p6_slope_tests
+[ 66%] Built target cteas_p6_slope
+[ 66%] Building CXX object CMakeFiles/cteas_p6_divcel_tests.dir/tests/p6_divcel_tests.cpp.o
+[ 66%] Built target cteas_p6_slope_tests
+[ 66%] Building CXX object CMakeFiles/cteas_p6_minim.dir/src/minim_main.cpp.o
+[ 67%] Linking CXX executable cteas_p6_cgamma_tests
+[ 67%] Built target cteas_p6_cgamma_tests
+[ 67%] Building CXX object CMakeFiles/cteas_p6_minim_tests.dir/tests/p6_minim_tests.cpp.o
+[ 67%] Linking CXX executable cteas_p6_comp_joint
+[ 68%] Linking CXX executable cteas_p6_divcel
+[ 69%] Linking CXX executable cteas_p6_cgamma
+[ 69%] Built target cteas_p6_divcel
+[ 69%] Building CXX object CMakeFiles/cteas_p6_smooth.dir/src/smooth_main.cpp.o
+[ 69%] Built target cteas_p6_comp_joint
+[ 70%] Linking CXX executable cteas_p6_minim
+[ 71%] Building CXX object CMakeFiles/cteas_p6_smooth_tests.dir/tests/p6_smooth_tests.cpp.o
+[ 71%] Built target cteas_p6_cgamma
+[ 72%] Building CXX object CMakeFiles/cteas_p6_final_segment.dir/src/diagno_segment_main.cpp.o
+[ 72%] Built target cteas_p6_minim
+[ 73%] Linking CXX executable cteas_p6_divcel_tests
+[ 74%] Building CXX object CMakeFiles/cteas_p6_final_segment_tests.dir/tests/p6_diagno_segment_tests.cpp.o
+[ 74%] Built target cteas_p6_divcel_tests
+[ 75%] Building CXX object CMakeFiles/cteas_p6_inter2.dir/src/inter2_selected_main.cpp.o
+[ 75%] Linking CXX executable cteas_p6_smooth_tests
+[ 75%] Built target cteas_p6_smooth_tests
+[ 76%] Linking CXX executable cteas_p6_minim_tests
+[ 77%] Building CXX object CMakeFiles/cteas_p6_inter2_tests.dir/tests/p6_inter2_selected_tests.cpp.o
+[ 77%] Linking CXX executable cteas_p6_final_segment_tests
+[ 77%] Built target cteas_p6_minim_tests
+[ 78%] Building CXX object CMakeFiles/cteas_p6_similt_profile.dir/src/similt_profile_main.cpp.o
+[ 78%] Built target cteas_p6_final_segment_tests
+[ 79%] Building CXX object CMakeFiles/cteas_p6_similt_profile_tests.dir/tests/p6_similt_profile_tests.cpp.o
+[ 79%] Linking CXX executable cteas_p6_inter2
+[ 80%] Linking CXX executable cteas_p6_smooth
+[ 80%] Built target cteas_p6_smooth
+[ 80%] Built target cteas_p6_inter2
+[ 80%] Building CXX object CMakeFiles/cteas_p6_wind1_hour_tests.dir/tests/p6_wind1_selected_station_hour_tests.cpp.o
+[ 81%] Building CXX object CMakeFiles/cteas_p6_wind1_firstguess.dir/src/wind1_firstguess_main.cpp.o
+[ 81%] Linking CXX executable cteas_p6_final_segment
+[ 81%] Built target cteas_p6_final_segment
+[ 81%] Linking CXX executable cteas_p6g_g17b4_iavet_two_pass_tests
+[ 82%] Building CXX object CMakeFiles/cteas_p6_wind1_firstguess_tests.dir/tests/p6_wind1_selected_firstguess_tests.cpp.o
+[ 82%] Linking CXX executable cteas_p6_similt_profile_tests
+[ 82%] Linking CXX executable cteas_p6_similt_profile
+[ 82%] Linking CXX executable cteas_p6_native_cgamma_grid_143h
+[ 82%] Built target cteas_p6_similt_profile_tests
+[ 83%] Building CXX object CMakeFiles/cteas_p6_d9a_bridge_tests.dir/tests/p6_diagno_d9a_bridge_tests.cpp.o
+[ 83%] Built target cteas_p6_similt_profile
+[ 84%] Building CXX object CMakeFiles/cteas_p6_obrien_minim_tests.dir/tests/p6_diagno_obrien_minim_tests.cpp.o
+[ 84%] Built target cteas_p6_native_cgamma_grid_143h
+[ 84%] Built target cteas_p6g_g17b4_iavet_two_pass_tests
+[ 84%] Building CXX object CMakeFiles/cteas_p6_fradj_route_tests.dir/tests/p6_diagno_fradj_route_tests.cpp.o
+[ 85%] Building CXX object CMakeFiles/cteas_p6_slope_route_tests.dir/tests/p6_diagno_slope_route_tests.cpp.o
+[ 86%] Linking CXX executable cteas_p6_inter2_tests
+[ 86%] Built target cteas_p6_inter2_tests
+[ 87%] Building CXX object CMakeFiles/cteas_p6_topof2_route_tests.dir/tests/p6_diagno_topof2_route_tests.cpp.o
+[ 87%] Linking CXX executable cteas_p6_wind1_firstguess
+[ 88%] Linking CXX executable cteas_p6_wind1_firstguess_tests
+[ 88%] Built target cteas_p6_wind1_firstguess
+[ 89%] Building CXX object CMakeFiles/cteas_p6_terset_envelope_tests.dir/tests/p6_diagno_terset_envelope_tests.cpp.o
+[ 89%] Built target cteas_p6_wind1_firstguess_tests
+[ 90%] Building CXX object CMakeFiles/cteas_p6_station_deck_tests.dir/tests/p6_station_deck_input_tests.cpp.o
+[ 90%] Linking CXX executable cteas_p6_obrien_minim_tests
+[ 91%] Linking CXX executable cteas_p6_wind1_hour_tests
+[ 91%] Built target cteas_p6_wind1_hour_tests
+[ 91%] Built target cteas_p6_obrien_minim_tests
+[ 92%] Building CXX object CMakeFiles/cteas_p6_station_mixhtst_probe.dir/src/station_mixhtst_probe_main.cpp.o
+[ 92%] Building CXX object CMakeFiles/cteas_p6_realcase_wind_field.dir/src/realcase_wind_field_main.cpp.o
+[ 92%] Linking CXX executable cteas_p6_d9a_bridge_tests
+[ 92%] Built target cteas_p6_d9a_bridge_tests
+[ 93%] Building CXX object CMakeFiles/cteas_p6_native_hourly_driver.dir/src/native_hourly_driver_main.cpp.o
+[ 94%] Linking CXX executable cteas_p6_fradj_route_tests
+[ 94%] Built target cteas_p6_fradj_route_tests
+[ 94%] Building CXX object CMakeFiles/cteas_p6_native_hourly_driver.dir/p6f/src/sha256.cpp.o
+[ 95%] Linking CXX executable cteas_p6_topof2_route_tests
+[ 95%] Built target cteas_p6_topof2_route_tests
+[ 96%] Building CXX object CMakeFiles/cteas_p6_native_comp_history_tests.dir/tests/p6_native_comp_history_tests.cpp.o
+[ 96%] Linking CXX executable cteas_p6_terset_envelope_tests
+[ 96%] Built target cteas_p6_terset_envelope_tests
+[ 97%] Linking CXX executable cteas_p6_slope_route_tests
+[ 98%] Building CXX object CMakeFiles/cteas_p6_d9a_source_trace.dir/src/diagno_d9a_trace_main.cpp.o
+[ 98%] Built target cteas_p6_slope_route_tests
+[ 98%] Linking CXX executable cteas_p6_station_mixhtst_probe
+[ 98%] Built target cteas_p6_station_mixhtst_probe
+[ 98%] Linking CXX executable cteas_p6_d9a_source_trace
+[ 98%] Built target cteas_p6_d9a_source_trace
+[ 98%] Linking CXX executable cteas_p6_station_deck_tests
+[ 98%] Built target cteas_p6_station_deck_tests
+[ 99%] Linking CXX executable cteas_p6_native_hourly_driver
+[ 99%] Built target cteas_p6_native_hourly_driver
+[ 99%] Linking CXX executable cteas_p6_native_comp_history_tests
+[ 99%] Built target cteas_p6_native_comp_history_tests
+[100%] Linking CXX executable cteas_p6_realcase_wind_field
+[100%] Built target cteas_p6_realcase_wind_field

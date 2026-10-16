@@ -1,0 +1,131 @@
+COMMAND: ["ctest", "--test-dir", "/tmp/cteas-next-gcc-validation/build-p6", "--output-on-failure", "--timeout", "180", "-E", "cteas_p7_hefei_real_(firsthour_h3_receptor|sixhour_comp_precision)_diagnostic"]
+Internal ctest changing into directory: /tmp/cteas-next-gcc-validation/build-p6
+Test project /tmp/cteas-next-gcc-validation/build-p6
+      Start  1: p6g_dynamic_geo_utm_and_frozen_field_parity
+ 1/62 Test  #1: p6g_dynamic_geo_utm_and_frozen_field_parity ....................   Passed    0.11 sec
+      Start  2: p6g_multistation_readcf_real4_parity
+ 2/62 Test  #2: p6g_multistation_readcf_real4_parity ...........................   Passed    0.02 sec
+      Start  3: p6g_surface_multi_site_multiyear_frozen_143h_parity
+ 3/62 Test  #3: p6g_surface_multi_site_multiyear_frozen_143h_parity ............   Passed    0.01 sec
+      Start  4: p6g_upper_multi_site_multiyear_frozen_rdupn_parity
+ 4/62 Test  #4: p6g_upper_multi_site_multiyear_frozen_rdupn_parity .............   Passed    0.01 sec
+      Start  5: p6g_multistation_surface_upper_hourly_input_contract
+ 5/62 Test  #5: p6g_multistation_surface_upper_hourly_input_contract ...........   Passed    0.01 sec
+      Start  6: p6g_g8_multisite_10km_8784h_selected_source_bridge
+ 6/62 Test  #6: p6g_g8_multisite_10km_8784h_selected_source_bridge .............   Passed   22.73 sec
+      Start  7: p6g_g9_expanded_10km_multi_wind1_frozen_pair_parity
+ 7/62 Test  #7: p6g_g9_expanded_10km_multi_wind1_frozen_pair_parity ............   Passed    0.03 sec
+      Start  8: p6g_g11_original_terrain_dynamic_10km_source_contract
+ 8/62 Test  #8: p6g_g11_original_terrain_dynamic_10km_source_contract ..........   Passed    0.01 sec
+      Start  9: p6g_g12_10km_2surface_observed_temp_selected_heatfx_contract
+ 9/62 Test  #9: p6g_g12_10km_2surface_observed_temp_selected_heatfx_contract ...   Passed    0.01 sec
+      Start 10: p6g_g14_unified_2ss_2us_hourly_clock_state_1h_6h_143h_8784h
+10/62 Test #10: p6g_g14_unified_2ss_2us_hourly_clock_state_1h_6h_143h_8784h ....   Passed    1.86 sec
+      Start 11: p6g_g19_source_file_backed_2ss_2us_g14_input_contract
+11/62 Test #11: p6g_g19_source_file_backed_2ss_2us_g14_input_contract ..........   Passed   17.88 sec
+      Start 12: p6g_g15_original_metinp_wind_radii_bias_readcf_source
+12/62 Test #12: p6g_g15_original_metinp_wind_radii_bias_readcf_source ..........   Passed    1.85 sec
+      Start 13: p6g_g16_source_wind1_then_explicit_post_slope_inter2_no_comp
+13/62 Test #13: p6g_g16_source_wind1_then_explicit_post_slope_inter2_no_comp ...   Passed    0.33 sec
+      Start 14: p6g_g17_fradj_slope_first_windbc_native_stage_source_parity
+14/62 Test #14: p6g_g17_fradj_slope_first_windbc_native_stage_source_parity ....   Passed    0.43 sec
+      Start 15: p6g_g17b_source_computed_utm_solar_multisite_surfvar_heatfx
+15/62 Test #15: p6g_g17b_source_computed_utm_solar_multisite_surfvar_heatfx ....   Passed    0.48 sec
+      Start 16: p6g_g17b_literal_vendor_setcom_nears_airden_real4_parity
+16/62 Test #16: p6g_g17b_literal_vendor_setcom_nears_airden_real4_parity .......   Passed    0.41 sec
+      Start 17: p6g_g18b6_literal_vendor_setcom_nearu_multiup_real4_parity
+17/62 Test #17: p6g_g18b6_literal_vendor_setcom_nearu_multiup_real4_parity .....   Passed    0.47 sec
+      Start 18: p6g_g18b8_literal_vendor_diagno_gamma_cmpd2_real4_parity
+18/62 Test #18: p6g_g18b8_literal_vendor_diagno_gamma_cmpd2_real4_parity .......   Passed    0.44 sec
+      Start 19: p6g_g18c1_literal_vendor_avemix_zi_ziconv_real4_parity
+19/62 Test #19: p6g_g18c1_literal_vendor_avemix_zi_ziconv_real4_parity .........   Passed    0.65 sec
+      Start 20: p6g_g18d3_literal_vendor_hflux_block_data_real4_parity
+20/62 Test #20: p6g_g18d3_literal_vendor_hflux_block_data_real4_parity .........   Passed    0.45 sec
+      Start 21: p6g_g18d6_literal_vendor_setcom_nearu_real4_parity
+21/62 Test #21: p6g_g18d6_literal_vendor_setcom_nearu_real4_parity .............   Passed    0.48 sec
+      Start 22: p6g_g18d7_literal_vendor_diagi_stheor_real4_site_cell_parity
+22/62 Test #22: p6g_g18d7_literal_vendor_diagi_stheor_real4_site_cell_parity ...   Passed    0.41 sec
+      Start 23: p6g_g17b4_original_iavet1_pre_and_post_fradj_surfvar
+23/62 Test #23: p6g_g17b4_original_iavet1_pre_and_post_fradj_surfvar ...........   Passed    8.44 sec
+      Start 24: p6g_g18c6_independent_native_calmet_dat21_2ss_2us_byte_walk
+24/62 Test #24: p6g_g18c6_independent_native_calmet_dat21_2ss_2us_byte_walk ....   Passed    0.10 sec
+      Start 25: p6g_g17b4_original_vendor_avetmp_40_case_source_parity
+25/62 Test #25: p6g_g17b4_original_vendor_avetmp_40_case_source_parity .........   Passed    0.45 sec
+      Start 26: p6_native_cgamma_grid_rejects_missing_state
+26/62 Test #26: p6_native_cgamma_grid_rejects_missing_state ....................   Passed    0.01 sec
+      Start 27: p6a_calmet_scoped_contracts
+27/62 Test #27: p6a_calmet_scoped_contracts ....................................   Passed    0.01 sec
+      Start 28: p6c_terrain_envelope_software
+28/62 Test #28: p6c_terrain_envelope_software ..................................   Passed    0.62 sec
+      Start 29: p6d_froude_adjust_software
+29/62 Test #29: p6d_froude_adjust_software .....................................   Passed    0.01 sec
+      Start 30: p6c_station_geometry_software
+30/62 Test #30: p6c_station_geometry_software ..................................   Passed    0.01 sec
+      Start 31: p6c_geo_selected_scoped_software
+31/62 Test #31: p6c_geo_selected_scoped_software ...............................   Passed    0.09 sec
+      Start 32: p6c_surface_selected_scoped_software
+32/62 Test #32: p6c_surface_selected_scoped_software ...........................   Passed    0.02 sec
+      Start 33: p6c_upper_rdupn_selected_scoped_software
+33/62 Test #33: p6c_upper_rdupn_selected_scoped_software .......................   Passed    0.01 sec
+      Start 34: p6c_original_vertav_software
+34/62 Test #34: p6c_original_vertav_software ...................................   Passed    0.01 sec
+      Start 35: p6c_hourly_prepdi_software
+35/62 Test #35: p6c_hourly_prepdi_software .....................................   Passed    0.01 sec
+      Start 36: p6c_original_facet_intp_software
+36/62 Test #36: p6c_original_facet_intp_software ...............................   Passed    0.01 sec
+      Start 37: p6c_comp_buffered_candidate_software
+37/62 Test #37: p6c_comp_buffered_candidate_software ...........................   Passed    0.01 sec
+      Start 38: p6c_rdsn_buffered_state_candidate
+38/62 Test #38: p6c_rdsn_buffered_state_candidate ..............................   Passed    0.01 sec
+      Start 39: p6c_original_cgamma_state_candidate
+39/62 Test #39: p6c_original_cgamma_state_candidate ............................   Passed    0.01 sec
+      Start 40: p6d_original_slope_software
+40/62 Test #40: p6d_original_slope_software ....................................   Passed    0.01 sec
+      Start 41: p6d_original_divcel_software
+41/62 Test #41: p6d_original_divcel_software ...................................   Passed    0.01 sec
+      Start 42: p6d_original_minim_software
+42/62 Test #42: p6d_original_minim_software ....................................   Passed    0.01 sec
+      Start 43: p6d_original_smooth_software
+43/62 Test #43: p6d_original_smooth_software ...................................   Passed    0.01 sec
+      Start 44: p6d_original_diagno_final_segment_software
+44/62 Test #44: p6d_original_diagno_final_segment_software .....................   Passed    0.01 sec
+      Start 45: p6d_original_inter2_selected_software
+45/62 Test #45: p6d_original_inter2_selected_software ..........................   Passed    0.01 sec
+      Start 46: p6d_original_similt_profile_software
+46/62 Test #46: p6d_original_similt_profile_software ...........................   Passed    0.01 sec
+      Start 47: p6d8_wind1_selected_hour_observation_contract
+47/62 Test #47: p6d8_wind1_selected_hour_observation_contract ..................   Passed    0.01 sec
+      Start 48: p6d8b_original_wind1_firstguess_selected_software
+48/62 Test #48: p6d8b_original_wind1_firstguess_selected_software ..............   Passed    0.02 sec
+      Start 49: p6d9a_wind1_inter2_diagno_selected_bridge_contract
+49/62 Test #49: p6d9a_wind1_inter2_diagno_selected_bridge_contract .............   Passed    0.50 sec
+      Start 50: p6d9a_obrien_minim_iobr1_tail_contract
+50/62 Test #50: p6d9a_obrien_minim_iobr1_tail_contract .........................   Passed    0.01 sec
+      Start 51: p6d9a_fradj_upstream_route_contract
+51/62 Test #51: p6d9a_fradj_upstream_route_contract ............................   Passed    0.10 sec
+      Start 52: p6d9a_slope_upstream_route_contract
+52/62 Test #52: p6d9a_slope_upstream_route_contract ............................   Passed    0.14 sec
+      Start 53: p6d9a_topof2_preblend_route_contract
+53/62 Test #53: p6d9a_topof2_preblend_route_contract ...........................   Passed    5.46 sec
+      Start 54: p6d9a_inchain_terset_envelope_contract
+54/62 Test #54: p6d9a_inchain_terset_envelope_contract .........................   Passed    1.07 sec
+      Start 55: p6d_original_station_deck_synthetic_source_contract
+55/62 Test #55: p6d_original_station_deck_synthetic_source_contract ............   Passed    0.02 sec
+      Start 56: p6d_original_metinp_station_deck_input
+56/62 Test #56: p6d_original_metinp_station_deck_input .........................   Passed    0.03 sec
+      Start 57: p6d_p3_p4_p5_metinp_station_contract
+57/62 Test #57: p6d_p3_p4_p5_metinp_station_contract ...........................   Passed    0.28 sec
+      Start 58: p6_modea_original_grid_generator_to_metinp
+58/62 Test #58: p6_modea_original_grid_generator_to_metinp .....................   Passed    0.17 sec
+      Start 59: p6d_original_readcf_real4_fortran_source
+59/62 Test #59: p6d_original_readcf_real4_fortran_source .......................   Passed    0.41 sec
+      Start 60: p6_native_cpp_hourly_driver_fail_closed_missing_case
+60/62 Test #60: p6_native_cpp_hourly_driver_fail_closed_missing_case ...........   Passed    0.01 sec
+      Start 61: p6_native_cpp_comp_history_state_and_rollback
+61/62 Test #61: p6_native_cpp_comp_history_state_and_rollback ..................   Passed    0.08 sec
+      Start 62: p6d_realcase_wind_producer_case_contract
+62/62 Test #62: p6d_realcase_wind_producer_case_contract .......................   Passed   62.78 sec
+
+100% tests passed, 0 tests failed out of 62
+
+Total Test time (real) = 130.13 sec

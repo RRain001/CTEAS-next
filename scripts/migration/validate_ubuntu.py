@@ -53,6 +53,7 @@ def main():
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--suite', choices=SUITES, action='append')
     ap.add_argument('--jobs', type=int, default=2)
+    ap.add_argument('--test-timeout', type=int, default=600, help='Per-test execution seconds, independent of numerical tolerances')
     ap.add_argument('--portable', action='store_true', help='Explicit software subset that needs no external vendor/terrain assets')
     args = ap.parse_args()
     root, out = args.root.resolve(), args.out.resolve()
@@ -61,6 +62,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     env['PYTHONDONTWRITEBYTECODE'] = '1'
+    scratch = out / 'scratch'
+    scratch.mkdir(exist_ok=True)
+    env['TMPDIR'] = str(scratch)
     tools = out / 'tools'
     tools.mkdir(exist_ok=True)
     fort = shutil.which(env.get('FC', 'gfortran-11'))
@@ -110,7 +114,7 @@ def main():
         if args.portable and not PORTABLE[name]:
             print(name + ': no upstream CTest tests (P3 reference comparison is a separate harness)', flush=True)
             continue
-        command = ['ctest', '--test-dir', str(build), '--output-on-failure', '--timeout', '180']
+        command = ['ctest', '--test-dir', str(build), '--output-on-failure', '--timeout', str(args.test_timeout)]
         if args.portable:
             command += ['--no-tests=error', '-R', '^(' + '|'.join(re.escape(t) for t in PORTABLE[name]) + ')$']
         else:

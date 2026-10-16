@@ -1,0 +1,151 @@
+COMMAND: ["cmake", "--build", "/tmp/cteas-next-validation/build-p4", "--parallel", "4"]
+[ 25%] Building CXX object CMakeFiles/cteas_p4_read62.dir/p4_read62_main.cpp.o
+[ 50%] Building CXX object CMakeFiles/cteas_p4_tests.dir/home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(18): error: no valid std::strong_ordering type found (<compare> must be included)
+  struct Timestamp{int year=0,month=0,day=0,hour=0;auto operator<=>(const Timestamp&) const=default;};
+         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(56): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds when(const Timestamp& t){
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "year_month_day" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "year" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: expected a ","
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "month" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: expected a ","
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                              ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "day" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                                                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: expected a ","
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                                                                  ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(60): error: identifier "sys_days" is undefined
+   return sys_days{ymd}+hours{t.hour};
+          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(4),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(60): error: expected a ";"
+   return sys_days{ymd}+hours{t.hour};
+                  ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(18): error: no valid std::strong_ordering type found (<compare> must be included)
+  struct Timestamp{int year=0,month=0,day=0,hour=0;auto operator<=>(const Timestamp&) const=default;};
+         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(56): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds when(const Timestamp& t){
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "year_month_day" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "year" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: expected a ","
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "month" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: expected a ","
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                              ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: identifier "day" is undefined
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                                                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(58): error: expected a ","
+   const year_month_day ymd{year{t.year},month{static_cast<unsigned>(t.month)},day{static_cast<unsigned>(t.day)}};
+                                                                                  ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(60): error: identifier "sys_days" is undefined
+   return sys_days{ymd}+hours{t.hour};
+          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_read62.hpp(60): error: expected a ";"
+   return sys_days{ymd}+hours{t.hour};
+                  ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(41): error: identifier "sys_days" is undefined
+      auto first=sys_days{year{t.year}/1/1};
+                 ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(41): error: expected a ";"
+      auto first=sys_days{year{t.year}/1/1};
+                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p4_read62/../../include/cteas/met_input/p4_updat.hpp(42): error: expected a ";"
+      auto now=sys_days{year{t.year}/static_cast<unsigned>(t.month)/static_cast<unsigned>(t.day)};
+                       ^
+
+compilation aborted for /home/lhy/CTEAS-next/native_cpp/modules/p4_read62/p4_read62_main.cpp (code 2)
+gmake[2]: *** [CMakeFiles/cteas_p4_read62.dir/build.make:76：CMakeFiles/cteas_p4_read62.dir/p4_read62_main.cpp.o] 错误 2
+gmake[1]: *** [CMakeFiles/Makefile2:111：CMakeFiles/cteas_p4_read62.dir/all] 错误 2
+gmake[1]: *** 正在等待未完成的任务....
+compilation aborted for /home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp (code 2)
+gmake[2]: *** [CMakeFiles/cteas_p4_tests.dir/build.make:76：CMakeFiles/cteas_p4_tests.dir/home/lhy/CTEAS-next/native_cpp/tests/p4_read62_tests.cpp.o] 错误 2
+gmake[1]: *** [CMakeFiles/Makefile2:85：CMakeFiles/cteas_p4_tests.dir/all] 错误 2
+gmake: *** [Makefile:101：all] 错误 2

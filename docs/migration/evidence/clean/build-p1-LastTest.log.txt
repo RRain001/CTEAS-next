@@ -1,0 +1,19 @@
+Start testing: Oct 16 16:38 CST
+----------------------------------------------------------
+1/1 Testing: cteas_p1_cellind_scoped
+1/1 Test: cteas_p1_cellind_scoped
+Command: "/tmp/cteas-next-clean-validation/build-p1/cteas_p1_cellind_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p1
+"cteas_p1_cellind_scoped" start time: Oct 16 16:38 CST
+Output:
+----------------------------------------------------------
+P1 original CELLIND boundary and explicit missing-source rejection PASS
+<end of output>
+Test time =   0.17 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p1_cellind_scoped" end time: Oct 16 16:38 CST
+"cteas_p1_cellind_scoped" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 16 16:38 CST

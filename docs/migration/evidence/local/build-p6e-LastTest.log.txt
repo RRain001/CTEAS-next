@@ -1,0 +1,507 @@
+Start testing: Oct 16 16:32 CST
+----------------------------------------------------------
+1/27 Testing: p6e_solar_software
+1/27 Test: p6e_solar_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_solar_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_solar_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_solar_software" end time: Oct 16 16:32 CST
+"p6e_solar_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/27 Testing: p6e_coordlib_pj09z0_software
+2/27 Test: p6e_coordlib_pj09z0_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_coordlib_pj09z0_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_coordlib_pj09z0_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_coordlib_pj09z0_software" end time: Oct 16 16:32 CST
+"p6e_coordlib_pj09z0_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/27 Testing: p6e_coordlib_utm_original_source_parity
+3/27 Test: p6e_coordlib_utm_original_source_parity
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/reference/compare_original_coordlib_utm.py" "--vendor" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../../../../engine/vendor/src/CALMET_v6.5.0_L150223/coordlib.for" "--cpp" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_coordlib_utm_reference" "--gfortran" "/usr/bin/gfortran-11" "--out" "/tmp/cteas-next-gcc-validation/build-p6e/coordlib-utm-original-parity.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_coordlib_utm_original_source_parity" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+{
+  "status": "PASS",
+  "cases": 11,
+  "values": 5222,
+  "max_abs_error_deg": 0.0,
+  "max_rel_error": 0.0,
+  "real4_bit_pattern_mismatches": 0,
+  "first_mismatches": [],
+  "vendor_sha256": "abe1d9a69ed7a4b8fa98bf1092cd668feef9f5612619ae3a8b565ec5b9be3c93",
+  "unmodified_source": "engine/vendor/src/CALMET_v6.5.0_L150223/coordlib.for (whole file, compiled as-is)",
+  "ported_routine": "PJ09Z0 inverse (via PJ01Z0/UTM); NOT PJ07Z0 (polyconic)",
+  "driver": "coordlib_utm_driver.f"
+}
+<end of output>
+Test time =   1.54 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_coordlib_utm_original_source_parity" end time: Oct 16 16:32 CST
+"p6e_coordlib_utm_original_source_parity" time elapsed: 00:00:01
+----------------------------------------------------------
+
+4/27 Testing: p6e_pgtstb_software
+4/27 Test: p6e_pgtstb_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_pgtstb_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_pgtstb_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_pgtstb_software" end time: Oct 16 16:32 CST
+"p6e_pgtstb_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/27 Testing: p6e_surfvar_observed_software
+5/27 Test: p6e_surfvar_observed_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_surfvar_observed_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_surfvar_observed_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_surfvar_observed_software" end time: Oct 16 16:32 CST
+"p6e_surfvar_observed_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/27 Testing: p6e_heatfx_software
+6/27 Test: p6e_heatfx_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_heatfx_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_heatfx_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_heatfx_software" end time: Oct 16 16:32 CST
+"p6e_heatfx_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/27 Testing: p6e_elustr_stable_software
+7/27 Test: p6e_elustr_stable_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_elustr_stable_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_elustr_stable_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_elustr_stable_software" end time: Oct 16 16:32 CST
+"p6e_elustr_stable_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/27 Testing: p6e_wstarr_software
+8/27 Test: p6e_wstarr_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_wstarr_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_wstarr_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_wstarr_software" end time: Oct 16 16:32 CST
+"p6e_wstarr_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/27 Testing: p6e_mixht_stable_software
+9/27 Test: p6e_mixht_stable_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_mixht_stable_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_mixht_stable_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_mixht_stable_software" end time: Oct 16 16:32 CST
+"p6e_mixht_stable_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/27 Testing: p6e_elustr_daytime_software
+10/27 Test: p6e_elustr_daytime_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_elustr_daytime_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_elustr_daytime_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_elustr_daytime_software" end time: Oct 16 16:32 CST
+"p6e_elustr_daytime_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/27 Testing: p6e_cloud3_software
+11/27 Test: p6e_cloud3_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_cloud3_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_cloud3_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_cloud3_software" end time: Oct 16 16:32 CST
+"p6e_cloud3_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/27 Testing: p6e_surfvar_multistation_software
+12/27 Test: p6e_surfvar_multistation_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_surfvar_multistation_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_surfvar_multistation_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_surfvar_multistation_software" end time: Oct 16 16:32 CST
+"p6e_surfvar_multistation_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/27 Testing: p6e_mixhmc_software
+13/27 Test: p6e_mixhmc_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_mixhmc_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_mixhmc_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_mixhmc_software" end time: Oct 16 16:32 CST
+"p6e_mixhmc_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/27 Testing: p6e_mixdt_software
+14/27 Test: p6e_mixdt_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_mixdt_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_mixdt_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_mixdt_software" end time: Oct 16 16:32 CST
+"p6e_mixdt_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/27 Testing: p6e_mixht_observed_mc_software
+15/27 Test: p6e_mixht_observed_mc_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_mixht_observed_mc_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_mixht_observed_mc_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_mixht_observed_mc_software" end time: Oct 16 16:32 CST
+"p6e_mixht_observed_mc_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/27 Testing: p6e_temp3d_observed_land_software
+16/27 Test: p6e_temp3d_observed_land_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_temp3d_observed_land_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_temp3d_observed_land_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_temp3d_observed_land_software" end time: Oct 16 16:32 CST
+"p6e_temp3d_observed_land_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/27 Testing: p6e_p6c_143h_hourly_boundary_contract
+17/27 Test: p6e_p6c_143h_hourly_boundary_contract
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_p6c_hourly_bridge_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_p6c_143h_hourly_boundary_contract" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+PASS_P6E_P6C_143H_HOURLY_BOUNDARY_CONTRACT normal=71 swapped=72 missing_precip=142 observed_zero=1
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_p6c_143h_hourly_boundary_contract" end time: Oct 16 16:32 CST
+"p6e_p6c_143h_hourly_boundary_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/27 Testing: p6e_p6c_143h_mixht_temp3d_sequential_invariants
+18/27 Test: p6e_p6c_143h_mixht_temp3d_sequential_invariants
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_p6c_143h_physics_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_p6c_143h_mixht_temp3d_sequential_invariants" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+PASS_P6E_E16_SYNTHETIC_143H_MIXHT_TEMP3D hours=143 positive_QH=87 stable_QH=35 neutral_QH=21 swapped_AABB=72 temp_checksum=211184 height_checksum=75012.4 ORIGINAL_2022_FULL_CASE_PARITY=NOT_VERIFIED
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_p6c_143h_mixht_temp3d_sequential_invariants" end time: Oct 16 16:32 CST
+"p6e_p6c_143h_mixht_temp3d_sequential_invariants" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/27 Testing: p6e_p6c_143h_formatted_input_cli
+19/27 Test: p6e_p6c_143h_formatted_input_cli
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/verify_p6c_cli_formatted_143h.py" "--cpp" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_p6c_hourly_bridge"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_p6c_143h_formatted_input_cli" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+PASS_P6E_E17_FORMATTED_SYNTHETIC_143H_CLI hours=143 swapped=72 missing_precip=142 observed_zero=1 sha256=98c9da8b78fc7c1d1f442e23b5ea867444d990d331ed8df08e15b3e5b2186708 REAL_2022_INPUTS_NOT_TESTED=1
+<end of output>
+Test time =   0.17 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_p6c_143h_formatted_input_cli" end time: Oct 16 16:32 CST
+"p6e_p6c_143h_formatted_input_cli" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/27 Testing: p6e_e18_real_2022_p6c_observed_temp3d_smoke
+20/27 Test: p6e_e18_real_2022_p6c_observed_temp3d_smoke
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/verify_real_2022_p6c_temp3d_replay.py" "--fixture" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/reference/data/hefei_2022_p6c_original_obs.zlib.b64" "--cpp" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_temp3d_observed_land_reference" "--out" "/tmp/cteas-next-gcc-validation/build-p6e/e18-real2022-observed-replay.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_e18_real_2022_p6c_observed_temp3d_smoke" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+{
+  "status": "PASS_REAL_OBS_SYNTHETIC_HEIGHT_TEMP3D_SMOKE",
+  "real_observation_hours": 143,
+  "scenario_heights_m": [
+    0.0,
+    150.0,
+    500.0
+  ],
+  "profile_scalar_results": 3861,
+  "validation_windows": {
+    "1": 27,
+    "6": 162,
+    "143": 3861
+  },
+  "min_max_computed_temperature_k": [
+    267.79800415,
+    287.350006104
+  ],
+  "original_p6c_reference_comp": "PASS_2022_143H",
+  "original_p6e_2022_field_parity": "NOT_VERIFIED",
+  "p6d_diagnostic_wind": "NOT_USED",
+  "rain_validated": "NO",
+  "hours": 143,
+  "swapped_AABB": 72,
+  "normal_AABB": 71,
+  "sounding_turnovers": 11,
+  "rain_missing": 143,
+  "rain_measured": 0,
+  "input_canonical_sha256": "ac45709dec5d5c624e2fbeeede57b4e55c311e384cfcb7a127afa4b5dcc9513b",
+  "provenance": {
+    "github_run_id": 38113874913,
+    "artifact_id": 11693445092,
+    "artifact_name": "p6b-original-calmet-hefei-2022-100m",
+    "joint_csv_sha256": "400226164f4e17665487ec0845f3ca6025ecdf310178a12fd9bed9d53818554f",
+    "original_comp_report_sha256": "2bf75c3de394f0fd712baa21bc4595c9445a5cd01335f48ab1947a48a9506485",
+    "original_comp_status": "PASS_ORIGINAL_COMP_RUNTIME_AA_BB",
+    "original_comp_hours": 143,
+    "original_justa_turnovers": 11,
+    "up_dat_sha256": "058e8845d34aaaa5a6bedc60f512f5d24857a4534f4107d57bb97f5c3a8d9c99",
+    "source_labels": [
+      "actual P6C observed 2022 case; original COMP/RDSN source-verified",
+      "NOT original P6E MIXHT/TEMP3D real-2022 physical field parity"
+    ]
+  },
+  "cpp_result_sha256": "8ad91d4e4e3292c6a181be13f41bdc61c23a8388b07d224aa1e44a41bcdcc9dd"
+}
+<end of output>
+Test time =   0.24 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_e18_real_2022_p6c_observed_temp3d_smoke" end time: Oct 16 16:32 CST
+"p6e_e18_real_2022_p6c_observed_temp3d_smoke" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/27 Testing: p6e_mixhbg_software
+21/27 Test: p6e_mixhbg_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_mixhbg_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_mixhbg_software" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_mixhbg_software" end time: Oct 16 16:32 CST
+"p6e_mixhbg_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/27 Testing: p6e_realcase_option_profile_contract
+22/27 Test: p6e_realcase_option_profile_contract
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_realcase_options_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_realcase_option_profile_contract" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_realcase_option_profile_contract" end time: Oct 16 16:32 CST
+"p6e_realcase_option_profile_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+23/27 Testing: p6e_calmet_dat21_output_contract
+23/27 Test: p6e_calmet_dat21_output_contract
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/verify_calmet_dat21_contract.py" "--tool" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_calmet_dat21" "--harness" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/reference/compare_calmet_dat21.py"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_calmet_dat21_output_contract" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+PASS_P6E_E22_CALMET_DAT21_OUTPUT_CONTRACT hours=3 fields_per_hour=21 cells=40 round_trip=PASS byte_exact_rewrite=PASS layout_fail_closed=4/4 missing_excluded=PASS exceedance_stats=PASS blocked_statuses=4/4 real_reference=not supplied
+<end of output>
+Test time =   1.04 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_calmet_dat21_output_contract" end time: Oct 16 16:32 CST
+"p6e_calmet_dat21_output_contract" time elapsed: 00:00:01
+----------------------------------------------------------
+
+24/27 Testing: p6e_calmet_dat21_real_reference_round_trip
+24/27 Test: p6e_calmet_dat21_real_reference_round_trip
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/verify_calmet_dat21_contract.py" "--tool" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_calmet_dat21" "--harness" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/reference/compare_calmet_dat21.py" "--real-reference" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat" "--real-reference-sha256" "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_calmet_dat21_real_reference_round_trip" start time: Oct 16 16:32 CST
+Output:
+----------------------------------------------------------
+PASS_P6E_E22_CALMET_DAT21_OUTPUT_CONTRACT hours=3 fields_per_hour=21 cells=40 round_trip=PASS byte_exact_rewrite=PASS layout_fail_closed=4/4 missing_excluded=PASS exceedance_stats=PASS blocked_statuses=4/4 real_reference=byte_exact+inventory+BLOCKED
+<end of output>
+Test time =  63.49 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_calmet_dat21_real_reference_round_trip" end time: Oct 16 16:33 CST
+"p6e_calmet_dat21_real_reference_round_trip" time elapsed: 00:01:03
+----------------------------------------------------------
+
+25/27 Testing: p6e_calmet_dat21_real_full_field_reference
+25/27 Test: p6e_calmet_dat21_real_full_field_reference
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/verify_real_2022_full_field_reference.py" "--repo-root" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../../../.." "--bridge" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_p6c_hourly_bridge" "--tool" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_calmet_dat21" "--work" "/tmp/cteas-next-gcc-validation/build-p6e/e42-real-full-field"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_calmet_dat21_real_full_field_reference" start time: Oct 16 16:33 CST
+Output:
+----------------------------------------------------------
+{
+  "status": "PASS",
+  "status_detail": "every compared cell is inside the frozen source-gate tolerance",
+  "total_exceedances": 0,
+  "owned_fields": 18,
+  "dQSW_zero_hours": 143,
+  "qsw_max_abs_error": 0,
+  "el_exceedances": 0,
+  "wstar_exceedances": 0,
+  "wind_regime": "original CALMET.DAT wind (frozen met.dat)"
+}
+P6E_FULL_FIELD_REFERENCE=PASS
+<end of output>
+Test time = 205.61 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_calmet_dat21_real_full_field_reference" end time: Oct 16 16:37 CST
+"p6e_calmet_dat21_real_full_field_reference" time elapsed: 00:03:25
+----------------------------------------------------------
+
+26/27 Testing: p6e_avetmp_software
+26/27 Test: p6e_avetmp_software
+Command: "/tmp/cteas-next-gcc-validation/build-p6e/p6e_avetmp_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_avetmp_software" start time: Oct 16 16:37 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_avetmp_software" end time: Oct 16 16:37 CST
+"p6e_avetmp_software" time elapsed: 00:00:00
+----------------------------------------------------------
+
+27/27 Testing: p6e_avetmp_original_source_parity
+27/27 Test: p6e_avetmp_original_source_parity
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/reference/compare_original_avetmp.py" "--vendor" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../../../../engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" "--cpp" "/tmp/cteas-next-gcc-validation/build-p6e/p6e_avetmp_reference" "--gfortran" "/usr/bin/gfortran-11" "--out" "/tmp/cteas-next-gcc-validation/build-p6e/avetmp-original-parity.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6e
+"p6e_avetmp_original_source_parity" start time: Oct 16 16:37 CST
+Output:
+----------------------------------------------------------
+{
+  "status": "PASS",
+  "cases": 40,
+  "values": 685,
+  "mode_distribution": {
+    "zero_wind": 10,
+    "uniform_wind": 10,
+    "rotating": 10,
+    "single_hot": 10
+  },
+  "max_abs_error_k": 4.999947122996673e-10,
+  "abs_limit": 0.0001,
+  "rel_limit": 1e-05,
+  "mismatches": 0,
+  "first_mismatches": [],
+  "original_blob": "437f43bb7f0e51a1919e56664663e1a046986ed0",
+  "vendor_sha256": "430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134",
+  "unmodified_source_lines": [
+    2356,
+    2589
+  ],
+  "scope": "isolated original AVETMP with synthetic u/v; the real-case IAVET=1 term still needs the P6D wind field"
+}
+<end of output>
+Test time =   0.48 sec
+----------------------------------------------------------
+Test Passed.
+"p6e_avetmp_original_source_parity" end time: Oct 16 16:37 CST
+"p6e_avetmp_original_source_parity" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 16 16:37 CST

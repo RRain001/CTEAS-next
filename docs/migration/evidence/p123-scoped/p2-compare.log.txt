@@ -1,0 +1,19 @@
+COMMAND: ["/home/lhy/CTEAS-next/.venv/bin/python", "native_cpp/reference/compare_p2_gen.py", "--reference", "/tmp/cteas-next-p123-reference", "--cpp", "/tmp/cteas-next-p123-reference/p2_cpp_fractions.csv", "--report", "/tmp/cteas-next-p123-reference/p2_numeric_comparison.json"]
+{
+  "comparison": "CTGPROC GEN EPSG32650 first Hefei 100m",
+  "valid_fraction_cells_original": 2500,
+  "valid_fraction_cells_cpp": 2500,
+  "missing_cpp_cells": 0,
+  "cell_mask_mismatch_count": 0,
+  "compared_float_fields": 95000,
+  "max_absolute_fraction_error": 0.0,
+  "mean_absolute_fraction_error": 0.0,
+  "rmse_fraction_error": 0.0,
+  "predeclared_absolute_fraction_tolerance": 0.0005,
+  "original_accepted_point_count": 10011,
+  "cpp_accepted_point_count": 10011,
+  "point_count_difference": 0,
+  "numeric_fraction_gate": "PASS",
+  "internal_count_gate": "PASS",
+  "other_algorithms": "NOT_TESTED"
+}

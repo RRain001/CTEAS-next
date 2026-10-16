@@ -1,0 +1,399 @@
+[
+  {
+    "label": "inputs-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-inputs",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 0.539,
+    "log": "inputs-configure.log"
+  },
+  {
+    "label": "inputs-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-inputs",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 13.073,
+    "log": "inputs-build.log"
+  },
+  {
+    "label": "inputs-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-inputs",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(cteas_p1_input_contracts|cteas_p2_input_contracts|cteas_p2_gen_fraction_contract)$"
+    ],
+    "returncode": 0,
+    "seconds": 0.571,
+    "log": "inputs-ctest.log"
+  },
+  {
+    "label": "p1-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/p1",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p1",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 0.468,
+    "log": "p1-configure.log"
+  },
+  {
+    "label": "p1-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p1",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 10.385,
+    "log": "p1-build.log"
+  },
+  {
+    "label": "p1-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-p1",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(cteas_p1_cellind_scoped)$"
+    ],
+    "returncode": 0,
+    "seconds": 0.216,
+    "log": "p1-ctest.log"
+  },
+  {
+    "label": "p3-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/p3",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p3",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 0.55,
+    "log": "p3-configure.log"
+  },
+  {
+    "label": "p3-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p3",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 4.059,
+    "log": "p3-build.log"
+  },
+  {
+    "label": "p4-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/modules/p4_read62",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p4",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 0.527,
+    "log": "p4-configure.log"
+  },
+  {
+    "label": "p4-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p4",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 3.691,
+    "log": "p4-build.log"
+  },
+  {
+    "label": "p4-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-p4",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(p4_fsl_input_contracts)$"
+    ],
+    "returncode": 0,
+    "seconds": 0.028,
+    "log": "p4-ctest.log"
+  },
+  {
+    "label": "p5-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/modules/p5_smerge",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p5",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 0.51,
+    "log": "p5-configure.log"
+  },
+  {
+    "label": "p5-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p5",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 12.383,
+    "log": "p5-build.log"
+  },
+  {
+    "label": "p5-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-p5",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(p5_generic_utc_input_contracts)$"
+    ],
+    "returncode": 0,
+    "seconds": 0.036,
+    "log": "p5-ctest.log"
+  },
+  {
+    "label": "p6-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p6",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 2.571,
+    "log": "p6-configure.log"
+  },
+  {
+    "label": "p6-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p6",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 88.801,
+    "log": "p6-build.log"
+  },
+  {
+    "label": "p6-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-p6",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(p6a_calmet_scoped_contracts|p6c_terrain_envelope_software|p6d_froude_adjust_software|p6c_station_geometry_software|p6_native_cpp_hourly_driver_fail_closed_missing_case|p6_native_cpp_comp_history_state_and_rollback)$"
+    ],
+    "returncode": 0,
+    "seconds": 0.772,
+    "log": "p6-ctest.log"
+  },
+  {
+    "label": "p6e-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p6e",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 2.283,
+    "log": "p6e-configure.log"
+  },
+  {
+    "label": "p6e-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p6e",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 23.433,
+    "log": "p6e-build.log"
+  },
+  {
+    "label": "p6e-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-p6e",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(p6e_solar_software|p6e_coordlib_pj09z0_software|p6e_pgtstb_software|p6e_heatfx_software|p6e_elustr_stable_software|p6e_wstarr_software|p6e_mixht_stable_software|p6e_elustr_daytime_software)$"
+    ],
+    "returncode": 0,
+    "seconds": 0.112,
+    "log": "p6e-ctest.log"
+  },
+  {
+    "label": "p6f-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6f",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p6f",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 2.243,
+    "log": "p6f-configure.log"
+  },
+  {
+    "label": "p6f-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p6f",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 20.958,
+    "log": "p6f-build.log"
+  },
+  {
+    "label": "p6f-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-p6f",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(p6f_calmet_dat21_writer_unit|p6f_calmet_dat21_synthetic_cli_roundtrip|p6f_calmet_dat21_e22_contract_cross_read)$"
+    ],
+    "returncode": 0,
+    "seconds": 67.195,
+    "log": "p6f-ctest.log"
+  },
+  {
+    "label": "p7-configure",
+    "command": [
+      "cmake",
+      "-S",
+      "/tmp/cteas-next-clean/native_cpp/modules/p7_calpuff",
+      "-B",
+      "/tmp/cteas-next-clean-validation/build-p7",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+      "-DPython3_EXECUTABLE=/home/lhy/CTEAS-next/.venv/bin/python"
+    ],
+    "returncode": 0,
+    "seconds": 2.462,
+    "log": "p7-configure.log"
+  },
+  {
+    "label": "p7-build",
+    "command": [
+      "cmake",
+      "--build",
+      "/tmp/cteas-next-clean-validation/build-p7",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "seconds": 73.462,
+    "log": "p7-build.log"
+  },
+  {
+    "label": "p7-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/tmp/cteas-next-clean-validation/build-p7",
+      "--output-on-failure",
+      "--timeout",
+      "180",
+      "--no-tests=error",
+      "-R",
+      "^(cteas_p7_control_contract|cteas_p7_fortran_record_contract|cteas_p7_calmet21_typed_field_contract|cteas_p7c_release_advection_inventory_contract|cteas_p7d_dispersion_contract|cteas_p7_calm_idopt1_native_subset|cteas_p7f_dry_deposition_contract|cteas_p7h_vertical_coupling_contract|cteas_p7i_ctsg_support_contract|cteas_p7e_receptor_sampling_conc_contract)$"
+    ],
+    "returncode": 0,
+    "seconds": 0.545,
+    "log": "p7-ctest.log"
+  }
+]
