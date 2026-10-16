@@ -1,0 +1,89 @@
+name: Ubuntu C++20 packaging and software regression
+on:
+  pull_request:
+  push:
+    branches: [main, codex/bootstrap-p1-p7]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [inputs, p1, p3, p4, p5, p6, p6e, p6f, p7]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install the documented Ubuntu toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y g++-12 gfortran-11 libgdal-dev
+          python -m pip install numpy==2.4.4 pandas==3.0.2 pyyaml==6.0.3
+      - name: Verify frozen tracked-file snapshot
+        run: python scripts/migration/verify_snapshot.py
+      - name: Build and run upstream software regressions (no external assets; not full 143h acceptance)
+        env:
+          CXX: /usr/bin/g++-12
+          FC: /usr/bin/gfortran-11
+        run: python scripts/migration/validate_ubuntu.py --suite '${{ matrix.suite }}' --out '${{ runner.temp }}/cteas-next-${{ matrix.suite }}' --jobs 2 --portable
+      - name: Upload commands, return codes and CTest evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-${{ matrix.suite }}-software-regression
+          path: |
+            ${{ runner.temp }}/cteas-next-${{ matrix.suite }}/*.log
+            ${{ runner.temp }}/cteas-next-${{ matrix.suite }}/*.json
+            ${{ runner.temp }}/cteas-next-${{ matrix.suite }}/build-*/Testing/Temporary/LastTest.log
+          if-no-files-found: warn
+  python-g5:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install GUI runtime and pinned Python requirements
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libegl1 libopengl0 libgl1 libxkbcommon-x11-0 libxcb-cursor0
+          python -m pip install -r requirements.txt
+      - name: Run data preparation and G5 isolation tests
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python -m unittest discover -s native_cpp/modules/p4_read62/data_prep/tests -p 'test_*.py' -v
+          python -m unittest discover -s native_cpp/modules/p5_smerge/data_prep/tests -p 'test_*.py' -v
+          python -m unittest discover -s engine/gui_g5/tests -p 'test_*.py' -v
+      - name: Start separate G5 GUI offscreen and assert execution boundaries
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python - <<'PY'
+          from PySide6.QtWidgets import QApplication
+          from engine.gui_g5.workbench import MainWindow, SOFTWARE_TITLE
+          from engine.gui_g5.pipeline import STAGES, BLOCKED
+          assert set(STAGES) == {'preprocess','upperair','surface','met','puff','all'}
+          assert all(s in BLOCKED for s in ('preprocess','upperair','met','puff','all'))
+          app = QApplication([])
+          window = MainWindow()
+          assert window.windowTitle() == SOFTWARE_TITLE
+          assert window.pages.count() >= 3 and window.field_widgets
+          window.close()
+          app.quit()
+          print('G5_GUI_AND_FAIL_CLOSED_BOUNDARY=PASS_SOFTWARE')
+          PY

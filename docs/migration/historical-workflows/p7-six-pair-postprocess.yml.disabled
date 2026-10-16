@@ -1,0 +1,135 @@
+name: P7 archived C1 C2 six-pair 143h matrix (no solver reruns)
+on:
+  pull_request:
+    branches: [codex/p7-c1-c2-native-met-integration-20261015]
+    paths:
+      - '.github/workflows/p7-six-pair-postprocess.yml'
+      - 'native_cpp/modules/p7_calpuff/reference/p7_six_pair_matrix.py'
+      - 'native_cpp/modules/p7_calpuff/reference/test_p7_six_pair_matrix.py'
+      - 'docs/reconstruction_cpp/P7_C1_C2_SIX_PAIR_MATRIX_20261016.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: p7-archived-six-pair-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  six-pair-archived-science:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout independent comparator and frozen 2022 B reference
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run fail-closed positive and negative comparator tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p7_calpuff/reference/test_p7_six_pair_matrix.py -v
+          python3 native_cpp/modules/p7_calpuff/reference/test_compare_p7_hourly_concentrations.py -v
+
+      - name: Read frozen C1 vendor A/C and native P7 D (historical accepted C1 run)
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-c1-pr53-original-native-met-143h
+          run-id: 38739266720
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/p7-sixpair/C1-frozen
+
+      - name: Read actual current-head native P7 B 143h concentration output
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-real-full143-source-and-puffcon-parity
+          run-id: 38830286957
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/p7-sixpair/B-native-full143
+
+      - name: Read C2 four-arm independently measured 143h JSON comparisons
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-c2-pr63-143h-two-MET-original-CALPUFF-science
+          run-id: 38830287087
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/p7-sixpair/C2-frozen
+
+      - name: Recompute all SIX C1 pairs directly from four real 143h concentration files
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-sixpair"
+          c1="$root/C1-frozen"
+          find_one() {
+            local candidate
+            candidate=$(find "$1" -type f -name "$2" -print -quit)
+            test -n "$candidate" && test -s "$candidate" || {
+              echo "missing frozen artifact: $1 / $2" >&2
+              exit 1
+            }
+            printf '%s\n' "$candidate"
+          }
+          A=$(find_one "$c1" 'A-original-calpuff.con')
+          C=$(find_one "$c1" 'C-original-calpuff.con')
+          D=$(find_one "$c1" 'D-native-p7-native-met.con')
+          B=$(find_one "$root/B-native-full143" 'native-full143-puff.con')
+          # B really is the new P7 native output, not an alias of vendor A.
+          # Independently enforce its original-vendor full-output SHA.
+          echo "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10  $B" | sha256sum -c -
+          echo '0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10  project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con' | sha256sum -c -
+          python3 native_cpp/modules/p7_calpuff/reference/p7_six_pair_matrix.py \
+            --case C1 --mode files --nx 50 --ny 50 --hours 143 \
+            --a "$A" --b "$B" --c "$C" --d "$D" \
+            --report "$root/C1-six-pair-143h.json" | tee "$root/C1-six-pair-143h.log"
+          grep -F 'P7_SIX_PAIR_CASE=PASS CASE=C1 HOURS=143 MODE=direct_four_files ALL_SIX=CONSISTENT INTERACTION=ZERO' "$root/C1-six-pair-143h.log"
+
+      - name: Audit ALL SIX C2 comparisons from archived 143h science WITHOUT re-simulating
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-sixpair"
+          c2="$root/C2-frozen"
+          find_one() {
+            local candidate
+            candidate=$(find "$1" -type f -name "$2" -print -quit)
+            test -n "$candidate" && test -s "$candidate" || {
+              echo "missing frozen artifact: $1 / $2" >&2
+              exit 1
+            }
+            printf '%s\n' "$candidate"
+          }
+          AB=$(find_one "$c2" 'C2-same-MET-A-vs-B.json')
+          AC=$(find_one "$c2" 'C2-A-vs-C-science.json')
+          BD=$(find_one "$c2" 'C2-different-MET-B-vs-D.json')
+          CD=$(find_one "$c2" 'C2-same-MET-C-vs-D.json')
+          PROV=$(find_one "$c2" 'C2-vendor-source-provenance.json')
+          VERDICT=$(find_one "$c2" 'C2-final-scientific-verdict.json')
+          python3 - "$VERDICT" <<'PY'
+          import json,sys
+          verdict=json.load(open(sys.argv[1]))
+          assert verdict["C2_ACCEPTED"] is True, "frozen C2 independent 143h verdict FAILED"
+          for pair in ("C2-same-MET-A-vs-B.json","C2-same-MET-C-vs-D.json"):
+              r=verdict[pair]
+              assert r["matching_real4"]==20592 and r["values"]==20592
+              assert r["bitwise_identical"] is True and r["first_difference"] is None
+          PY
+          python3 native_cpp/modules/p7_calpuff/reference/p7_six_pair_matrix.py \
+            --case C2 --mode summaries --nx 12 --ny 12 --hours 143 \
+            --ab-report "$AB" --ac-report "$AC" \
+            --bd-report "$BD" --cd-report "$CD" --provenance "$PROV" \
+            --report "$root/C2-six-pair-143h.json" | tee "$root/C2-six-pair-143h.log"
+          grep -F 'P7_SIX_PAIR_CASE=PASS CASE=C2 HOURS=143 MODE=archived_summary_closure ALL_SIX=CONSISTENT INTERACTION=ZERO' "$root/C2-six-pair-143h.log"
+
+      - name: Publish six-pair machine-readable matrix with origin-method labels
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p7-c1-c2-143h-six-pair-archived-matrix
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/p7-sixpair/C1-six-pair-143h.json
+            ${{ runner.temp }}/p7-sixpair/C2-six-pair-143h.json
+            ${{ runner.temp }}/p7-sixpair/C1-six-pair-143h.log
+            ${{ runner.temp }}/p7-sixpair/C2-six-pair-143h.log

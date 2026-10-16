@@ -1,0 +1,2 @@
+id,name,lat,lon,elev_m,year,raw_txt
+CHM00058424,ANQING,31.9398,117.1416,62.0,2022,/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/CHM00058424-data.txt

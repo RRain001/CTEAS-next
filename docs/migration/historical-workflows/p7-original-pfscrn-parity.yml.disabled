@@ -1,0 +1,35 @@
+name: P7 original PFSCRN REAL4 Fortran parity
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/**'
+      - '.github/workflows/p7-original-pfscrn-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-original-pfscrn-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  pfscrn-parity:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/**
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+      - name: Compile original PFSCRN and independent C++ probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v gfortran
+          cmake -S native_cpp/modules/p7_calpuff -B "$RUNNER_TEMP/p7-pfscrn" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$RUNNER_TEMP/p7-pfscrn" --parallel 2 --target cteas_p7_original_pfscrn_probe
+          python3 native_cpp/modules/p7_calpuff/reference/compare_original_pfscrn.py \
+            --vendor engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for \
+            --probe "$RUNNER_TEMP/p7-pfscrn/cteas_p7_original_pfscrn_probe"

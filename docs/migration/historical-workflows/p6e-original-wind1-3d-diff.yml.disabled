@@ -1,0 +1,71 @@
+name: P6E original WIND1 first-hour full 3D source comparison
+
+on:
+  push:
+    branches: [codex/p6-hourly-stateful-scheduler-20261013]
+    paths:
+      - scripts/p6e_trace_original_wind1_full3d.py
+      - .github/workflows/p6e-original-wind1-3d-diff.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  source-vs-native-3d:
+    name: "Original WIND1 REAL4 full 3D: first-hour layer-by-layer source trace"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            scripts/p6e_trace_original_wind1_full3d.py
+            native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          path: original_locked_case
+          filter: blob:none
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011
+      - name: Download independently native wind output after real READCF fix
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38371224052
+          github-token: ${{ github.token }}
+          name: p6-causal-original-case-6h
+          path: ${{ runner.temp }}/p6e-wind1-3d/native
+      - name: Check native first-hour complete WIND1 source shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/p6e-wind1-3d/native/hour_000/diagno"
+          test "$(stat -c '%s' "$first/wind1_u_2022-01-01_01.f32")" -eq 90000
+          test "$(stat -c '%s' "$first/wind1_v_2022-01-01_01.f32")" -eq 90000
+      - name: SHA-locked original CALMET 143h write-only 3D source run
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/p6e_trace_original_wind1_full3d.py \
+            --vendor "$GITHUB_WORKSPACE/engine/vendor/src/CALMET_v6.5.0_L150223" \
+            --case "$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011" \
+            --native "$RUNNER_TEMP/p6e-wind1-3d/native/hour_000/diagno" \
+            --compiler gfortran-11 \
+            --out "$RUNNER_TEMP/p6e-wind1-3d/original_vs_native_first_hour_full3d.json" \
+            > "$RUNNER_TEMP/p6e-wind1-3d/log.txt"
+          cat "$RUNNER_TEMP/p6e-wind1-3d/log.txt"
+      - name: Preserve forensic evidence without claiming P6E science PASS
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-source-wind1-firsthour-full3d
+          path: |
+            ${{ runner.temp }}/p6e-wind1-3d/original_vs_native_first_hour_full3d.json
+            ${{ runner.temp }}/p6e-wind1-3d/log.txt
+            ${{ runner.temp }}/p6e-wind1-3d/original-wind1-3d/case/run/met/p6e_wind1_full3d_first.bin
+          retention-days: 14
+          if-no-files-found: warn

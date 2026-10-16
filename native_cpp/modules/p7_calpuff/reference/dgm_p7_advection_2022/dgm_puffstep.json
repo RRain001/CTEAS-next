@@ -1,0 +1,2103 @@
+{
+  "what": "the original CALPUFF 7.2.1 puff-step advection state for the frozen Hefei 2022 case, exported by write-only instrumentation of the unmodified vendor source",
+  "why": "P7U pinned the advection chain and asked for the observable variables at named lines; none of them appears in puff.con",
+  "source": {
+    "vendor_file": "engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for",
+    "vendor_sha256": "da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568",
+    "subroutine": "COMP",
+    "request": "native_cpp/modules/p7_calpuff/reference/p7u_source_anchor.json and the P7U ledger section",
+    "insertion_points": {
+      "item6_sampling_cadence": {
+        "vendor_line": 10347,
+        "when": "the sampling-step cadence of this puff (nsam, nsstr, xsami, tsamp, reftsamp, iold, istype, ipno, wsvar)"
+      },
+      "item1_start_of_step": {
+        "vendor_line": 10473,
+        "when": "the start-of-step puff state (the comparison's initial condition)"
+      },
+      "item2_cell_parameters": {
+        "vendor_line": 10487,
+        "when": "the met cell and parameters the step uses"
+      },
+      "item3_puffdz_return": {
+        "vendor_line": 10495,
+        "when": "the averaging layer bounds from PUFFDZ"
+      },
+      "item4_advect_return": {
+        "vendor_line": 10499,
+        "when": "the advective wind from ADVECT (METFM=1 -> ADVWND)"
+      },
+      "item5_after_adjustments": {
+        "vendor_line": 10528,
+        "when": "the effective transport speed after RISEWIND and the calm treatment"
+      },
+      "item8a_setpuf_entry": {
+        "vendor_line": 10939,
+        "when": "SETPUF entry: the stored puff state and the /CURRENT/ values carried over from the previous puff"
+      },
+      "item7_setpuf_return": {
+        "vendor_line": 10942,
+        "when": "SETPUF return and the end-of-step puff position; this call writes the record"
+      }
+    },
+    "write_only": "both the untouched original and the instrumented copy were compiled and run on identical inputs; puff.con must hash identically (dgm-audit.json)"
+  },
+  "binary": {
+    "path": "/home/lhy/build/dgm3/out/case/run/puff/dgm_puffstep.bin",
+    "bytes": 89649824,
+    "sha256": "cbbdaa29c6222e6ca6aefe9f605ad13e7dd6d258f6ad243afcac07cb578108c6",
+    "record_bytes": 352,
+    "records": 254687,
+    "hours": 143,
+    "header": "int32[24]",
+    "payload": "float32[64]",
+    "byte_order": "little endian",
+    "order": "records are ordered by timestep, then puff index, then sampling substep; each record carries its own key (packed, ii, ksam)"
+  },
+  "ints": {
+    "kpt": {
+      "slot": 1,
+      "meaning": "record type, always 1"
+    },
+    "packed": {
+      "slot": 2,
+      "meaning": "current timestep beginning time, packed YYYYJJJHH (/DATEHR/ ndathrb)"
+    },
+    "seconds": {
+      "slot": 3,
+      "meaning": "current timestep beginning seconds (/DATEHR/ nsecb)"
+    },
+    "ii": {
+      "slot": 4,
+      "meaning": "puff index"
+    },
+    "icode": {
+      "slot": 5,
+      "meaning": "puff/slug state code"
+    },
+    "ixs": {
+      "slot": 6,
+      "meaning": "met cell i at the start of the step"
+    },
+    "iys": {
+      "slot": 7,
+      "meaning": "met cell j at the start of the step"
+    },
+    "mdoms": {
+      "slot": 8,
+      "meaning": "met domain of the start cell"
+    },
+    "istab": {
+      "slot": 9,
+      "meaning": "PG stability class at the start cell"
+    },
+    "ilayer": {
+      "slot": 10,
+      "meaning": "starting met layer index (ilayer1)"
+    },
+    "nsam": {
+      "slot": 11,
+      "meaning": "number of sampling substeps for this puff"
+    },
+    "nsstr": {
+      "slot": 12,
+      "meaning": "first sampling substep index"
+    },
+    "iold": {
+      "slot": 13,
+      "meaning": "1 = old puff, 0 = new puff, 2 = road slug"
+    },
+    "istype": {
+      "slot": 14,
+      "meaning": "source type"
+    },
+    "ipno": {
+      "slot": 15,
+      "meaning": "source/stack number"
+    },
+    "mdstep": {
+      "slot": 16,
+      "meaning": "met domain used for the step size"
+    },
+    "ksam": {
+      "slot": 17,
+      "meaning": "current sampling substep index"
+    },
+    "lcalm": {
+      "slot": 18,
+      "meaning": "1 when the calm treatment was applied, else 0"
+    },
+    "nspec": {
+      "slot": 19,
+      "meaning": "number of modelled species"
+    },
+    "lpuff": {
+      "slot": 20,
+      "meaning": "1 for a Gaussian puff, 0 for a slug"
+    },
+    "islug": {
+      "slot": 21,
+      "meaning": "1 for a slug, 0 for a puff"
+    },
+    "isrcnum": {
+      "slot": 22,
+      "meaning": "source index of the puff"
+    },
+    "spare1": {
+      "slot": 23,
+      "meaning": "reserved, always 0"
+    },
+    "spare2": {
+      "slot": 24,
+      "meaning": "reserved, always 0"
+    }
+  },
+  "fields": {
+    "xold": {
+      "slot": 1,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "start-of-step puff x"
+    },
+    "yold": {
+      "slot": 2,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "start-of-step puff y"
+    },
+    "zold": {
+      "slot": 3,
+      "units": "m",
+      "meaning": "start-of-step puff height above sea level"
+    },
+    "dpbl": {
+      "slot": 4,
+      "units": "m",
+      "meaning": "mixing height at the start cell (clamped)"
+    },
+    "el": {
+      "slot": 5,
+      "units": "m",
+      "meaning": "Monin-Obukhov length at the start cell"
+    },
+    "z0m": {
+      "slot": 6,
+      "units": "m",
+      "meaning": "roughness length at the start cell"
+    },
+    "htmet": {
+      "slot": 7,
+      "units": "m",
+      "meaning": "puff height used by PUFFDZ (zold)"
+    },
+    "ztop": {
+      "slot": 8,
+      "units": "m",
+      "meaning": "top of the averaging layer (PUFFDZ return)"
+    },
+    "zbot": {
+      "slot": 9,
+      "units": "m",
+      "meaning": "bottom of the averaging layer (PUFFDZ return)"
+    },
+    "uadv_advect": {
+      "slot": 10,
+      "units": "m/s",
+      "meaning": "ADVECT return u"
+    },
+    "vadv_advect": {
+      "slot": 11,
+      "units": "m/s",
+      "meaning": "ADVECT return v"
+    },
+    "ws": {
+      "slot": 12,
+      "units": "m/s",
+      "meaning": "speed after the rise-wind and calm adjustments"
+    },
+    "uadv_adjusted": {
+      "slot": 13,
+      "units": "m/s",
+      "meaning": "u after the adjustments (transport u)"
+    },
+    "vadv_adjusted": {
+      "slot": 14,
+      "units": "m/s",
+      "meaning": "v after the adjustments (transport v)"
+    },
+    "lcalm_f": {
+      "slot": 15,
+      "units": "0/1",
+      "meaning": "lcalm as a float"
+    },
+    "xsami": {
+      "slot": 16,
+      "units": "1",
+      "meaning": "reciprocal of the number of sampling steps (set for old puffs; carried over for new puffs)"
+    },
+    "tsamp": {
+      "slot": 17,
+      "units": "s",
+      "meaning": "sampling step length at the cadence point (before any subsampling split)"
+    },
+    "reftsamp": {
+      "slot": 18,
+      "units": "s",
+      "meaning": "reference sampling step interval"
+    },
+    "wsvar": {
+      "slot": 19,
+      "units": "m/s",
+      "meaning": "wind speed used for variable sampling (new puffs)"
+    },
+    "xtotb_in": {
+      "slot": 20,
+      "units": "m",
+      "meaning": "total travel distance of the puff before SETPUF"
+    },
+    "tmtotb_in": {
+      "slot": 21,
+      "units": "s",
+      "meaning": "total travel time of the puff before SETPUF"
+    },
+    "sigyb_in": {
+      "slot": 22,
+      "units": "m",
+      "meaning": "stored sigma-y before SETPUF"
+    },
+    "sigzb_in": {
+      "slot": 23,
+      "units": "m",
+      "meaning": "stored sigma-z before SETPUF (after any vertical divergence adjustment of this substep)"
+    },
+    "xpb_in": {
+      "slot": 24,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "stored puff x before SETPUF"
+    },
+    "ypb_in": {
+      "slot": 25,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "stored puff y before SETPUF"
+    },
+    "zpb_in": {
+      "slot": 26,
+      "units": "m",
+      "meaning": "stored puff z before SETPUF"
+    },
+    "xb1_in": {
+      "slot": 27,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ xb1 entering SETPUF (carried over from the previous puff)"
+    },
+    "yb1_in": {
+      "slot": 28,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ yb1 entering SETPUF"
+    },
+    "zb1_in": {
+      "slot": 29,
+      "units": "m",
+      "meaning": "/CURRENT/ zb1 entering SETPUF"
+    },
+    "xe1_in": {
+      "slot": 30,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ xe1 entering SETPUF"
+    },
+    "ye1_in": {
+      "slot": 31,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ ye1 entering SETPUF"
+    },
+    "ze1_in": {
+      "slot": 32,
+      "units": "m",
+      "meaning": "/CURRENT/ ze1 entering SETPUF"
+    },
+    "syb1_in": {
+      "slot": 33,
+      "units": "m",
+      "meaning": "/CURRENT/ syb1 entering SETPUF"
+    },
+    "sym1_in": {
+      "slot": 34,
+      "units": "m",
+      "meaning": "/CURRENT/ sym1 entering SETPUF"
+    },
+    "sye1_in": {
+      "slot": 35,
+      "units": "m",
+      "meaning": "/CURRENT/ sye1 entering SETPUF"
+    },
+    "szb1_in": {
+      "slot": 36,
+      "units": "m",
+      "meaning": "/CURRENT/ szb1 entering SETPUF"
+    },
+    "szm1_in": {
+      "slot": 37,
+      "units": "m",
+      "meaning": "/CURRENT/ szm1 entering SETPUF"
+    },
+    "sze1_in": {
+      "slot": 38,
+      "units": "m",
+      "meaning": "/CURRENT/ sze1 entering SETPUF"
+    },
+    "xnew": {
+      "slot": 39,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "end-of-step puff x before SETPUF stores it"
+    },
+    "ynew": {
+      "slot": 40,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "end-of-step puff y"
+    },
+    "xtotb_out": {
+      "slot": 41,
+      "units": "m",
+      "meaning": "total travel distance after SETPUF"
+    },
+    "tmtotb_out": {
+      "slot": 42,
+      "units": "s",
+      "meaning": "total travel time after SETPUF"
+    },
+    "sigyb_out": {
+      "slot": 43,
+      "units": "m",
+      "meaning": "stored sigma-y after SETPUF (start of next step)"
+    },
+    "sigzb_out": {
+      "slot": 44,
+      "units": "m",
+      "meaning": "stored sigma-z after SETPUF (start of next step)"
+    },
+    "xpb_out": {
+      "slot": 45,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "stored puff x after SETPUF"
+    },
+    "ypb_out": {
+      "slot": 46,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "stored puff y after SETPUF"
+    },
+    "zpb_out": {
+      "slot": 47,
+      "units": "m",
+      "meaning": "stored puff z after SETPUF (CALPUFF has no `znew`; the vertical end position is the internal `ze1`, and this is the stored result)"
+    },
+    "xb1_out": {
+      "slot": 48,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ xb1 after SETPUF"
+    },
+    "yb1_out": {
+      "slot": 49,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ yb1 after SETPUF"
+    },
+    "zb1_out": {
+      "slot": 50,
+      "units": "m",
+      "meaning": "/CURRENT/ zb1 after SETPUF"
+    },
+    "xe1_out": {
+      "slot": 51,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ xe1 after SETPUF"
+    },
+    "ye1_out": {
+      "slot": 52,
+      "units": "grid units (cells of the outermost met grid; 1 cell = 100 m here)",
+      "meaning": "/CURRENT/ ye1 after SETPUF"
+    },
+    "ze1_out": {
+      "slot": 53,
+      "units": "m",
+      "meaning": "/CURRENT/ ze1 after SETPUF (the vertical end position)"
+    },
+    "syb1_out": {
+      "slot": 54,
+      "units": "m",
+      "meaning": "/CURRENT/ syb1 after SETPUF"
+    },
+    "sym1_out": {
+      "slot": 55,
+      "units": "m",
+      "meaning": "/CURRENT/ sym1 after SETPUF"
+    },
+    "sye1_out": {
+      "slot": 56,
+      "units": "m",
+      "meaning": "/CURRENT/ sye1 after SETPUF"
+    },
+    "szb1_out": {
+      "slot": 57,
+      "units": "m",
+      "meaning": "/CURRENT/ szb1 after SETPUF"
+    },
+    "szm1_out": {
+      "slot": 58,
+      "units": "m",
+      "meaning": "/CURRENT/ szm1 after SETPUF"
+    },
+    "sze1_out": {
+      "slot": 59,
+      "units": "m",
+      "meaning": "/CURRENT/ sze1 after SETPUF"
+    },
+    "distm": {
+      "slot": 60,
+      "units": "m",
+      "meaning": "distance travelled during this substep"
+    },
+    "tleft": {
+      "slot": 61,
+      "units": "s",
+      "meaning": "time left in the sampling step"
+    },
+    "tsampsum": {
+      "slot": 62,
+      "units": "s",
+      "meaning": "sampling time accumulated before this substep"
+    },
+    "tsamp_effective": {
+      "slot": 63,
+      "units": "s",
+      "meaning": "sampling substep length actually used by this step (the `tsamp` variable at the SETPUF call)"
+    },
+    "spare_f2": {
+      "slot": 64,
+      "units": "0",
+      "meaning": "reserved, always 0"
+    }
+  },
+  "missing_sentinel": {
+    "applied": false,
+    "note": "no value is missing at these points; CALPUFF's own missing markers are not used in these arrays, so a reader must not special-case any value"
+  },
+  "time": {
+    "label": "packed YYYYJJJHH beginning time of the met timestep (/DATEHR/ ndathrb) plus its seconds (/DATEHR/ nsecb)",
+    "hour_table": [
+      {
+        "packed": 202200100,
+        "seconds": 0,
+        "records": 1275,
+        "first_byte_offset": 0,
+        "last_byte_offset": 448448,
+        "first_puff": 1,
+        "last_puff": 54
+      },
+      {
+        "packed": 202200101,
+        "seconds": 0,
+        "records": 2242,
+        "first_byte_offset": 448800,
+        "last_byte_offset": 1237632,
+        "first_puff": 22,
+        "last_puff": 137
+      },
+      {
+        "packed": 202200102,
+        "seconds": 0,
+        "records": 1906,
+        "first_byte_offset": 1237984,
+        "last_byte_offset": 1908544,
+        "first_puff": 113,
+        "last_puff": 208
+      },
+      {
+        "packed": 202200103,
+        "seconds": 0,
+        "records": 2132,
+        "first_byte_offset": 1908896,
+        "last_byte_offset": 2659008,
+        "first_puff": 183,
+        "last_puff": 272
+      },
+      {
+        "packed": 202200104,
+        "seconds": 0,
+        "records": 1742,
+        "first_byte_offset": 2659360,
+        "last_byte_offset": 3272192,
+        "first_puff": 247,
+        "last_puff": 337
+      },
+      {
+        "packed": 202200105,
+        "seconds": 0,
+        "records": 2161,
+        "first_byte_offset": 3272544,
+        "last_byte_offset": 4032864,
+        "first_puff": 314,
+        "last_puff": 417
+      },
+      {
+        "packed": 202200106,
+        "seconds": 0,
+        "records": 2475,
+        "first_byte_offset": 4033216,
+        "last_byte_offset": 4904064,
+        "first_puff": 393,
+        "last_puff": 509
+      },
+      {
+        "packed": 202200107,
+        "seconds": 0,
+        "records": 2486,
+        "first_byte_offset": 4904416,
+        "last_byte_offset": 5779136,
+        "first_puff": 485,
+        "last_puff": 608
+      },
+      {
+        "packed": 202200108,
+        "seconds": 0,
+        "records": 260,
+        "first_byte_offset": 5779488,
+        "last_byte_offset": 5870656,
+        "first_puff": 585,
+        "last_puff": 618
+      },
+      {
+        "packed": 202200109,
+        "seconds": 0,
+        "records": 2189,
+        "first_byte_offset": 5871008,
+        "last_byte_offset": 6641184,
+        "first_puff": 593,
+        "last_puff": 692
+      },
+      {
+        "packed": 202200110,
+        "seconds": 0,
+        "records": 2116,
+        "first_byte_offset": 6641536,
+        "last_byte_offset": 7386016,
+        "first_puff": 668,
+        "last_puff": 773
+      },
+      {
+        "packed": 202200111,
+        "seconds": 0,
+        "records": 2301,
+        "first_byte_offset": 7386368,
+        "last_byte_offset": 8195968,
+        "first_puff": 749,
+        "last_puff": 861
+      },
+      {
+        "packed": 202200112,
+        "seconds": 0,
+        "records": 2929,
+        "first_byte_offset": 8196320,
+        "last_byte_offset": 9226976,
+        "first_puff": 837,
+        "last_puff": 960
+      },
+      {
+        "packed": 202200113,
+        "seconds": 0,
+        "records": 2135,
+        "first_byte_offset": 9227328,
+        "last_byte_offset": 9978496,
+        "first_puff": 931,
+        "last_puff": 1039
+      },
+      {
+        "packed": 202200114,
+        "seconds": 0,
+        "records": 1939,
+        "first_byte_offset": 9978848,
+        "last_byte_offset": 10661024,
+        "first_puff": 1015,
+        "last_puff": 1113
+      },
+      {
+        "packed": 202200115,
+        "seconds": 0,
+        "records": 1873,
+        "first_byte_offset": 10661376,
+        "last_byte_offset": 11320320,
+        "first_puff": 1089,
+        "last_puff": 1182
+      },
+      {
+        "packed": 202200116,
+        "seconds": 0,
+        "records": 1803,
+        "first_byte_offset": 11320672,
+        "last_byte_offset": 11954976,
+        "first_puff": 1157,
+        "last_puff": 1247
+      },
+      {
+        "packed": 202200117,
+        "seconds": 0,
+        "records": 1698,
+        "first_byte_offset": 11955328,
+        "last_byte_offset": 12552672,
+        "first_puff": 1222,
+        "last_puff": 1307
+      },
+      {
+        "packed": 202200118,
+        "seconds": 0,
+        "records": 1635,
+        "first_byte_offset": 12553024,
+        "last_byte_offset": 13128192,
+        "first_puff": 1281,
+        "last_puff": 1363
+      },
+      {
+        "packed": 202200119,
+        "seconds": 0,
+        "records": 1613,
+        "first_byte_offset": 13128544,
+        "last_byte_offset": 13695968,
+        "first_puff": 1336,
+        "last_puff": 1415
+      },
+      {
+        "packed": 202200120,
+        "seconds": 0,
+        "records": 2067,
+        "first_byte_offset": 13696320,
+        "last_byte_offset": 14423552,
+        "first_puff": 1387,
+        "last_puff": 1481
+      },
+      {
+        "packed": 202200121,
+        "seconds": 0,
+        "records": 1989,
+        "first_byte_offset": 14423904,
+        "last_byte_offset": 15123680,
+        "first_puff": 1453,
+        "last_puff": 1551
+      },
+      {
+        "packed": 202200122,
+        "seconds": 0,
+        "records": 2006,
+        "first_byte_offset": 15124032,
+        "last_byte_offset": 15829792,
+        "first_puff": 1525,
+        "last_puff": 1627
+      },
+      {
+        "packed": 202200123,
+        "seconds": 0,
+        "records": 1155,
+        "first_byte_offset": 15830144,
+        "last_byte_offset": 16236352,
+        "first_puff": 1603,
+        "last_puff": 1668
+      },
+      {
+        "packed": 202200200,
+        "seconds": 0,
+        "records": 1230,
+        "first_byte_offset": 16236704,
+        "last_byte_offset": 16669312,
+        "first_puff": 1647,
+        "last_puff": 1711
+      },
+      {
+        "packed": 202200201,
+        "seconds": 0,
+        "records": 2010,
+        "first_byte_offset": 16669664,
+        "last_byte_offset": 17376832,
+        "first_puff": 1685,
+        "last_puff": 1779
+      },
+      {
+        "packed": 202200202,
+        "seconds": 0,
+        "records": 2077,
+        "first_byte_offset": 17377184,
+        "last_byte_offset": 18107936,
+        "first_puff": 1750,
+        "last_puff": 1853
+      },
+      {
+        "packed": 202200203,
+        "seconds": 0,
+        "records": 2134,
+        "first_byte_offset": 18108288,
+        "last_byte_offset": 18859104,
+        "first_puff": 1828,
+        "last_puff": 1952
+      },
+      {
+        "packed": 202200204,
+        "seconds": 0,
+        "records": 2599,
+        "first_byte_offset": 18859456,
+        "last_byte_offset": 19773952,
+        "first_puff": 1933,
+        "last_puff": 2048
+      },
+      {
+        "packed": 202200205,
+        "seconds": 0,
+        "records": 2072,
+        "first_byte_offset": 19774304,
+        "last_byte_offset": 20503296,
+        "first_puff": 2022,
+        "last_puff": 2126
+      },
+      {
+        "packed": 202200206,
+        "seconds": 0,
+        "records": 1903,
+        "first_byte_offset": 20503648,
+        "last_byte_offset": 21173152,
+        "first_puff": 2102,
+        "last_puff": 2196
+      },
+      {
+        "packed": 202200207,
+        "seconds": 0,
+        "records": 2589,
+        "first_byte_offset": 21173504,
+        "last_byte_offset": 22084480,
+        "first_puff": 2171,
+        "last_puff": 2295
+      },
+      {
+        "packed": 202200208,
+        "seconds": 0,
+        "records": 2412,
+        "first_byte_offset": 22084832,
+        "last_byte_offset": 22933504,
+        "first_puff": 2271,
+        "last_puff": 2394
+      },
+      {
+        "packed": 202200209,
+        "seconds": 0,
+        "records": 4073,
+        "first_byte_offset": 22933856,
+        "last_byte_offset": 24367200,
+        "first_puff": 2372,
+        "last_puff": 2493
+      },
+      {
+        "packed": 202200210,
+        "seconds": 0,
+        "records": 4375,
+        "first_byte_offset": 24367552,
+        "last_byte_offset": 25907200,
+        "first_puff": 2444,
+        "last_puff": 2592
+      },
+      {
+        "packed": 202200211,
+        "seconds": 0,
+        "records": 2118,
+        "first_byte_offset": 25907552,
+        "last_byte_offset": 26652736,
+        "first_puff": 2544,
+        "last_puff": 2660
+      },
+      {
+        "packed": 202200212,
+        "seconds": 0,
+        "records": 4195,
+        "first_byte_offset": 26653088,
+        "last_byte_offset": 28129376,
+        "first_puff": 2635,
+        "last_puff": 2759
+      },
+      {
+        "packed": 202200213,
+        "seconds": 0,
+        "records": 4770,
+        "first_byte_offset": 28129728,
+        "last_byte_offset": 29808416,
+        "first_puff": 2708,
+        "last_puff": 2858
+      },
+      {
+        "packed": 202200214,
+        "seconds": 0,
+        "records": 1714,
+        "first_byte_offset": 29808768,
+        "last_byte_offset": 30411744,
+        "first_puff": 2802,
+        "last_puff": 2908
+      },
+      {
+        "packed": 202200215,
+        "seconds": 0,
+        "records": 4897,
+        "first_byte_offset": 30412096,
+        "last_byte_offset": 32135488,
+        "first_puff": 2884,
+        "last_puff": 3007
+      },
+      {
+        "packed": 202200216,
+        "seconds": 0,
+        "records": 1656,
+        "first_byte_offset": 32135840,
+        "last_byte_offset": 32718400,
+        "first_puff": 2937,
+        "last_puff": 3047
+      },
+      {
+        "packed": 202200217,
+        "seconds": 0,
+        "records": 910,
+        "first_byte_offset": 32718752,
+        "last_byte_offset": 33038720,
+        "first_puff": 3023,
+        "last_puff": 3082
+      },
+      {
+        "packed": 202200218,
+        "seconds": 0,
+        "records": 845,
+        "first_byte_offset": 33039072,
+        "last_byte_offset": 33336160,
+        "first_puff": 3058,
+        "last_puff": 3113
+      },
+      {
+        "packed": 202200219,
+        "seconds": 0,
+        "records": 786,
+        "first_byte_offset": 33336512,
+        "last_byte_offset": 33612832,
+        "first_puff": 3087,
+        "last_puff": 3140
+      },
+      {
+        "packed": 202200220,
+        "seconds": 0,
+        "records": 809,
+        "first_byte_offset": 33613184,
+        "last_byte_offset": 33897600,
+        "first_puff": 3112,
+        "last_puff": 3165
+      },
+      {
+        "packed": 202200221,
+        "seconds": 0,
+        "records": 854,
+        "first_byte_offset": 33897952,
+        "last_byte_offset": 34198208,
+        "first_puff": 3133,
+        "last_puff": 3189
+      },
+      {
+        "packed": 202200222,
+        "seconds": 0,
+        "records": 752,
+        "first_byte_offset": 34198560,
+        "last_byte_offset": 34462912,
+        "first_puff": 3159,
+        "last_puff": 3214
+      },
+      {
+        "packed": 202200223,
+        "seconds": 0,
+        "records": 381,
+        "first_byte_offset": 34463264,
+        "last_byte_offset": 34597024,
+        "first_puff": 3188,
+        "last_puff": 3215
+      },
+      {
+        "packed": 202200300,
+        "seconds": 0,
+        "records": 77,
+        "first_byte_offset": 34597376,
+        "last_byte_offset": 34624128,
+        "first_puff": 3214,
+        "last_puff": 3226
+      },
+      {
+        "packed": 202200301,
+        "seconds": 0,
+        "records": 2032,
+        "first_byte_offset": 34624480,
+        "last_byte_offset": 35339392,
+        "first_puff": 3215,
+        "last_puff": 3325
+      },
+      {
+        "packed": 202200302,
+        "seconds": 0,
+        "records": 1241,
+        "first_byte_offset": 35339744,
+        "last_byte_offset": 35776224,
+        "first_puff": 3307,
+        "last_puff": 3375
+      },
+      {
+        "packed": 202200303,
+        "seconds": 0,
+        "records": 1137,
+        "first_byte_offset": 35776576,
+        "last_byte_offset": 36176448,
+        "first_puff": 3352,
+        "last_puff": 3411
+      },
+      {
+        "packed": 202200304,
+        "seconds": 0,
+        "records": 3376,
+        "first_byte_offset": 36176800,
+        "last_byte_offset": 37364800,
+        "first_puff": 3378,
+        "last_puff": 3472
+      },
+      {
+        "packed": 202200305,
+        "seconds": 0,
+        "records": 3301,
+        "first_byte_offset": 37365152,
+        "last_byte_offset": 38526752,
+        "first_puff": 3378,
+        "last_puff": 3548
+      },
+      {
+        "packed": 202200306,
+        "seconds": 0,
+        "records": 2309,
+        "first_byte_offset": 38527104,
+        "last_byte_offset": 39339520,
+        "first_puff": 3522,
+        "last_puff": 3626
+      },
+      {
+        "packed": 202200307,
+        "seconds": 0,
+        "records": 2691,
+        "first_byte_offset": 39339872,
+        "last_byte_offset": 40286752,
+        "first_puff": 3598,
+        "last_puff": 3709
+      },
+      {
+        "packed": 202200308,
+        "seconds": 0,
+        "records": 2538,
+        "first_byte_offset": 40287104,
+        "last_byte_offset": 41180128,
+        "first_puff": 3678,
+        "last_puff": 3795
+      },
+      {
+        "packed": 202200309,
+        "seconds": 0,
+        "records": 2557,
+        "first_byte_offset": 41180480,
+        "last_byte_offset": 42080192,
+        "first_puff": 3768,
+        "last_puff": 3881
+      },
+      {
+        "packed": 202200310,
+        "seconds": 0,
+        "records": 2850,
+        "first_byte_offset": 42080544,
+        "last_byte_offset": 43083392,
+        "first_puff": 3853,
+        "last_puff": 3976
+      },
+      {
+        "packed": 202200311,
+        "seconds": 0,
+        "records": 2802,
+        "first_byte_offset": 43083744,
+        "last_byte_offset": 44069696,
+        "first_puff": 3948,
+        "last_puff": 4075
+      },
+      {
+        "packed": 202200312,
+        "seconds": 0,
+        "records": 2811,
+        "first_byte_offset": 44070048,
+        "last_byte_offset": 45059168,
+        "first_puff": 4049,
+        "last_puff": 4172
+      },
+      {
+        "packed": 202200313,
+        "seconds": 0,
+        "records": 2644,
+        "first_byte_offset": 45059520,
+        "last_byte_offset": 45989856,
+        "first_puff": 4145,
+        "last_puff": 4263
+      },
+      {
+        "packed": 202200314,
+        "seconds": 0,
+        "records": 2473,
+        "first_byte_offset": 45990208,
+        "last_byte_offset": 46860352,
+        "first_puff": 4236,
+        "last_puff": 4348
+      },
+      {
+        "packed": 202200315,
+        "seconds": 0,
+        "records": 2248,
+        "first_byte_offset": 46860704,
+        "last_byte_offset": 47651648,
+        "first_puff": 4321,
+        "last_puff": 4427
+      },
+      {
+        "packed": 202200316,
+        "seconds": 0,
+        "records": 2053,
+        "first_byte_offset": 47652000,
+        "last_byte_offset": 48374304,
+        "first_puff": 4401,
+        "last_puff": 4500
+      },
+      {
+        "packed": 202200317,
+        "seconds": 0,
+        "records": 1888,
+        "first_byte_offset": 48374656,
+        "last_byte_offset": 49038880,
+        "first_puff": 4474,
+        "last_puff": 4567
+      },
+      {
+        "packed": 202200318,
+        "seconds": 0,
+        "records": 1683,
+        "first_byte_offset": 49039232,
+        "last_byte_offset": 49631296,
+        "first_puff": 4542,
+        "last_puff": 4629
+      },
+      {
+        "packed": 202200319,
+        "seconds": 0,
+        "records": 1391,
+        "first_byte_offset": 49631648,
+        "last_byte_offset": 50120928,
+        "first_puff": 4604,
+        "last_puff": 4728
+      },
+      {
+        "packed": 202200320,
+        "seconds": 0,
+        "records": 1145,
+        "first_byte_offset": 50121280,
+        "last_byte_offset": 50523968,
+        "first_puff": 4717,
+        "last_puff": 4778
+      },
+      {
+        "packed": 202200321,
+        "seconds": 0,
+        "records": 4335,
+        "first_byte_offset": 50524320,
+        "last_byte_offset": 52049888,
+        "first_puff": 4754,
+        "last_puff": 4877
+      },
+      {
+        "packed": 202200322,
+        "seconds": 0,
+        "records": 1544,
+        "first_byte_offset": 52050240,
+        "last_byte_offset": 52593376,
+        "first_puff": 4823,
+        "last_puff": 4920
+      },
+      {
+        "packed": 202200323,
+        "seconds": 0,
+        "records": 1023,
+        "first_byte_offset": 52593728,
+        "last_byte_offset": 52953472,
+        "first_puff": 4894,
+        "last_puff": 4956
+      },
+      {
+        "packed": 202200400,
+        "seconds": 0,
+        "records": 2491,
+        "first_byte_offset": 52953824,
+        "last_byte_offset": 53830304,
+        "first_puff": 4931,
+        "last_puff": 5055
+      },
+      {
+        "packed": 202200401,
+        "seconds": 0,
+        "records": 2121,
+        "first_byte_offset": 53830656,
+        "last_byte_offset": 54576896,
+        "first_puff": 5032,
+        "last_puff": 5154
+      },
+      {
+        "packed": 202200402,
+        "seconds": 0,
+        "records": 1812,
+        "first_byte_offset": 54577248,
+        "last_byte_offset": 55214720,
+        "first_puff": 5135,
+        "last_puff": 5253
+      },
+      {
+        "packed": 202200403,
+        "seconds": 0,
+        "records": 1325,
+        "first_byte_offset": 55215072,
+        "last_byte_offset": 55681120,
+        "first_puff": 5237,
+        "last_puff": 5352
+      },
+      {
+        "packed": 202200404,
+        "seconds": 0,
+        "records": 1473,
+        "first_byte_offset": 55681472,
+        "last_byte_offset": 56199616,
+        "first_puff": 5341,
+        "last_puff": 5451
+      },
+      {
+        "packed": 202200405,
+        "seconds": 0,
+        "records": 1300,
+        "first_byte_offset": 56199968,
+        "last_byte_offset": 56657216,
+        "first_puff": 5438,
+        "last_puff": 5550
+      },
+      {
+        "packed": 202200406,
+        "seconds": 0,
+        "records": 1378,
+        "first_byte_offset": 56657568,
+        "last_byte_offset": 57142272,
+        "first_puff": 5539,
+        "last_puff": 5649
+      },
+      {
+        "packed": 202200407,
+        "seconds": 0,
+        "records": 1477,
+        "first_byte_offset": 57142624,
+        "last_byte_offset": 57662176,
+        "first_puff": 5637,
+        "last_puff": 5748
+      },
+      {
+        "packed": 202200408,
+        "seconds": 0,
+        "records": 1666,
+        "first_byte_offset": 57662528,
+        "last_byte_offset": 58248608,
+        "first_puff": 5735,
+        "last_puff": 5847
+      },
+      {
+        "packed": 202200409,
+        "seconds": 0,
+        "records": 1517,
+        "first_byte_offset": 58248960,
+        "last_byte_offset": 58782592,
+        "first_puff": 5832,
+        "last_puff": 5946
+      },
+      {
+        "packed": 202200410,
+        "seconds": 0,
+        "records": 1124,
+        "first_byte_offset": 58782944,
+        "last_byte_offset": 59178240,
+        "first_puff": 5933,
+        "last_puff": 6045
+      },
+      {
+        "packed": 202200411,
+        "seconds": 0,
+        "records": 1089,
+        "first_byte_offset": 59178592,
+        "last_byte_offset": 59561568,
+        "first_puff": 6036,
+        "last_puff": 6144
+      },
+      {
+        "packed": 202200412,
+        "seconds": 0,
+        "records": 1089,
+        "first_byte_offset": 59561920,
+        "last_byte_offset": 59944896,
+        "first_puff": 6135,
+        "last_puff": 6243
+      },
+      {
+        "packed": 202200413,
+        "seconds": 0,
+        "records": 1089,
+        "first_byte_offset": 59945248,
+        "last_byte_offset": 60328224,
+        "first_puff": 6234,
+        "last_puff": 6342
+      },
+      {
+        "packed": 202200414,
+        "seconds": 0,
+        "records": 1089,
+        "first_byte_offset": 60328576,
+        "last_byte_offset": 60711552,
+        "first_puff": 6333,
+        "last_puff": 6441
+      },
+      {
+        "packed": 202200415,
+        "seconds": 0,
+        "records": 1089,
+        "first_byte_offset": 60711904,
+        "last_byte_offset": 61094880,
+        "first_puff": 6432,
+        "last_puff": 6540
+      },
+      {
+        "packed": 202200416,
+        "seconds": 0,
+        "records": 1565,
+        "first_byte_offset": 61095232,
+        "last_byte_offset": 61645760,
+        "first_puff": 6531,
+        "last_puff": 6639
+      },
+      {
+        "packed": 202200417,
+        "seconds": 0,
+        "records": 1235,
+        "first_byte_offset": 61646112,
+        "last_byte_offset": 62080480,
+        "first_puff": 6625,
+        "last_puff": 6738
+      },
+      {
+        "packed": 202200418,
+        "seconds": 0,
+        "records": 1754,
+        "first_byte_offset": 62080832,
+        "last_byte_offset": 62697888,
+        "first_puff": 6728,
+        "last_puff": 6837
+      },
+      {
+        "packed": 202200419,
+        "seconds": 0,
+        "records": 1416,
+        "first_byte_offset": 62698240,
+        "last_byte_offset": 63196320,
+        "first_puff": 6821,
+        "last_puff": 6936
+      },
+      {
+        "packed": 202200420,
+        "seconds": 0,
+        "records": 1475,
+        "first_byte_offset": 63196672,
+        "last_byte_offset": 63715520,
+        "first_puff": 6924,
+        "last_puff": 7035
+      },
+      {
+        "packed": 202200421,
+        "seconds": 0,
+        "records": 2181,
+        "first_byte_offset": 63715872,
+        "last_byte_offset": 64483232,
+        "first_puff": 7022,
+        "last_puff": 7134
+      },
+      {
+        "packed": 202200422,
+        "seconds": 0,
+        "records": 1356,
+        "first_byte_offset": 64483584,
+        "last_byte_offset": 64960544,
+        "first_puff": 7113,
+        "last_puff": 7233
+      },
+      {
+        "packed": 202200423,
+        "seconds": 0,
+        "records": 1646,
+        "first_byte_offset": 64960896,
+        "last_byte_offset": 65539936,
+        "first_puff": 7222,
+        "last_puff": 7332
+      },
+      {
+        "packed": 202200500,
+        "seconds": 0,
+        "records": 1588,
+        "first_byte_offset": 65540288,
+        "last_byte_offset": 66098912,
+        "first_puff": 7317,
+        "last_puff": 7431
+      },
+      {
+        "packed": 202200501,
+        "seconds": 0,
+        "records": 1777,
+        "first_byte_offset": 66099264,
+        "last_byte_offset": 66724416,
+        "first_puff": 7417,
+        "last_puff": 7530
+      },
+      {
+        "packed": 202200502,
+        "seconds": 0,
+        "records": 2312,
+        "first_byte_offset": 66724768,
+        "last_byte_offset": 67538240,
+        "first_puff": 7514,
+        "last_puff": 7629
+      },
+      {
+        "packed": 202200503,
+        "seconds": 0,
+        "records": 1649,
+        "first_byte_offset": 67538592,
+        "last_byte_offset": 68118688,
+        "first_puff": 7607,
+        "last_puff": 7728
+      },
+      {
+        "packed": 202200504,
+        "seconds": 0,
+        "records": 1589,
+        "first_byte_offset": 68119040,
+        "last_byte_offset": 68678016,
+        "first_puff": 7714,
+        "last_puff": 7827
+      },
+      {
+        "packed": 202200505,
+        "seconds": 0,
+        "records": 1940,
+        "first_byte_offset": 68678368,
+        "last_byte_offset": 69360896,
+        "first_puff": 7813,
+        "last_puff": 7926
+      },
+      {
+        "packed": 202200506,
+        "seconds": 0,
+        "records": 1892,
+        "first_byte_offset": 69361248,
+        "last_byte_offset": 70026880,
+        "first_puff": 7908,
+        "last_puff": 8025
+      },
+      {
+        "packed": 202200507,
+        "seconds": 0,
+        "records": 1607,
+        "first_byte_offset": 70027232,
+        "last_byte_offset": 70592544,
+        "first_puff": 8008,
+        "last_puff": 8124
+      },
+      {
+        "packed": 202200508,
+        "seconds": 0,
+        "records": 2026,
+        "first_byte_offset": 70592896,
+        "last_byte_offset": 71305696,
+        "first_puff": 8110,
+        "last_puff": 8223
+      },
+      {
+        "packed": 202200509,
+        "seconds": 0,
+        "records": 1809,
+        "first_byte_offset": 71306048,
+        "last_byte_offset": 71942464,
+        "first_puff": 8204,
+        "last_puff": 8322
+      },
+      {
+        "packed": 202200510,
+        "seconds": 0,
+        "records": 1689,
+        "first_byte_offset": 71942816,
+        "last_byte_offset": 72536992,
+        "first_puff": 8306,
+        "last_puff": 8421
+      },
+      {
+        "packed": 202200511,
+        "seconds": 0,
+        "records": 1683,
+        "first_byte_offset": 72537344,
+        "last_byte_offset": 73129408,
+        "first_puff": 8406,
+        "last_puff": 8520
+      },
+      {
+        "packed": 202200512,
+        "seconds": 0,
+        "records": 1677,
+        "first_byte_offset": 73129760,
+        "last_byte_offset": 73719712,
+        "first_puff": 8505,
+        "last_puff": 8619
+      },
+      {
+        "packed": 202200513,
+        "seconds": 0,
+        "records": 1588,
+        "first_byte_offset": 73720064,
+        "last_byte_offset": 74278688,
+        "first_puff": 8604,
+        "last_puff": 8718
+      },
+      {
+        "packed": 202200514,
+        "seconds": 0,
+        "records": 1584,
+        "first_byte_offset": 74279040,
+        "last_byte_offset": 74836256,
+        "first_puff": 8704,
+        "last_puff": 8817
+      },
+      {
+        "packed": 202200515,
+        "seconds": 0,
+        "records": 1584,
+        "first_byte_offset": 74836608,
+        "last_byte_offset": 75393824,
+        "first_puff": 8803,
+        "last_puff": 8916
+      },
+      {
+        "packed": 202200516,
+        "seconds": 0,
+        "records": 1584,
+        "first_byte_offset": 75394176,
+        "last_byte_offset": 75951392,
+        "first_puff": 8902,
+        "last_puff": 9015
+      },
+      {
+        "packed": 202200517,
+        "seconds": 0,
+        "records": 1584,
+        "first_byte_offset": 75951744,
+        "last_byte_offset": 76508960,
+        "first_puff": 9001,
+        "last_puff": 9114
+      },
+      {
+        "packed": 202200518,
+        "seconds": 0,
+        "records": 1584,
+        "first_byte_offset": 76509312,
+        "last_byte_offset": 77066528,
+        "first_puff": 9100,
+        "last_puff": 9213
+      },
+      {
+        "packed": 202200519,
+        "seconds": 0,
+        "records": 1584,
+        "first_byte_offset": 77066880,
+        "last_byte_offset": 77624096,
+        "first_puff": 9199,
+        "last_puff": 9312
+      },
+      {
+        "packed": 202200520,
+        "seconds": 0,
+        "records": 1133,
+        "first_byte_offset": 77624448,
+        "last_byte_offset": 78022912,
+        "first_puff": 9298,
+        "last_puff": 9411
+      },
+      {
+        "packed": 202200521,
+        "seconds": 0,
+        "records": 1089,
+        "first_byte_offset": 78023264,
+        "last_byte_offset": 78406240,
+        "first_puff": 9402,
+        "last_puff": 9510
+      },
+      {
+        "packed": 202200522,
+        "seconds": 0,
+        "records": 1550,
+        "first_byte_offset": 78406592,
+        "last_byte_offset": 78951840,
+        "first_puff": 9501,
+        "last_puff": 9609
+      },
+      {
+        "packed": 202200523,
+        "seconds": 0,
+        "records": 1211,
+        "first_byte_offset": 78952192,
+        "last_byte_offset": 79378112,
+        "first_puff": 9595,
+        "last_puff": 9708
+      },
+      {
+        "packed": 202200600,
+        "seconds": 0,
+        "records": 1460,
+        "first_byte_offset": 79378464,
+        "last_byte_offset": 79892032,
+        "first_puff": 9698,
+        "last_puff": 9807
+      },
+      {
+        "packed": 202200601,
+        "seconds": 0,
+        "records": 1302,
+        "first_byte_offset": 79892384,
+        "last_byte_offset": 80350336,
+        "first_puff": 9794,
+        "last_puff": 9906
+      },
+      {
+        "packed": 202200602,
+        "seconds": 0,
+        "records": 1381,
+        "first_byte_offset": 80350688,
+        "last_byte_offset": 80836448,
+        "first_puff": 9895,
+        "last_puff": 10005
+      },
+      {
+        "packed": 202200603,
+        "seconds": 0,
+        "records": 1296,
+        "first_byte_offset": 80836800,
+        "last_byte_offset": 81292640,
+        "first_puff": 9993,
+        "last_puff": 10104
+      },
+      {
+        "packed": 202200604,
+        "seconds": 0,
+        "records": 1471,
+        "first_byte_offset": 81292992,
+        "last_byte_offset": 81810432,
+        "first_puff": 10093,
+        "last_puff": 10203
+      },
+      {
+        "packed": 202200605,
+        "seconds": 0,
+        "records": 1574,
+        "first_byte_offset": 81810784,
+        "last_byte_offset": 82364480,
+        "first_puff": 10190,
+        "last_puff": 10302
+      },
+      {
+        "packed": 202200606,
+        "seconds": 0,
+        "records": 1399,
+        "first_byte_offset": 82364832,
+        "last_byte_offset": 82856928,
+        "first_puff": 10288,
+        "last_puff": 10401
+      },
+      {
+        "packed": 202200607,
+        "seconds": 0,
+        "records": 1480,
+        "first_byte_offset": 82857280,
+        "last_byte_offset": 83377888,
+        "first_puff": 10389,
+        "last_puff": 10500
+      },
+      {
+        "packed": 202200608,
+        "seconds": 0,
+        "records": 1767,
+        "first_byte_offset": 83378240,
+        "last_byte_offset": 83999872,
+        "first_puff": 10487,
+        "last_puff": 10599
+      },
+      {
+        "packed": 202200609,
+        "seconds": 0,
+        "records": 1052,
+        "first_byte_offset": 84000224,
+        "last_byte_offset": 84370176,
+        "first_puff": 10583,
+        "last_puff": 10698
+      },
+      {
+        "packed": 202200610,
+        "seconds": 0,
+        "records": 990,
+        "first_byte_offset": 84370528,
+        "last_byte_offset": 84718656,
+        "first_puff": 10690,
+        "last_puff": 10797
+      },
+      {
+        "packed": 202200611,
+        "seconds": 0,
+        "records": 1096,
+        "first_byte_offset": 84719008,
+        "last_byte_offset": 85104448,
+        "first_puff": 10789,
+        "last_puff": 10896
+      },
+      {
+        "packed": 202200612,
+        "seconds": 0,
+        "records": 1005,
+        "first_byte_offset": 85104800,
+        "last_byte_offset": 85458208,
+        "first_puff": 10887,
+        "last_puff": 10995
+      },
+      {
+        "packed": 202200613,
+        "seconds": 0,
+        "records": 1095,
+        "first_byte_offset": 85458560,
+        "last_byte_offset": 85843648,
+        "first_puff": 10987,
+        "last_puff": 11094
+      },
+      {
+        "packed": 202200614,
+        "seconds": 0,
+        "records": 1184,
+        "first_byte_offset": 85844000,
+        "last_byte_offset": 86260416,
+        "first_puff": 11085,
+        "last_puff": 11193
+      },
+      {
+        "packed": 202200615,
+        "seconds": 0,
+        "records": 1188,
+        "first_byte_offset": 86260768,
+        "last_byte_offset": 86678592,
+        "first_puff": 11183,
+        "last_puff": 11292
+      },
+      {
+        "packed": 202200616,
+        "seconds": 0,
+        "records": 1188,
+        "first_byte_offset": 86678944,
+        "last_byte_offset": 87096768,
+        "first_puff": 11282,
+        "last_puff": 11391
+      },
+      {
+        "packed": 202200617,
+        "seconds": 0,
+        "records": 1188,
+        "first_byte_offset": 87097120,
+        "last_byte_offset": 87514944,
+        "first_puff": 11381,
+        "last_puff": 11490
+      },
+      {
+        "packed": 202200618,
+        "seconds": 0,
+        "records": 1020,
+        "first_byte_offset": 87515296,
+        "last_byte_offset": 87873984,
+        "first_puff": 11480,
+        "last_puff": 11589
+      },
+      {
+        "packed": 202200619,
+        "seconds": 0,
+        "records": 1080,
+        "first_byte_offset": 87874336,
+        "last_byte_offset": 88254144,
+        "first_puff": 11581,
+        "last_puff": 11688
+      },
+      {
+        "packed": 202200620,
+        "seconds": 0,
+        "records": 1287,
+        "first_byte_offset": 88254496,
+        "last_byte_offset": 88707168,
+        "first_puff": 11679,
+        "last_puff": 11787
+      },
+      {
+        "packed": 202200621,
+        "seconds": 0,
+        "records": 1293,
+        "first_byte_offset": 88707520,
+        "last_byte_offset": 89162304,
+        "first_puff": 11776,
+        "last_puff": 11886
+      },
+      {
+        "packed": 202200622,
+        "seconds": 0,
+        "records": 1384,
+        "first_byte_offset": 89162656,
+        "last_byte_offset": 89649472,
+        "first_puff": 11875,
+        "last_puff": 11985
+      }
+    ]
+  },
+  "slice": {
+    "path": "out/dgm_puffstep_hour202200100.bin",
+    "bytes": 448800,
+    "sha256": "b51d20d3cd1085902342d5b6d6b2f34c4a84c96d4966b63a2b1231c126087c89",
+    "hour": 202200100,
+    "records": 1275,
+    "note": "byte-identical records copied out of the full dump"
+  },
+  "slice_statistics": {
+    "xold": {
+      "min": 18.251935958862305,
+      "max": 25.0,
+      "mean": 21.187979474535176
+    },
+    "yold": {
+      "min": 25.0,
+      "max": 49.648921966552734,
+      "mean": 36.360022458843154
+    },
+    "zold": {
+      "min": 136.40403747558594,
+      "max": 136.40403747558594,
+      "mean": 136.40403747558594
+    },
+    "dpbl": {
+      "min": 230.92819213867188,
+      "max": 230.97744750976562,
+      "mean": 230.9530741852405
+    },
+    "el": {
+      "min": -49.638946533203125,
+      "max": -49.49502182006836,
+      "mean": -49.5660935495414
+    },
+    "z0m": {
+      "min": 0.25,
+      "max": 0.25,
+      "mean": 0.25
+    },
+    "htmet": {
+      "min": 136.40403747558594,
+      "max": 136.40403747558594,
+      "mean": 136.40403747558594
+    },
+    "ztop": {
+      "min": 137.40403747558594,
+      "max": 198.13076782226562,
+      "mean": 171.76335682588464
+    },
+    "zbot": {
+      "min": 74.67731475830078,
+      "max": 135.40403747558594,
+      "mean": 101.04471745509727
+    },
+    "uadv_advect": {
+      "min": -0.5652323961257935,
+      "max": -0.1268818974494934,
+      "mean": -0.3405694764969396
+    },
+    "vadv_advect": {
+      "min": 0.9328287839889526,
+      "max": 1.3828625679016113,
+      "mean": 1.155562220881967
+    },
+    "ws": {
+      "min": 0.9414183497428894,
+      "max": 1.4910821914672852,
+      "mean": 1.2089061129326915
+    },
+    "uadv_adjusted": {
+      "min": -0.579278290271759,
+      "max": -0.1268818974494934,
+      "mean": -0.34116436142547457
+    },
+    "vadv_adjusted": {
+      "min": 0.9328287839889526,
+      "max": 1.38027024269104,
+      "mean": 1.154413508387173
+    },
+    "lcalm_f": {
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0
+    },
+    "xsami": {
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0
+    },
+    "tsamp": {
+      "min": 66.66666412353516,
+      "max": 66.66666412353516,
+      "mean": 66.66666412353516
+    },
+    "reftsamp": {
+      "min": 66.66666412353516,
+      "max": 66.66666412353516,
+      "mean": 66.66666412353516
+    },
+    "wsvar": {
+      "min": 1.493919849395752,
+      "max": 1.493919849395752,
+      "mean": 1.493919849395752
+    },
+    "xtotb_in": {
+      "min": 0.0,
+      "max": 2566.740478515625,
+      "mean": 1201.938573255352
+    },
+    "tmtotb_in": {
+      "min": 0.0,
+      "max": 2199.999755859375,
+      "mean": 928.8888153973747
+    },
+    "sigyb_in": {
+      "min": 1.0,
+      "max": 160.92640686035156,
+      "mean": 79.60607143177705
+    },
+    "sigzb_in": {
+      "min": 1.0053820610046387,
+      "max": 61.726722717285156,
+      "mean": 35.36166033987905
+    },
+    "xpb_in": {
+      "min": 18.251935958862305,
+      "max": 25.0,
+      "mean": 21.187979474535176
+    },
+    "ypb_in": {
+      "min": 25.0,
+      "max": 49.648921966552734,
+      "mean": 36.360022458843154
+    },
+    "zpb_in": {
+      "min": 136.40403747558594,
+      "max": 136.40403747558594,
+      "mean": 136.40403747558594
+    },
+    "xb1_in": {
+      "min": 0.0,
+      "max": 2500.0,
+      "mean": 2116.8371624157476
+    },
+    "yb1_in": {
+      "min": 0.0,
+      "max": 4964.89208984375,
+      "mean": 3634.0414692478553
+    },
+    "zb1_in": {
+      "min": 0.0,
+      "max": 136.40403747558594,
+      "mean": 136.29705391678155
+    },
+    "xe1_in": {
+      "min": 0.0,
+      "max": 2461.381591796875,
+      "mean": 2094.1231735409006
+    },
+    "ye1_in": {
+      "min": 0.0,
+      "max": 5027.0810546875,
+      "mean": 3710.9314947150733
+    },
+    "ze1_in": {
+      "min": 0.0,
+      "max": 136.40403747558594,
+      "mean": 136.29705391678155
+    },
+    "syb1_in": {
+      "min": 0.0,
+      "max": 162.01434326171875,
+      "mean": 83.3565754774505
+    },
+    "sym1_in": {
+      "min": 0.0,
+      "max": 163.77154541015625,
+      "mean": 85.54998772565057
+    },
+    "sye1_in": {
+      "min": 0.0,
+      "max": 165.5288543701172,
+      "mean": 87.79791351617551
+    },
+    "szb1_in": {
+      "min": 0.0,
+      "max": 64.5098876953125,
+      "mean": 41.28003993763643
+    },
+    "szm1_in": {
+      "min": 0.0,
+      "max": 64.94673156738281,
+      "mean": 42.00119371301987
+    },
+    "sze1_in": {
+      "min": 0.0,
+      "max": 65.3812026977539,
+      "mean": 42.74256099476534
+    },
+    "xnew": {
+      "min": 18.167348861694336,
+      "max": 24.613815307617188,
+      "mean": 20.960536700978
+    },
+    "ynew": {
+      "min": 25.903827667236328,
+      "max": 50.270809173583984,
+      "mean": 37.12963157354616
+    },
+    "xtotb_out": {
+      "min": 98.28743743896484,
+      "max": 2629.501708984375,
+      "mean": 1282.5322996610753
+    },
+    "tmtotb_out": {
+      "min": 66.66666412353516,
+      "max": 2266.66650390625,
+      "mean": 995.5554764571845
+    },
+    "sigyb_out": {
+      "min": 8.861703872680664,
+      "max": 164.46417236328125,
+      "mean": 84.71449224135455
+    },
+    "sigzb_out": {
+      "min": 5.457585334777832,
+      "max": 62.63676452636719,
+      "mean": 37.404878953671926
+    },
+    "xpb_out": {
+      "min": 18.167348861694336,
+      "max": 24.613815307617188,
+      "mean": 20.960536700978
+    },
+    "ypb_out": {
+      "min": 25.903827667236328,
+      "max": 50.270809173583984,
+      "mean": 37.12963157354616
+    },
+    "zpb_out": {
+      "min": 136.40403747558594,
+      "max": 136.40403747558594,
+      "mean": 136.40403747558594
+    },
+    "xb1_out": {
+      "min": 1825.193603515625,
+      "max": 2500.0,
+      "mean": 2118.797946729473
+    },
+    "yb1_out": {
+      "min": 2500.0,
+      "max": 4964.89208984375,
+      "mean": 3636.002253561581
+    },
+    "zb1_out": {
+      "min": 136.40403747558594,
+      "max": 136.40403747558594,
+      "mean": 136.40403747558594
+    },
+    "xe1_out": {
+      "min": 1816.73486328125,
+      "max": 2461.381591796875,
+      "mean": 2096.053668907016
+    },
+    "ye1_out": {
+      "min": 2590.3828125,
+      "max": 5027.0810546875,
+      "mean": 3712.963167509191
+    },
+    "ze1_out": {
+      "min": 136.40403747558594,
+      "max": 136.40403747558594,
+      "mean": 136.40403747558594
+    },
+    "syb1_out": {
+      "min": 18.77066421508789,
+      "max": 162.01434326171875,
+      "mean": 83.37129756703096
+    },
+    "sym1_out": {
+      "min": 19.41855239868164,
+      "max": 163.77154541015625,
+      "mean": 85.565217962826
+    },
+    "sye1_out": {
+      "min": 20.73324966430664,
+      "max": 165.5288543701172,
+      "mean": 87.81417488846124
+    },
+    "szb1_out": {
+      "min": 18.770952224731445,
+      "max": 64.5098876953125,
+      "mean": 41.29476225310681
+    },
+    "szm1_out": {
+      "min": 19.04467010498047,
+      "max": 64.94673156738281,
+      "mean": 42.01613070918064
+    },
+    "sze1_out": {
+      "min": 19.522375106811523,
+      "max": 65.3812026977539,
+      "mean": 42.757872661515776
+    },
+    "distm": {
+      "min": 62.7612190246582,
+      "max": 99.40547943115234,
+      "mean": 80.59373787973442
+    },
+    "tleft": {
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0
+    },
+    "tsampsum": {
+      "min": 0.0,
+      "max": 2199.999755859375,
+      "mean": 928.8888153973747
+    },
+    "tsamp_effective": {
+      "min": 66.66666412353516,
+      "max": 66.66666412353516,
+      "mean": 66.66666412353516
+    },
+    "spare_f2": {
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0
+    }
+  }
+}

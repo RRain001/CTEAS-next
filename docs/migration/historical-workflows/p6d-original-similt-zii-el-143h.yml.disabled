@@ -1,0 +1,132 @@
+name: P6D original SIMILT station ZII EL 143-hour source forensic
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/p6d_trace_original_similt_station_state.py'
+      - 'scripts/p6d_compare_original_similt_diagnostic.py'
+      - 'scripts/run_p6_end_to_end.py'
+      - '.github/workflows/p6d-original-similt-zii-el-143h.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p6d-similt-oracle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  original-similt-state:
+    name: Untouched CALMET ELUSTR2 ZII EL source trace 143 hours
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    defaults:
+      run:
+        working-directory: p6d_similt_trace_checkout
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: p6d_similt_trace_checkout
+      - uses: ./p6d_similt_trace_checkout/.github/actions/cteas-linux-toolchain
+      - name: Verify all frozen source case input blobs
+        run: python3 native_cpp/modules/p6_calmet/reference/restore_frozen_case_from_git.py --mode grid
+      - name: Compile and run untouched CALMET against temporary write-only trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/p6d_trace_original_similt_station_state.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --compiler gfortran-11 --hours 143 \
+            --out "$RUNNER_TEMP/p6d-original-zii-el-${{ github.run_id }}-${{ github.run_attempt }}"
+      - name: Preserve strict original SIMILT input and reference SHA proof
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p6d-original-similt-station-real4-143h
+          path: |
+            ${{ runner.temp }}/p6d-original-zii-el-${{ github.run_id }}-${{ github.run_attempt }}/source_original_station_zii_143h.f32
+            ${{ runner.temp }}/p6d-original-zii-el-${{ github.run_id }}-${{ github.run_attempt }}/source_original_station_el_143h.f32
+            ${{ runner.temp }}/p6d-original-zii-el-${{ github.run_id }}-${{ github.run_attempt }}/source_original_similt_station_manifest.json
+            ${{ runner.temp }}/p6d-original-zii-el-${{ github.run_id }}-${{ github.run_attempt }}/dgm-audit.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  full-143h-original-station-input-delta:
+    name: Hefei 143h unassisted vs original SIMILT ZII EL diagnostic
+    needs: [original-similt-state]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: p6d_similt_diff_checkout
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: p6d_similt_diff_checkout
+      - uses: ./p6d_similt_diff_checkout/.github/actions/cteas-linux-toolchain
+      - uses: actions/download-artifact@v4
+        with:
+          name: p6d-original-similt-station-real4-143h
+          path: ${{ runner.temp }}/p6d-station-reference-${{ github.run_id }}
+      - name: Confirm original input and artifact blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p6_calmet/reference/restore_frozen_case_from_git.py --mode grid
+          test -s "$RUNNER_TEMP/p6d-station-reference-${{ github.run_id }}/source_original_similt_station_manifest.json"
+          test -s "$RUNNER_TEMP/p6d-station-reference-${{ github.run_id }}/source_original_station_zii_143h.f32"
+          test -s "$RUNNER_TEMP/p6d-station-reference-${{ github.run_id }}/source_original_station_el_143h.f32"
+      - name: Compare two complete 143h runs with the SAME C++ executables
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/p6d-similt-intervention-${{ github.run_id }}-${{ github.run_attempt }}"
+          source="$RUNNER_TEMP/p6d-station-reference-${{ github.run_id }}"
+          mkdir -p "$evidence"
+          set +e
+          python3 scripts/run_p6_end_to_end.py \
+            --work "$evidence/baseline" --build-dir "$evidence/build" \
+            --jobs 2 --hours 143 > "$evidence/baseline.log" 2>&1
+          base_rc=$?
+          set -e
+          test -s "$evidence/baseline/p6g_report.json" || {
+            tail -110 "$evidence/baseline.log";exit 2;
+          }
+          test "$base_rc" -le 1 || {
+            tail -110 "$evidence/baseline.log";exit "$base_rc";
+          }
+          set +e
+          python3 scripts/run_p6_end_to_end.py \
+            --work "$evidence/with_source_zii_el" \
+            --build-dir "$evidence/build" --jobs 2 --hours 143 \
+            --original-similt-station-dir "$source" \
+            --original-similt-station-manifest "$source/source_original_similt_station_manifest.json" \
+            > "$evidence/with_source_zii_el.log" 2>&1
+          changed_rc=$?
+          set -e
+          test -s "$evidence/with_source_zii_el/p6g_report.json" || {
+            tail -110 "$evidence/with_source_zii_el.log";exit 2;
+          }
+          test "$changed_rc" -le 1 || {
+            tail -110 "$evidence/with_source_zii_el.log";exit "$changed_rc";
+          }
+          python3 scripts/p6d_compare_original_similt_diagnostic.py \
+            --baseline "$evidence/baseline/p6g_report.json" \
+            --intervention "$evidence/with_source_zii_el/p6g_report.json" \
+            --out "$evidence/zii_el_27_uvw_field_delta.json"
+          cat "$evidence/zii_el_27_uvw_field_delta.json"
+      - name: Archive original-station 143h field verdicts (not native physics PASS)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6d-original-station-zii-el-143h-effect
+          path: |
+            ${{ runner.temp }}/p6d-similt-intervention-${{ github.run_id }}-${{ github.run_attempt }}/zii_el_27_uvw_field_delta.json
+            ${{ runner.temp }}/p6d-similt-intervention-${{ github.run_id }}-${{ github.run_attempt }}/baseline/p6g_report.json
+            ${{ runner.temp }}/p6d-similt-intervention-${{ github.run_id }}-${{ github.run_attempt }}/with_source_zii_el/p6g_report.json
+            ${{ runner.temp }}/p6d-similt-intervention-${{ github.run_id }}-${{ github.run_attempt }}/baseline.log
+            ${{ runner.temp }}/p6d-similt-intervention-${{ github.run_id }}-${{ github.run_attempt }}/with_source_zii_el.log
+          if-no-files-found: warn
+          retention-days: 7

@@ -1,0 +1,38 @@
+name: P7 original COMP VMASS DRY QOLD QNEW mass source anchors
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p7-original-mass-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-mass-source:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+      - name: Print pinned original complete COMP and DRY mass arithmetic
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          p=Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for')
+          raw=p.read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=='da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568'
+          lines=raw.decode('latin-1').splitlines()
+          for left,right,label in (
+              (10835,10880,'VMASS'),(10948,10992,'QOLD'),
+              (11032,11148,'DRY-QNEW'),(26180,26296,'DRY-GAUSSIAN'),
+              (26300,26568,'VDCOMP'),(26820,27300,'DRYI')):
+              for i in range(left-1,right):
+                  print(f'P7_VENDOR_{label} {i+1:6d} {lines[i]}')
+          print('P7_ORIGINAL_MASS_SOURCE_ANCHOR=PASS')
+          PY

@@ -1,0 +1,4 @@
+# command: /usr/bin/python3 -m engine.preprocess.makegeo.auto_config_makegeo --grid /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn --makegeo /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp --ludat /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/lu.dat --terrdat /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.dat
+# cwd: /home/lhy/build/ref/cteas-ref
+
+合并完成, 输出文件位置: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo

@@ -1,0 +1,43 @@
+name: P7 native WINDSET RLSMET first-hour POINTS1 release
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/**'
+      - '.github/workflows/p7-native-release-wind.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-native-release-wind-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-wind-first-hour:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/**
+            /project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+      - name: Native RLSMET selected METFM1 WINDSET and original 2022 DGM parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v g++-12 >/dev/null 2>&1; then cpp=$(command -v g++-12);
+          elif command -v g++-11 >/dev/null 2>&1; then cpp=$(command -v g++-11);
+          else cpp=$(command -v c++); fi
+          build="${RUNNER_TEMP}/p7-release-wind-${GITHUB_RUN_ID}"
+          cmake -S native_cpp/modules/p7_calpuff -B "$build" \
+            -DCMAKE_CXX_COMPILER="$cpp" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$build" --parallel 2 --target cteas_p7_original_release_wind_tests
+          ctest --test-dir "$build" -R '^cteas_p7_native_windset_(release_synthetic|rlsmet_2022_first_hour)$' --output-on-failure
+          "$build/cteas_p7_original_release_wind_tests" \
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat \
+            native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin
+          echo 'P7_NATIVE_RELEASE_WSNEW_FIRST_HOUR=PASS'
+          echo 'P7_ORIGINAL_143H_RLSMET_PRFIN=NOT_YET_ACCEPTED'

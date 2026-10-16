@@ -1,0 +1,10 @@
+{
+  "status": "数据清洗和缺测处理完毕",
+  "stage": "cleaned",
+  "file_name": "583210-99999-2022_cleaned.csv",
+  "wind_policy": "P5_ISD_LITE_WIND_V2_WHOLE_VECTOR_HOLD_CALM_REPLACE",
+  "original_calm_hours": 203,
+  "raw_absent_hours": 68,
+  "year": 2022,
+  "calendar_hours": 8760
+}

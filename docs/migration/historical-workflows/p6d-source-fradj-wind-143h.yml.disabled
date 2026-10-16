@@ -1,0 +1,83 @@
+name: P6D SLOPE source FRADJ wind input attribution (forensic only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p6d-source-fradj-wind-143h.yml'
+      - 'scripts/p6d_source_post_fradj_wind_parity.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-vs-native-post-fradj:
+    name: Compare original and native post-FRADJ pre-SLOPE U V on all 143h
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            .github/actions/cteas-linux-toolchain
+            native_cpp/modules/p6_calmet
+            scripts
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: ./.github/actions/cteas-linux-toolchain
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          filter: blob:none
+          path: original_locked_case
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011
+      - name: Restore original fixed case and independently audit original source
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-fradj-src-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 native_cpp/modules/p6_calmet/reference/restore_frozen_case_from_git.py --mode grid
+          python3 native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py audit \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --out "$root/original" --compiler gfortran-11
+      - name: Build unmodified P6D P6E native causal scheduler
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-fradj-src-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/p6d" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p6d" --parallel 2 \
+            --target cteas_p6_realcase_wind_field cteas_p6_native_cgamma_grid_143h cteas_p6_native_hourly_driver
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$root/p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p6e" --parallel 2 --target p6e_calmet_dat21 p6e_p6c_hourly_bridge
+      - name: Produce exactly 143 hours with native CGAMMA and causally coupled P6E
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-fradj-src-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          "$root/p6d/cteas_p6_native_hourly_driver" \
+            --case "$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011" \
+            --p6d "$root/p6d/cteas_p6_realcase_wind_field" \
+            --p6e "$root/p6e/p6e_calmet_dat21" \
+            --bridge "$root/p6e/p6e_p6c_hourly_bridge" \
+            --cgamma "$root/p6d/cteas_p6_native_cgamma_grid_143h" \
+            --work "$root/causal" --hours 143
+          test -s "$root/causal/hour_142/diagno/produced_hours.txt"
+      - name: Compare all first-level wind cells immediately before SLOPE
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-fradj-src-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 scripts/p6d_source_post_fradj_wind_parity.py \
+            --original-dir "$root/original" --candidate "$root/causal" \
+            --out "$root/p6d_post_fradj_stage_input_parity.json"
+          echo "FORENSIC_ONLY_DO_NOT_PROMOTE_FULL_PHYSICS_PASS"
+      - name: Preserve original source and native post-FRADJ wind evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6d-source-post-fradj-wind-143h
+          path: |
+            ${{ runner.temp }}/p6d-fradj-src-${{ github.run_id }}-${{ github.run_attempt }}/p6d_post_fradj_stage_input_parity.json
+            ${{ runner.temp }}/p6d-fradj-src-${{ github.run_id }}-${{ github.run_attempt }}/original/dgm-audit.json
+          if-no-files-found: warn
+          retention-days: 14

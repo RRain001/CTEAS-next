@@ -1,0 +1,37 @@
+# P6C selected 2022 CALMET vertical winds, hourly PREPDI and temperature-face interpolation
+
+Date: 2026-10-11. Research study: 2022-01-01 00:00 UTC – 2022-01-06 23:00 UTC, 50×50×9, 100 m, WGS84/UTM50N. P6A/B are already PASS; **P6C as a whole is NOT COMPLETE**, P6D–G integrated implementation is HOLD.
+
+## Original Fortran source routes (not simplified surrogate physics)
+
+The exact original CALMET v6.5.0 Level 150223 pipeline for the selected `UP.DAT v2.1` is:
+`RDHDU → RDUPN (input time+levels → LGL height and U/V) → COMP AA/BB` -> **`VERTAV`** (wind integration between model faces), **`FACET → INTP`** (temperature at layer faces) -> **`PREPDI`** (time interpolation of VERTAV `UAVEAA, UAVEBB` and `VAVEAA, VAVEBB` to model **hour-ending** clock) -> later diagnostic wind processing.
+
+- Original `VERTAV`: `engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for` L32253–32402. Filters wind-component missing (`U>=998.99 || V>=998.99`), shifts retained values +1000 for positive integration, explicitly interpolates and **inserts cell-face winds** into the profile, integrates piecewise-linear U/V by layer width. C++ `vertical_wind_average.hpp`.
+- Original `FACET` L6929–6982 and `INTP` L9122–9214. Uses `ZFACE(k)` to interpolate T(K) from first valid upper/lower observation levels, handles missing temperatures via original threshold 999.89 and equal-height averaging. C++ `temperature_faces.hpp`.
+- Original `COMP` L4118–4412 tests whether two instantaneous soundings straddle current **end** time, rejects excessive sounding frequency and `MAXSEP` gaps, swaps AA/BB arrays and calls VERTAV/FACET. Original `PREPDI` L13915–13985 interpolates pre-integrated U/V with `XFACT = FLOAT(JTOGO) / FLOAT(JDELTA)`, U/V computed by original float32 subtraction order and `JORDER` branch. C++ `upper_hourly_wind.hpp` presently supports the selected **chronological bracket**, one P4 upper station and 143-hour window; **full COMP AA/BB buffer state and multi-station scheduler not yet source-equivalent**.
+- Vertical mesh: `ZFACE={0,20,40,80,160,320,640,1200,2000,3000} m`. 9 model layers = 10 height faces; **do not time interpolate raw wind observations and then integrate** as if VERTAV were commutative with CALMET's missingness, face insertion and float32 arithmetic. 
+- The verified actual P4 file is `project/current/met/upperair/final/up_58424.dat` from **pinned P4 commit `dc4e3f042e5668358fc43f2f2ae98d7a554ecfd3`**, SHA256 **`058e8845d34aaaa5a6bedc60f512f5d24857a4534f4107d57bb97f5c3a8d9c99`**, 13 upper soundings, 785 measured height levels. First/last model reference times are **not** to be conflated with 144 hourly endpoint labels and 143 actual one-hour intervals.
+
+## Independent scientific evidence and qualification (source-pinned)
+
+**VERTAV PASS:** [P6B+P6C original-subroutine verification CI](https://github.com/RRain001/CTEAS/actions/runs/38111276612). `reference/compare_original_vertav.py` extracts the original VERTAV Fortran procedure **verbatim**, compiles it against vendor `params.met`, supplies the same selected 2022 P4 profiles with levels and U/V previously checked against original RDUPN-format/transform driver. `13 × 9 × 2 = 234` model-layer U/V values all PASS. Max absolute U error `5.0000004e-9 m/s`, V error `5.0e-9 m/s` (against fixed tolerance `2e-4 m/s`). This proves isolated VERTAV numerical equivalence in this case, **not** whole-hour CALMET diagnostic wind.
+
+**PREPDI selected source time path PASS and FACET+INTP source-exact PASS:** Implemented C++ routines and independent Fortran source comparators:
+- `reference/compare_original_prepdi_time.py` extracts the **actual PREPDI routine** per-layer AA/BB interpolation source lines instead of copying a separately handwritten model. It derives expected brackets from original `6201` headers and uses verbatim original `VERTAV` results for the reference; C++ independently computes full 143×9×2 hours/levels from raw P4 UP.DAT. Requested 2,574 numerical U/V comparisons and 143 × 9 bracket checks. **PASS** over 143×9×2=**2,574** hourly model-layer U/V values. PREPDI's original source lines **13976–13985** compiled independently; maximum absolute U/V difference **5.0000004×10⁻⁹ m/s** (frozen 0.0003 m/s threshold). All 143 hourly upper-air profile brackets match the independently checked 2022 original sounding dates, with **zero mismatches**.
+- `reference/compare_original_facet.py` independently compiles both **verbatim original `FACET` and `INTP` Fortran routines** and compares 13×10=130 layer-face temperatures with C++ `calmet_facet_temperatures`, using the same source-validated P4 real observations. **PASS** over 13×10=**130** model-height-face temperatures; full original CALMET `FACET` and `INTP` procedures compiled unchanged. Maximum absolute temperature difference **5.000004×10⁻⁹ K** (frozen 0.0003 K threshold), **zero mismatches**.
+- Werror standalone C++ tests reject missing/invalid altitude and broken profile brackets, distinguish zero measured winds from source missing, reject model-face overshoots, enforce one-hour endpoint time policy. Tests are software gates; independent original Fortran comparison is separate.
+
+## Remaining P6C stage blockers, in necessary order
+
+1. **PASS:** isolated original PREPDI selected 143-hour interpolation and original FACET/INTP 13×10 face temperatures. Numeric results are archived by GitHub Actions. These are not full COMP state-machine parity.
+2. Compare complete original `COMP` AA/BB reads, `RDUPN` live AA/BB variable state, valid/missing masks, `MAXSEP` policy and `JORDER` at all 143 original hours; current chronological bracket may be numerically equivalent under 12-hour instantaneous soundings, but not yet audited as full original procedure execution.
+3. Couple actual 2022 `GEO.DAT/SURF.DAT/UP.DAT` at the state level and compare original vs C++ PREPDI station U/V/temp and surface observation transformations (1h, 6h, 143h), including original `CGAMMA` as required by scope. Input-format or standalone array output PASS does not equal complete preprocessor.
+4. P6D wind solver, P6E boundary-layer, P6F writer, P6G full original data equivalence held until the whole P6C passes its independent audit.
+5. **Rainfall remains scientifically unqualified:** original `SURF.DAT IPCODE=9999` all 143 hours and original P6 has `NPSTA=0`. No valid precipitation driver or wet-deposition qualification is inferred from dry met verification.
+
+**Staged state:** `P6A=PASS`, `P6B=PASS`, `P6C_VERTAV_ORIGINAL=PASS`, `P6C_PREPDI_SELECTED_SOURCE=PASS`, `P6C_FACET_ORIGINAL_SOURCE=PASS`, `P6C_COMPLETE=FALSE`, `P6D_INTEGRATED=HOLD`, `P6E–G=HOLD`, `P6_CALPUFF_READY=FALSE`.
+
+## P6C latest original Fortran source-gated CI result
+
+[CALMET P6B pinned reference + P6C VERTAV / PREPDI / FACET original-source numeric CI](https://github.com/RRain001/CTEAS/actions/runs/38111692047): each of three independent P6C physics checks completed successfully (source-exact routine and/or snippet numerical comparisons), in addition to the previously verified P4 UP.DAT parser. The complete original CALMET output regression on the **same workflow** subsequently also completed **PASS**; original `CALMET.DAT` decoded its 143 contiguous hourly intervals and 45 two-dimensional fields per hour. This means original reference output remained reproducible, not that modern C++ emits an equivalent `CALMET.DAT`. **Stage P6C remains PARTIAL** because original full COMP buffer states and real multisource station arrays are not yet equivalently reconstructed.

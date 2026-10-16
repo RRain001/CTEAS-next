@@ -1,0 +1,2 @@
+station_id,station_name,lat,lon,elev_m,tz_hour,source_file
+58203,FUYANG,32.0,117.0,33.0,0,met/upperair/final/up_58203.dat

@@ -1,0 +1,3818 @@
+{
+  "what": "whole-grid fields around SLOPE and DIVCEL in DIAGNO (P6D request 2) from the write-only instrumented unmodified original CALMET 6.5.0, frozen Hefei 2022 case",
+  "why": "to locate which step introduces the planar tilt of the reference U/V field (U-LEV 3 de-meaned spread 0.0106, fitted dU/di=-1.30e-05, dU/dj=+3.78e-05), the source of every WFACE failure",
+  "source": {
+    "subroutine": "DIAGNO",
+    "vendor_file": "engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for",
+    "vendor_sha256": "430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134",
+    "insertions": {
+      "7": {
+        "vendor_line": 5723,
+        "when": "inside DIAGNO, immediately after the SLOPE call (USLOPE/VSLOPE)",
+        "fields": [
+          "USLOPE",
+          "VSLOPE"
+        ]
+      },
+      "8": {
+        "vendor_line": 5726,
+        "when": "inside DIAGNO, immediately before the UG/VG slope-flow addition",
+        "fields": [
+          "UG",
+          "VG"
+        ]
+      },
+      "9": {
+        "vendor_line": 5732,
+        "when": "inside DIAGNO, immediately after the UG/VG slope-flow addition",
+        "fields": [
+          "UG",
+          "VG"
+        ]
+      },
+      "10": {
+        "vendor_line": 6148,
+        "when": "inside DIAGNO, immediately after the DIVCEL loop and the W integration",
+        "fields": [
+          "DIV",
+          "W",
+          "U",
+          "V"
+        ]
+      }
+    },
+    "write_only": "see dgm-audit.json: MET.DAT is byte identical to the untouched original and to the frozen reference"
+  },
+  "full_dump": {
+    "path": "/home/lhy/build/dgm2/out/case/run/met/dgm_fields.bin",
+    "bytes": 130148304,
+    "sha256": "e32b43880a561f878e4376ed766ce39ec5a050f1af1319b540a19ca0b6a4159f",
+    "hours": 143,
+    "records": 572
+  },
+  "selected_dump": {
+    "path": "/home/lhy/build/dgm4/ugvg_p6d_hours/dgm_fields_hours.bin",
+    "bytes": 5460768,
+    "sha256": "b2bc3cfe63f511eb69173af4f4cb7ffaeca3b78724e9b59ed5044d57dd68e972",
+    "hours": [
+      19,
+      20,
+      43,
+      44,
+      49,
+      50
+    ],
+    "note": "byte-identical records copied out of the full dump, same format, grouped by hour"
+  },
+  "binary": {
+    "header": "int32[8] = kpt, packed YYYYJJJHH, seconds, i0, j0, nx, ny, nz",
+    "field_dtype": "float32 little endian",
+    "field_order": "i fastest, then j, then k: element ((k-1)*ny+(j-1))*nx+i for 1-based i=1..nx east, j=1..ny north, k=1..nz (nz+1 for W)",
+    "grid": {
+      "nx": 50,
+      "ny": 50,
+      "nz": 9
+    },
+    "record_sizes": {
+      "7": 180032,
+      "8": 180032,
+      "9": 180032,
+      "10": 370032
+    }
+  },
+  "points": {
+    "7": {
+      "when": "inside DIAGNO, immediately after the SLOPE call (USLOPE/VSLOPE)",
+      "fields": [
+        "USLOPE",
+        "VSLOPE"
+      ]
+    },
+    "8": {
+      "when": "inside DIAGNO, immediately before the UG/VG slope-flow addition",
+      "fields": [
+        "UG",
+        "VG"
+      ]
+    },
+    "9": {
+      "when": "inside DIAGNO, immediately after the UG/VG slope-flow addition",
+      "fields": [
+        "UG",
+        "VG"
+      ]
+    },
+    "10": {
+      "when": "inside DIAGNO, immediately after the DIVCEL loop and the W integration",
+      "fields": [
+        "DIV",
+        "W",
+        "U",
+        "V"
+      ]
+    }
+  },
+  "fields": {
+    "USLOPE": {
+      "units": "m/s",
+      "meaning": "slope-flow U component (/D1/)"
+    },
+    "VSLOPE": {
+      "units": "m/s",
+      "meaning": "slope-flow V component (/D1/)"
+    },
+    "DIV": {
+      "units": "1/s",
+      "meaning": "horizontal divergence from DIVCEL (/D1/)"
+    },
+    "W": {
+      "units": "m/s",
+      "meaning": "vertical velocity on cell faces (/D1/, NZ+1 levels)"
+    },
+    "U": {
+      "units": "m/s",
+      "meaning": "working horizontal U field at the end of the DIVCEL step, i.e. after ADJUST and SMOOTH (/D1/); what CALMET.DAT writes as U-LEV"
+    },
+    "V": {
+      "units": "m/s",
+      "meaning": "working horizontal V field at the end of the DIVCEL step (/D1/)"
+    }
+  },
+  "missing_sentinel": {
+    "applied": false,
+    "note": "no value is missing at these points"
+  },
+  "statistics": {
+    "7:USLOPE": {
+      "19": {
+        "min": -0.01157908421009779,
+        "max": 0.011377287097275257,
+        "mean": 1.1031919078845615e-05,
+        "levels": 9
+      },
+      "20": {
+        "min": -0.03786269947886467,
+        "max": 0.037199847400188446,
+        "mean": 3.607109670130026e-05,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.011553355492651463,
+        "max": 0.011352007277309895,
+        "mean": 1.1007402692469388e-05,
+        "levels": 9
+      },
+      "44": {
+        "min": -0.03777517378330231,
+        "max": 0.03711986541748047,
+        "mean": 3.599029771277687e-05,
+        "levels": 9
+      },
+      "49": {
+        "min": -0.02428288199007511,
+        "max": 0.023297807201743126,
+        "mean": -1.0359311186174284e-05,
+        "levels": 9
+      },
+      "50": {
+        "min": -0.03430243581533432,
+        "max": 0.03292001783847809,
+        "mean": -1.4571673350484262e-05,
+        "levels": 9
+      }
+    },
+    "7:VSLOPE": {
+      "19": {
+        "min": -0.012460768222808838,
+        "max": 0.009889465756714344,
+        "mean": -0.00010323225427413918,
+        "levels": 9
+      },
+      "20": {
+        "min": -0.040745727717876434,
+        "max": 0.03233516588807106,
+        "mean": -0.00033754218677426026,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.01243307814002037,
+        "max": 0.00986749492585659,
+        "mean": -0.00010300287851916346,
+        "levels": 9
+      },
+      "44": {
+        "min": -0.04065154120326042,
+        "max": 0.032263025641441345,
+        "mean": -0.00033678827188150757,
+        "levels": 9
+      },
+      "49": {
+        "min": -0.024265162646770477,
+        "max": 0.02330218441784382,
+        "mean": 0.0002229630872252738,
+        "levels": 9
+      },
+      "50": {
+        "min": -0.03429564833641052,
+        "max": 0.03292252495884895,
+        "mean": 0.0003148160280079414,
+        "levels": 9
+      }
+    },
+    "8:UG": {
+      "19": {
+        "min": -0.8067348599433899,
+        "max": 0.2773468494415283,
+        "mean": -0.5561913724737035,
+        "levels": 9
+      },
+      "20": {
+        "min": -2.4759085178375244,
+        "max": -1.2137353420257568,
+        "mean": -1.8377661134984757,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.6760625243186951,
+        "max": 2.2579164505004883,
+        "mean": 0.2336255017174615,
+        "levels": 9
+      },
+      "44": {
+        "min": -2.0713107585906982,
+        "max": 0.6746046543121338,
+        "mean": -1.1740346111297608,
+        "levels": 9
+      },
+      "49": {
+        "min": -0.30866676568984985,
+        "max": 4.233808994293213,
+        "mean": 1.3962675292011097,
+        "levels": 9
+      },
+      "50": {
+        "min": 1.2358041203697212e-05,
+        "max": 5.318984031677246,
+        "mean": 1.7472441467662003,
+        "levels": 9
+      }
+    },
+    "8:VG": {
+      "19": {
+        "min": -1.3711884021759033,
+        "max": 1.0946060419082642,
+        "mean": 0.19458500705401044,
+        "levels": 9
+      },
+      "20": {
+        "min": -3.034531831741333,
+        "max": -0.48879557847976685,
+        "mean": -1.4209527874125374,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.30000001192092896,
+        "max": 1.0359914302825928,
+        "mean": 0.3106391804543864,
+        "levels": 9
+      },
+      "44": {
+        "min": 0.34729936718940735,
+        "max": 2.165818691253662,
+        "mean": 1.01582517999808,
+        "levels": 9
+      },
+      "49": {
+        "min": -0.5711395740509033,
+        "max": 1.817068338394165,
+        "mean": 0.4729711499654982,
+        "levels": 9
+      },
+      "50": {
+        "min": 3.141395092010498,
+        "max": 6.847424030303955,
+        "mean": 4.930193121263716,
+        "levels": 9
+      }
+    },
+    "9:UG": {
+      "19": {
+        "min": -0.8067348599433899,
+        "max": 0.2868133783340454,
+        "mean": -0.5561803405566348,
+        "levels": 9
+      },
+      "20": {
+        "min": -2.4759085178375244,
+        "max": -1.2137353420257568,
+        "mean": -1.837730042330424,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.6760625243186951,
+        "max": 2.2579164505004883,
+        "mean": 0.23363650909778144,
+        "levels": 9
+      },
+      "44": {
+        "min": -2.0713107585906982,
+        "max": 0.6746046543121338,
+        "mean": -1.1739986208968691,
+        "levels": 9
+      },
+      "49": {
+        "min": -0.3078143298625946,
+        "max": 4.233808994293213,
+        "mean": 1.3962571698799442,
+        "levels": 9
+      },
+      "50": {
+        "min": -0.03429007902741432,
+        "max": 5.318984031677246,
+        "mean": 1.7472295751016769,
+        "levels": 9
+      }
+    },
+    "9:VG": {
+      "19": {
+        "min": -1.3711884021759033,
+        "max": 1.0946060419082642,
+        "mean": 0.19448177482430296,
+        "levels": 9
+      },
+      "20": {
+        "min": -3.034531831741333,
+        "max": -0.48879557847976685,
+        "mean": -1.421290329723888,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.30000001192092896,
+        "max": 1.0359914302825928,
+        "mean": 0.3105361775674437,
+        "levels": 9
+      },
+      "44": {
+        "min": 0.3066478669643402,
+        "max": 2.165818691253662,
+        "mean": 1.0154883917477395,
+        "levels": 9
+      },
+      "49": {
+        "min": -0.5711395740509033,
+        "max": 1.817068338394165,
+        "mean": 0.4731941130534849,
+        "levels": 9
+      },
+      "50": {
+        "min": 3.141395092010498,
+        "max": 6.847424030303955,
+        "mean": 4.930507937611474,
+        "levels": 9
+      }
+    },
+    "10:DIV": {
+      "19": {
+        "min": -9.851753929979168e-06,
+        "max": 6.2058866205916274e-06,
+        "mean": -5.702693191568365e-10,
+        "levels": 9
+      },
+      "20": {
+        "min": -3.2961368560791016e-05,
+        "max": 6.963372288737446e-05,
+        "mean": 4.9734510674070974e-08,
+        "levels": 9
+      },
+      "43": {
+        "min": -5.376972239901079e-06,
+        "max": 7.371939773292979e-06,
+        "mean": 6.626576799387891e-09,
+        "levels": 9
+      },
+      "44": {
+        "min": -6.308138108579442e-05,
+        "max": 3.2467840355820954e-05,
+        "mean": -4.3016281924311713e-08,
+        "levels": 9
+      },
+      "49": {
+        "min": -1.0683759683161043e-05,
+        "max": 7.960572474985383e-06,
+        "mean": -9.737943790277815e-09,
+        "levels": 9
+      },
+      "50": {
+        "min": -0.00022416672436520457,
+        "max": 6.733081681886688e-05,
+        "mean": -5.845728935994034e-07,
+        "levels": 9
+      }
+    },
+    "10:W": {
+      "19": {
+        "min": -0.0021586953662335873,
+        "max": 0.0022732377983629704,
+        "mean": 6.132326861768522e-07,
+        "levels": 10
+      },
+      "20": {
+        "min": -0.0024867504835128784,
+        "max": 0.0025129541754722595,
+        "mean": -7.180867633881966e-06,
+        "levels": 10
+      },
+      "43": {
+        "min": -0.0030287213157862425,
+        "max": 0.0030074343085289,
+        "mean": -1.0283394650872557e-06,
+        "levels": 10
+      },
+      "44": {
+        "min": -0.005361097399145365,
+        "max": 0.005432472564280033,
+        "mean": 6.999980436260706e-06,
+        "levels": 10
+      },
+      "49": {
+        "min": -0.0020694953855127096,
+        "max": 0.0022054878063499928,
+        "mean": 1.9976174918519442e-06,
+        "levels": 10
+      },
+      "50": {
+        "min": -0.01951800286769867,
+        "max": 0.06399989873170853,
+        "mean": 0.00023194742541167443,
+        "levels": 10
+      }
+    },
+    "10:U": {
+      "19": {
+        "min": -1.0107975006103516,
+        "max": 0.4748210310935974,
+        "mean": -0.5205897588666942,
+        "levels": 9
+      },
+      "20": {
+        "min": -1.6825454235076904,
+        "max": 0.20977050065994263,
+        "mean": -0.8991766518179639,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.7895809412002563,
+        "max": 5.1444091796875,
+        "mean": 0.9834115206983355,
+        "levels": 9
+      },
+      "44": {
+        "min": -1.9697600603103638,
+        "max": 5.554934978485107,
+        "mean": 0.8144271456168758,
+        "levels": 9
+      },
+      "49": {
+        "min": -0.3000924587249756,
+        "max": 6.95610237121582,
+        "mean": 1.8920103625853857,
+        "levels": 9
+      },
+      "50": {
+        "min": -0.007578277960419655,
+        "max": 6.7151336669921875,
+        "mean": 1.7549782903636202,
+        "levels": 9
+      }
+    },
+    "10:V": {
+      "19": {
+        "min": -3.6821718215942383,
+        "max": 1.4578030109405518,
+        "mean": -0.3043447607398033,
+        "levels": 9
+      },
+      "20": {
+        "min": -3.409951686859131,
+        "max": 1.2123558521270752,
+        "mean": -0.7912357458644443,
+        "levels": 9
+      },
+      "43": {
+        "min": -0.07847170531749725,
+        "max": 1.99900484085083,
+        "mean": 0.6261531684981452,
+        "levels": 9
+      },
+      "44": {
+        "min": -0.023883378133177757,
+        "max": 2.24896240234375,
+        "mean": 0.6858251222303344,
+        "levels": 9
+      },
+      "49": {
+        "min": -1.6342942714691162,
+        "max": 3.099137306213379,
+        "mean": 0.5108199730769628,
+        "levels": 9
+      },
+      "50": {
+        "min": -1.0407907962799072,
+        "max": 5.000066757202148,
+        "mean": 2.5795931198000908,
+        "levels": 9
+      }
+    }
+  },
+  "hours": [
+    {
+      "hour_index": 1,
+      "packed": 202200100,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 0,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 180032,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 360064,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 540096,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 2,
+      "packed": 202200101,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 910128,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 1090160,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 1270192,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 1450224,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 3,
+      "packed": 202200102,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 1820256,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 2000288,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 2180320,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 2360352,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 4,
+      "packed": 202200103,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 2730384,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 2910416,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 3090448,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 3270480,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 5,
+      "packed": 202200104,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 3640512,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 3820544,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 4000576,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 4180608,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 6,
+      "packed": 202200105,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 4550640,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 4730672,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 4910704,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 5090736,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 7,
+      "packed": 202200106,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 5460768,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 5640800,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 5820832,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 6000864,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 8,
+      "packed": 202200107,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 6370896,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 6550928,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 6730960,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 6910992,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 9,
+      "packed": 202200108,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 7281024,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 7461056,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 7641088,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 7821120,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 10,
+      "packed": 202200109,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 8191152,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 8371184,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 8551216,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 8731248,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 11,
+      "packed": 202200110,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 9101280,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 9281312,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 9461344,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 9641376,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 12,
+      "packed": 202200111,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 10011408,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 10191440,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 10371472,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 10551504,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 13,
+      "packed": 202200112,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 10921536,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 11101568,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 11281600,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 11461632,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 14,
+      "packed": 202200113,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 11831664,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 12011696,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 12191728,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 12371760,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 15,
+      "packed": 202200114,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 12741792,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 12921824,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 13101856,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 13281888,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 16,
+      "packed": 202200115,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 13651920,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 13831952,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 14011984,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 14192016,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 17,
+      "packed": 202200116,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 14562048,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 14742080,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 14922112,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 15102144,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 18,
+      "packed": 202200117,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 15472176,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 15652208,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 15832240,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 16012272,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 19,
+      "packed": 202200118,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 16382304,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 16562336,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 16742368,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 16922400,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 20,
+      "packed": 202200119,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 17292432,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 17472464,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 17652496,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 17832528,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 21,
+      "packed": 202200120,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 18202560,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 18382592,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 18562624,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 18742656,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 22,
+      "packed": 202200121,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 19112688,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 19292720,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 19472752,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 19652784,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 23,
+      "packed": 202200122,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 20022816,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 20202848,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 20382880,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 20562912,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 24,
+      "packed": 202200123,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 20932944,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 21112976,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 21293008,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 21473040,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 25,
+      "packed": 202200200,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 21843072,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 22023104,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 22203136,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 22383168,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 26,
+      "packed": 202200201,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 22753200,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 22933232,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 23113264,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 23293296,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 27,
+      "packed": 202200202,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 23663328,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 23843360,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 24023392,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 24203424,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 28,
+      "packed": 202200203,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 24573456,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 24753488,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 24933520,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 25113552,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 29,
+      "packed": 202200204,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 25483584,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 25663616,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 25843648,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 26023680,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 30,
+      "packed": 202200205,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 26393712,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 26573744,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 26753776,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 26933808,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 31,
+      "packed": 202200206,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 27303840,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 27483872,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 27663904,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 27843936,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 32,
+      "packed": 202200207,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 28213968,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 28394000,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 28574032,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 28754064,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 33,
+      "packed": 202200208,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 29124096,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 29304128,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 29484160,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 29664192,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 34,
+      "packed": 202200209,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 30034224,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 30214256,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 30394288,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 30574320,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 35,
+      "packed": 202200210,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 30944352,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 31124384,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 31304416,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 31484448,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 36,
+      "packed": 202200211,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 31854480,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 32034512,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 32214544,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 32394576,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 37,
+      "packed": 202200212,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 32764608,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 32944640,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 33124672,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 33304704,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 38,
+      "packed": 202200213,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 33674736,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 33854768,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 34034800,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 34214832,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 39,
+      "packed": 202200214,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 34584864,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 34764896,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 34944928,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 35124960,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 40,
+      "packed": 202200215,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 35494992,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 35675024,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 35855056,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 36035088,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 41,
+      "packed": 202200216,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 36405120,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 36585152,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 36765184,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 36945216,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 42,
+      "packed": 202200217,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 37315248,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 37495280,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 37675312,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 37855344,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 43,
+      "packed": 202200218,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 38225376,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 38405408,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 38585440,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 38765472,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 44,
+      "packed": 202200219,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 39135504,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 39315536,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 39495568,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 39675600,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 45,
+      "packed": 202200220,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 40045632,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 40225664,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 40405696,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 40585728,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 46,
+      "packed": 202200221,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 40955760,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 41135792,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 41315824,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 41495856,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 47,
+      "packed": 202200222,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 41865888,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 42045920,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 42225952,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 42405984,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 48,
+      "packed": 202200223,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 42776016,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 42956048,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 43136080,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 43316112,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 49,
+      "packed": 202200300,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 43686144,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 43866176,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 44046208,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 44226240,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 50,
+      "packed": 202200301,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 44596272,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 44776304,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 44956336,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 45136368,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 51,
+      "packed": 202200302,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 45506400,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 45686432,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 45866464,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 46046496,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 52,
+      "packed": 202200303,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 46416528,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 46596560,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 46776592,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 46956624,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 53,
+      "packed": 202200304,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 47326656,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 47506688,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 47686720,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 47866752,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 54,
+      "packed": 202200305,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 48236784,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 48416816,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 48596848,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 48776880,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 55,
+      "packed": 202200306,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 49146912,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 49326944,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 49506976,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 49687008,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 56,
+      "packed": 202200307,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 50057040,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 50237072,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 50417104,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 50597136,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 57,
+      "packed": 202200308,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 50967168,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 51147200,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 51327232,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 51507264,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 58,
+      "packed": 202200309,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 51877296,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 52057328,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 52237360,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 52417392,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 59,
+      "packed": 202200310,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 52787424,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 52967456,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 53147488,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 53327520,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 60,
+      "packed": 202200311,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 53697552,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 53877584,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 54057616,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 54237648,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 61,
+      "packed": 202200312,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 54607680,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 54787712,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 54967744,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 55147776,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 62,
+      "packed": 202200313,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 55517808,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 55697840,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 55877872,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 56057904,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 63,
+      "packed": 202200314,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 56427936,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 56607968,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 56788000,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 56968032,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 64,
+      "packed": 202200315,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 57338064,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 57518096,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 57698128,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 57878160,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 65,
+      "packed": 202200316,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 58248192,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 58428224,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 58608256,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 58788288,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 66,
+      "packed": 202200317,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 59158320,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 59338352,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 59518384,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 59698416,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 67,
+      "packed": 202200318,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 60068448,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 60248480,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 60428512,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 60608544,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 68,
+      "packed": 202200319,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 60978576,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 61158608,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 61338640,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 61518672,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 69,
+      "packed": 202200320,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 61888704,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 62068736,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 62248768,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 62428800,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 70,
+      "packed": 202200321,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 62798832,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 62978864,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 63158896,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 63338928,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 71,
+      "packed": 202200322,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 63708960,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 63888992,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 64069024,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 64249056,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 72,
+      "packed": 202200323,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 64619088,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 64799120,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 64979152,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 65159184,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 73,
+      "packed": 202200400,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 65529216,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 65709248,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 65889280,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 66069312,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 74,
+      "packed": 202200401,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 66439344,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 66619376,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 66799408,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 66979440,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 75,
+      "packed": 202200402,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 67349472,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 67529504,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 67709536,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 67889568,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 76,
+      "packed": 202200403,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 68259600,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 68439632,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 68619664,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 68799696,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 77,
+      "packed": 202200404,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 69169728,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 69349760,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 69529792,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 69709824,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 78,
+      "packed": 202200405,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 70079856,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 70259888,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 70439920,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 70619952,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 79,
+      "packed": 202200406,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 70989984,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 71170016,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 71350048,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 71530080,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 80,
+      "packed": 202200407,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 71900112,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 72080144,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 72260176,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 72440208,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 81,
+      "packed": 202200408,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 72810240,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 72990272,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 73170304,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 73350336,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 82,
+      "packed": 202200409,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 73720368,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 73900400,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 74080432,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 74260464,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 83,
+      "packed": 202200410,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 74630496,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 74810528,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 74990560,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 75170592,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 84,
+      "packed": 202200411,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 75540624,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 75720656,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 75900688,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 76080720,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 85,
+      "packed": 202200412,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 76450752,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 76630784,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 76810816,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 76990848,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 86,
+      "packed": 202200413,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 77360880,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 77540912,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 77720944,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 77900976,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 87,
+      "packed": 202200414,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 78271008,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 78451040,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 78631072,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 78811104,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 88,
+      "packed": 202200415,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 79181136,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 79361168,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 79541200,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 79721232,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 89,
+      "packed": 202200416,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 80091264,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 80271296,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 80451328,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 80631360,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 90,
+      "packed": 202200417,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 81001392,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 81181424,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 81361456,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 81541488,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 91,
+      "packed": 202200418,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 81911520,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 82091552,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 82271584,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 82451616,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 92,
+      "packed": 202200419,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 82821648,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 83001680,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 83181712,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 83361744,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 93,
+      "packed": 202200420,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 83731776,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 83911808,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 84091840,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 84271872,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 94,
+      "packed": 202200421,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 84641904,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 84821936,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 85001968,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 85182000,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 95,
+      "packed": 202200422,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 85552032,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 85732064,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 85912096,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 86092128,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 96,
+      "packed": 202200423,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 86462160,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 86642192,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 86822224,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 87002256,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 97,
+      "packed": 202200500,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 87372288,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 87552320,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 87732352,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 87912384,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 98,
+      "packed": 202200501,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 88282416,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 88462448,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 88642480,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 88822512,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 99,
+      "packed": 202200502,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 89192544,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 89372576,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 89552608,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 89732640,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 100,
+      "packed": 202200503,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 90102672,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 90282704,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 90462736,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 90642768,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 101,
+      "packed": 202200504,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 91012800,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 91192832,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 91372864,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 91552896,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 102,
+      "packed": 202200505,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 91922928,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 92102960,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 92282992,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 92463024,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 103,
+      "packed": 202200506,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 92833056,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 93013088,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 93193120,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 93373152,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 104,
+      "packed": 202200507,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 93743184,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 93923216,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 94103248,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 94283280,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 105,
+      "packed": 202200508,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 94653312,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 94833344,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 95013376,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 95193408,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 106,
+      "packed": 202200509,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 95563440,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 95743472,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 95923504,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 96103536,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 107,
+      "packed": 202200510,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 96473568,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 96653600,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 96833632,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 97013664,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 108,
+      "packed": 202200511,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 97383696,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 97563728,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 97743760,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 97923792,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 109,
+      "packed": 202200512,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 98293824,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 98473856,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 98653888,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 98833920,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 110,
+      "packed": 202200513,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 99203952,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 99383984,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 99564016,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 99744048,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 111,
+      "packed": 202200514,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 100114080,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 100294112,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 100474144,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 100654176,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 112,
+      "packed": 202200515,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 101024208,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 101204240,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 101384272,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 101564304,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 113,
+      "packed": 202200516,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 101934336,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 102114368,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 102294400,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 102474432,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 114,
+      "packed": 202200517,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 102844464,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 103024496,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 103204528,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 103384560,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 115,
+      "packed": 202200518,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 103754592,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 103934624,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 104114656,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 104294688,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 116,
+      "packed": 202200519,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 104664720,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 104844752,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 105024784,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 105204816,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 117,
+      "packed": 202200520,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 105574848,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 105754880,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 105934912,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 106114944,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 118,
+      "packed": 202200521,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 106484976,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 106665008,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 106845040,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 107025072,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 119,
+      "packed": 202200522,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 107395104,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 107575136,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 107755168,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 107935200,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 120,
+      "packed": 202200523,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 108305232,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 108485264,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 108665296,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 108845328,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 121,
+      "packed": 202200600,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 109215360,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 109395392,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 109575424,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 109755456,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 122,
+      "packed": 202200601,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 110125488,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 110305520,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 110485552,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 110665584,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 123,
+      "packed": 202200602,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 111035616,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 111215648,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 111395680,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 111575712,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 124,
+      "packed": 202200603,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 111945744,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 112125776,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 112305808,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 112485840,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 125,
+      "packed": 202200604,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 112855872,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 113035904,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 113215936,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 113395968,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 126,
+      "packed": 202200605,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 113766000,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 113946032,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 114126064,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 114306096,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 127,
+      "packed": 202200606,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 114676128,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 114856160,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 115036192,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 115216224,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 128,
+      "packed": 202200607,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 115586256,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 115766288,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 115946320,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 116126352,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 129,
+      "packed": 202200608,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 116496384,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 116676416,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 116856448,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 117036480,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 130,
+      "packed": 202200609,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 117406512,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 117586544,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 117766576,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 117946608,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 131,
+      "packed": 202200610,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 118316640,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 118496672,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 118676704,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 118856736,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 132,
+      "packed": 202200611,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 119226768,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 119406800,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 119586832,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 119766864,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 133,
+      "packed": 202200612,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 120136896,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 120316928,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 120496960,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 120676992,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 134,
+      "packed": 202200613,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 121047024,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 121227056,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 121407088,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 121587120,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 135,
+      "packed": 202200614,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 121957152,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 122137184,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 122317216,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 122497248,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 136,
+      "packed": 202200615,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 122867280,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 123047312,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 123227344,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 123407376,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 137,
+      "packed": 202200616,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 123777408,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 123957440,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 124137472,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 124317504,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 138,
+      "packed": 202200617,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 124687536,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 124867568,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 125047600,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 125227632,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 139,
+      "packed": 202200618,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 125597664,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 125777696,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 125957728,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 126137760,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 140,
+      "packed": 202200619,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 126507792,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 126687824,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 126867856,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 127047888,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 141,
+      "packed": 202200620,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 127417920,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 127597952,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 127777984,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 127958016,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 142,
+      "packed": 202200621,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 128328048,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 128508080,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 128688112,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 128868144,
+          "bytes": 370032
+        }
+      }
+    },
+    {
+      "hour_index": 143,
+      "packed": 202200622,
+      "seconds": 0,
+      "records": {
+        "7": {
+          "byte_offset": 129238176,
+          "bytes": 180032
+        },
+        "8": {
+          "byte_offset": 129418208,
+          "bytes": 180032
+        },
+        "9": {
+          "byte_offset": 129598240,
+          "bytes": 180032
+        },
+        "10": {
+          "byte_offset": 129778272,
+          "bytes": 370032
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# command: /usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.download_isd_by_grid --year 2022 --stack-lat 31.939774444 --stack-lon 117.141610855 --timeout 30 --retries 2
+# cwd: /home/lhy/build/ref/cteas-ref
+
+candidate year=2022 sid=58321099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=8692/8760; coverage=99.2237% wind_ISD_Lite=original_ISD_Lite_hours=8692/8760; coverage=99.2237% external_gt90_both=True
+P5_SELECTED year=2022 mode=VIRTUAL_RELOCATED station_count=1 stations=58321099999 manifest=/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/surface/isd_raw/station_selection_2022.json

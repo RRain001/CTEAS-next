@@ -1,0 +1,17 @@
+===== Suggested replacements for SMERGE.INP =====
+
+INPUT GROUP 0a (paths + station count):
+! NFF = 1 !
+! PREVDAT = * !
+! SURFDAT = surf.dat !
+! RUNLST = smerge.lst !
+! LCFILES = T !
+
+INPUT GROUP 0b (repeat this 4-line block for each station):
+     !SFCMET = ../../met/surface/isd2smerge_ready/583210-99999.csv !
+     !IFSTN = 58321 !
+     !XELEV = 63 !
+     !ASTZ = UTC+0000 !   !END!
+
+Optional check for Group 1:
+! ABTZ = UTC+0000 !

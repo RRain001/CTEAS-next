@@ -1,0 +1,114 @@
+{
+  "tag": "hefei_5km",
+  "center": {
+    "lat": 31.939774444,
+    "lon": 117.141610855,
+    "utm_e": 513.3846439571007,
+    "utm_n": 3533.7689269678035
+  },
+  "utm_crs": "EPSG:32650",
+  "study_side_km": 5.0,
+  "margin_km": 1.0,
+  "half_width_km": 3.5,
+  "bbox_wgs84": [
+    117.10454484213773,
+    31.908151184916658,
+    117.17870218976155,
+    31.97138685033769
+  ],
+  "srtm_dir": "/Users/rain/Documents/Doctor/Topic/CTEAS/calpuff_terrain_and_landuse_data/china_srtm",
+  "landuse_file": "/Users/rain/Documents/Doctor/Topic/CTEAS/calpuff_terrain_and_landuse_data/eurasia_asia_landuse/eausgs2_0la.img",
+  "landuse_window": {
+    "i0": 9610,
+    "i1": 9621,
+    "j0": 4207,
+    "j1": 4218,
+    "laea_bounds_km": [
+      1609.2755409008623,
+      -1292.5259720460035,
+      1620.3508070218227,
+      -1281.2303690313367
+    ],
+    "utm_box_corners": [
+      [
+        509.8846439571007,
+        3530.2689269678035
+      ],
+      [
+        509.8846439571007,
+        3533.7689269678035
+      ],
+      [
+        509.8846439571007,
+        3537.2689269678035
+      ],
+      [
+        513.3846439571007,
+        3530.2689269678035
+      ],
+      [
+        513.3846439571007,
+        3533.7689269678035
+      ],
+      [
+        513.3846439571007,
+        3537.2689269678035
+      ],
+      [
+        516.8846439571007,
+        3530.2689269678035
+      ],
+      [
+        516.8846439571007,
+        3533.7689269678035
+      ],
+      [
+        516.8846439571007,
+        3537.2689269678035
+      ]
+    ]
+  },
+  "terrain": [
+    {
+      "source": "/Users/rain/Documents/Doctor/Topic/CTEAS/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif",
+      "source_sha256": "913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4",
+      "output": "calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/srtm_60_06_hefei_5km.tif",
+      "window": {
+        "col_off": 2525,
+        "row_off": 3634,
+        "width": 90,
+        "height": 77
+      },
+      "dtype": "int16",
+      "nodata": -32768.0,
+      "pixel_deg": 0.0008333333333333334,
+      "bounds_wgs84": [
+        117.10416666666667,
+        31.907500000000002,
+        117.17916666666667,
+        31.971666666666668
+      ],
+      "sha256": "c4211914fce527d2ad41ecac1e668d7faa2904bbbfd9135868ee83ef0d32123f",
+      "bytes": 14648
+    }
+  ],
+  "landuse": {
+    "laea_tif": "calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.tif",
+    "generic": {
+      "output": "calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt",
+      "cells": 144,
+      "cells_skipped_no_data": 0,
+      "mesh_cells": 20,
+      "mesh_km": 0.05,
+      "points": 57600,
+      "categories": 38,
+      "datum": "ESR-S",
+      "generator": "scripts/crop_terrain_landuse_data.py",
+      "sha256": "bd937d99fb13b49ac6185c080359bef050afe76fc63945ac53b7d676547d43dc",
+      "bytes": 1497932
+    },
+    "laea_tif_sha256": "34a7178377af6bcfb908b3ff21f9e96b035f5f9dbf2cd04fbe5439fab718b850",
+    "laea_tif_bytes": 1570
+  },
+  "manifest": "calpuff_terrain_and_landuse_data_crop/hefei_5km/crop_info.json"
+}

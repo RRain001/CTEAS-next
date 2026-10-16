@@ -1,0 +1,4 @@
+# command: /usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.run_smerge_and_monitor
+# cwd: /home/lhy/build/ref/cteas-ref
+
+P5_SURFDAT_PUBLISHED=PASS backend=ORIGINAL_FORTRAN

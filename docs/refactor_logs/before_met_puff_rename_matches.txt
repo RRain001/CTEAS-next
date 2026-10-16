@@ -1,0 +1,1111 @@
+./engine/run_calmet/log copy.md:1:ai@DESKTOP-6HJDGGN:~/code/calpuff/tutorial$ .venv/bin/python /home/ai/code/calpuff/tutorial/run_calmet/run_calmet.py
+./engine/run_calmet/log copy.md:3:[INFO] 工作目录: /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet
+./engine/run_calmet/log copy.md:4:[INFO] 风场数据: /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet/calmet.dat
+./engine/run_calmet/log copy.md:5:[INFO] 运行记录: /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet/calmet.lst
+./engine/run_calmet/log copy.md:6:[INFO] 运行日志: /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet/calmet_runtime.log
+./engine/run_calmet/log copy.md:8:[INFO] 可通过 calmet.lst 查询报错原因
+./engine/run_calmet/log copy.md:9:[INFO] 可通过 calmet_runtime.log 查询实时进程
+./建议.md:178:8. ./calpuff-cli desktopgui 可以正常启动。
+./engine/run_calmet/common.py:13:TEMPLATE_INP = TEMPLATE_FILES["calmet"]
+./engine/validators/case_schema.py:40:    calmet = _require_mapping(config.get("calmet"), "calmet")
+./engine/validators/case_schema.py:41:    calpuff = _require_mapping(config.get("calpuff"), "calpuff")
+./engine/validators/case_schema.py:52:    for key in schema.get("required_calmet", []):
+./engine/validators/case_schema.py:53:        if key not in calmet:
+./engine/validators/case_schema.py:54:            raise CaseSchemaError(f"Missing calmet.{key}")
+./engine/validators/case_schema.py:55:    for key in schema.get("required_calpuff", []):
+./engine/validators/case_schema.py:56:        if key not in calpuff:
+./engine/validators/case_schema.py:57:            raise CaseSchemaError(f"Missing calpuff.{key}")
+./engine/orchestrator/cli.py:21:STAGE_ORDER = ["preprocess", "upperair", "surface", "calmet", "calpuff"]
+./engine/orchestrator/cli.py:65:    if stage == "calmet":
+./engine/orchestrator/cli.py:66:        return (case_root / "run" / "calmet" / "calmet.dat").exists() and (case_root / "run" / "calmet" / "calmet.lst").exists()
+./engine/orchestrator/cli.py:71:    if stage == "calpuff":
+./engine/orchestrator/cli.py:72:        lst_ok = _existing_path([case_root / "run" / "calpuff" / "calpuff.lst", case_root / "run" / "calpuff" / "CALPUFF.LST"]) is not None
+./engine/orchestrator/cli.py:73:        con_ok = _existing_path([case_root / "run" / "calpuff" / "calpuff.con", case_root / "run" / "calpuff" / "CALPUFF.CON"]) is not None
+./engine/orchestrator/cli.py:93:    if stage == "calmet":
+./engine/orchestrator/cli.py:94:        return [sys.executable, "-m", "engine.run_calmet.run_calmet", "--case", case_name]
+./engine/orchestrator/cli.py:95:    if stage == "calpuff":
+./engine/orchestrator/cli.py:96:        return [sys.executable, "-m", "engine.run_calpuff.run_calpuff", "--case", case_name]
+./engine/orchestrator/cli.py:101:    if stage == "calmet" and not _stage_completion(case_root, "preprocess"):
+./engine/orchestrator/cli.py:102:        raise RuntimeError("calmet stage requires preprocess outputs (geo/makegeo/geo.dat)")
+./engine/orchestrator/cli.py:103:    if stage == "calpuff" and not _stage_completion(case_root, "calmet"):
+./engine/orchestrator/cli.py:104:        raise RuntimeError("calpuff stage requires calmet outputs (run/calmet/calmet.dat, calmet.lst)")
+./engine/orchestrator/cli.py:108:    if stage == "calmet":
+./engine/orchestrator/cli.py:109:        paths = [case_root / "run" / "calmet" / "calmet.dat", case_root / "run" / "calmet" / "calmet.lst"]
+./engine/orchestrator/cli.py:110:    elif stage == "calpuff":
+./engine/orchestrator/cli.py:112:            case_root / "run" / "calpuff" / "calpuff.con",
+./engine/orchestrator/cli.py:113:            case_root / "run" / "calpuff" / "calpuff.lst",
+./engine/orchestrator/cli.py:114:            case_root / "run" / "calpuff" / "calpuff.dry",
+./engine/orchestrator/cli.py:115:            case_root / "run" / "calpuff" / "calpuff.wet",
+./engine/orchestrator/cli.py:116:            case_root / "run" / "calpuff" / "calpuff.vis",
+./engine/orchestrator/cli.py:129:            name="calmet_dat",
+./engine/orchestrator/cli.py:130:            source_candidates=[case_root / "run" / "calmet" / "calmet.dat"],
+./engine/orchestrator/cli.py:131:            deliverable_rel=Path("calmet") / "calmet.dat",
+./engine/orchestrator/cli.py:132:            link_back_rel=Path("run") / "calmet" / "calmet.dat",
+./engine/orchestrator/cli.py:136:            name="calmet_lst",
+./engine/orchestrator/cli.py:137:            source_candidates=[case_root / "run" / "calmet" / "calmet.lst"],
+./engine/orchestrator/cli.py:138:            deliverable_rel=Path("calmet") / "calmet.lst",
+./engine/orchestrator/cli.py:139:            link_back_rel=Path("run") / "calmet" / "calmet.lst",
+./engine/orchestrator/cli.py:143:            name="calpuff_con",
+./engine/orchestrator/cli.py:144:            source_candidates=[case_root / "run" / "calpuff" / "calpuff.con", case_root / "run" / "calpuff" / "CALPUFF.CON"],
+./engine/orchestrator/cli.py:145:            deliverable_rel=Path("calpuff") / "calpuff.con",
+./engine/orchestrator/cli.py:146:            link_back_rel=Path("run") / "calpuff" / "calpuff.con",
+./engine/orchestrator/cli.py:150:            name="calpuff_dry",
+./engine/orchestrator/cli.py:151:            source_candidates=[case_root / "run" / "calpuff" / "calpuff.dry", case_root / "run" / "calpuff" / "CALPUFF.DRY"],
+./engine/orchestrator/cli.py:152:            deliverable_rel=Path("calpuff") / "calpuff.dry",
+./engine/orchestrator/cli.py:153:            link_back_rel=Path("run") / "calpuff" / "calpuff.dry",
+./engine/orchestrator/cli.py:157:            name="calpuff_wet",
+./engine/orchestrator/cli.py:158:            source_candidates=[case_root / "run" / "calpuff" / "calpuff.wet", case_root / "run" / "calpuff" / "CALPUFF.WET"],
+./engine/orchestrator/cli.py:159:            deliverable_rel=Path("calpuff") / "calpuff.wet",
+./engine/orchestrator/cli.py:160:            link_back_rel=Path("run") / "calpuff" / "calpuff.wet",
+./engine/orchestrator/cli.py:164:            name="calpuff_vis",
+./engine/orchestrator/cli.py:165:            source_candidates=[case_root / "run" / "calpuff" / "calpuff.vis", case_root / "run" / "calpuff" / "CALPUFF.VIS"],
+./engine/orchestrator/cli.py:166:            deliverable_rel=Path("calpuff") / "calpuff.vis",
+./engine/orchestrator/cli.py:167:            link_back_rel=Path("run") / "calpuff" / "calpuff.vis",
+./engine/orchestrator/cli.py:291:    parser = argparse.ArgumentParser(description="CALPUFF orchestration CLI")
+./engine/orchestrator/cli.py:297:    run_parser.add_argument("--stage", choices=["preprocess", "upperair", "surface", "calmet", "calpuff", "all"], default="all")
+./docs/native_binaries.md:10:| `bin/linux-x86_64/calmet.x` | ELF 64-bit LSB executable, x86-64 | 诊断风场 | `engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for`, `coordlib.for`, `calutils.for`, `auxutils.for` | 原目录有 `cpl.bat`；本轮新增 Docker + `gfortran` 脚本 | yes |
+./docs/native_binaries.md:11:| `bin/linux-x86_64/calpuff.x` | ELF 64-bit LSB executable, x86-64 | 烟团扩散主程序 | `engine/vendor/src/CALPUFF_v7.2.1_L150618/modules.for`, `calpuff.for`, `coordlib.for`, `calutils.for`, `api_chem.for`, `isorropia_v2.2.for`, `lwcsubs.for` | 原目录有 `cpl_unix.bat` / `cpl_calpuff.bat`；本轮新增 Docker + `gfortran` 脚本 | yes |
+./engine/run_calmet/log.md:1:ai@DESKTOP-6HJDGGN:~/code/calpuff/tutorial$ .venv/bin/python /home/ai/code/calpuff/tutorial/run_calmet/run_calmet.py
+./engine/run_calmet/log.md:3:[INFO] Work dir   : /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet
+./engine/run_calmet/log.md:4:[INFO] Command    : /home/ai/code/calpuff/tutorial/source_code/CALMET_v6.5.0_L150223/calmet.x
+./engine/run_calmet/log.md:5:[INFO] METLST     : /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet/calmet.lst
+./engine/run_calmet/log.md:6:[INFO] METDAT     : /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet/calmet.dat
+./engine/run_calmet/log.md:10:[INFO] Runtime log: /home/ai/code/calpuff/tutorial/project/cases/test/run/calmet/calmet_runtime.log
+./engine/run_calmet/log.md:14:[RESULT] CALMET run succeeded.
+./engine/native/registry.py:35:    "calmet": {
+./engine/native/registry.py:36:        "binary": "calmet",
+./engine/native/registry.py:38:        "module": "CALMET diagnostic wind field",
+./engine/native/registry.py:41:    "calpuff": {
+./engine/native/registry.py:42:        "binary": "calpuff",
+./engine/native/registry.py:44:        "module": "CALPUFF puff dispersion",
+./engine/run_calmet/并行计算的尝试.md:1:# CALMET Parallel Attempt Log
+./engine/run_calmet/并行计算的尝试.md:6:- Policy: keep original `calmet.x`; produce `calmet_omp.x`
+./engine/run_calmet/并行计算的尝试.md:12:- Source snapshot: `/home/ai/code/calpuff/tutorial/source_code/CALMET_v6.5.0_L150223_backup_src_20260429_080206`
+./engine/run_calmet/并行计算的尝试.md:13:- Binary snapshot: `/home/ai/code/calpuff/tutorial/source_code/CALMET_v6.5.0_L150223_backup_bin_20260429_080206/calmet.x`
+./engine/run_calmet/并行计算的尝试.md:17:- Command: `calmet.x` on one-month case (`project/current/run/calmet`)
+./engine/run_calmet/并行计算的尝试.md:21:  - `calmet_serial.dat`
+./engine/run_calmet/并行计算的尝试.md:22:  - `calmet_serial.lst`
+./engine/run_calmet/并行计算的尝试.md:23:  - `calmet_serial_runtime.log`
+./engine/run_calmet/并行计算的尝试.md:26:- File modified: `/home/ai/code/calpuff/tutorial/source_code/CALMET_v6.5.0_L150223/calmet.for`
+./engine/run_calmet/并行计算的尝试.md:36:- Build command: `ifx calmet.for -O2 -save -qopenmp -o calmet_omp.x`
+./engine/run_calmet/并行计算的尝试.md:47:  - Command: `OMP_NUM_THREADS=6 calmet_omp.x`
+./engine/run_calmet/并行计算的尝试.md:51:  - `calmet_omp.dat`
+./engine/run_calmet/并行计算的尝试.md:52:  - `calmet_omp.lst`
+./engine/run_calmet/并行计算的尝试.md:53:  - `calmet_omp_runtime.log`
+./engine/run_calmet/并行计算的尝试.md:61:  - `cmp calmet_serial.dat calmet_omp.dat` -> different (`RC=1`)
+./engine/run_calmet/并行计算的尝试.md:62:  - `cmp calmet_serial.lst calmet_omp.lst` -> different (`RC=1`)
+./engine/run_calmet/并行计算的尝试.md:64:  - `calmet_serial.dat`: `b1161bcc2c4921e471b696378eb610df29a9e3dc940490c8e9870bb9292d1056`
+./engine/run_calmet/并行计算的尝试.md:65:  - `calmet_omp.dat`: `3f8f602db6958960a440d777bdd75e07598edd0be70b5fd9d3a6799f4611bd4d`
+./engine/run_calmet/并行计算的尝试.md:66:  - `calmet_serial.lst`: `abcc741429967b92cce3e9e97d618d363a4ba25c1aff4e1e894596c0df69e808`
+./engine/run_calmet/并行计算的尝试.md:67:  - `calmet_omp.lst`: `cf1955e4b32a1335672bc8132ea7a08dd245f3ce5d8833da371374925eb3f882`
+./engine/run_calmet/并行计算的尝试.md:71:- Current recommendation: **abandon this parallel variant** and keep serial `calmet.x` as default.
+./engine/run_calmet/并行计算的尝试.md:72:- Note: source patch and `calmet_omp.x` are preserved for traceability; backups are available for full rollback.
+./engine/run_calmet/并行计算的尝试.md:88:- Serial command: `calmet.x` (timed with `/usr/bin/time`)
+./engine/run_calmet/并行计算的尝试.md:90:- OMP command: `OMP_NUM_THREADS=6 calmet_omp.x` (oneAPI env sourced)
+./engine/run_calmet/并行计算的尝试.md:96:- `cmp calmet_serial.dat calmet_omp.dat` -> `RC=1` (different)
+./engine/run_calmet/并行计算的尝试.md:97:- `cmp calmet_serial.lst calmet_omp.lst` -> `RC=1` (different)
+./engine/run_calmet/并行计算的尝试.md:99:  - `calmet_serial.dat`: `631bfc81cc3fd38c98d9acf9b1cf5a447795c05071493058591ddc89244f6325`
+./engine/run_calmet/并行计算的尝试.md:100:  - `calmet_omp.dat`: `7d694888263b583fa6c6709e245d684bee5a1400a0db12a31050cccab0e776f4`
+./engine/run_calmet/并行计算的尝试.md:101:  - `calmet_serial.lst`: `f73afbec4df5fd20db2682bd916ed8a8203e118f248eb41b31f6cc1285b2e4c6`
+./engine/run_calmet/并行计算的尝试.md:102:  - `calmet_omp.lst`: `8f8edb4bc2cbca0941e333a8ef7a3214b15f5ca6c714b609469a19242449537f`
+./engine/run_calmet/并行计算的尝试.md:108:- Keep serial `calmet.x` as default execution path.
+./engine/run_calmet/run_calmet.py:15:from .prepare_calmet import render_calmet_inp
+./engine/run_calmet/run_calmet.py:18:RUNTIME_LOG = "calmet_runtime.log"
+./engine/run_calmet/run_calmet.py:54:    ap = argparse.ArgumentParser(description="Render and run CALMET for the current case")
+./engine/run_calmet/run_calmet.py:56:    ap.add_argument("--skip-prepare", action="store_true", help="Skip input rendering and use existing calmet.inp")
+./engine/run_calmet/run_calmet.py:60:    work_dir = case_paths(config, case_name, required=["run_calmet_dir"])["run_calmet_dir"]
+./engine/run_calmet/run_calmet.py:62:    inp_path = work_dir / "calmet.inp"
+./engine/run_calmet/run_calmet.py:65:        rendered, _summary = render_calmet_inp(case_name, config, work_dir)
+./engine/run_calmet/run_calmet.py:69:        resolve_executable("calmet")
+./engine/run_calmet/run_calmet.py:74:        print(f"[ERROR] calmet.inp not found: {inp_path}")
+./engine/run_calmet/run_calmet.py:78:    metlst = resolve_from_workdir(work_dir, parse_inp_assignment(inp_text, "METLST"), "calmet.lst")
+./engine/run_calmet/run_calmet.py:79:    metdat = resolve_from_workdir(work_dir, parse_inp_assignment(inp_text, "METDAT"), "calmet.dat")
+./engine/run_calmet/run_calmet.py:92:    print("[INFO] 可通过 calmet.lst 查询报错原因")
+./engine/run_calmet/run_calmet.py:93:    print("[INFO] 可通过 calmet_runtime.log 查询实时进程")
+./engine/run_calmet/run_calmet.py:98:            "calmet",
+./engine/run_calmet/README.md:1:# run_calmet
+./engine/run_calmet/README.md:3:本目录提供 CALMET 第一阶段自动化脚本：
+./engine/run_calmet/README.md:5:- `prepare_calmet.py`
+./engine/run_calmet/README.md:6:  - 从 `project/current` 和 `case.yaml` 渲染 `project/current/run/calmet/calmet.inp`
+./engine/run_calmet/README.md:7:- `run_calmet.py`
+./engine/run_calmet/README.md:8:  - 调用 `calmet.x`
+./engine/run_calmet/README.md:9:  - 写运行日志并检查 `calmet.lst` / `calmet.dat`
+./engine/run_calmet/README.md:22:仅生成 `calmet.inp`：
+./engine/run_calmet/README.md:25:python3 /home/ai/code/calpuff/tutorial/run_calmet/prepare_calmet.py
+./engine/run_calmet/README.md:31:python3 /home/ai/code/calpuff/tutorial/run_calmet/run_calmet.py
+./engine/run_calmet/README.md:40:当前支持的 `calmet` 配置骨架：
+./engine/run_calmet/README.md:43:calmet:
+./engine/run_calmet/README.md:76:- `project/current/run/calmet`
+./engine/run_calmet/README.md:80:- `calmet.inp`
+./engine/run_calmet/README.md:81:- `calmet.lst`
+./engine/run_calmet/README.md:82:- `calmet.dat`
+./engine/run_calmet/README.md:83:- `calmet_runtime.log`
+./engine/run_calmet/README.md:85:## `calmet.inp` 迁移规则（必须改 / 可选改）
+./docs/run_gui.md:23:./calpuff-cli desktopgui
+./docs/run_gui.md:29:./calpuff-cli
+./docs/regression_test_after_path_refactor.md:46:./.venv/bin/python -m engine.run_calmet.prepare_calmet --case smoke5d
+./docs/regression_test_after_path_refactor.md:47:./.venv/bin/python -m engine.run_calpuff.prepare_calpuff --case smoke5d
+./docs/regression_test_after_path_refactor.md:52:./.venv/bin/python -c "import engine.pyside_gui, engine.gui.workbench, engine.preprocess.read62_upperair_data.run_read62, engine.preprocess.smerge_surf_data.run_smerge_and_monitor, engine.run_calmet.run_calmet, engine.run_calpuff.run_calpuff, engine.orchestrator.cli; print('[OK] GUI and runtime module imports passed')"
+./docs/regression_test_after_path_refactor.md:56:./.venv/bin/python -m engine.run_calmet.run_calmet --case smoke5d --skip-prepare
+./docs/regression_test_after_path_refactor.md:57:./.venv/bin/python -m engine.run_calpuff.run_calpuff --case smoke5d --skip-prepare
+./docs/regression_test_after_path_refactor.md:63:./.venv/bin/python -m engine.postprocessing.plot_daily_from_calpuff \
+./docs/regression_test_after_path_refactor.md:64:  --conc-file project/current/run/calpuff/calpuff.con \
+./docs/regression_test_after_path_refactor.md:65:  --calmet-inp project/current/run/calmet/calmet.inp \
+./docs/regression_test_after_path_refactor.md:67:  --csv-output project/current/run/calpuff/postprocessing/regression_point_timeseries.csv \
+./docs/regression_test_after_path_refactor.md:68:  --output project/current/run/calpuff/postprocessing/regression_daily_concentration.png
+./docs/regression_test_after_path_refactor.md:71:  --output project/current/run/calpuff/postprocessing/regression_windrose.png \
+./docs/regression_test_after_path_refactor.md:76:./.venv/bin/python -m engine.postprocessing.plot_calpuff_snapshot \
+./docs/regression_test_after_path_refactor.md:78:  --conc-file project/current/run/calpuff/calpuff.con \
+./docs/regression_test_after_path_refactor.md:79:  --calmet-inp project/current/run/calmet/calmet.inp \
+./docs/regression_test_after_path_refactor.md:80:  --out project/current/run/calpuff/postprocessing/regression_snapshot.png \
+./docs/regression_test_after_path_refactor.md:82:  --terrain-file project/current/run/calpuff/qaterr.grd
+./docs/regression_test_after_path_refactor.md:100:- CALMET input rendering passed.
+./docs/regression_test_after_path_refactor.md:101:- CALPUFF input rendering passed.
+./docs/regression_test_after_path_refactor.md:137:### 3. CALMET runtime execution did not complete
+./docs/regression_test_after_path_refactor.md:140:  - `./.venv/bin/python -m engine.run_calmet.run_calmet --case smoke5d --skip-prepare`
+./docs/regression_test_after_path_refactor.md:147:### 4. CALPUFF runtime execution did not complete
+./docs/regression_test_after_path_refactor.md:150:  - `./.venv/bin/python -m engine.run_calpuff.run_calpuff --case smoke5d --skip-prepare`
+./docs/regression_test_after_path_refactor.md:183:  - `calmet.x`
+./docs/regression_test_after_path_refactor.md:184:  - `calpuff.x`
+./engine/run_calmet/prepare_calmet.py:63:        raise RuntimeError("Cannot locate CALMET Subgroup (b) data boundaries")
+./engine/run_calmet/prepare_calmet.py:162:def render_calmet_inp(case_name: str, config: dict[str, Any], work_dir: Path) -> tuple[str, dict[str, Any]]:
+./engine/run_calmet/prepare_calmet.py:166:        required=["geo_makegeo_dir", "met_surface_dir", "met_upperair_dir", "run_calmet_dir"],
+./engine/run_calmet/prepare_calmet.py:181:        raise FileNotFoundError(f"Required CALMET inputs missing: {', '.join(missing)}")
+./engine/run_calmet/prepare_calmet.py:188:    calmet_cfg = config.get("calmet", {})
+./engine/run_calmet/prepare_calmet.py:189:    station_cfg = calmet_cfg.get("station_selection", {})
+./engine/run_calmet/prepare_calmet.py:190:    options = calmet_cfg.get("options", {})
+./engine/run_calmet/prepare_calmet.py:218:        "METLST": "calmet.lst",
+./engine/run_calmet/prepare_calmet.py:219:        "METDAT": "calmet.dat",
+./engine/run_calmet/prepare_calmet.py:301:    ap = argparse.ArgumentParser(description="Render CALMET input file from current case metadata")
+./engine/run_calmet/prepare_calmet.py:303:    ap.add_argument("--output", help="Override output path; default project/current/run/calmet/calmet.inp")
+./engine/run_calmet/prepare_calmet.py:307:    work_dir = case_paths(config, case_name, required=["run_calmet_dir"])["run_calmet_dir"]
+./engine/run_calmet/prepare_calmet.py:309:    output = Path(args.output).resolve() if args.output else (work_dir / "calmet.inp")
+./engine/run_calmet/prepare_calmet.py:311:    rendered, summary = render_calmet_inp(case_name, config, work_dir)
+./engine/run_calmet/prepare_calmet.py:314:    print(f"Rendered CALMET input: {output}")
+./scripts/build_native_linux_arm64.sh:53:build calmet \
+./scripts/build_native_linux_arm64.sh:54:  engine/vendor/src/CALMET_v6.5.0_L150223/calutils.for \
+./scripts/build_native_linux_arm64.sh:55:  engine/vendor/src/CALMET_v6.5.0_L150223/coordlib.for \
+./scripts/build_native_linux_arm64.sh:56:  engine/vendor/src/CALMET_v6.5.0_L150223/auxutils.for \
+./scripts/build_native_linux_arm64.sh:57:  engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+./scripts/build_native_linux_arm64.sh:59:build calpuff \
+./scripts/build_native_linux_arm64.sh:60:  engine/vendor/src/CALPUFF_v7.2.1_L150618/calutils.for \
+./scripts/build_native_linux_arm64.sh:61:  engine/vendor/src/CALPUFF_v7.2.1_L150618/coordlib.for \
+./scripts/build_native_linux_arm64.sh:62:  engine/vendor/src/CALPUFF_v7.2.1_L150618/api_chem.for \
+./scripts/build_native_linux_arm64.sh:63:  engine/vendor/src/CALPUFF_v7.2.1_L150618/isorropia_v2.2.for \
+./scripts/build_native_linux_arm64.sh:64:  engine/vendor/src/CALPUFF_v7.2.1_L150618/lwcsubs.for \
+./scripts/build_native_linux_arm64.sh:65:  engine/vendor/src/CALPUFF_v7.2.1_L150618/modules.for \
+./scripts/build_native_linux_arm64.sh:66:  engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+./pyproject.toml:8:description = "Tritium environmental assessment workflow based on Python, CALMET, and CALPUFF."
+./WEBGUI_USAGE.md:11:./calpuff-cli desktopgui
+./WEBGUI_USAGE.md:18:./calpuff-cli run --case smoke5d --stage all
+./WEBGUI_USAGE.md:21:如果执行 `./calpuff-cli webgui` 或 `./calpuff-cli streamlitgui`，现在会直接返回明确错误，不再启动本地 Web 服务。
+./engine/templates/calpuff.inp:7:                    CALPUFF MODEL CONTROL FILE
+./engine/templates/calpuff.inp:17:CALMET.DAT    output   ! METDAT=../calmet/calmet.dat      !
+./engine/templates/calpuff.inp:27:CALPUFF.LST   output   ! PUFLST =calpuff.lst !
+./engine/templates/calpuff.inp:28:CONC.DAT      output   ! CONDAT =calpuff.con !
+./engine/templates/calpuff.inp:78:     Number of CALMET.DAT files for run (NMETDAT)
+./engine/templates/calpuff.inp:96:  Provide a name for each CALMET domain if NMETDOM > 1
+./engine/templates/calpuff.inp:106:  The following CALMET.DAT filenames are processed in sequence
+./engine/templates/calpuff.inp:120:     The name for each CALMET domain and each CALMET.DAT file is treated
+./engine/templates/calpuff.inp:124:     Use DOMAIN1= to assign the name for the outermost CALMET domain.
+./engine/templates/calpuff.inp:125:     Use DOMAIN2= to assign the name for the next inner CALMET domain.
+./engine/templates/calpuff.inp:126:     Use DOMAIN3= to assign the name for the next inner CALMET domain, etc.
+./engine/templates/calpuff.inp:134:     Use METDAT1= to assign the file names for the outermost CALMET domain.
+./engine/templates/calpuff.inp:135:     Use METDAT2= to assign the file names for the next inner CALMET domain.
+./engine/templates/calpuff.inp:136:     Use METDAT3= to assign the file names for the next inner CALMET domain, etc.
+./engine/templates/calpuff.inp:259:           METFM = 1 - CALMET binary file (CALMET.MET)
+./engine/templates/calpuff.inp:314:        2 = simple, CALPUFF-type of terrain
+./engine/templates/calpuff.inp:392:        1 = gridded cloud water data read from CALMET
+./engine/templates/calpuff.inp:394:            the CALMET.DAT names PLUS the extension
+./engine/templates/calpuff.inp:489:        1 = Standard CALPUFF subroutines
+./engine/templates/calpuff.inp:552:     using CALPUFF in conjunction with a cooling tower emissions
+./engine/templates/calpuff.inp:556:     conditions by CTEMISS. CALPUFF models the dispersion of these
+./engine/templates/calpuff.inp:718:     models may be in use, and their selection in CALMET will make its output
+./engine/templates/calpuff.inp:985:       CALPUFF coordinate system, in Kilometers (MHILL=1)
+./engine/templates/calpuff.inp:988:       CALPUFF coordinate system, in Kilometers (MHILL=1)
+./engine/templates/calpuff.inp:1402:     that includes gradual rise (for CALMET
+./docs/refactor_logs/before_structure_refactor_git_status.txt:32: M engine/run_calmet/common.py
+./docs/refactor_logs/before_structure_refactor_git_status.txt:33: M engine/run_calmet/run_calmet.py
+./docs/refactor_logs/before_structure_refactor_git_status.txt:34: M engine/run_calpuff/common.py
+./docs/refactor_logs/before_structure_refactor_git_status.txt:35: M engine/run_calpuff/run_calpuff.py
+./docs/refactor_logs/before_structure_refactor_git_status.txt:37: M engine/vendor/src/CALMET_v6.5.0_L150223/auxdat.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:38: M engine/vendor/src/CALMET_v6.5.0_L150223/auxutils.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:39: M engine/vendor/src/CALMET_v6.5.0_L150223/auxvar.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:40: M engine/vendor/src/CALMET_v6.5.0_L150223/blockdat.crd
+./docs/refactor_logs/before_structure_refactor_git_status.txt:41: M engine/vendor/src/CALMET_v6.5.0_L150223/breez.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:42: M engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:43: M engine/vendor/src/CALMET_v6.5.0_L150223/calutils.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:44: M engine/vendor/src/CALMET_v6.5.0_L150223/coordlib.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:45: M engine/vendor/src/CALMET_v6.5.0_L150223/cpl.bat
+./docs/refactor_logs/before_structure_refactor_git_status.txt:46: M engine/vendor/src/CALMET_v6.5.0_L150223/cpl.txt
+./docs/refactor_logs/before_structure_refactor_git_status.txt:47: M engine/vendor/src/CALMET_v6.5.0_L150223/d1.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:48: M engine/vendor/src/CALMET_v6.5.0_L150223/d3.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:49: M engine/vendor/src/CALMET_v6.5.0_L150223/d4.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:50: M engine/vendor/src/CALMET_v6.5.0_L150223/d6.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:51: M engine/vendor/src/CALMET_v6.5.0_L150223/filnam.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:52: M engine/vendor/src/CALMET_v6.5.0_L150223/flags.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:53: M engine/vendor/src/CALMET_v6.5.0_L150223/gen.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:54: M engine/vendor/src/CALMET_v6.5.0_L150223/geo.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:55: M engine/vendor/src/CALMET_v6.5.0_L150223/grid.cmn
+./docs/refactor_logs/before_structure_refactor_git_status.txt:56: M engine/vendor/src/CALMET_v6.5.0_L150223/grid.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:57: M engine/vendor/src/CALMET_v6.5.0_L150223/hflux.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:58: M engine/vendor/src/CALMET_v6.5.0_L150223/igf.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:59: M engine/vendor/src/CALMET_v6.5.0_L150223/lon.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:60: M engine/vendor/src/CALMET_v6.5.0_L150223/m3dmet.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:61: M engine/vendor/src/CALMET_v6.5.0_L150223/map.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:62: M engine/vendor/src/CALMET_v6.5.0_L150223/met1.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:63: M engine/vendor/src/CALMET_v6.5.0_L150223/met2.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:64: M engine/vendor/src/CALMET_v6.5.0_L150223/met3.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:65: M engine/vendor/src/CALMET_v6.5.0_L150223/metgrd.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:66: M engine/vendor/src/CALMET_v6.5.0_L150223/metpac.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:67: M engine/vendor/src/CALMET_v6.5.0_L150223/mm4hdo.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:68: M engine/vendor/src/CALMET_v6.5.0_L150223/nima.crd
+./docs/refactor_logs/before_structure_refactor_git_status.txt:69: M engine/vendor/src/CALMET_v6.5.0_L150223/outpt.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:70: M engine/vendor/src/CALMET_v6.5.0_L150223/ovrwat.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:71: M engine/vendor/src/CALMET_v6.5.0_L150223/params.cal
+./docs/refactor_logs/before_structure_refactor_git_status.txt:72: M engine/vendor/src/CALMET_v6.5.0_L150223/params.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:73: M engine/vendor/src/CALMET_v6.5.0_L150223/qa.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:74: M engine/vendor/src/CALMET_v6.5.0_L150223/tmp.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:75: M engine/vendor/src/CALMET_v6.5.0_L150223/tmpold.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:76: M engine/vendor/src/CALMET_v6.5.0_L150223/upmet.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:77: M engine/vendor/src/CALMET_v6.5.0_L150223/wparm.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:78: M engine/vendor/src/CALMET_v6.5.0_L150223/wtgrd.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:79: M engine/vendor/src/CALMET_v6.5.0_L150223/y2k.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:80: M engine/vendor/src/CALMET_v6.5.0_L150223/ziparm.met
+./docs/refactor_logs/before_structure_refactor_git_status.txt:81: M engine/vendor/src/CALPUFF_v7.2.1_L150618/ambient.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:82: M engine/vendor/src/CALPUFF_v7.2.1_L150618/api_chem.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:83: M engine/vendor/src/CALPUFF_v7.2.1_L150618/aqueous.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:84: M engine/vendor/src/CALPUFF_v7.2.1_L150618/ar1.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:85: M engine/vendor/src/CALPUFF_v7.2.1_L150618/ar2.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:86: M engine/vendor/src/CALPUFF_v7.2.1_L150618/auxdat.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:87: M engine/vendor/src/CALPUFF_v7.2.1_L150618/auxhd.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:88: M engine/vendor/src/CALPUFF_v7.2.1_L150618/bcs.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:89: M engine/vendor/src/CALPUFF_v7.2.1_L150618/blockdat.crd
+./docs/refactor_logs/before_structure_refactor_git_status.txt:90: M engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:91: M engine/vendor/src/CALPUFF_v7.2.1_L150618/calutils.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:92: M engine/vendor/src/CALPUFF_v7.2.1_L150618/chemdat.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:93: M engine/vendor/src/CALPUFF_v7.2.1_L150618/chiflx.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:94: M engine/vendor/src/CALPUFF_v7.2.1_L150618/coastln.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:95: M engine/vendor/src/CALPUFF_v7.2.1_L150618/comparm.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:96: M engine/vendor/src/CALPUFF_v7.2.1_L150618/const.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:97: M engine/vendor/src/CALPUFF_v7.2.1_L150618/coordlib.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:98: M engine/vendor/src/CALPUFF_v7.2.1_L150618/cpl_calpuff.bat
+./docs/refactor_logs/before_structure_refactor_git_status.txt:99: M engine/vendor/src/CALPUFF_v7.2.1_L150618/cpl_unix.bat
+./docs/refactor_logs/before_structure_refactor_git_status.txt:100: M engine/vendor/src/CALPUFF_v7.2.1_L150618/csigma.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:101: M engine/vendor/src/CALPUFF_v7.2.1_L150618/ctpass.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:102: M engine/vendor/src/CALPUFF_v7.2.1_L150618/ctsgdat.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:103: M engine/vendor/src/CALPUFF_v7.2.1_L150618/current.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:104: M engine/vendor/src/CALPUFF_v7.2.1_L150618/dataset.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:105: M engine/vendor/src/CALPUFF_v7.2.1_L150618/datehr.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:106: M engine/vendor/src/CALPUFF_v7.2.1_L150618/dispdat.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:107: M engine/vendor/src/CALPUFF_v7.2.1_L150618/drydep.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:108: M engine/vendor/src/CALPUFF_v7.2.1_L150618/drygas.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:109: M engine/vendor/src/CALPUFF_v7.2.1_L150618/drypart.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:110: M engine/vendor/src/CALPUFF_v7.2.1_L150618/filnam.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:111: M engine/vendor/src/CALPUFF_v7.2.1_L150618/fl1.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:112: M engine/vendor/src/CALPUFF_v7.2.1_L150618/fl2.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:113: M engine/vendor/src/CALPUFF_v7.2.1_L150618/flags.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:114: M engine/vendor/src/CALPUFF_v7.2.1_L150618/flvar.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:115: M engine/vendor/src/CALPUFF_v7.2.1_L150618/fog.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:116: M engine/vendor/src/CALPUFF_v7.2.1_L150618/gen.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:117: M engine/vendor/src/CALPUFF_v7.2.1_L150618/grid.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:118: M engine/vendor/src/CALPUFF_v7.2.1_L150618/gridnest.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:119: M engine/vendor/src/CALPUFF_v7.2.1_L150618/headbc2.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:120: M engine/vendor/src/CALPUFF_v7.2.1_L150618/isorropia_v2.2.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:121: M engine/vendor/src/CALPUFF_v7.2.1_L150618/isrpia.inc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:122: M engine/vendor/src/CALPUFF_v7.2.1_L150618/ln1.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:123: M engine/vendor/src/CALPUFF_v7.2.1_L150618/ln2.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:124: M engine/vendor/src/CALPUFF_v7.2.1_L150618/lwcsubs.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:125: M engine/vendor/src/CALPUFF_v7.2.1_L150618/map.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:126: M engine/vendor/src/CALPUFF_v7.2.1_L150618/methd.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:127: M engine/vendor/src/CALPUFF_v7.2.1_L150618/methr.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:128: M engine/vendor/src/CALPUFF_v7.2.1_L150618/mflux.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:129: M engine/vendor/src/CALPUFF_v7.2.1_L150618/modules.for
+./docs/refactor_logs/before_structure_refactor_git_status.txt:130: M engine/vendor/src/CALPUFF_v7.2.1_L150618/msbal.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:131: M engine/vendor/src/CALPUFF_v7.2.1_L150618/nesthd.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:132: M engine/vendor/src/CALPUFF_v7.2.1_L150618/newsoa.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:133: M engine/vendor/src/CALPUFF_v7.2.1_L150618/nh3z.dat
+./docs/refactor_logs/before_structure_refactor_git_status.txt:134: M engine/vendor/src/CALPUFF_v7.2.1_L150618/nima.crd
+./docs/refactor_logs/before_structure_refactor_git_status.txt:135: M engine/vendor/src/CALPUFF_v7.2.1_L150618/nongrd.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:136: M engine/vendor/src/CALPUFF_v7.2.1_L150618/numparm.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:137: M engine/vendor/src/CALPUFF_v7.2.1_L150618/options.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:138: M engine/vendor/src/CALPUFF_v7.2.1_L150618/outpt.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:139: M engine/vendor/src/CALPUFF_v7.2.1_L150618/params.cal
+./docs/refactor_logs/before_structure_refactor_git_status.txt:140: M engine/vendor/src/CALPUFF_v7.2.1_L150618/params.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:141: M engine/vendor/src/CALPUFF_v7.2.1_L150618/params_keep.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:142: M engine/vendor/src/CALPUFF_v7.2.1_L150618/pdf.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:143: M engine/vendor/src/CALPUFF_v7.2.1_L150618/pt1.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:144: M engine/vendor/src/CALPUFF_v7.2.1_L150618/pt2.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:145: M engine/vendor/src/CALPUFF_v7.2.1_L150618/puff.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:146: M engine/vendor/src/CALPUFF_v7.2.1_L150618/qa.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:147: M engine/vendor/src/CALPUFF_v7.2.1_L150618/qscale.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:148: M engine/vendor/src/CALPUFF_v7.2.1_L150618/restarthd.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:149: M engine/vendor/src/CALPUFF_v7.2.1_L150618/slug.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:150: M engine/vendor/src/CALPUFF_v7.2.1_L150618/soa.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:151: M engine/vendor/src/CALPUFF_v7.2.1_L150618/soadat.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:152: M engine/vendor/src/CALPUFF_v7.2.1_L150618/srctab.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:153: M engine/vendor/src/CALPUFF_v7.2.1_L150618/tibl.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:154: M engine/vendor/src/CALPUFF_v7.2.1_L150618/trak.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:155: M engine/vendor/src/CALPUFF_v7.2.1_L150618/vol1.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:156: M engine/vendor/src/CALPUFF_v7.2.1_L150618/vol2.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:157: M engine/vendor/src/CALPUFF_v7.2.1_L150618/wakedat.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:158: M engine/vendor/src/CALPUFF_v7.2.1_L150618/wakedfsn.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:159: M engine/vendor/src/CALPUFF_v7.2.1_L150618/wetdat.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:160: M engine/vendor/src/CALPUFF_v7.2.1_L150618/wrkspc.puf
+./docs/refactor_logs/before_structure_refactor_git_status.txt:288:?? engine/postprocessing/__pycache__/plot_calpuff_animation.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:289:?? engine/postprocessing/__pycache__/plot_calpuff_annual.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:290:?? engine/postprocessing/__pycache__/plot_calpuff_seasonal.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:291:?? engine/postprocessing/__pycache__/plot_calpuff_snapshot.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:293:?? engine/postprocessing/__pycache__/plot_daily_from_calpuff.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:311:?? engine/run_calmet/__pycache__/__init__.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:312:?? engine/run_calmet/__pycache__/common.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:313:?? engine/run_calmet/__pycache__/prepare_calmet.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:314:?? engine/run_calmet/__pycache__/run_calmet.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:315:?? engine/run_calpuff/__pycache__/__init__.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:316:?? engine/run_calpuff/__pycache__/common.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:317:?? engine/run_calpuff/__pycache__/prepare_calpuff.cpython-314.pyc
+./docs/refactor_logs/before_structure_refactor_git_status.txt:318:?? engine/run_calpuff/__pycache__/run_calpuff.cpython-314.pyc
+./docs/path_inventory.md:32:| `engine/postprocessing/_core.py` | `internal_project_path` | Replaced default CALPUFF/CALMET/postprocessing paths with `current_project_path(...)`; local font uses `tutorial_path(...)`. |
+./docs/path_inventory.md:35:| `engine/postprocessing/extract_point_data.py` | `internal_project_path` | Replaced default CALPUFF/CALMET/postprocessing paths with `current_project_path(...)`. |
+./docs/path_inventory.md:54:| `engine/preprocess/*`, `engine/run_calmet/run_calmet.py`, `engine/run_calpuff/run_calpuff.py` | `binary_path` | Native calls route through `resolve_executable()`, `executable_path()`, or `run_binary()`. |
+./docs/path_inventory.md:81:| CALPUFF/CALMET template keys such as `XREFKM`, `xorig_km`, `point_x_km` | `display_only_path` | Domain variable names, not paths. |
+./docs/project_structure_for_chatgpt.md:76:./calpuff_terrain_and_landuse_data
+./docs/project_structure_for_chatgpt.md:93:- CALMET code:
+./docs/project_structure_for_chatgpt.md:94:  - `engine/run_calmet/`
+./docs/project_structure_for_chatgpt.md:95:- CALPUFF code:
+./docs/project_structure_for_chatgpt.md:96:  - `engine/run_calpuff/`
+./docs/project_structure_for_chatgpt.md:110:  - `calpuff_terrain_and_landuse_data/`
+./docs/project_structure_for_chatgpt.md:143:- `calpuff-cli`
+./docs/project_structure_for_chatgpt.md:147:- `./calpuff-cli webgui` -> removed with explicit error
+./docs/project_structure_for_chatgpt.md:148:- `./calpuff-cli desktopgui` -> `python -m engine.ui.desktop.main`
+./docs/project_structure_for_chatgpt.md:149:- `./calpuff-cli streamlitgui` -> removed with explicit error
+./docs/project_structure_for_chatgpt.md:169:./calpuff-cli desktopgui
+./docs/project_structure_for_chatgpt.md:189:  - `--stage` in `preprocess|upperair|surface|calmet|calpuff|all`
+./docs/project_structure_for_chatgpt.md:197:python3 -m engine.orchestrator.cli run --case smoke5d --stage calmet
+./docs/project_structure_for_chatgpt.md:262:## CALMET entrypoints
+./docs/project_structure_for_chatgpt.md:265:  - `engine.run_calmet.prepare_calmet`
+./docs/project_structure_for_chatgpt.md:267:  - `engine.run_calmet.run_calmet`
+./docs/project_structure_for_chatgpt.md:272:python3 -m engine.run_calmet.prepare_calmet --case smoke5d
+./docs/project_structure_for_chatgpt.md:273:python3 -m engine.run_calmet.run_calmet --case smoke5d
+./docs/project_structure_for_chatgpt.md:274:python3 -m engine.run_calmet.run_calmet --case smoke5d --skip-prepare
+./docs/project_structure_for_chatgpt.md:277:## CALPUFF entrypoints
+./docs/project_structure_for_chatgpt.md:280:  - `engine.run_calpuff.prepare_calpuff`
+./docs/project_structure_for_chatgpt.md:282:  - `engine.run_calpuff.run_calpuff`
+./docs/project_structure_for_chatgpt.md:287:python3 -m engine.run_calpuff.prepare_calpuff --case smoke5d
+./docs/project_structure_for_chatgpt.md:288:python3 -m engine.run_calpuff.run_calpuff --case smoke5d
+./docs/project_structure_for_chatgpt.md:289:python3 -m engine.run_calpuff.run_calpuff --case smoke5d --skip-prepare
+./docs/project_structure_for_chatgpt.md:296:- `engine.postprocessing.plot_calpuff_snapshot`
+./docs/project_structure_for_chatgpt.md:297:- `engine.postprocessing.plot_calpuff_animation`
+./docs/project_structure_for_chatgpt.md:298:- `engine.postprocessing.plot_calpuff_annual`
+./docs/project_structure_for_chatgpt.md:299:- `engine.postprocessing.plot_calpuff_seasonal`
+./docs/project_structure_for_chatgpt.md:301:- `engine.postprocessing.plot_daily_from_calpuff`
+./docs/project_structure_for_chatgpt.md:308:python3 -m engine.postprocessing.plot_calpuff_snapshot --mode snapshot --conc-file project/current/run/calpuff/calpuff.con --calmet-inp project/current/run/calmet/calmet.inp
+./docs/project_structure_for_chatgpt.md:309:python3 -m engine.postprocessing.extract_point_data --conc-file project/current/run/calpuff/calpuff.con --calmet-inp project/current/run/calmet/calmet.inp --x 500.0 --y 3540.436
+./docs/project_structure_for_chatgpt.md:310:python3 -m engine.postprocessing.plot_daily_from_calpuff --conc-file project/current/run/calpuff/calpuff.con --calmet-inp project/current/run/calmet/calmet.inp --x 500.0 --y 3540.436
+./docs/project_structure_for_chatgpt.md:456:| `bin/linux-x86_64/calmet.x` | ELF 64-bit LSB executable, x86-64, dynamically linked, GNU/Linux 3.2.0 | yes | diagnostic wind field / CALMET |
+./docs/project_structure_for_chatgpt.md:457:| `bin/linux-x86_64/calpuff.x` | ELF 64-bit LSB executable, x86-64, dynamically linked, GNU/Linux 3.2.0 | yes | puff dispersion model / CALPUFF |
+./docs/project_structure_for_chatgpt.md:503:### CALMET
+./docs/project_structure_for_chatgpt.md:506:  - `engine.run_calmet.run_calmet`
+./docs/project_structure_for_chatgpt.md:508:  - `calmet.x`
+./docs/project_structure_for_chatgpt.md:510:  - `resolve_executable("calmet")`
+./docs/project_structure_for_chatgpt.md:511:  - `run_binary("calmet", ...)`
+./docs/project_structure_for_chatgpt.md:513:### CALPUFF
+./docs/project_structure_for_chatgpt.md:516:  - `engine.run_calpuff.run_calpuff`
+./docs/project_structure_for_chatgpt.md:518:  - `calpuff.x`
+./docs/project_structure_for_chatgpt.md:520:  - `resolve_executable("calpuff")`
+./docs/project_structure_for_chatgpt.md:521:  - `run_binary("calpuff", ...)`
+./docs/project_structure_for_chatgpt.md:645:- `project/current/run/calmet/calmet.inp`
+./docs/project_structure_for_chatgpt.md:646:- `project/current/run/calpuff/calpuff.inp`
+./docs/project_structure_for_chatgpt.md:660:- `project/current/deliverables/calmet/calmet.dat`
+./docs/project_structure_for_chatgpt.md:661:- `project/current/deliverables/calmet/calmet.lst`
+./docs/project_structure_for_chatgpt.md:662:- `project/current/deliverables/calpuff/calpuff.con`
+./docs/project_structure_for_chatgpt.md:663:- `project/current/run/calpuff/calpuff.lst`
+./docs/project_structure_for_chatgpt.md:669:### Will READ62 / CALMET / CALPUFF overwrite current results?
+./docs/project_structure_for_chatgpt.md:682:#### CALMET
+./docs/project_structure_for_chatgpt.md:686:- `project/current/run/calmet/calmet.inp`
+./docs/project_structure_for_chatgpt.md:687:- `project/current/run/calmet/calmet_runtime.log`
+./docs/project_structure_for_chatgpt.md:688:- `project/current/run/calmet/calmet.dat`
+./docs/project_structure_for_chatgpt.md:689:- `project/current/run/calmet/calmet.lst`
+./docs/project_structure_for_chatgpt.md:693:- `project/current/deliverables/calmet/calmet.dat`
+./docs/project_structure_for_chatgpt.md:694:- `project/current/deliverables/calmet/calmet.lst`
+./docs/project_structure_for_chatgpt.md:696:#### CALPUFF
+./docs/project_structure_for_chatgpt.md:700:- `project/current/run/calpuff/calpuff.inp`
+./docs/project_structure_for_chatgpt.md:701:- `project/current/run/calpuff/calpuff_runtime.log`
+./docs/project_structure_for_chatgpt.md:702:- `project/current/run/calpuff/calpuff.lst`
+./docs/project_structure_for_chatgpt.md:703:- `project/current/run/calpuff/calpuff.con`
+./docs/project_structure_for_chatgpt.md:707:- `project/current/deliverables/calpuff/calpuff.con`
+./docs/project_structure_for_chatgpt.md:786:echo "=== smoke: calmet ==="
+./docs/project_structure_for_chatgpt.md:787:if python -m engine.run_calmet.run_calmet --case smoke5d --skip-prepare; then
+./docs/project_structure_for_chatgpt.md:788:  echo "[OK] CALMET finished"
+./docs/project_structure_for_chatgpt.md:790:  echo "[FAIL] CALMET failed"
+./docs/project_structure_for_chatgpt.md:793:echo "=== smoke: calpuff ==="
+./docs/project_structure_for_chatgpt.md:794:if python -m engine.run_calpuff.run_calpuff --case smoke5d --skip-prepare; then
+./docs/project_structure_for_chatgpt.md:795:  echo "[OK] CALPUFF finished"
+./docs/project_structure_for_chatgpt.md:797:  echo "[FAIL] CALPUFF failed"
+./docs/project_structure_for_chatgpt.md:863:- This is a Python-controlled CALPUFF workflow project.
+./docs/project_structure_for_chatgpt.md:864:- Python orchestrates case management, preprocessing, CALMET, CALPUFF, and postprocessing.
+./ENV_SETUP.md:1:# Environment Setup (CALPUFF tutorial)
+./ENV_SETUP.md:25:./calpuff-cli run --case test --stage all
+./ENV_SETUP.md:40:./calpuff-cli desktopgui
+./engine/core/paths.py:47:    "calmet": TEMPLATES_DIR / "calmet.inp",
+./engine/core/paths.py:48:    "calpuff": TEMPLATES_DIR / "calpuff.inp",
+./scripts/test_linux_x86_64_runtime_in_docker.sh:135:python -m engine.run_calmet.prepare_calmet --case "$CASE_NAME"
+./scripts/test_linux_x86_64_runtime_in_docker.sh:136:python -m engine.run_calpuff.prepare_calpuff --case "$CASE_NAME"
+./scripts/test_linux_x86_64_runtime_in_docker.sh:140:python -m engine.run_calmet.run_calmet --case "$CASE_NAME" --skip-prepare || true
+./scripts/test_linux_x86_64_runtime_in_docker.sh:141:python -m engine.run_calpuff.run_calpuff --case "$CASE_NAME" --skip-prepare || true
+./docs/git_tracking_plan.md:17:- `calpuff-cli`
+./docs/git_tracking_plan.md:40:- 大型地形/土地利用数据目录 `calpuff_terrain_and_landuse_data/`
+./docs/git_tracking_plan.md:47:- 当前最大的是 `bin/linux-x86_64/calpuff.x`，约 `545M`。
+./docs/git_tracking_plan.md:78:- 由于 `calmet.x`、`terrel.x`、尤其 `calpuff.x` 体量很大，如果未来要推远程仓库，建议改用 Git LFS 或发布附件。
+./docs/desktop_gui_modularization_plan.md:17:- `engine/ui/desktop/pages/calmet_page.py`
+./docs/desktop_gui_modularization_plan.md:18:- `engine/ui/desktop/pages/calpuff_page.py`
+./scripts/build_native_linux_x86_64.sh:53:build calmet \
+./scripts/build_native_linux_x86_64.sh:54:  engine/vendor/src/CALMET_v6.5.0_L150223/calutils.for \
+./scripts/build_native_linux_x86_64.sh:55:  engine/vendor/src/CALMET_v6.5.0_L150223/coordlib.for \
+./scripts/build_native_linux_x86_64.sh:56:  engine/vendor/src/CALMET_v6.5.0_L150223/auxutils.for \
+./scripts/build_native_linux_x86_64.sh:57:  engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+./scripts/build_native_linux_x86_64.sh:59:build calpuff \
+./scripts/build_native_linux_x86_64.sh:60:  engine/vendor/src/CALPUFF_v7.2.1_L150618/calutils.for \
+./scripts/build_native_linux_x86_64.sh:61:  engine/vendor/src/CALPUFF_v7.2.1_L150618/coordlib.for \
+./scripts/build_native_linux_x86_64.sh:62:  engine/vendor/src/CALPUFF_v7.2.1_L150618/api_chem.for \
+./scripts/build_native_linux_x86_64.sh:63:  engine/vendor/src/CALPUFF_v7.2.1_L150618/isorropia_v2.2.for \
+./scripts/build_native_linux_x86_64.sh:64:  engine/vendor/src/CALPUFF_v7.2.1_L150618/lwcsubs.for \
+./scripts/build_native_linux_x86_64.sh:65:  engine/vendor/src/CALPUFF_v7.2.1_L150618/modules.for \
+./scripts/build_native_linux_x86_64.sh:66:  engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+./docs/native_binary_cleanup_report.md:26:| `bin/linux-x86_64/calmet.x` | `ELF 64-bit LSB executable, x86-64` | `00d51b15c77ede44b60a0abd5e794e11ee6d1a4ae54613d08076c410522168a2` | `yes` | 正式运行目录 |
+./docs/native_binary_cleanup_report.md:27:| `bin/linux-x86_64/calpuff.x` | `ELF 64-bit LSB executable, x86-64` | `9fa3d5a80a3efc86ca0370c505f53e5f675a2d6ed04877a73679d779c95856a5` | `yes` | 正式运行目录 |
+./docs/native_binary_cleanup_report.md:33:| `engine/vendor/bin/calmet.x` | `ELF 64-bit LSB executable, x86-64` | `00d51b15c77ede44b60a0abd5e794e11ee6d1a4ae54613d08076c410522168a2` | `no` | 与 `bin/linux-x86_64/calmet.x` 哈希一致，重复分发副本 |
+./docs/native_binary_cleanup_report.md:34:| `engine/vendor/bin/calpuff.x` | `ELF 64-bit LSB executable, x86-64` | `9fa3d5a80a3efc86ca0370c505f53e5f675a2d6ed04877a73679d779c95856a5` | `no` | 与 `bin/linux-x86_64/calpuff.x` 哈希一致，重复分发副本 |
+./docs/native_binary_cleanup_report.md:40:| `engine/vendor/src/CALMET_v6.5.0_L150223/calmet.x` | `ELF 64-bit LSB executable, x86-64` | `00d51b15c77ede44b60a0abd5e794e11ee6d1a4ae54613d08076c410522168a2` | `no` | 与 `bin/linux-x86_64/calmet.x` 哈希一致，源码目录历史编译产物 |
+./docs/native_binary_cleanup_report.md:41:| `engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.x` | `ELF 64-bit LSB executable, x86-64` | `9fa3d5a80a3efc86ca0370c505f53e5f675a2d6ed04877a73679d779c95856a5` | `no` | 与 `bin/linux-x86_64/calpuff.x` 哈希一致，源码目录历史编译产物 |
+./docs/refactor_logs/before_structure_refactor_files.txt:33:./bin/linux-x86_64/calmet.x
+./docs/refactor_logs/before_structure_refactor_files.txt:34:./bin/linux-x86_64/calpuff.x
+./docs/refactor_logs/before_structure_refactor_files.txt:42:./calpuff-cli
+./docs/refactor_logs/before_structure_refactor_files.txt:43:./calpuff_terrain_and_landuse_data/.DS_Store
+./docs/refactor_logs/before_structure_refactor_files.txt:44:./calpuff_terrain_and_landuse_data/china_srtm/china_srtm.gmc
+./docs/refactor_logs/before_structure_refactor_files.txt:45:./calpuff_terrain_and_landuse_data/china_srtm/readme.txt
+./docs/refactor_logs/before_structure_refactor_files.txt:46:./calpuff_terrain_and_landuse_data/china_srtm/srtm_51_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:47:./calpuff_terrain_and_landuse_data/china_srtm/srtm_51_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:48:./calpuff_terrain_and_landuse_data/china_srtm/srtm_51_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:49:./calpuff_terrain_and_landuse_data/china_srtm/srtm_51_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:50:./calpuff_terrain_and_landuse_data/china_srtm/srtm_51_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:51:./calpuff_terrain_and_landuse_data/china_srtm/srtm_51_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:52:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:53:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:54:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:55:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:56:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:57:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:58:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:59:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:60:./calpuff_terrain_and_landuse_data/china_srtm/srtm_52_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:61:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:62:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:63:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:64:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:65:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:66:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:67:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:68:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:69:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:70:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:71:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:72:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:73:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:74:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:75:./calpuff_terrain_and_landuse_data/china_srtm/srtm_53_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:76:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:77:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:78:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:79:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:80:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:81:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:82:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:83:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:84:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:85:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:86:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:87:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:88:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:89:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:90:./calpuff_terrain_and_landuse_data/china_srtm/srtm_54_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:91:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:92:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:93:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:94:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:95:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:96:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:97:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:98:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:99:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:100:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:101:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:102:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:103:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:104:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:105:./calpuff_terrain_and_landuse_data/china_srtm/srtm_55_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:106:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:107:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:108:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:109:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:110:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:111:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:112:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:113:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:114:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:115:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:116:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:117:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:118:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_08.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:119:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_08.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:120:./calpuff_terrain_and_landuse_data/china_srtm/srtm_56_08.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:121:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:122:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:123:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:124:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:125:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:126:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:127:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:128:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:129:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:130:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:131:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:132:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:133:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_08.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:134:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_08.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:135:./calpuff_terrain_and_landuse_data/china_srtm/srtm_57_08.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:136:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:137:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:138:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:139:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:140:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:141:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:142:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:143:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:144:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:145:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:146:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:147:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:148:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_08.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:149:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_08.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:150:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_08.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:151:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_09.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:152:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_09.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:153:./calpuff_terrain_and_landuse_data/china_srtm/srtm_58_09.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:154:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:155:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:156:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:157:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:158:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:159:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:160:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:161:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:162:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:163:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:164:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:165:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:166:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:167:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:168:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:169:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_08.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:170:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_08.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:171:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_08.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:172:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_09.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:173:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_09.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:174:./calpuff_terrain_and_landuse_data/china_srtm/srtm_59_09.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:175:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_02.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:176:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_02.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:177:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_02.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:178:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:179:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:180:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:181:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:182:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:183:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:184:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:185:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:186:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:187:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:188:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:189:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:190:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:191:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:192:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:193:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_08.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:194:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_08.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:195:./calpuff_terrain_and_landuse_data/china_srtm/srtm_60_08.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:196:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_02.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:197:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_02.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:198:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_02.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:199:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:200:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:201:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:202:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:203:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:204:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:205:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_05.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:206:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_05.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:207:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_05.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:208:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_06.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:209:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_06.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:210:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_06.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:211:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_07.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:212:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_07.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:213:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_07.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:214:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_08.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:215:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_08.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:216:./calpuff_terrain_and_landuse_data/china_srtm/srtm_61_08.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:217:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_02.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:218:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_02.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:219:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_02.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:220:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:221:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:222:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:223:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:224:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:225:./calpuff_terrain_and_landuse_data/china_srtm/srtm_62_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:226:./calpuff_terrain_and_landuse_data/china_srtm/srtm_63_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:227:./calpuff_terrain_and_landuse_data/china_srtm/srtm_63_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:228:./calpuff_terrain_and_landuse_data/china_srtm/srtm_63_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:229:./calpuff_terrain_and_landuse_data/china_srtm/srtm_63_04.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:230:./calpuff_terrain_and_landuse_data/china_srtm/srtm_63_04.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:231:./calpuff_terrain_and_landuse_data/china_srtm/srtm_63_04.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:232:./calpuff_terrain_and_landuse_data/china_srtm/srtm_64_03.hdr
+./docs/refactor_logs/before_structure_refactor_files.txt:233:./calpuff_terrain_and_landuse_data/china_srtm/srtm_64_03.tfw
+./docs/refactor_logs/before_structure_refactor_files.txt:234:./calpuff_terrain_and_landuse_data/china_srtm/srtm_64_03.tif
+./docs/refactor_logs/before_structure_refactor_files.txt:235:./calpuff_terrain_and_landuse_data/eurasia_asia_landuse/eausgs2_0la.img
+./docs/refactor_logs/before_structure_refactor_files.txt:274:./engine/postprocessing/plot_calpuff_animation.py
+./docs/refactor_logs/before_structure_refactor_files.txt:275:./engine/postprocessing/plot_calpuff_annual.py
+./docs/refactor_logs/before_structure_refactor_files.txt:276:./engine/postprocessing/plot_calpuff_seasonal.py
+./docs/refactor_logs/before_structure_refactor_files.txt:277:./engine/postprocessing/plot_calpuff_snapshot.py
+./docs/refactor_logs/before_structure_refactor_files.txt:279:./engine/postprocessing/plot_daily_from_calpuff.py
+./docs/refactor_logs/before_structure_refactor_files.txt:285:./engine/run_calmet/README.md
+./docs/refactor_logs/before_structure_refactor_files.txt:286:./engine/run_calmet/__init__.py
+./docs/refactor_logs/before_structure_refactor_files.txt:287:./engine/run_calmet/common.py
+./docs/refactor_logs/before_structure_refactor_files.txt:288:./engine/run_calmet/log copy.md
+./docs/refactor_logs/before_structure_refactor_files.txt:289:./engine/run_calmet/log.md
+./docs/refactor_logs/before_structure_refactor_files.txt:290:./engine/run_calmet/prepare_calmet.py
+./docs/refactor_logs/before_structure_refactor_files.txt:291:./engine/run_calmet/run_calmet.py
+./docs/refactor_logs/before_structure_refactor_files.txt:292:./engine/run_calmet/并行计算的尝试.md
+./docs/refactor_logs/before_structure_refactor_files.txt:293:./engine/run_calpuff/README.md
+./docs/refactor_logs/before_structure_refactor_files.txt:294:./engine/run_calpuff/__init__.py
+./docs/refactor_logs/before_structure_refactor_files.txt:295:./engine/run_calpuff/common.py
+./docs/refactor_logs/before_structure_refactor_files.txt:296:./engine/run_calpuff/prepare_calpuff.py
+./docs/refactor_logs/before_structure_refactor_files.txt:297:./engine/run_calpuff/run_calpuff.py
+./docs/refactor_logs/before_structure_refactor_files.txt:298:./engine/templates/calmet.inp
+./docs/refactor_logs/before_structure_refactor_files.txt:299:./engine/templates/calpuff.inp
+./docs/refactor_logs/before_native_binaries.txt:1:./bin/linux-x86_64/calmet.x: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=23769ff42db361bbdcaf284cad463dcf14739b86, for GNU/Linux 3.2.0, not stripped
+./docs/refactor_logs/before_native_binaries.txt:2:./bin/linux-x86_64/calpuff.x: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1327e0c78f44139f6709c8bd766d2ad93b0178ca, for GNU/Linux 3.2.0, not stripped
+./docs/refactor_logs/before_native_binaries.txt:8:./engine/vendor/bin/calmet.x: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=23769ff42db361bbdcaf284cad463dcf14739b86, for GNU/Linux 3.2.0, not stripped
+./docs/refactor_logs/before_native_binaries.txt:9:./engine/vendor/bin/calpuff.x: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1327e0c78f44139f6709c8bd766d2ad93b0178ca, for GNU/Linux 3.2.0, not stripped
+./docs/refactor_logs/before_native_binaries.txt:15:./engine/vendor/src/CALMET_v6.5.0_L150223/calmet.x: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=23769ff42db361bbdcaf284cad463dcf14739b86, for GNU/Linux 3.2.0, not stripped
+./docs/refactor_logs/before_native_binaries.txt:16:./engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.x: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1327e0c78f44139f6709c8bd766d2ad93b0178ca, for GNU/Linux 3.2.0, not stripped
+./docs/project_inventory.md:5:- CLI 总入口：`/Users/rain/CTEAS/tutorial/calpuff-cli`
+./docs/project_inventory.md:20:- `calpuff_terrain_and_landuse_data/`
+./docs/project_inventory.md:33:- `/Users/rain/CTEAS/tutorial/calpuff-cli`
+./docs/project_inventory.md:55:- `/Users/rain/CTEAS/tutorial/calpuff-cli`
+./docs/project_inventory.md:79:  - `/Users/rain/CTEAS/tutorial/calpuff_terrain_and_landuse_data/china_srtm`
+./docs/project_inventory.md:81:  - `/Users/rain/CTEAS/tutorial/calpuff_terrain_and_landuse_data/eurasia_asia_landuse/eausgs2_0la.img`
+./docs/project_inventory.md:110:- `calmet.x`：诊断风场
+./docs/project_inventory.md:111:- `calpuff.x`：烟团扩散主求解
+./engine/postprocessing/plot_windrose_style.py:19:OUT_PATH = current_project_path("run", "calpuff", "postprocessing", "windrose.png")
+./docs/docker_linux_x86_64_runtime_test.md:65:- CALMET/CALPUFF 输入配置错误：否
+./docs/docker_linux_x86_64_runtime_test.md:105:- `prepare_calmet`
+./docs/docker_linux_x86_64_runtime_test.md:106:- `prepare_calpuff`
+./docs/docker_linux_x86_64_runtime_test.md:108:- `run_calmet`
+./docs/docker_linux_x86_64_runtime_test.md:109:- `run_calpuff`
+./docs/docker_linux_x86_64_runtime_test.md:117:- 在未修复容器网络前，无法把这次失败归因到项目代码、native `.x`、输入文件或 CALMET/CALPUFF 配置。
+./docs/docker_linux_x86_64_runtime_test.md:239:但在继续实跑更新后的 `debian:12` runtime 脚本时，当前会话的 Docker 提权执行额度被平台拦截，因此这轮没有拿到新的容器内 `apt/pip/prepare_calmet` 实跑结果。
+./engine/templates/terrel.inp:8:  use in particular dispersion modeling systems.  For the CALPUFF
+./engine/templates/terrel.inp:11:  receptors for CALPUFF.  Use TERREL one or more times to build the
+./engine/templates/terrel.inp:102:1 !GEOTIFF = ../../../../calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.tif !    !END!
+./engine/templates/terrel.inp:103:2 !GEOTIFF = ../../../../calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif !    !END!
+./engine/templates/terrel.inp:303:     1 = CALMET        (grid-cell-average elevations)
+./engine/templates/terrel.inp:429:                of cell (1,1)    --- CALMET Convention ---
+./engine/postprocessing/plot_daily_concentration_fangda.py:17:DEFAULT_CSV = current_project_path("run", "calpuff", "postprocessing", "point_timeseries.csv")
+./engine/postprocessing/plot_daily_concentration_fangda.py:18:DEFAULT_OUTPUT = current_project_path("run", "calpuff", "postprocessing", "daily_concentration.png")
+./engine/postprocessing/extract_point_data.py:16:DEFAULT_CONC_FILE = current_project_path("run", "calpuff", "calpuff.con")
+./engine/postprocessing/extract_point_data.py:17:DEFAULT_CALMET_INP = current_project_path("run", "calmet", "calmet.inp")
+./engine/postprocessing/extract_point_data.py:18:DEFAULT_OUTPUT_CSV = current_project_path("run", "calpuff", "postprocessing", "point_timeseries.csv")
+./engine/postprocessing/extract_point_data.py:44:def _extract_calmet_key(text: str, key: str, cast):
+./engine/postprocessing/extract_point_data.py:50:    raise ValueError(f"Cannot find {key} in CALMET.INP")
+./engine/postprocessing/extract_point_data.py:53:def parse_calmet_grid(calmet_inp: Path) -> GridSpec:
+./engine/postprocessing/extract_point_data.py:54:    text = calmet_inp.read_text(encoding="utf-8", errors="ignore")
+./engine/postprocessing/extract_point_data.py:56:        nx=_extract_calmet_key(text, "NX", int),
+./engine/postprocessing/extract_point_data.py:57:        ny=_extract_calmet_key(text, "NY", int),
+./engine/postprocessing/extract_point_data.py:58:        dgrid_km=_extract_calmet_key(text, "DGRIDKM", float),
+./engine/postprocessing/extract_point_data.py:59:        xorig_km=_extract_calmet_key(text, "XORIGKM", float),
+./engine/postprocessing/extract_point_data.py:60:        yorig_km=_extract_calmet_key(text, "YORIGKM", float),
+./engine/postprocessing/extract_point_data.py:64:def parse_calmet_run_window(calmet_inp: Path) -> RunWindow:
+./engine/postprocessing/extract_point_data.py:65:    text = calmet_inp.read_text(encoding="utf-8", errors="ignore")
+./engine/postprocessing/extract_point_data.py:66:    ibyr = _extract_calmet_key(text, "IBYR", int)
+./engine/postprocessing/extract_point_data.py:67:    ibmo = _extract_calmet_key(text, "IBMO", int)
+./engine/postprocessing/extract_point_data.py:68:    ibdy = _extract_calmet_key(text, "IBDY", int)
+./engine/postprocessing/extract_point_data.py:69:    ibhr = _extract_calmet_key(text, "IBHR", int)
+./engine/postprocessing/extract_point_data.py:70:    ibsec = _extract_calmet_key(text, "IBSEC", int)
+./engine/postprocessing/extract_point_data.py:72:    ieyr = _extract_calmet_key(text, "IEYR", int)
+./engine/postprocessing/extract_point_data.py:73:    iemo = _extract_calmet_key(text, "IEMO", int)
+./engine/postprocessing/extract_point_data.py:74:    iedy = _extract_calmet_key(text, "IEDY", int)
+./engine/postprocessing/extract_point_data.py:75:    iehr = _extract_calmet_key(text, "IEHR", int)
+./engine/postprocessing/extract_point_data.py:76:    iesec = _extract_calmet_key(text, "IESEC", int)
+./engine/postprocessing/extract_point_data.py:241:    calmet_inp: Path,
+./engine/postprocessing/extract_point_data.py:254:        calmet_inp: Path to CALMET.INP for grid metadata
+./engine/postprocessing/extract_point_data.py:264:    grid = parse_calmet_grid(calmet_inp)
+./engine/postprocessing/extract_point_data.py:265:    window = parse_calmet_run_window(calmet_inp)
+./engine/postprocessing/extract_point_data.py:351:        description="Extract time series of concentrations at a specific point from CALPUFF CONC.DAT"
+./engine/postprocessing/extract_point_data.py:357:        help="Path to CALPUFF CONC.DAT (binary)",
+./engine/postprocessing/extract_point_data.py:360:        "--calmet-inp",
+./engine/postprocessing/extract_point_data.py:362:        default=DEFAULT_CALMET_INP,
+./engine/postprocessing/extract_point_data.py:363:        help="Path to CALMET.INP for grid metadata",
+./engine/postprocessing/extract_point_data.py:405:        calmet_inp=args.calmet_inp,
+./engine/postprocessing/plot_calpuff_animation.py:17:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_animation.py:25:        parse_calmet_grid,
+./engine/postprocessing/plot_calpuff_animation.py:26:        parse_calmet_run_window,
+./engine/postprocessing/plot_calpuff_animation.py:36:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_animation.py:44:        parse_calmet_grid,
+./engine/postprocessing/plot_calpuff_animation.py:45:        parse_calmet_run_window,
+./engine/postprocessing/plot_calpuff_animation.py:55:    parser = argparse.ArgumentParser(description="Render yearly CALPUFF concentration animation")
+./engine/postprocessing/plot_calpuff_animation.py:56:    parser.add_argument("--conc-file", type=Path, default=DEFAULT_CONC_FILE, help="Path to CALPUFF calpuff.con")
+./engine/postprocessing/plot_calpuff_animation.py:57:    parser.add_argument("--calmet-inp", type=Path, default=DEFAULT_CALMET_INP, help="Path to CALMET input file")
+./engine/postprocessing/plot_calpuff_animation.py:146:    grid = parse_calmet_grid(args.calmet_inp)
+./engine/postprocessing/plot_calpuff_animation.py:147:    window = parse_calmet_run_window(args.calmet_inp)
+./engine/postprocessing/plot_calpuff_animation.py:153:    print(f"CALMET window: {window.start:%Y-%m-%d %H:%M:%S} -> {window.end:%Y-%m-%d %H:%M:%S}")
+./engine/postprocessing/__init__.py:1:"""CALPUFF postprocessing helpers."""
+./scripts/check_paths.py:29:EXECUTABLES = ("terrel", "ctgproc", "makegeo", "calmet", "calpuff", "read62", "smerge")
+./engine/postprocessing/plot_calpuff_snapshot.py:9:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_snapshot.py:23:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_snapshot.py:37:    parser = common_parser("Plot CALPUFF concentration in snapshot, annual, or seasonal mode")
+./engine/postprocessing/plot_calpuff_snapshot.py:65:    calmet_inp = args.calmet_inp or DEFAULT_CALMET_INP
+./engine/postprocessing/plot_calpuff_snapshot.py:77:            calmet_inp=calmet_inp,
+./engine/postprocessing/plot_calpuff_snapshot.py:91:            calmet_inp=calmet_inp,
+./engine/postprocessing/plot_calpuff_snapshot.py:103:            calmet_inp=calmet_inp,
+./scripts/test_native_backend.sh:6:REQUIRED=(terrel ctgproc makegeo read62 smerge calmet calpuff)
+./engine/templates/makegeo.inp:8:  MAKEGEO creates the geophysical data file (GEO.DAT) for CALMET.  Using
+./engine/templates/makegeo.inp:75:   files that can be used in individual CALMET runs during the winter.
+./engine/preprocess/grid/README.md:3:本目录用于根据用户输入的中心点与研究域参数，自动更新 CALMET 网格配置文件 `grid.cmn`。
+./engine/preprocess/grid/README.md:7:- `grid.cmn`：CALMET 网格参数文件
+./engine/preprocess/grid/README.md:14:python3 /home/ai/code/calpuff/tutorial/data/grid/configure_grid_cmn.py
+./engine/preprocess/grid/README.md:62:- `/home/ai/code/calpuff/tutorial/data/grid/center_location`
+./engine/preprocess/grid/README.md:63:- `/home/ai/code/calpuff/tutorial/data/grid/grid.cmn`
+./engine/postprocessing/plan.md:8:project/cases/<case>/run/calpuff/postprocessing/
+./engine/postprocessing/plan.md:23:3. 点位浓度提取：从 `calpuff.con` 提取点位时序 CSV
+./engine/postprocessing/plan.md:31:  - `--conc-file <case>/run/calpuff/calpuff.con`
+./engine/postprocessing/plan.md:32:  - `--calmet-inp <case>/run/calmet/calmet.inp`
+./engine/postprocessing/plan.md:36:- 日浓度曲线不再使用旧 CSV 的“cfd对应放大”列作为默认值，默认使用点位浓度提取出的真实 `calpuff.con` 浓度值。
+./engine/postprocessing/plan.md:39:- 不接入 `plot_calpuff_annual-dixing.py`，它保留为旧实验脚本。
+./engine/postprocessing/plan.md:56:  - 缺失 `calpuff.con`
+./engine/postprocessing/plan.md:57:  - 缺失 `calmet.inp`
+./engine/postprocessing/plan.md:73:- GUI 启动检查：`./calpuff-cli desktopgui`。
+./engine/postprocessing/plan.md:109:  - 地形文件按显式参数、`calpuff.con` 同目录、case `geo/makegeo/qaterr.grd`、旧 `project/current` 兜底顺序查找。
+./engine/postprocessing/plan.md:110:- `engine/postprocessing/plot_calpuff_snapshot.py`
+./engine/postprocessing/plan.md:112:- `engine/postprocessing/plot_calpuff_animation.py`
+./engine/postprocessing/plan.md:124:- `engine/postprocessing/plot_daily_from_calpuff.py`
+./engine/postprocessing/plan.md:125:  - 新增包装 CLI：先从 `calpuff.con` 提取点位时序，再绘制日均浓度曲线。
+./engine/postprocessing/plan.md:132:- `calpuff-cli`
+./engine/postprocessing/plan.md:133:  - 启动时优先使用项目 `.venv/bin/python`，不存在时回退到系统 `python3`，使 `./calpuff-cli desktopgui` 能使用项目虚拟环境中的 PySide6。
+./engine/postprocessing/plan.md:140:  - 生成 `project/cases/test/run/calpuff/postprocessing/check_snapshot.png`。
+./engine/postprocessing/plan.md:144:  - 从 `calpuff.con` 生成点位 CSV，再生成 `check_daily.png`。
+./engine/postprocessing/plan.md:152:  - `QT_QPA_PLATFORM=offscreen ./calpuff-cli desktopgui` 能进入事件循环；测试用 `timeout` 结束，退出码 124 是预期超时退出。
+./engine/postprocessing/plot_calpuff_annual.py:8:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_annual.py:20:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_annual.py:32:    parser = common_parser("Plot annual mean concentration from CALPUFF calpuff.con")
+./engine/postprocessing/plot_calpuff_annual.py:47:        calmet_inp=args.calmet_inp or DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_daily_from_calpuff.py:7:from .extract_point_data import DEFAULT_CALMET_INP, DEFAULT_CONC_FILE, DEFAULT_OUTPUT_CSV, extract_point_time_series
+./engine/postprocessing/plot_daily_from_calpuff.py:12:    parser = argparse.ArgumentParser(description="Extract a CALPUFF point time series and plot daily mean concentration.")
+./engine/postprocessing/plot_daily_from_calpuff.py:14:    parser.add_argument("--calmet-inp", type=Path, default=DEFAULT_CALMET_INP)
+./engine/postprocessing/plot_daily_from_calpuff.py:29:        calmet_inp=args.calmet_inp,
+./engine/postprocessing/plot_calpuff_seasonal.py:8:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_seasonal.py:20:        DEFAULT_CALMET_INP,
+./engine/postprocessing/plot_calpuff_seasonal.py:32:    parser = common_parser("Plot seasonal mean concentration from CALPUFF calpuff.con")
+./engine/postprocessing/plot_calpuff_seasonal.py:47:        calmet_inp=args.calmet_inp or DEFAULT_CALMET_INP,
+./engine/templates/read62.inp:7:  CALMET accepts upper air data (wind and temperature soundings) from
+./engine/templates/read62.inp:90:     that equals or exceeds the top of the CALMET modeling domain, or
+./engine/templates/read62.inp:91:     else CALMET will stop with an error message.
+./engine/templates/read62.inp:112:     user before that file can be used in CALMET.  Note that the repair
+./engine/postprocessing/_core.py:19:DEFAULT_CONC_FILE = current_project_path("run", "calpuff", "calpuff.con")
+./engine/postprocessing/_core.py:20:DEFAULT_CALMET_INP = current_project_path("run", "calmet", "calmet.inp")
+./engine/postprocessing/_core.py:21:DEFAULT_POSTPROCESS_DIR = current_project_path("run", "calpuff", "postprocessing")
+./engine/postprocessing/_core.py:22:DEFAULT_TERRAIN_FILE = current_project_path("run", "calpuff", "qaterr.grd")
+./engine/postprocessing/_core.py:114:def _extract_calmet_key(text: str, key: str, cast):
+./engine/postprocessing/_core.py:120:    raise ValueError(f"Cannot find {key} in CALMET.INP")
+./engine/postprocessing/_core.py:123:def parse_calmet_grid(calmet_inp: Path) -> GridSpec:
+./engine/postprocessing/_core.py:124:    text = calmet_inp.read_text(encoding="utf-8", errors="ignore")
+./engine/postprocessing/_core.py:126:        nx=_extract_calmet_key(text, "NX", int),
+./engine/postprocessing/_core.py:127:        ny=_extract_calmet_key(text, "NY", int),
+./engine/postprocessing/_core.py:128:        dgrid_km=_extract_calmet_key(text, "DGRIDKM", float),
+./engine/postprocessing/_core.py:129:        xorig_km=_extract_calmet_key(text, "XORIGKM", float),
+./engine/postprocessing/_core.py:130:        yorig_km=_extract_calmet_key(text, "YORIGKM", float),
+./engine/postprocessing/_core.py:134:def parse_calmet_run_window(calmet_inp: Path) -> RunWindow:
+./engine/postprocessing/_core.py:135:    text = calmet_inp.read_text(encoding="utf-8", errors="ignore")
+./engine/postprocessing/_core.py:138:            _extract_calmet_key(text, "IBYR", int),
+./engine/postprocessing/_core.py:139:            _extract_calmet_key(text, "IBMO", int),
+./engine/postprocessing/_core.py:140:            _extract_calmet_key(text, "IBDY", int),
+./engine/postprocessing/_core.py:141:            _extract_calmet_key(text, "IBHR", int),
+./engine/postprocessing/_core.py:143:            _extract_calmet_key(text, "IBSEC", int),
+./engine/postprocessing/_core.py:146:            _extract_calmet_key(text, "IEYR", int),
+./engine/postprocessing/_core.py:147:            _extract_calmet_key(text, "IEMO", int),
+./engine/postprocessing/_core.py:148:            _extract_calmet_key(text, "IEDY", int),
+./engine/postprocessing/_core.py:149:            _extract_calmet_key(text, "IEHR", int),
+./engine/postprocessing/_core.py:151:            _extract_calmet_key(text, "IESEC", int),
+./engine/postprocessing/_core.py:225:        raise RuntimeError("No timestep data records found. Please verify calpuff.con and grid size.")
+./engine/postprocessing/_core.py:409:            "Warning: terrain grid extent does not match CALMET grid centers; "
+./engine/postprocessing/_core.py:749:    parser.add_argument("--conc-file", type=Path, default=DEFAULT_CONC_FILE, help="Path to CALPUFF calpuff.con")
+./engine/postprocessing/_core.py:750:    parser.add_argument("--calmet-inp", type=Path, default=DEFAULT_CALMET_INP, help="Path to CALMET input file")
+./engine/postprocessing/_core.py:764:    print(f"CALMET window: {window.start:%Y-%m-%d %H:%M:%S} -> {window.end:%Y-%m-%d %H:%M:%S}")
+./engine/postprocessing/_core.py:769:    calmet_inp: Path,
+./engine/postprocessing/_core.py:780:    grid = parse_calmet_grid(calmet_inp)
+./engine/postprocessing/_core.py:781:    window = parse_calmet_run_window(calmet_inp)
+./engine/postprocessing/_core.py:787:            print("Warning: requested time is outside CALMET window; nearest available record will be used.")
+./engine/postprocessing/_core.py:799:    calmet_inp: Path,
+./engine/postprocessing/_core.py:808:    grid = parse_calmet_grid(calmet_inp)
+./engine/postprocessing/_core.py:809:    window = parse_calmet_run_window(calmet_inp)
+./engine/postprocessing/_core.py:835:    calmet_inp: Path,
+./engine/postprocessing/_core.py:844:    grid = parse_calmet_grid(calmet_inp)
+./engine/postprocessing/_core.py:845:    window = parse_calmet_run_window(calmet_inp)
+./engine/templates/ctgproc.inp:85:1 !GLAZAS = ../../../../calpuff_terrain_and_landuse_data/eurasia_asia_landuse/eausgs2_0la.img !    !END!
+./engine/templates/ctgproc.inp:132:          CALMET and LU grids, so that daily snow information can be used 
+./engine/templates/smerge.inp:7:    CALMET accepts data for a number of 'surface meteorology stations'
+./engine/templates/calmet.inp:1:CALMET.INP      2.1             Hour Start and End Times with Seconds
+./engine/templates/calmet.inp:7:                    CALMET MODEL CONTROL FILE
+./engine/templates/calmet.inp:25:CALMET.LST    output   ! METLST=/workspace/data/2023HEFEI/CALMET.lst     !
+./engine/templates/calmet.inp:26:CALMET.DAT    output   ! METDAT=/workspace/data/2023HEFEI/CALMET.DAT      !
+./engine/templates/calmet.inp:40:NUMBER OF PROGNOSTIC and IGF-CALMET FILEs:
+./engine/templates/calmet.inp:45:    Number of IGF-CALMET.DAT files
+./engine/templates/calmet.inp:76:IGF-CALMET.DAT files (consecutive or overlapping)
+./engine/templates/calmet.inp:80:IGFn.DAT       input     1  * IGFDAT=CALMET0.DAT *    *END*
+./engine/templates/calmet.inp:142:        (IRTYPE must be 1 to run CALPUFF or CALGRID)
+./engine/templates/calmet.inp:256:     models may be in use, and their selection in CALMET will make its output
+./engine/templates/calmet.inp:321:            1 = CALPUFF/CALGRID type file (CALMET.DAT)
+./engine/templates/calmet.inp:496:       (1 = unformatted - CALMET unformatted output)
+./engine/templates/calmet.inp:497:       (2 = formatted   - free-formatted CALMET output or user input)
+./engine/templates/calmet.inp:577:       Use coarse CALMET fields as initial guess fields (IGFMET)
+./engine/templates/calmet.inp:863:              to equilibrium value (treatment identical to CALMET v5.8)
+./project/cases/smoke5d/case.yaml:10:  run_calmet_dir: project/current/run/calmet
+./project/cases/smoke5d/case.yaml:11:  run_calpuff_dir: project/current/run/calpuff
+./project/cases/smoke5d/case.yaml:33:calmet:
+./project/cases/smoke5d/case.yaml:54:calpuff:
+./calpuff-cli:6:PYTHON_BIN="${CALPUFF_PYTHON:-}"
+./calpuff-cli:16:  echo "WebGUI has been removed. Use ./calpuff-cli desktopgui for the PySide6 desktop GUI." >&2
+./calpuff-cli:26:  echo "Streamlit GUI has been removed. Use ./calpuff-cli desktopgui for the PySide6 desktop GUI." >&2
+./engine/gui/app.py:16:    "Use ./calpuff-cli desktopgui for the PySide6 desktop GUI,\n"
+./engine/gui/app.py:17:    "or ./calpuff-cli run --case <name> --stage <stage> for CLI orchestration."
+./engine/gui/README.md:1:# CALPUFF GUI
+./engine/gui/README.md:13:- Run pipeline via `calpuff-cli` (`stage` + `resume`)
+./engine/preprocess/bin/new_case.py:91:        Path('run') / 'calmet',
+./engine/preprocess/bin/new_case.py:92:        Path('run') / 'calpuff',
+./engine/preprocess/bin/new_case.py:103:        "calmet.inp": case_dir / "run" / "calmet" / "calmet.inp",
+./engine/preprocess/bin/new_case.py:104:        "calpuff.inp": case_dir / "run" / "calpuff" / "calpuff.inp",
+./engine/preprocess/bin/new_case.py:128:  run_calmet_dir: project/current/run/calmet
+./engine/preprocess/bin/new_case.py:129:  run_calpuff_dir: project/current/run/calpuff
+./engine/preprocess/bin/new_case.py:151:calmet:
+./engine/preprocess/bin/new_case.py:172:calpuff:
+./engine/gui/__init__.py:1:"""CALPUFF local GUI package."""
+./engine/config/case.schema.yaml:1:schema_name: calpuff_case
+./engine/config/case.schema.yaml:9:  - calmet
+./engine/config/case.schema.yaml:10:  - calpuff
+./engine/config/case.schema.yaml:18:  - run_calmet_dir
+./engine/config/case.schema.yaml:19:  - run_calpuff_dir
+./engine/config/case.schema.yaml:28:required_calmet:
+./engine/config/case.schema.yaml:31:required_calpuff:
+./engine/run_calpuff/common.py:11:CALPUFF_TEMPLATE_FALLBACK = TEMPLATE_FILES["calpuff"]
+./engine/preprocess/ctgproc/auto_select_landuse_to_ctgproc.py:22:    tutorial_path("calpuff_terrain_and_landuse_data", "eurasia_asia_landuse", "eausgs2_0la.img")
+./engine/gui/workbench.py:64:from engine.postprocessing._core import index_time_records, parse_calmet_grid
+./engine/gui/workbench.py:74:    "calmet": "诊断风场",
+./engine/gui/workbench.py:75:    "calpuff": "烟团模型",
+./engine/gui/workbench.py:143:        stage="calmet",
+./engine/gui/workbench.py:147:        outputs=["run/calmet/calmet.dat", "run/calmet/calmet.lst"],
+./engine/gui/workbench.py:148:        output_dir_rel="run/calmet",
+./engine/gui/workbench.py:152:        stage="calpuff",
+./engine/gui/workbench.py:154:        deps=["calmet"],
+./engine/gui/workbench.py:155:        inputs=["run/calmet/calmet.dat", "run/calmet/calmet.lst"],
+./engine/gui/workbench.py:156:        outputs=["run/calpuff/calpuff.con", "run/calpuff/calpuff.lst"],
+./engine/gui/workbench.py:157:        output_dir_rel="run/calpuff",
+./engine/gui/workbench.py:1111:        self.task_stage_combo.addItem("诊断风场", "calmet")
+./engine/gui/workbench.py:1112:        self.task_stage_combo.addItem("烟团模型", "calpuff")
+./engine/gui/workbench.py:1129:            ("诊断风场", "calmet", 0, 4, 1),
+./engine/gui/workbench.py:1130:            ("烟团模型", "calpuff", 1, 1, 1),
+./engine/gui/workbench.py:1260:        self.log_stage_filter.addItem("诊断风场", "calmet")
+./engine/gui/workbench.py:1261:        self.log_stage_filter.addItem("烟团模型", "calpuff")
+./engine/gui/workbench.py:1706:        points = _get_path(self.case_data, "calpuff.point_sources", [])
+./engine/gui/workbench.py:1758:        _set_path(data, "calpuff.point_sources", [source])
+./engine/gui/workbench.py:1759:        _set_path(data, "calpuff.options.source_mode", "case_yaml")
+./engine/gui/workbench.py:1760:        _set_path(data, "calpuff.options.nspec", 2)
+./engine/gui/workbench.py:1761:        _set_path(data, "calpuff.options.nse", 1)
+./engine/gui/workbench.py:1987:        if croot and not self._stage_complete(croot, "calmet"):
+./engine/gui/workbench.py:2080:        if stage == "calmet":
+./engine/gui/workbench.py:2081:            return (croot / "run" / "calmet" / "calmet.dat").exists() and (croot / "run" / "calmet" / "calmet.lst").exists()
+./engine/gui/workbench.py:2082:        if stage == "calpuff":
+./engine/gui/workbench.py:2083:            lst_ok = (croot / "run" / "calpuff" / "calpuff.lst").exists() or (croot / "run" / "calpuff" / "CALPUFF.LST").exists()
+./engine/gui/workbench.py:2084:            con_ok = (croot / "run" / "calpuff" / "calpuff.con").exists() or (croot / "run" / "calpuff" / "CALPUFF.CON").exists()
+./engine/gui/workbench.py:2101:        elif stage == "calmet":
+./engine/gui/workbench.py:2102:            if not (croot / "run" / "calmet" / "calmet.dat").exists():
+./engine/gui/workbench.py:2103:                missing.append("run/calmet/calmet.dat")
+./engine/gui/workbench.py:2104:            if not (croot / "run" / "calmet" / "calmet.lst").exists():
+./engine/gui/workbench.py:2105:                missing.append("run/calmet/calmet.lst")
+./engine/gui/workbench.py:2106:        elif stage == "calpuff":
+./engine/gui/workbench.py:2107:            if not ((croot / "run" / "calpuff" / "calpuff.con").exists() or (croot / "run" / "calpuff" / "CALPUFF.CON").exists()):
+./engine/gui/workbench.py:2108:                missing.append("run/calpuff/calpuff.con")
+./engine/gui/workbench.py:2109:            if not ((croot / "run" / "calpuff" / "calpuff.lst").exists() or (croot / "run" / "calpuff" / "CALPUFF.LST").exists()):
+./engine/gui/workbench.py:2110:                missing.append("run/calpuff/calpuff.lst")
+./engine/gui/workbench.py:2326:        return case_dir(self.current_case) / "run" / "calpuff" / "postprocessing"
+./engine/gui/workbench.py:2339:        conc_file = croot / "run" / "calpuff" / "calpuff.con"
+./engine/gui/workbench.py:2340:        calmet_inp = croot / "run" / "calmet" / "calmet.inp"
+./engine/gui/workbench.py:2342:            croot / "run" / "calpuff" / "qaterr.grd",
+./engine/gui/workbench.py:2346:        return conc_file, calmet_inp, terrain_file
+./engine/gui/workbench.py:2348:    def _load_calpuff_times(self) -> list[str]:
+./engine/gui/workbench.py:2349:        """从当前 case 的 calpuff.con 读取所有时刻，返回格式化字符串列表。"""
+./engine/gui/workbench.py:2354:            conc_file, calmet_inp, _ = self.postprocess_case_inputs()
+./engine/gui/workbench.py:2355:            grid = parse_calmet_grid(calmet_inp)
+./engine/gui/workbench.py:2362:        times = self._load_calpuff_times()
+./engine/gui/workbench.py:2366:            self._set_status_error("未能加载时刻，请确认案例已选择且 calpuff.con 存在")
+./engine/gui/workbench.py:2377:        conc_file, calmet_inp, _terrain = self.postprocess_case_inputs()
+./engine/gui/workbench.py:2380:        if not calmet_inp.exists():
+./engine/gui/workbench.py:2381:            return False, f"缺少 CALMET 输入文件: {calmet_inp}"
+./engine/gui/workbench.py:2607:            conc_file, calmet_inp, terrain_file = self.postprocess_case_inputs()
+./engine/gui/workbench.py:2614:                sys.executable, "-u", "-m", "engine.postprocessing.plot_calpuff_snapshot",
+./engine/gui/workbench.py:2617:                "--calmet-inp", str(calmet_inp),
+./engine/gui/workbench.py:2629:                grid = parse_calmet_grid(calmet_inp)
+./engine/gui/workbench.py:2643:            conc_file, calmet_inp, terrain_file = self.postprocess_case_inputs()
+./engine/gui/workbench.py:2651:                sys.executable, "-u", "-m", "engine.postprocessing.plot_calpuff_animation",
+./engine/gui/workbench.py:2653:                "--calmet-inp", str(calmet_inp),
+./engine/gui/workbench.py:2672:                grid = parse_calmet_grid(calmet_inp)
+./engine/gui/workbench.py:2690:            conc_file, calmet_inp, _terrain_file = self.postprocess_case_inputs()
+./engine/gui/workbench.py:2697:                sys.executable, "-u", "-m", "engine.postprocessing.plot_daily_from_calpuff",
+./engine/gui/workbench.py:2699:                "--calmet-inp", str(calmet_inp),
+./engine/gui/workbench.py:2765:        if stage == "calpuff" and not self._stage_complete(croot, "calmet"):
+./engine/gui/workbench.py:2837:            "all_calmet_started": False,
+./engine/gui/workbench.py:2838:            "all_calmet_done": False,
+./engine/gui/workbench.py:2839:            "all_calpuff_started": False,
+./engine/gui/workbench.py:2840:            "all_calpuff_done": False,
+./engine/gui/workbench.py:2899:                if (not self.current_task.get("all_calmet_started")) and line.startswith("[INFO] 计算时间:"):
+./engine/gui/workbench.py:2901:                    self.current_task["all_calmet_started"] = True
+./engine/gui/workbench.py:2902:                if self.current_task.get("all_calmet_started") and (not self.current_task.get("all_calmet_done")) and line.startswith("[RESULT] 诊断风场计算完毕"):
+./engine/gui/workbench.py:2905:                    self.current_task["all_calmet_done"] = True
+./engine/gui/workbench.py:2907:                if self.current_task.get("all_calmet_done") and (not self.current_task.get("all_calpuff_started")) and line.startswith("[INFO] 计算时间:"):
+./engine/gui/workbench.py:2909:                    self.current_task["all_calpuff_started"] = True
+./engine/gui/workbench.py:2910:                if self.current_task.get("all_calpuff_started") and (not self.current_task.get("all_calpuff_done")) and line.startswith("[RESULT] 烟团模型计算完毕"):
+./engine/gui/workbench.py:2913:                    self.current_task["all_calpuff_done"] = True
+./engine/preprocess/bin/run_preprocessing_pipeline.py:31:    ("calmet", Path("run") / "calmet" / "calmet.inp"),
+./engine/preprocess/bin/run_preprocessing_pipeline.py:32:    ("calpuff", Path("run") / "calpuff" / "calpuff.inp"),
+./engine/preprocess/ctgproc/README.md:7:- [auto_select_landuse_to_ctgproc.py](/home/ai/code/calpuff/tutorial/data/ctgproc/auto_select_landuse_to_ctgproc.py)
+./engine/preprocess/ctgproc/README.md:13:- `/home/ai/calpuff_terrain_and_landuse_data/eurasia_asia_landuse/eausgs2_0la.img`
+./engine/preprocess/ctgproc/README.md:19:脚本会从 `/home/ai/code/calpuff/tutorial/data/grid/grid.cmn` 同步以下参数到 `ctgproc.inp`：
+./engine/preprocess/ctgproc/README.md:53:python3 /home/ai/code/calpuff/tutorial/data/ctgproc/auto_select_landuse_to_ctgproc.py
+./engine/preprocess/ctgproc/README.md:56:执行后会在 `/home/ai/code/calpuff/tutorial/data/ctgproc/` 生成或更新：
+./engine/preprocess/ctgproc/README.md:67:python3 /home/ai/code/calpuff/tutorial/data/ctgproc/auto_select_landuse_to_ctgproc.py --dry-run
+./engine/preprocess/ctgproc/README.md:73:python3 /home/ai/code/calpuff/tutorial/data/ctgproc/auto_select_landuse_to_ctgproc.py --no-run-ctgproc
+./engine/preprocess/ctgproc/README.md:79:python3 /home/ai/code/calpuff/tutorial/data/ctgproc/auto_select_landuse_to_ctgproc.py \
+./engine/run_calpuff/run_calpuff.py:16:from .prepare_calpuff import render_calpuff_inp
+./engine/run_calpuff/run_calpuff.py:19:RUNTIME_LOG = "calpuff_runtime.log"
+./engine/run_calpuff/run_calpuff.py:47:def ensure_metdat(work_dir: Path, metdat: Path, calmet_dir: Path) -> None:
+./engine/run_calpuff/run_calpuff.py:50:    fallback = calmet_dir / "calmet.dat"
+./engine/run_calpuff/run_calpuff.py:75:    ap = argparse.ArgumentParser(description="Render and run CALPUFF for the current case")
+./engine/run_calpuff/run_calpuff.py:77:    ap.add_argument("--skip-prepare", action="store_true", help="Skip input rendering and use existing calpuff.inp")
+./engine/run_calpuff/run_calpuff.py:81:    paths = case_paths(config, case_name, required=["run_calmet_dir", "run_calpuff_dir"])
+./engine/run_calpuff/run_calpuff.py:82:    work_dir = paths["run_calpuff_dir"]
+./engine/run_calpuff/run_calpuff.py:83:    calmet_dir = paths["run_calmet_dir"]
+./engine/run_calpuff/run_calpuff.py:85:    inp_path = work_dir / "calpuff.inp"
+./engine/run_calpuff/run_calpuff.py:88:        rendered, _summary = render_calpuff_inp(case_name, config, work_dir)
+./engine/run_calpuff/run_calpuff.py:92:        resolve_executable("calpuff")
+./engine/run_calpuff/run_calpuff.py:97:        print(f"[ERROR] calpuff.inp not found: {inp_path}")
+./engine/run_calpuff/run_calpuff.py:101:    metdat = resolve_from_workdir(work_dir, parse_inp_assignment(inp_text, "METDAT"), "calmet.dat")
+./engine/run_calpuff/run_calpuff.py:102:    puflst = resolve_from_workdir(work_dir, parse_inp_assignment(inp_text, "PUFLST"), "calpuff.lst")
+./engine/run_calpuff/run_calpuff.py:103:    condat = resolve_from_workdir(work_dir, parse_inp_assignment(inp_text, "CONDAT"), "calpuff.con")
+./engine/run_calpuff/run_calpuff.py:106:    ensure_metdat(work_dir, metdat, calmet_dir)
+./engine/run_calpuff/run_calpuff.py:109:        print(f"[HINT] expected CALMET output at: {calmet_dir / 'calmet.dat'}")
+./engine/run_calpuff/run_calpuff.py:124:    print("[INFO] 可通过 calpuff.lst 查询报错原因")
+./engine/run_calpuff/run_calpuff.py:125:    print("[INFO] 可通过 calpuff_runtime.log 查询实时进程")
+./engine/run_calpuff/run_calpuff.py:130:            "calpuff",
+./engine/run_calpuff/README.md:1:# run_calpuff
+./engine/run_calpuff/README.md:3:本目录提供 CALPUFF 串行自动化脚本：
+./engine/run_calpuff/README.md:5:- `prepare_calpuff.py`
+./engine/run_calpuff/README.md:6:  - 读取案例中的 `calpuff_7.0.inp` 模板（优先 `project/current/run/calpuff`）
+./engine/run_calpuff/README.md:7:  - 自动写入 `METDAT` 为 `run/calmet/calmet.dat`
+./engine/run_calpuff/README.md:9:  - 生成 `project/current/run/calpuff/calpuff.inp`
+./engine/run_calpuff/README.md:10:- `run_calpuff.py`
+./engine/run_calpuff/README.md:11:  - 调用 `calpuff.x`
+./engine/run_calpuff/README.md:12:  - 自动检查并补齐 `METDAT`（若缺失则从 `run/calmet/calmet.dat` 复制）
+./engine/run_calpuff/README.md:13:  - 写运行日志并检查 `calpuff.lst` / `calpuff.con`
+./engine/run_calpuff/README.md:17:当前 CALPUFF 参数与点源数据统一从 `project/current/case.yaml` 读取。
+./engine/run_calpuff/README.md:22:calpuff:
+./engine/run_calpuff/README.md:53:- 后续源项修改只需要改 `case.yaml` 的 `calpuff.point_sources`。
+./engine/run_calpuff/README.md:57:  - `case_yaml`：使用 `calpuff.point_sources` 中定义的点源
+./engine/run_calpuff/README.md:59:- `prepare_calpuff.py` 会自动同步网格/投影/时区参数，并把模板源项坐标按当前网格原点平移。
+./engine/run_calpuff/README.md:67:仅生成 `calpuff.inp`：
+./engine/run_calpuff/README.md:70:python3 /home/ai/code/calpuff/tutorial/run_calpuff/prepare_calpuff.py
+./engine/run_calpuff/README.md:76:python3 /home/ai/code/calpuff/tutorial/run_calpuff/run_calpuff.py
+./engine/run_calpuff/README.md:81:1. 前处理与 CALMET 完成，确保 `project/current/run/calmet/calmet.dat` 已存在。
+./engine/run_calpuff/README.md:82:2. 编辑 `project/current/case.yaml` 中 `calpuff.options` 和 `calpuff.point_sources`。
+./engine/run_calpuff/README.md:83:3. 执行 `prepare_calpuff.py`，生成 `project/current/run/calpuff/calpuff.inp`。
+./engine/run_calpuff/README.md:84:4. 执行 `run_calpuff.py` 串行计算，输出 `calpuff.con`、`calpuff.dry`、`calpuff.wet`、`calpuff.vis` 等结果。
+./engine/run_calpuff/README.md:85:5. 检查 `run/calpuff/calpuff.lst` 与 `run/calpuff/calpuff_runtime.log`。
+./engine/run_calpuff/README.md:87:## `calpuff.inp` 必改参数清单
+./engine/run_calpuff/README.md:104:- `METDAT` 的网格/层数与 `calpuff.inp` 网格定义一致
+./engine/preprocess/terrel/README.md:20:- 网格文件：`/home/ai/code/calpuff/tutorial/data/grid/grid.cmn`
+./engine/preprocess/terrel/README.md:21:- 控制文件：`/home/ai/code/calpuff/tutorial/data/terrel/terrel.inp`
+./engine/preprocess/terrel/README.md:22:- 地形目录：`/home/ai/calpuff_terrain_and_landuse_data/china_srtm`
+./engine/preprocess/terrel/README.md:23:- TERREL 程序：`/home/ai/code/calpuff/tutorial/TERREL_v7.0.0_L141010/terrel.x`
+./engine/preprocess/terrel/README.md:37:python3 /home/ai/code/calpuff/tutorial/data/terrel/auto_select_srtm_to_terrel.py
+./engine/preprocess/terrel/README.md:47:python3 /home/ai/code/calpuff/tutorial/data/terrel/auto_select_srtm_to_terrel.py --dry-run
+./engine/preprocess/terrel/README.md:53:python3 /home/ai/code/calpuff/tutorial/data/terrel/auto_select_srtm_to_terrel.py --no-run-terrel
+./engine/preprocess/terrel/README.md:59:python3 /home/ai/code/calpuff/tutorial/data/terrel/auto_select_srtm_to_terrel.py \
+./engine/preprocess/terrel/README.md:69:python3 /home/ai/code/calpuff/tutorial/data/terrel/auto_select_srtm_to_terrel.py --igrid 2
+./engine/preprocess/read62_upperair_data/README.md:19:python3 /home/ai/code/calpuff/tutorial/data_pre_processing/read62_upperair_data/run_upperair_pipeline.py
+./engine/preprocess/read62_upperair_data/README.md:29:python3 /home/ai/code/calpuff/tutorial/data_pre_processing/read62_upperair_data/run_upperair_pipeline.py --pstop 500
+./engine/preprocess/read62_upperair_data/README.md:30:python3 /home/ai/code/calpuff/tutorial/data_pre_processing/read62_upperair_data/run_upperair_pipeline.py --skip-download --pstop 500
+./engine/preprocess/read62_upperair_data/merge_final_upperair.py:17:MAX_CALMET_LEVELS = 99
+./engine/preprocess/read62_upperair_data/merge_final_upperair.py:145:        trimmed_levels = levels[:MAX_CALMET_LEVELS]
+./engine/preprocess/read62_upperair_data/merge_final_upperair.py:278:    ap = argparse.ArgumentParser(description="Merge yearly READ62 UP.DAT files into final CALMET-ready files")
+./engine/preprocess/makegeo/README.md:7:- [auto_config_makegeo.py](/home/ai/code/calpuff/tutorial/data/makegeo/auto_config_makegeo.py)
+./engine/preprocess/makegeo/README.md:15:脚本会从 `/home/ai/code/calpuff/tutorial/data/grid/grid.cmn` 同步：
+./engine/preprocess/makegeo/README.md:29:- `LUDAT` -> `/home/ai/code/calpuff/tutorial/data/ctgproc/lu.dat`
+./engine/preprocess/makegeo/README.md:30:- `TERRDAT` -> `/home/ai/code/calpuff/tutorial/data/terrel/terrel.dat`
+./engine/preprocess/makegeo/README.md:41:/home/ai/code/calpuff/tutorial/MAKEGEO_V3.2_L110401/makegeo.x makegeo.inp
+./engine/preprocess/makegeo/README.md:49:python3 /home/ai/code/calpuff/tutorial/data/makegeo/auto_config_makegeo.py
+./engine/preprocess/makegeo/README.md:57:python3 /home/ai/code/calpuff/tutorial/data/makegeo/auto_config_makegeo.py --dry-run
+./engine/preprocess/makegeo/README.md:63:python3 /home/ai/code/calpuff/tutorial/data/makegeo/auto_config_makegeo.py --no-run-makegeo
+./engine/preprocess/makegeo/README.md:69:python3 /home/ai/code/calpuff/tutorial/data/makegeo/auto_config_makegeo.py \
+./engine/preprocess/makegeo/README.md:78:- `/home/ai/code/calpuff/tutorial/data/makegeo/geo.dat`
+./engine/preprocess/makegeo/README.md:79:- `/home/ai/code/calpuff/tutorial/data/makegeo/makegeo.lst`
+./engine/preprocess/makegeo/README.md:80:- `/home/ai/code/calpuff/tutorial/data/makegeo/qaluse.grd`
+./engine/preprocess/makegeo/README.md:81:- `/home/ai/code/calpuff/tutorial/data/makegeo/qaterr.grd`
+./engine/run_calpuff/prepare_calpuff.py:12:from .common import CALPUFF_TEMPLATE_FALLBACK, case_paths, load_case_config_with_name, parse_research_time
+./engine/run_calpuff/prepare_calpuff.py:182:def _normalize_point_sources(calpuff_cfg: dict[str, Any], nspec: int, grid: dict[str, Any], grid_dir: Path) -> list[dict[str, Any]]:
+./engine/run_calpuff/prepare_calpuff.py:188:    raw_sources = calpuff_cfg.get("point_sources", [])
+./engine/run_calpuff/prepare_calpuff.py:282:def render_calpuff_inp(case_name: str, config: dict[str, Any], work_dir: Path) -> tuple[str, dict[str, Any]]:
+./engine/run_calpuff/prepare_calpuff.py:283:    paths = case_paths(config, case_name, required=["grid_dir", "run_calmet_dir", "run_calpuff_dir"])
+./engine/run_calpuff/prepare_calpuff.py:289:        work_dir / "calpuff_7.0.inp",
+./engine/run_calpuff/prepare_calpuff.py:290:        CALPUFF_TEMPLATE_FALLBACK,
+./engine/run_calpuff/prepare_calpuff.py:291:        work_dir / "calpuff.inp",
+./engine/run_calpuff/prepare_calpuff.py:295:        raise FileNotFoundError("No CALPUFF input template found")
+./engine/run_calpuff/prepare_calpuff.py:301:    calpuff_cfg = config.get("calpuff", {})
+./engine/run_calpuff/prepare_calpuff.py:302:    opts = calpuff_cfg.get("options", {})
+./engine/run_calpuff/prepare_calpuff.py:317:        point_sources = _normalize_point_sources(calpuff_cfg, nspec, grid, grid_dir)
+./engine/run_calpuff/prepare_calpuff.py:319:        raise ValueError(f"Unsupported calpuff.options.source_mode: {source_mode}")
+./engine/run_calpuff/prepare_calpuff.py:323:            f"Invalid CALPUFF config: NSPEC={nspec} but template has {len(tpl_species)} CSPEC entries {tpl_species}. "
+./engine/run_calpuff/prepare_calpuff.py:329:            "Invalid CALPUFF config: NSPEC=1 with NDECAY>0. "
+./engine/run_calpuff/prepare_calpuff.py:333:    metdat = paths["run_calmet_dir"] / "calmet.dat"
+./engine/run_calpuff/prepare_calpuff.py:336:        "PUFLST": "calpuff.lst",
+./engine/run_calpuff/prepare_calpuff.py:337:        "CONDAT": "calpuff.con",
+./engine/run_calpuff/prepare_calpuff.py:338:        "DFDAT": "calpuff.dry",
+./engine/run_calpuff/prepare_calpuff.py:339:        "WFDAT": "calpuff.wet",
+./engine/run_calpuff/prepare_calpuff.py:417:    ap = argparse.ArgumentParser(description="Render CALPUFF input for current case")
+./engine/run_calpuff/prepare_calpuff.py:422:    work_dir = case_paths(config, case_name, required=["run_calpuff_dir"])["run_calpuff_dir"]
+./engine/run_calpuff/prepare_calpuff.py:424:    out_inp = work_dir / "calpuff.inp"
+./engine/run_calpuff/prepare_calpuff.py:426:    rendered, summary = render_calpuff_inp(case_name, config, work_dir)
+./engine/preprocess/terrel/auto_select_srtm_to_terrel.py:2:"""Select SRTM GeoTIFF files covering CALPUFF grid domain and write TERREL 0b list.
+./engine/preprocess/terrel/auto_select_srtm_to_terrel.py:5:selects intersecting calpuff_terrain_and_landuse_data/china_srtm/srtm_XX_YY.tif files, then updates:
+./engine/preprocess/terrel/auto_select_srtm_to_terrel.py:333:        default=str(tutorial_path("calpuff_terrain_and_landuse_data", "china_srtm")),
+./engine/preprocess/smerge_surf_data/run_smerge_and_monitor.py:161:    CALMET aborts if all surface stations have missing cloud cover for an
+./engine/preprocess/smerge_surf_data/run_smerge_and_monitor.py:162:    hour. The final published SURF.DAT is the stable interface into CALMET,
+./engine/preprocess/smerge_surf_data/README.md:3:本目录用于按项目研究时段自动下载 NOAA Global Hourly(ISD) 数据，完成转换、插值、清洗合并、SMERGE 配置更新与 SMERGE 运行，并发布 CALMET 直接使用的 `surf.dat`。
+./engine/preprocess/smerge_surf_data/README.md:23:- 最终发布（供 CALMET 使用）：`project/current/met/surface/final`
+./engine/preprocess/smerge_surf_data/README.md:27:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/run_isd_surface_pipeline.py
+./engine/preprocess/smerge_surf_data/README.md:32:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/run_isd_surface_pipeline.py --skip-download
+./engine/preprocess/smerge_surf_data/README.md:38:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/download_isd_by_grid.py
+./engine/preprocess/smerge_surf_data/README.md:43:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/isd_to_smerge_and_fill.py
+./engine/preprocess/smerge_surf_data/README.md:48:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/clean_merge_filled_by_research_time.py
+./engine/preprocess/smerge_surf_data/README.md:53:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/convert_cleaned_to_smerge_ready.py
+./engine/preprocess/smerge_surf_data/README.md:58:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/generate_smerge_input_sections.py
+./engine/preprocess/smerge_surf_data/README.md:63:.venv/bin/python /home/ai/code/calpuff/tutorial/data_pre_processing/smerge_surf_data/run_smerge_and_monitor.py
+./engine/preprocess/smerge_surf_data/README.md:68:- CALMET 使用的是 `project/current/met/surface/final/surf.dat`，不是 `run/smerge/surf.dat`。

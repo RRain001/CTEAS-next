@@ -1,0 +1,98 @@
+{
+  "status": "ORIGINAL_CALMET_WRITE_ONLY_INTERNAL_STATE_INSTRUMENTED",
+  "why": "CALMET.DAT records ZI/WSTAR/T-LEV but not the ZICONV/DPTT mixing-height memory nor QH/USTAR/EL/RHO/TEMP2D that produce them, so the residual P6E disagreement cannot be explained from the model output alone",
+  "no_vendor_source_edits": true,
+  "vendor_source_sha256": {
+    "calmet.for": "430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134",
+    "calutils.for": "1e1fbad6444dcebbcaefed3f5f9a65e5ab0569d45fdf12ea973ca613b8d7cad1"
+  },
+  "instrumented_sha256": {
+    "calmet_instrumented.for": "d763a642d3b9327c1cec40778cb3e2ac0d8f216c290b818c336e6aa278c95d6d"
+  },
+  "helper_subroutine": {
+    "name": "DGMSTATE",
+    "vendor_lines": 40199,
+    "sha256": "fd55b1767bef1990bf2647282c7531a61e6342e6369fc2a326ebd637de9fe65a",
+    "unit": 97,
+    "output_file": "dgm_state.bin",
+    "writes_only": true
+  },
+  "points": [
+    {
+      "kpt": 1,
+      "vendor_line": 4686,
+      "when": "after ELUSTR (QH/USTAR/EL) and the optional prints, before MIXHT",
+      "fields": [
+        "QH",
+        "USTAR",
+        "EL",
+        "RHO",
+        "TEMP2D"
+      ],
+      "inserted_text_sha256": "2447d770c6ab0a202ab12a0a7826d3214b46f148047aa7847df522fdaff09815"
+    },
+    {
+      "kpt": 2,
+      "vendor_line": 4690,
+      "when": "immediately before the MIXHT/MIXHT2 call (memory entering the hour)",
+      "fields": [
+        "ZICONV",
+        "DPTT"
+      ],
+      "inserted_text_sha256": "8a38d9dfcbf9f0f5385bc479cb29343abbca1e41b49ea5882e1b2dcdd4217870"
+    },
+    {
+      "kpt": 3,
+      "vendor_line": 4699,
+      "when": "immediately after MIXHT/MIXHT2, before AVEMIX",
+      "fields": [
+        "ZI",
+        "ZICONV",
+        "DPTT"
+      ],
+      "inserted_text_sha256": "66118f6e5f61e6da8a94a6816b9b0c994833b85afb47c20b09f23baebdfb772e"
+    },
+    {
+      "kpt": 4,
+      "vendor_line": 4717,
+      "when": "immediately after the IAVEZI=1 AVEMIX averaging",
+      "fields": [
+        "ZI",
+        "ZICONV"
+      ],
+      "inserted_text_sha256": "caa86df8e37f030b6d5b76cc043e525ad09015e4d725b59aab44f6474a66d40c"
+    },
+    {
+      "kpt": 5,
+      "vendor_line": 4750,
+      "when": "immediately after WSTARR",
+      "fields": [
+        "WSTAR",
+        "ZICONV"
+      ],
+      "inserted_text_sha256": "c892ffd64cf67e42417d6dc3396ad505d9e9297aae964dd7e1612e6edf774208"
+    }
+  ],
+  "instrumented_source_segment": {
+    "vendor_lines": [
+      4657,
+      4751
+    ],
+    "sha256": "9855666ed86d6a9dd3456fee000478e476054b5ddbe4807f0f85827b3d9fd92b"
+  },
+  "record_layout": {
+    "header": [
+      "kpt",
+      "nh",
+      "nyr",
+      "ijul",
+      "ihr",
+      "isec",
+      "nx",
+      "ny"
+    ],
+    "header_dtype": "int32 little endian",
+    "field_dtype": "float32 little endian",
+    "field_order": "i fastest: element = (j-1)*nx + i, i=1..nx, j=1..ny"
+  }
+}

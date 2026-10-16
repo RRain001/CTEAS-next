@@ -1,0 +1,57 @@
+name: P4 READ62 scoped C++20
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/include/cteas/met_input/**'
+      - 'native_cpp/tests/**'
+      - 'native_cpp/modules/p4_read62/**'
+      - '.github/workflows/p4-read62-scoped.yml'
+jobs:
+  unit:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select self-hosted C++20 and Fortran tools
+        uses: ./.github/actions/cteas-linux-toolchain
+      - name: Reset self-hosted scratch directories
+        shell: bash
+        run: |
+          rm -rf ${{ runner.temp }}/cteas-p4-build ${{ runner.temp }}/cteas-p4-release
+      - name: Configure
+        run: cmake -S native_cpp/modules/p4_read62 -B ${{ runner.temp }}/cteas-p4-build -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build ${{ runner.temp }}/cteas-p4-build -j2
+      - name: Test
+        run: ctest --test-dir ${{ runner.temp }}/cteas-p4-build --output-on-failure
+
+      - name: Release build and active assert tests
+        run: |
+          cmake -S native_cpp/modules/p4_read62 -B ${{ runner.temp }}/cteas-p4-release -DCMAKE_BUILD_TYPE=Release
+          cmake --build ${{ runner.temp }}/cteas-p4-release -j2
+          ctest --test-dir ${{ runner.temp }}/cteas-p4-release --output-on-failure
+
+      - name: Verify copied IGRA sources and Python runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m compileall -q native_cpp/modules/p4_read62/data_prep
+          python3 -m native_cpp.modules.p4_read62.data_prep.prepare_inputs --year 2022 --pstop 500
+          python3 - <<'PY'
+          from pathlib import Path
+          original = Path("engine/preprocess/read62_upperair_data")
+          snapshot = Path("native_cpp/modules/p4_read62/data_prep")
+          for name in ("download_igra.py","parse_igra_to_csv.py","read.py"):
+              assert (original/name).read_bytes() != (snapshot/name).read_bytes(), name
+          assert (original/"README.md").read_bytes() == (snapshot/"upstream_README.md").read_bytes()
+          assert (original/"merge_final_upperair.py").read_bytes() == (snapshot/"merge_final_upperair.py").read_bytes()
+          assert (original/"READ62_strict_requirements.md").read_bytes() == (snapshot/"READ62_strict_requirements.md").read_bytes()
+          print("P4_UPSTREAM_PROTECTED_SCOPED_COPY_CHANGED=PASS")
+          PY
+          python3 -m unittest discover -s native_cpp/modules/p4_read62/data_prep/tests -p 'test_*.py' -v

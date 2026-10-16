@@ -1,0 +1,90 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+.venv-*/
+venv/
+env/
+ENV/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+*.tmp
+*.bak
+
+# Matplotlib/cache
+.mplconfig/
+.matplotlib/
+
+# Build/package outputs
+build/
+dist/
+*.egg-info/
+
+# Docker/runtime temp
+.venv-docker/
+docker_tmp/
+tmp/
+
+# Native build artifacts
+*.mod
+
+# Runtime native binaries are required locally but not tracked in normal Git history.
+bin/linux-x86_64/*.x
+
+# Project data and runtime outputs
+project/
+
+# Common model outputs
+*.lst
+*.con
+*.grd
+*.dat
+*.out
+*.plt
+*.bin
+
+# Keep placeholders
+!bin/linux-x86_64/.gitkeep
+!bin/linux-arm64/.gitkeep
+!bin/windows-x86_64/.gitkeep
+
+# Local git history backups created during reset
+.git.backup_*/
+
+# Native binary backup logs
+docs/refactor_logs/removed_native_binaries_backup/
+
+# Large terrain / landuse datasets
+calpuff_terrain_and_landuse_data/
+
+# CTEAS-next compiled artifacts and local external scientific dependencies
+*.o
+*.obj
+*.a
+*.so
+*.exe
+*.x
+cmake-build*/
+/engine/vendor/
+/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/

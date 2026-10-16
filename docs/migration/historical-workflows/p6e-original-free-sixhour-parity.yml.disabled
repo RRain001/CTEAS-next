@@ -1,0 +1,323 @@
+name: P6E original CALMET free six-hour and 143-hour native source parity
+
+on:
+  push:
+    branches: [codex/p6-hourly-stateful-scheduler-20261013]
+    paths:
+      - .github/workflows/p6e-original-free-sixhour-parity.yml
+      - native_cpp/modules/p6_calmet/src/native_hourly_driver_main.cpp
+      - native_cpp/modules/p6_calmet/p6f/src/p6f_p6e_source_metadata_main.cpp
+      - native_cpp/modules/p6_calmet/p6f/CMakeLists.txt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  real-six-hour-without-original-p6e-metadata:
+    name: 6h native P6D->P6E vs source-accepted baseline, hourly REAL4 payload exact
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            native_cpp/modules/p6_calmet
+            native_cpp/modules/p7_calpuff/reference/original_decode_calmet_hourly.py
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          path: original_locked_case
+          filter: blob:none
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011
+      - name: Physically omit original met.dat from model case inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, pathlib
+          src=(pathlib.Path(os.environ['GITHUB_WORKSPACE'])/
+               'original_locked_case/project/cases/hefei5km_2022_reference_case_20261011')
+          dst=pathlib.Path(os.environ['RUNNER_TEMP'])/'p6-no-reference-met-case'
+          assert src.is_dir() and not dst.exists()
+          dst.mkdir()
+          for p in src.iterdir():
+              if p.name!='run':
+                  (dst/p.name).symlink_to(p.resolve(),target_is_directory=p.is_dir())
+                  continue
+              target=dst/'run'; target.mkdir()
+              for sub in p.iterdir():
+                  if sub.name!='met':
+                      (target/sub.name).symlink_to(
+                          sub.resolve(),target_is_directory=sub.is_dir())
+                      continue
+                  met_dir=target/'met';met_dir.mkdir()
+                  for item in sub.iterdir():
+                      if item.name=='met.dat':
+                          continue
+                      (met_dir/item.name).symlink_to(
+                          item.resolve(),target_is_directory=item.is_dir())
+          assert (dst/'run/met/met.inp').is_file()
+          assert not (dst/'run/met/met.dat').exists(), 'original CALMET.DAT leaked'
+          print('PASS_NO_ORIGINAL_CALMET_DAT_PRESENT_IN_NATIVE_CASE_ROOT')
+          PY
+      - name: Get previously accepted original-metadata six-hour baseline
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 38380716284
+          name: p6-causal-original-case-6h
+          path: ${{ runner.temp }}/original-metadata-baseline
+      - name: Build unchanged P6D/P6E and source-only metadata producer
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet \
+            -B "$RUNNER_TEMP/p6e-native-p6d" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6e-native-p6d" \
+            --target cteas_p6_realcase_wind_field cteas_p6_native_cgamma_grid_143h \
+                     cteas_p6_native_hourly_driver --parallel 2
+          cmake -S native_cpp/modules/p6_calmet/p6e \
+            -B "$RUNNER_TEMP/p6e-native-p6e" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6e-native-p6e" \
+            --target p6e_calmet_dat21 p6e_p6c_hourly_bridge --parallel 2
+          cmake -S native_cpp/modules/p6_calmet/p6f \
+            -B "$RUNNER_TEMP/p6e-native-p6f" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release \
+            -DP6F_REPO_ROOT="$GITHUB_WORKSPACE/original_locked_case"
+          cmake --build "$RUNNER_TEMP/p6e-native-p6f" \
+            --target cteas_p6f_p6e_source_metadata --parallel 2
+      - name: Run native 6h with independent GEO and deck metadata replacing original CALMET for P6E
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/p6e-native-p6d/cteas_p6_native_hourly_driver" \
+            --case "$RUNNER_TEMP/p6-no-reference-met-case" \
+            --p6d "$RUNNER_TEMP/p6e-native-p6d/cteas_p6_realcase_wind_field" \
+            --p6e "$RUNNER_TEMP/p6e-native-p6e/p6e_calmet_dat21" \
+            --bridge "$RUNNER_TEMP/p6e-native-p6e/p6e_p6c_hourly_bridge" \
+            --cgamma "$RUNNER_TEMP/p6e-native-p6d/cteas_p6_native_cgamma_grid_143h" \
+            --p6e-source-builder "$RUNNER_TEMP/p6e-native-p6f/cteas_p6f_p6e_source_metadata" \
+            --work "$RUNNER_TEMP/p6e-source-only-six" --hours 6
+          grep -q '"p6e_reference_is_geo_deck_metadata_only": true' \
+            "$RUNNER_TEMP/p6e-source-only-six/native_cpp_hourly_manifest.json"
+          test -s "$RUNNER_TEMP/p6e-source-only-six/p6e_geo_deck_metadata_only.dat"
+      - name: Compare every real 1h meteorological Fortran record against frozen prior result
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, pathlib, struct
+          base=pathlib.Path(os.environ['RUNNER_TEMP'])
+          old=base/'original-metadata-baseline/native_causal_calmet.dat'
+          new=base/'p6e-source-only-six/native_causal_calmet.dat'
+          def fields(path):
+              raw=path.read_bytes()
+              records=[]
+              at=0
+              reading=False
+              while at<len(raw):
+                  assert at+8<=len(raw), f'truncated record marker at {at}'
+                  n=struct.unpack_from('<I',raw,at)[0]
+                  assert at+8+n<=len(raw), f'truncated record at {at}'
+                  end=struct.unpack_from('<I',raw,at+4+n)[0]
+                  assert n==end, f'wrong Fortran marker at {at}'
+                  payload=raw[at+4:at+4+n]
+                  if payload[:8]==b'U-LEV  1':
+                      reading=True
+                  if reading:
+                      assert len(payload)==24+2500*4, f'wrong hourly record size at {at}'
+                      records.append(payload)
+                  at+=8+n
+              assert at==len(raw)
+              assert len(records)==6*45, f'wrong number of hourly records {len(records)}'
+              return records
+          a,b=fields(old),fields(new)
+          failed=[i for i,(x,y) in enumerate(zip(a,b)) if x!=y]
+          assert not failed, f'first nonidentical hourly source record {failed[0]}'
+          print('PASS_P6E_NO_ORIGINAL_CALMET_METADATA_6H_270_HOURLY_RECORDS_BIT_EXACT')
+          PY
+      - name: Archive opt-in genuine P6E metadata independence gate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-geo-deck-only-native-six-hour-verdict
+          path: |
+            ${{ runner.temp }}/p6e-source-only-six/native_cpp_hourly_manifest.json
+            ${{ runner.temp }}/p6e-source-only-six/p6e_source_metadata.log
+            ${{ runner.temp }}/p6e-source-only-six/p6e_geo_deck_metadata_only.dat
+          if-no-files-found: warn
+          retention-days: 7
+
+  real-143-hour-without-original-p6e-metadata:
+    needs: real-six-hour-without-original-p6e-metadata
+    name: 143h native P6D->P6E vs source-accepted baseline, hourly REAL4 payload exact
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            native_cpp/modules/p6_calmet
+            native_cpp/modules/p7_calpuff/reference/original_decode_calmet_hourly.py
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          path: original_locked_case
+          filter: blob:none
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011
+      - name: Physically omit original met.dat from model case inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, pathlib
+          src=(pathlib.Path(os.environ['GITHUB_WORKSPACE'])/
+               'original_locked_case/project/cases/hefei5km_2022_reference_case_20261011')
+          dst=pathlib.Path(os.environ['RUNNER_TEMP'])/'p6-no-reference-met-case'
+          assert src.is_dir() and not dst.exists()
+          dst.mkdir()
+          for p in src.iterdir():
+              if p.name!='run':
+                  (dst/p.name).symlink_to(p.resolve(),target_is_directory=p.is_dir())
+                  continue
+              target=dst/'run'; target.mkdir()
+              for sub in p.iterdir():
+                  if sub.name!='met':
+                      (target/sub.name).symlink_to(
+                          sub.resolve(),target_is_directory=sub.is_dir())
+                      continue
+                  met_dir=target/'met';met_dir.mkdir()
+                  for item in sub.iterdir():
+                      if item.name=='met.dat':
+                          continue
+                      (met_dir/item.name).symlink_to(
+                          item.resolve(),target_is_directory=item.is_dir())
+          assert (dst/'run/met/met.inp').is_file()
+          assert not (dst/'run/met/met.dat').exists(), 'original CALMET.DAT leaked'
+          print('PASS_NO_ORIGINAL_CALMET_DAT_PRESENT_IN_NATIVE_CASE_ROOT')
+          PY
+      - name: Get previously accepted original-metadata 143-hour baseline
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 38380716284
+          name: p6-causal-original-case-143h
+          path: ${{ runner.temp }}/original-metadata-baseline
+      - name: Build unchanged P6D/P6E and source-only metadata producer
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet \
+            -B "$RUNNER_TEMP/p6e-native-p6d" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6e-native-p6d" \
+            --target cteas_p6_realcase_wind_field cteas_p6_native_cgamma_grid_143h \
+                     cteas_p6_native_hourly_driver --parallel 2
+          cmake -S native_cpp/modules/p6_calmet/p6e \
+            -B "$RUNNER_TEMP/p6e-native-p6e" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6e-native-p6e" \
+            --target p6e_calmet_dat21 p6e_p6c_hourly_bridge --parallel 2
+          cmake -S native_cpp/modules/p6_calmet/p6f \
+            -B "$RUNNER_TEMP/p6e-native-p6f" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release \
+            -DP6F_REPO_ROOT="$GITHUB_WORKSPACE/original_locked_case"
+          cmake --build "$RUNNER_TEMP/p6e-native-p6f" \
+            --target cteas_p6f_p6e_source_metadata \
+                     cteas_p6f_geo_static_provenance --parallel 2
+      - name: Run native 143h with independent GEO and deck metadata replacing original CALMET for P6E
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/p6e-native-p6d/cteas_p6_native_hourly_driver" \
+            --case "$RUNNER_TEMP/p6-no-reference-met-case" \
+            --p6d "$RUNNER_TEMP/p6e-native-p6d/cteas_p6_realcase_wind_field" \
+            --p6e "$RUNNER_TEMP/p6e-native-p6e/p6e_calmet_dat21" \
+            --bridge "$RUNNER_TEMP/p6e-native-p6e/p6e_p6c_hourly_bridge" \
+            --cgamma "$RUNNER_TEMP/p6e-native-p6d/cteas_p6_native_cgamma_grid_143h" \
+            --p6e-source-builder "$RUNNER_TEMP/p6e-native-p6f/cteas_p6f_p6e_source_metadata" \
+            --p6f-writer "$RUNNER_TEMP/p6e-native-p6f/cteas_p6f_geo_static_provenance" \
+            --work "$RUNNER_TEMP/p6e-source-only-143" --hours 143
+          grep -q '"p6e_reference_is_geo_deck_metadata_only": true' \
+            "$RUNNER_TEMP/p6e-source-only-143/native_cpp_hourly_manifest.json"
+          test -s "$RUNNER_TEMP/p6e-source-only-143/p6e_geo_deck_metadata_only.dat"
+          grep -q '"independent_p6f_source_header_written": true' \
+            "$RUNNER_TEMP/p6e-source-only-143/native_cpp_hourly_manifest.json"
+          independent="$RUNNER_TEMP/p6e-source-only-143/native_causal_independent_header_calmet.dat"
+          test -s "$independent"
+          baseline="$RUNNER_TEMP/original-metadata-baseline/native_causal_independent_header_calmet.dat"
+          test -s "$baseline"
+          cmp "$baseline" "$independent"
+          echo "PASS_P6_NO_ORIGINAL_CALMET_INPUT_143H_SOURCE_ONLY_FULL_OUTHD_BIT_EXACT"
+      - name: Compare every real 1h meteorological Fortran record against frozen prior result
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, pathlib, struct
+          base=pathlib.Path(os.environ['RUNNER_TEMP'])
+          old=base/'original-metadata-baseline/native_causal_calmet.dat'
+          new=base/'p6e-source-only-143/native_causal_calmet.dat'
+          def fields(path):
+              raw=path.read_bytes()
+              records=[]
+              at=0
+              reading=False
+              while at<len(raw):
+                  assert at+8<=len(raw), f'truncated record marker at {at}'
+                  n=struct.unpack_from('<I',raw,at)[0]
+                  assert at+8+n<=len(raw), f'truncated record at {at}'
+                  end=struct.unpack_from('<I',raw,at+4+n)[0]
+                  assert n==end, f'wrong Fortran marker at {at}'
+                  payload=raw[at+4:at+4+n]
+                  if payload[:8]==b'U-LEV  1':
+                      reading=True
+                  if reading:
+                      assert len(payload)==24+2500*4, f'wrong hourly record size at {at}'
+                      records.append(payload)
+                  at+=8+n
+              assert at==len(raw)
+              assert len(records)==143*45, f'wrong number of hourly records {len(records)}'
+              return records
+          a,b=fields(old),fields(new)
+          failed=[i for i,(x,y) in enumerate(zip(a,b)) if x!=y]
+          assert not failed, f'first nonidentical hourly source record {failed[0]}'
+          print('PASS_P6E_NO_ORIGINAL_CALMET_METADATA_143H_6435_HOURLY_RECORDS_BIT_EXACT')
+          PY
+      - name: Original CALMET 45-field strict science gate on original-free P6E metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          original="$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+          candidate="$RUNNER_TEMP/p6e-source-only-143/native_causal_independent_header_calmet.dat"
+          "$RUNNER_TEMP/p6e-native-p6e/p6e_calmet_dat21" compare \
+            --reference "$original" --candidate "$candidate" \
+            --out "$RUNNER_TEMP/p6e-source-only-143/original45_verdict.json"
+          python3 - <<'PY'
+          import json, os, pathlib
+          report=pathlib.Path(os.environ['RUNNER_TEMP'])/'p6e-source-only-143/original45_verdict.json'
+          result=json.loads(report.read_text())
+          assert result["total_exceedances"] == 0, result
+          print("PASS_P6E_GEO_DECK_ONLY_143H_ORIGINAL_45_FIELDS_ZERO_EXCEEDANCES")
+          PY
+      - name: Archive opt-in genuine P6E metadata independence gate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-geo-deck-only-native-143-hour-verdict
+          path: |
+            ${{ runner.temp }}/p6e-source-only-143/native_cpp_hourly_manifest.json
+            ${{ runner.temp }}/p6e-source-only-143/original45_verdict.json
+            ${{ runner.temp }}/p6e-source-only-143/p6f-native-header.log
+            ${{ runner.temp }}/p6e-source-only-143/p6e_source_metadata.log
+            ${{ runner.temp }}/p6e-source-only-143/p6e_geo_deck_metadata_only.dat
+          if-no-files-found: warn
+          retention-days: 7

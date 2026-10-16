@@ -1,0 +1,31 @@
+* text=auto
+
+*.py text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+
+*.x binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.dat binary
+*.con binary
+*.grd binary
+*.bin binary
+
+# 栅格数据（站点裁剪件等）：按二进制处理，避免行尾/编码转换
+*.tif binary
+*.img binary
+
+# 参考案例工作区（project/cases/<case>/**）保存的是原始链路捕获产物，
+# 其 SHA-256 冻结在 docs/reconstruction_cpp/*_CAPTURE.md 中。必须逐字节保存：
+# 若做行尾转换，冻结哈希无法由仓库检出复现（NOAA ISD/IGRA 派生的 CSV 为 CRLF）。
+project/cases/** -text
+
+# Disabled workflow archive is provenance, not newly formatted YAML.
+docs/migration/historical-workflows/** -text

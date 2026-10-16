@@ -1,0 +1,4418 @@
+{
+  "case_name": "hefei5km_2022_reference_case_20261011",
+  "generated_utc": "2026-10-11T12:29:01+00:00",
+  "host": {
+    "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+    "machine": "x86_64",
+    "processor_count": 112,
+    "python": "3.10.12",
+    "capture_command": "scripts/capture_hefei_2022_reference_case.py --doc-out docs/reconstruction_cpp/HEFEI_2022_REFERENCE_CAPTURE.md"
+  },
+  "stage_total_s": 165.499,
+  "spec": {
+    "stack_latitude_deg": 31.939774444,
+    "stack_longitude_deg": 117.141610855,
+    "stack_height_m": 70.8,
+    "stack_diameter_m": 1.6,
+    "stack_exit_velocity_mps": 17.26,
+    "stack_exit_temperature_c": 25.0,
+    "hto_bq_per_year": 26300000000000.0,
+    "ht_bq_per_year": 0.0,
+    "domain_km": 5.0,
+    "resolution_km": 0.1,
+    "nz": 9,
+    "zface_m": [
+      0.0,
+      20.0,
+      40.0,
+      80.0,
+      160.0,
+      320.0,
+      640.0,
+      1200.0,
+      2000.0,
+      3000.0
+    ],
+    "begin": "20220101-000000",
+    "end": "20220106-230000",
+    "timezone": "UTC+0000",
+    "pstop_hpa": 500.0,
+    "upperair_station_id": "CHM00058424",
+    "expected_hour_labels": 144,
+    "crop_info": "calpuff_terrain_and_landuse_data_crop/hefei_5km/crop_info.json"
+  },
+  "emission_bq_per_s": 833967.5291730086,
+  "seconds_per_year": 31536000.0,
+  "grid": {
+    "nx": 50,
+    "ny": 50,
+    "nz": 9,
+    "xref_km": "510.885",
+    "yref_km": "3531.269",
+    "dgridkm": "0.1",
+    "iutmzn": "50",
+    "datum": "WGS-84"
+  },
+  "stages": [
+    {
+      "stage": "configure_grid_cmn",
+      "module": "engine.preprocess.grid.configure_grid_cmn",
+      "argv": [],
+      "command": "/usr/bin/python3 -m engine.preprocess.grid.configure_grid_cmn",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 0.085,
+      "log": "logs/01_configure_grid_cmn.log",
+      "log_sha256": "7901cdb1994529324d99cfb653f80bd689f8cbeb02d7a539bd6ca9e77549e1a0"
+    },
+    {
+      "stage": "terrel",
+      "module": "engine.preprocess.terrel.auto_select_srtm_to_terrel",
+      "argv": [
+        "--grid",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn",
+        "--terrel",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.inp",
+        "--srtm-dir",
+        "/home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm"
+      ],
+      "command": "/usr/bin/python3 -m engine.preprocess.terrel.auto_select_srtm_to_terrel --grid /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn --terrel /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.inp --srtm-dir /home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 0.119,
+      "log": "logs/02_terrel.log",
+      "log_sha256": "2cbbef636c5ffe108575eb26ca031f77fa0899e1dcf3226622e25aefe1da8497"
+    },
+    {
+      "stage": "ctgproc",
+      "module": "engine.preprocess.ctgproc.auto_select_landuse_to_ctgproc",
+      "argv": [
+        "--grid",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn",
+        "--ctgproc",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp",
+        "--landuse-file",
+        "/home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt",
+        "--lulc-type",
+        "GEN"
+      ],
+      "command": "/usr/bin/python3 -m engine.preprocess.ctgproc.auto_select_landuse_to_ctgproc --grid /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn --ctgproc /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp --landuse-file /home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt --lulc-type GEN",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 0.424,
+      "log": "logs/03_ctgproc.log",
+      "log_sha256": "bc29ff392aea0289d022512a67357286a49b3bf3288d860119ff58df59589dc2"
+    },
+    {
+      "stage": "makegeo",
+      "module": "engine.preprocess.makegeo.auto_config_makegeo",
+      "argv": [
+        "--grid",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn",
+        "--makegeo",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp",
+        "--ludat",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/lu.dat",
+        "--terrdat",
+        "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.dat"
+      ],
+      "command": "/usr/bin/python3 -m engine.preprocess.makegeo.auto_config_makegeo --grid /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn --makegeo /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp --ludat /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/lu.dat --terrdat /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.dat",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 0.229,
+      "log": "logs/04_makegeo.log",
+      "log_sha256": "cbcf9a1a3aeccd49a57f03cd31e6a3c291cd903645742e19c9b1c563e89f21eb"
+    },
+    {
+      "stage": "read62",
+      "module": "engine.preprocess.read62_upperair_data.run_upperair_pipeline",
+      "argv": [
+        "--python",
+        "/usr/bin/python3",
+        "--pstop",
+        "500.0"
+      ],
+      "command": "/usr/bin/python3 -m engine.preprocess.read62_upperair_data.run_upperair_pipeline --python /usr/bin/python3 --pstop 500.0",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 23.395,
+      "log": "logs/05_read62.log",
+      "log_sha256": "ad6cec320e7df9f29e7b31229c89cd5db8b34e574cbbf33093e84ec14b8fee6a"
+    },
+    {
+      "stage": "isd_download",
+      "module": "native_cpp.modules.p5_smerge.data_prep.download_isd_by_grid",
+      "argv": [
+        "--year",
+        "2022",
+        "--stack-lat",
+        "31.939774444",
+        "--stack-lon",
+        "117.141610855",
+        "--timeout",
+        "30",
+        "--retries",
+        "2"
+      ],
+      "command": "/usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.download_isd_by_grid --year 2022 --stack-lat 31.939774444 --stack-lon 117.141610855 --timeout 30 --retries 2",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 5.536,
+      "log": "logs/06_isd_download.log",
+      "log_sha256": "51efa983cdbbf2a219454a9e9c24f152b3e77eace157f60ee9818a3bfc82ec62"
+    },
+    {
+      "stage": "smerge_prepare",
+      "module": "native_cpp.modules.p5_smerge.data_prep.prepare_inputs",
+      "argv": [
+        "--expected-year",
+        "2022",
+        "--skip-download",
+        "--write-legacy-control",
+        "--execute"
+      ],
+      "command": "/usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.prepare_inputs --expected-year 2022 --skip-download --write-legacy-control --execute",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 3.013,
+      "log": "logs/07_smerge_prepare.log",
+      "log_sha256": "f6c8302309198ecd597f8c65254dbb3dc1ede1db59a8e9f5662bf64ca0423e8f"
+    },
+    {
+      "stage": "smerge",
+      "module": "native_cpp.modules.p5_smerge.data_prep.run_smerge_and_monitor",
+      "argv": [],
+      "command": "/usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.run_smerge_and_monitor",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 0.087,
+      "log": "logs/08_smerge.log",
+      "log_sha256": "a01ed1ddc668e1ca81374a35f59c09853441c83ebe01c10cf0f2260235a39dc7"
+    },
+    {
+      "stage": "calmet",
+      "module": "engine.run_met.run_met",
+      "argv": [
+        "--case",
+        "hefei5km_2022_reference_case_20261011"
+      ],
+      "command": "/usr/bin/python3 -m engine.run_met.run_met --case hefei5km_2022_reference_case_20261011",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 118.617,
+      "log": "logs/09_calmet.log",
+      "log_sha256": "97f0dc9a7af8c78751ab3bc594a06d83f5a623bf7bfacd56b0959f7ea6e69704"
+    },
+    {
+      "stage": "calpuff",
+      "module": "engine.run_puff.run_puff",
+      "argv": [
+        "--case",
+        "hefei5km_2022_reference_case_20261011"
+      ],
+      "command": "/usr/bin/python3 -m engine.run_puff.run_puff --case hefei5km_2022_reference_case_20261011",
+      "cwd": "/home/lhy/build/ref/cteas-ref",
+      "returncode": 0,
+      "elapsed_s": 13.994,
+      "log": "logs/10_calpuff.log",
+      "log_sha256": "1c73213c31ee8b4aa331ef79ffc80e6d541287c3adea9c349c6ba57ad6b1e8e7"
+    }
+  ],
+  "control_decks": {
+    "geo/terrel/terrel.inp": "5f663016eb8e04da9fa611dae31d730ebf437ea6e122b3b16dae5a8b1d68e762",
+    "geo/ctgproc/ctgproc.inp": "87b8d06219b2e0518bf25f5093e9edb0b98dec9bea055d09b5d8cdff82b225f0",
+    "geo/makegeo/makegeo.inp": "e87b166346abe1c16136a790cda3acffdec6e29d9fb558ab2c9738ef426238b7",
+    "run/read62/read62.inp": "949d89df6169d6c49068dc3be4a822e163ba9791052badcc7d496b4961d6664b",
+    "run/smerge/smerge.inp": "1370681c2cb06d6b5a562b7850d30c11213a87c7067d8c414ae6f8c4be102375",
+    "run/met/met.inp": "94b6d34639abb3f54719577298c49b6939c9c6eec5b3755c79dddfaa01edc671",
+    "run/puff/puff.inp": "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc"
+  },
+  "binaries": {
+    "terrel": "64462639be97dc5cdb87ccc86396623c7597e4bfd85c12a7dbcb241177e46de3",
+    "ctgproc": "6a6ce296516991281003b057a24331f32aa8229684e9280bf76862f594ed2566",
+    "makegeo": "da968d53509e6f12248826eb4973e72871518145c511b9ea941ba30c5225a6ed",
+    "read62": "db5e0bf7666d95716ef734a6e4add657365e0085e6145692d9d226554ed59f51",
+    "smerge": "0d07eb65762d622a59eefd4ee36a2fe2d5082a133594e55bfeceeef372a5c802",
+    "met": "1c2d1227d1ba7e8135bd81488be48d3d1e54f041839f20cd466bcd0176f41322",
+    "puff": "7ded56746f77ea752e95d2ebe1149d4d20b44562e150a1ce2cb3a1b6f20525fb"
+  },
+  "toolchain": {
+    "build_recipe": {
+      "compiler": "gfortran-11",
+      "common_flags": [
+        "-std=legacy",
+        "-ffixed-line-length-none",
+        "-fno-automatic",
+        "-fno-align-commons",
+        "-fallow-argument-mismatch",
+        "-O0"
+      ],
+      "legacy72_flags": [
+        "-std=legacy",
+        "-ffixed-line-length-72",
+        "-fno-automatic",
+        "-fno-align-commons",
+        "-fallow-argument-mismatch",
+        "-O0"
+      ],
+      "calpuff_flags": [
+        "-std=legacy",
+        "-ffixed-line-length-72",
+        "-fno-automatic",
+        "-fno-align-commons",
+        "-fallow-argument-mismatch",
+        "-O0",
+        "-fdec-format-defaults"
+      ],
+      "include_handling": "lower-case symlink alias tree per vendor directory passed with -I"
+    },
+    "built_missing_binaries": false,
+    "note": "byte identity of the .x files depends on compiler version and build paths; the vendor source hashes below are the frozen provenance"
+  },
+  "selected_stations": {
+    "upperair_station_used_list": [
+      "id,name,lat,lon,elev_m,year,raw_txt",
+      "CHM00058424,ANQING,31.9398,117.1416,62.0,2022,/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/CHM00058424-data.txt"
+    ],
+    "surface_selection": {
+      "mode": "VIRTUAL_RELOCATED",
+      "station_selection_case": "EXTERNAL_SINGLE_VIRTUAL"
+    },
+    "surface_stations": [
+      {
+        "sid": "58321099999",
+        "ifstn": "583210",
+        "name": "LUOGANG / XINQIAO",
+        "lat": 31.939774444,
+        "lon": 117.141610855,
+        "relocated": true,
+        "wind_treatment": "COMPLETE_FILL_AND_CALM_REPLACE"
+      }
+    ]
+  },
+  "vendor_sources": {
+    "terrel": "99321c6d42823464fdf9a20f84c18862c4b17e2ba9588e184801afbc7f356f0a",
+    "ctgproc": "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281",
+    "makegeo": "8c4fb11db36d4b976b54f470b7a06ce4e38ab09e934951b0e2c613bddc34e347",
+    "read62": "4cf936fba6802e7f6f207f5a83b5374201947e8239db1ca618247bb603d5192f",
+    "smerge": "72f87217045c7a3e19b3dc522411089129bb07f1830b9c2a321352d84a640804",
+    "calmet": "430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134",
+    "calmet_calutils": "1e1fbad6444dcebbcaefed3f5f9a65e5ab0569d45fdf12ea973ca613b8d7cad1",
+    "calpuff_modules": "115ab7c7e50701a454852106d7c7536d75f1975f66a87a616b4835c5bea353b6",
+    "calpuff": "da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568",
+    "grid_cmn": "f63e67a251b6f22e60c73716f2d0d04282dc85d49011016df24e94f25b63e2c4"
+  },
+  "inputs": {
+    "crop_info": {
+      "path": "calpuff_terrain_and_landuse_data_crop/hefei_5km/crop_info.json",
+      "bytes": 3122,
+      "sha256": "b7882526e0d99db5cdca558ff2e83c870c2b0fcea626e42496129913dc36f1aa"
+    },
+    "terrain_geotiff": {
+      "path": "calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/srtm_60_06_hefei_5km.tif",
+      "bytes": 14648,
+      "sha256": "c4211914fce527d2ad41ecac1e668d7faa2904bbbfd9135868ee83ef0d32123f"
+    },
+    "landuse_generic": {
+      "path": "calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt",
+      "bytes": 1497932,
+      "sha256": "bd937d99fb13b49ac6185c080359bef050afe76fc63945ac53b7d676547d43dc"
+    }
+  },
+  "verification": {
+    "met_control_options": {
+      "IRTYPE": "1",
+      "LCALGRD": "T",
+      "IWFCOD": "1",
+      "IOBR": "0",
+      "ISLOPE": "1",
+      "IFRADJ": "1",
+      "IKINE": "0",
+      "IEXTRP": "-4",
+      "TERRAD": "15.",
+      "CRITFN": "1.",
+      "ALPHA": "0.1",
+      "DIVLIM": "5.0E-06",
+      "NITER": "50",
+      "IMIXH": "1",
+      "THRESHL": "0.",
+      "IZICRLX": "1",
+      "NSECDT": "3600",
+      "ISURFT": "-1",
+      "IUPT": "-1",
+      "IUPWND": "-1"
+    },
+    "puff_control_options": {
+      "METFM": "1",
+      "NSPEC": "2",
+      "NSE": "1",
+      "IOUTU": "3",
+      "IOVERS": "2",
+      "MGAUSS": "1",
+      "MSLUG": "0",
+      "MTRANS": "1",
+      "MTIP": "1",
+      "MDISP": "3",
+      "MCHEM": "0",
+      "MWET": "0",
+      "MDRY": "1",
+      "MTILT": "0",
+      "MBCON": "0",
+      "MFOG": "0",
+      "MREG": "0"
+    },
+    "calmet": {
+      "hourly_labels": 144,
+      "calmet_logged_steps": 143,
+      "first_step_utc": "2022-01-01T00:00:00",
+      "last_logged_step_utc": "2022-01-06T22:00:00"
+    },
+    "calmet_errors": [],
+    "calmet_dat": {
+      "bytes": 64762556,
+      "dataset_marker": "CALMET.DAT",
+      "dataset_version": "2.1",
+      "embedded_control": {
+        "NX": "50",
+        "NY": "50",
+        "NZ": "9",
+        "IBYR": "2022",
+        "IBDY": "1",
+        "IEYR": "2022",
+        "IEDY": "6"
+      },
+      "sha256": "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30"
+    },
+    "calpuff_errors": [],
+    "puff_con": {
+      "bytes": 1896056,
+      "dataset_version": "7.0"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "case.yaml",
+      "bytes": 1723,
+      "sha256": "73d37aa3273b421d180226c5a1adb24c24f8c4b1e97cdaca491b7275e56bc7e3"
+    },
+    {
+      "path": "deliverables/met/met.dat",
+      "bytes": 64762556,
+      "sha256": "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30"
+    },
+    {
+      "path": "deliverables/met/met.lst",
+      "bytes": 430659,
+      "sha256": "4cf474120dd14ab5763ee5f08e22771a481d3e314019f21902fc59e49fb4d76d"
+    },
+    {
+      "path": "deliverables/puff/puff.con",
+      "bytes": 1896056,
+      "sha256": "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10"
+    },
+    {
+      "path": "deliverables/puff/puff.lst",
+      "bytes": 9890899,
+      "sha256": "59c8d430349115462709bdaf4291ac0da002e27b3e1a7f2c0802d50301a82dbd"
+    },
+    {
+      "path": "geo/ctgproc/ctgproc.inp",
+      "bytes": 14554,
+      "sha256": "87b8d06219b2e0518bf25f5093e9edb0b98dec9bea055d09b5d8cdff82b225f0"
+    },
+    {
+      "path": "geo/ctgproc/ctgproc.lst",
+      "bytes": 24294,
+      "sha256": "ccc18b7b4c42b27101440d2b0518215c1cf2ebab38404f9c1eba6a8315a9a976"
+    },
+    {
+      "path": "geo/ctgproc/lu.dat",
+      "bytes": 648139,
+      "sha256": "75720a211126ffc1d5dbd931cb1dfcc4b4c54f0f4b19b0bceeb26487ba75c0ea"
+    },
+    {
+      "path": "geo/makegeo/geo.dat",
+      "bytes": 161274,
+      "sha256": "c71133b3775bd4d14854a4787bffd1e403e1b4ee869f38adfef7bc769cd603f1"
+    },
+    {
+      "path": "geo/makegeo/luse.clr",
+      "bytes": 563,
+      "sha256": "fdae576ae202db9b34b2140def5abc2ca9c8e832e7843f8ecb37d02cd0129f00"
+    },
+    {
+      "path": "geo/makegeo/makegeo.inp",
+      "bytes": 28634,
+      "sha256": "e87b166346abe1c16136a790cda3acffdec6e29d9fb558ab2c9738ef426238b7"
+    },
+    {
+      "path": "geo/makegeo/makegeo.lst",
+      "bytes": 117397,
+      "sha256": "9e55bc4c95cae62cd123aff35570acf52921e5ef05ae0158e826bcf202cefc63"
+    },
+    {
+      "path": "geo/makegeo/qaluse.grd",
+      "bytes": 12555,
+      "sha256": "93e157ed20e3ff4f10ad596dbd70d047c95a74881cf94ea0c5782a613635166a"
+    },
+    {
+      "path": "geo/makegeo/qaterr.grd",
+      "bytes": 30105,
+      "sha256": "04a7422b49b767942d7a8d224b707e997e83cbb30ee1f638ca9f303216201e53"
+    },
+    {
+      "path": "geo/terrel/numpts.dat",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "geo/terrel/qaterr.grd",
+      "bytes": 20385,
+      "sha256": "f9d2378e7d8f706b168ed8339ca85577b123d542f21f92e012528edba3369876"
+    },
+    {
+      "path": "geo/terrel/terrel.dat",
+      "bytes": 20648,
+      "sha256": "b35d48762e1e060dcf9236a6edd90f2fd8b8bd5a819f5ecd92cc94be03e9175e"
+    },
+    {
+      "path": "geo/terrel/terrel.inp",
+      "bytes": 21464,
+      "sha256": "5f663016eb8e04da9fa611dae31d730ebf437ea6e122b3b16dae5a8b1d68e762"
+    },
+    {
+      "path": "geo/terrel/terrel.lst",
+      "bytes": 59633,
+      "sha256": "a3fc14500aae4ad66b9538135518a65123938c5b4c5993474b16d99b330b96bd"
+    },
+    {
+      "path": "geo/terrel/terrel.sav",
+      "bytes": 30060,
+      "sha256": "3fd194585ff03a9eccff6d2540f9057a609e52d0415334a2b8f05fca35185809"
+    },
+    {
+      "path": "grid/center_location",
+      "bytes": 46,
+      "sha256": "78998f07fa20e06638260a6a4d7ad06d16affff98442a6d736579dad13768afd"
+    },
+    {
+      "path": "grid/grid.cmn",
+      "bytes": 1144,
+      "sha256": "2df82272b5d6438475125d065330255f719788de569b15dd2953b80b5f5d408e"
+    },
+    {
+      "path": "grid/research_time",
+      "bytes": 42,
+      "sha256": "21a3ef18bd75f72e736f9c4e5b1c3a8e1557897b324bb5ceb82041748ce8cfcc"
+    },
+    {
+      "path": "met/surface/final/stations.csv",
+      "bytes": 177,
+      "sha256": "42bdcc4eda435b06d21d5879b47a3ae0970935b20d28735c4d4d0a20615cda83"
+    },
+    {
+      "path": "met/surface/final/surf.dat",
+      "bytes": 13841,
+      "sha256": "082202c9d4e87dca35869b5ab4dccde115f243ba129341e2301f123cb2672cff"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_calm_interpolated.csv",
+      "bytes": 417597,
+      "sha256": "442bdbb0cbca3e70f6ca4aaa803a57a17ca81535fc54875dbc634d3532d48d8d"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_calm_interpolated.stage.json",
+      "bytes": 302,
+      "sha256": "f0364b84c44c2db1f8ee9830fd80323e2d5180d4424e73625c12aae264095191"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_cleaned.csv",
+      "bytes": 417267,
+      "sha256": "a54195847fd8d84be218713ca4bd5af3be5166572130db522f7d7c0b83543990"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_cleaned.stage.json",
+      "bytes": 291,
+      "sha256": "07045029a4195b7c685a4592836b4a165f22060853f8f1325d4836397e9f16f7"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_filled.csv",
+      "bytes": 417597,
+      "sha256": "442bdbb0cbca3e70f6ca4aaa803a57a17ca81535fc54875dbc634d3532d48d8d"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_filled.stage.json",
+      "bytes": 279,
+      "sha256": "bc4501c5b2abbb2f97757c8d2794a630af0e1323ed5412fe9333c7e634f8d3df"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_filled_wind_audit.csv",
+      "bytes": 1264975,
+      "sha256": "a58d6e38941a29cfc25989ebf7b984754c765c36212c40d18b5d03b1b369dabc"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_filled_wind_audit.json",
+      "bytes": 1226,
+      "sha256": "8b82909a8ee36f80abbf10d8f4e5a5c7918cfaa6c1b50251a2bef0339d0a3614"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_isd_lite_source.json",
+      "bytes": 494,
+      "sha256": "1bdd17e8884aaff4d801ba2aeb52209eb5cff01b04386b6204eb8a576b40158e"
+    },
+    {
+      "path": "met/surface/isd2smerge_and_fill/583210-99999-2022_isd_lite_source_audit.csv",
+      "bytes": 558751,
+      "sha256": "b154493f32c451b0e5973de79cf289b3ffc52c51671c9ce3823367a082586832"
+    },
+    {
+      "path": "met/surface/isd2smerge_cleaned/583210-99999.csv",
+      "bytes": 6781,
+      "sha256": "b8d6df22e27e903ff5520841b61c4e61bcf39eabf93e0675110c85261faae4aa"
+    },
+    {
+      "path": "met/surface/isd2smerge_ready/583210-99999.csv",
+      "bytes": 6781,
+      "sha256": "b8d6df22e27e903ff5520841b61c4e61bcf39eabf93e0675110c85261faae4aa"
+    },
+    {
+      "path": "met/surface/isd_raw/58321099999-2022.csv",
+      "bytes": 3981655,
+      "sha256": "f14b876ab4bb9a6c137e98c27756699f142e8d49a0e16e65e07f0fd4a6c22906"
+    },
+    {
+      "path": "met/surface/isd_raw/download_report_2022.json",
+      "bytes": 1152,
+      "sha256": "ff48423c296dbe2cfc73b7ffb81cfc928b54406182bcc029458ebbc9ddcc35a2"
+    },
+    {
+      "path": "met/surface/isd_raw/isd_lite/583210-99999-2022.gz",
+      "bytes": 75107,
+      "sha256": "9e7f58aebd55171ef6c7d2c1fb40674b013a295bdf091a79a6fead33cbe73e74"
+    },
+    {
+      "path": "met/surface/isd_raw/station_selection_2022.json",
+      "bytes": 1308,
+      "sha256": "c40a22d2642d7413a3f6ec2dfff6e84ea17f68caf845e7f521521b0e44dd57aa"
+    },
+    {
+      "path": "met/surface/isd_raw/surf_station_list_2022.txt",
+      "bytes": 207,
+      "sha256": "a5165236ad986ee4dc458db7b5789ed79ae824476b322dd365afc95fb20ac54a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424-data.txt",
+      "bytes": 75582262,
+      "sha256": "1ac0405bf9376f8d34e01621328fa17f5f0de600afbcbf9614247ee59fbb76fb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010100.csv",
+      "bytes": 2530,
+      "sha256": "99b52d8ef881d9d3ca4aef4e358a6d7aa96b916093f4746c6098d9934ab64c31"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010112.csv",
+      "bytes": 2772,
+      "sha256": "9441d9260ecec18764aa9bc9ddfc672c1bfd94c93f8c3bff3e8cb4b9a83f8e9c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010200.csv",
+      "bytes": 2242,
+      "sha256": "e53c0d4d0f4acfb73fca7c9ca1533571eccd132c78d14f0bc735b1f2e304c4bf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010212.csv",
+      "bytes": 2120,
+      "sha256": "14e41273675dd6974ce3c3d1ad2d00492385ebec9b9ecd36d03da0a9928c63e5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010300.csv",
+      "bytes": 2303,
+      "sha256": "cc256cd137610f7ad40ff76298d5e07c9e92b10ecd61e7c3f0957f81a5c760e3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010312.csv",
+      "bytes": 2088,
+      "sha256": "b7e9d8f25e9d061e0e2b7fb360ef6e2bca533abd13c3909312e3f770e11ec4e9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010400.csv",
+      "bytes": 2609,
+      "sha256": "430319e57e1909d565ae190166802fdba51866642ee4bd5d44b2b6bf85670d14"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010412.csv",
+      "bytes": 1908,
+      "sha256": "29b7f5ceb61cc52482ebf3aa5924ba66996fe1f89522982ad55edd848f9a9a8e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010500.csv",
+      "bytes": 1734,
+      "sha256": "0c9e8869ca73832fdff7e4d6dc888255fc1449fb0191101144762fd16b38777c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010512.csv",
+      "bytes": 1963,
+      "sha256": "aa3bc898a4eb827726a55d9252133ed71ce9acde65c6f2e1e74e12355f594347"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010600.csv",
+      "bytes": 2148,
+      "sha256": "f45154fe08bc11d1cd9fa37a94ed08b24d28ecca84db89579000914f0b739013"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010612.csv",
+      "bytes": 2073,
+      "sha256": "5077d4d21e1e7632d82d348dfb0f14ca473f07e95721898b55b9f0bdd0fd80ba"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010700.csv",
+      "bytes": 2327,
+      "sha256": "441a7a7c696dc45182298948575a4177ac13f4616943b86a9d82fce787315b42"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010712.csv",
+      "bytes": 2122,
+      "sha256": "90c4e7aaa53c2860329b21a8cb2a3c60de32861eee18a3d964e9923af4395114"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010800.csv",
+      "bytes": 2330,
+      "sha256": "7e60105b2ccb238c0c1b5857a84f1c498bbd162a14532a50adb901f4e0459418"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010812.csv",
+      "bytes": 1643,
+      "sha256": "f095a628bce439359e3ab505fcf9bcaae73fe66fa123c1004d471940592ecfdd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010900.csv",
+      "bytes": 2264,
+      "sha256": "9cf64d4729fbbd74d7a159795b16212bccec92b7eb313e7bb5e67f1e64798246"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022010912.csv",
+      "bytes": 1940,
+      "sha256": "e8e50d0773025d356805e05be41e9507716a0e5500609d61e011cf50c8f1c530"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011000.csv",
+      "bytes": 2515,
+      "sha256": "80240fe800165790ea2a3f14f4fd932fcbb1c9a12f62b33bf2cee6d74d080ea5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011012.csv",
+      "bytes": 2089,
+      "sha256": "20a410e8621f9e9b0101603b1ec437806dac3cfdba6bcd422f841512778afb80"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011100.csv",
+      "bytes": 1874,
+      "sha256": "8cfd2cab342d6041742860f858e03a49cab98831501dbb0e2955644c72d2c891"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011112.csv",
+      "bytes": 1721,
+      "sha256": "ac5d9450bd1e84406e9491956b9bbda0247935b2762daf5a933f2cb85f44cd39"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011200.csv",
+      "bytes": 2647,
+      "sha256": "be54b6952a55262c7b9a7d4b5e31df19f779ae5caeb423052c11d6c6a2ef52f6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011212.csv",
+      "bytes": 1885,
+      "sha256": "5410678b40c7be2bd28dec41850b4847fc2a4eae3671cc3c9307fd77ad45c782"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011300.csv",
+      "bytes": 2379,
+      "sha256": "0a5b5fba062c4a8463623faa0c675df6f8980c14feb7b4fb61a7adc3b78a613a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011312.csv",
+      "bytes": 2158,
+      "sha256": "350a4455256f04a9730f63bc8e3493ef76e0165e9e25387ac39ab772fc39d158"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011400.csv",
+      "bytes": 2240,
+      "sha256": "8bee5e8eb608b3fc3e1c25ece3741b7b2be9d160b68c270b4163ada05b01a108"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011412.csv",
+      "bytes": 1910,
+      "sha256": "5c4b1135f1a23eea26b4575ae63f3a36e93ac1f142e91ea61a296ac0d83deb58"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011500.csv",
+      "bytes": 2031,
+      "sha256": "9471b9b3c95491f3522aae616c5ab67ab220d126906ede306aa8e9d4a310ff08"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011512.csv",
+      "bytes": 2365,
+      "sha256": "aa1de2e2d2de2d22920db8cff55da2de34cf1b01ff06ccecbc51c954ce8dfff0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011600.csv",
+      "bytes": 2250,
+      "sha256": "1d8d4ff0ccbd15d198427d0f869f811f78fb0fa30dfb2bf9b8ae46942fa58508"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011612.csv",
+      "bytes": 1925,
+      "sha256": "a6a3f7ca1c151858d9b3424dc2bb25cb86271b6471ef9803c39de3fe4725ddcd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011700.csv",
+      "bytes": 2494,
+      "sha256": "d812ed5de692b4224ea19551dd2e4300bad2e74c156d52bdce478b93b470580e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011712.csv",
+      "bytes": 2139,
+      "sha256": "880b08cc1a48b82fcc42c6aac056cf2769a472772815f14e03c983b204748632"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011800.csv",
+      "bytes": 1883,
+      "sha256": "faba881314c0db878a2e0941a42a531cf567aabd7820cf401448a075c4f05575"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011812.csv",
+      "bytes": 2302,
+      "sha256": "c98d4c2d86c76e22090d39b56dce04dc3c85de12d1e9a491dc482ab655c569bf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011900.csv",
+      "bytes": 2150,
+      "sha256": "c9d120ffe982dc84088e28eb1d2b934ba2952d3a7cd33956bebc85ba573b9ec2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022011912.csv",
+      "bytes": 2183,
+      "sha256": "c87fe1a49ee60bc42e94036116486be9304268d2f3794403062f17f41bc0a635"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012000.csv",
+      "bytes": 2141,
+      "sha256": "dc4694c34566b7c97963486839ce1ea9ff39a702c0eca699cecbc8b413bdf42e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012012.csv",
+      "bytes": 2277,
+      "sha256": "f6ccc2706190bfd053baa229e26a7104bfd4340be5ef8c35188d21150bb4b74c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012100.csv",
+      "bytes": 2255,
+      "sha256": "32c2545d09d58e2369093a808f9ca0114e32e6b52b478bcf1134461f584a0dfe"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012112.csv",
+      "bytes": 1249,
+      "sha256": "75c37b3ce1d265e87d386d7af978cd6f6c0dfadb901d9f74f0fcfe86e63762f7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012200.csv",
+      "bytes": 1662,
+      "sha256": "cdff7d0f6e9e9ddea7cc9b12643af81f31b33019097c0f71b1087adb952c6cf2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012212.csv",
+      "bytes": 1777,
+      "sha256": "07b4e4f9e5ddefdccea521c193eb29d09742dd0e8685c22c3a3e6b3a82ec120b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012300.csv",
+      "bytes": 1771,
+      "sha256": "abf264bc1645b30e86b0f4e2f10c7f402dc6cc13e455b6caae93d4cfc7a5e8a2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012312.csv",
+      "bytes": 1163,
+      "sha256": "bc49e5a00f065fa5f3fcd4f8812d7f1d4ff952982967c8fadc13d65c5b0cc6c9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012400.csv",
+      "bytes": 2098,
+      "sha256": "169a4da58aa39e5e6335f24ffcdf3c1dd232c3dcd4177727eaea5035f3824460"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012412.csv",
+      "bytes": 1960,
+      "sha256": "6347f2d7e8678ae3ec4a19517f6cc7fd92a3d1432a23cc6e2f60be5afbd916f4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012500.csv",
+      "bytes": 2089,
+      "sha256": "955b11cad8c3ee33d33149da0590a3f6023f6385653e7c4c636e505a9d77e98b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012512.csv",
+      "bytes": 1644,
+      "sha256": "843710b7ccb8b64ddb616f991d1a1dbc73308db4a9f657432cf1d4b3aa6c4c2a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012600.csv",
+      "bytes": 1640,
+      "sha256": "43aeb49aa776fcac4689095dd4a6d48ebefb23d25362040284196a874dfe3fd8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012612.csv",
+      "bytes": 1630,
+      "sha256": "c00b45151c68bc372e72b5800fae4ae339c514ef6ffed086132535e2bbc18e18"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012700.csv",
+      "bytes": 2056,
+      "sha256": "7d2d0e9d9cd10b15ae0c5b3b7a5a66fab27e81bb7b1c86eed54d50a0fa7ddebf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012712.csv",
+      "bytes": 1881,
+      "sha256": "6fe1304d76a4357994845da39308ef79cd965586d86dfc5dd4d998e861242d1f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012800.csv",
+      "bytes": 1600,
+      "sha256": "a09e0354376d890afb5b2c9a3f42f0f424ddb3e96abfddceeab5f890ceb6013d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012812.csv",
+      "bytes": 1439,
+      "sha256": "ca87fcaa6df97a57705190cc7f11542b40945966e9d912fe39f3589de6d65d35"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012900.csv",
+      "bytes": 1743,
+      "sha256": "1a94e3ceac58e29f992483b419244e2d793f77d4c4a652e539dfdcce2ff23574"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022012912.csv",
+      "bytes": 1660,
+      "sha256": "7426161a6a089e7250f209dcb6532b01857d02d74052b5f0a0affd04140c7ae3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022013000.csv",
+      "bytes": 2068,
+      "sha256": "551b4f725cf04ea28f15697108ab848ca0b656d2d392ba6c1c611116bdfb7d1a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022013012.csv",
+      "bytes": 2282,
+      "sha256": "a2973f5a516a05fb8ca6d2cc523c565beba609c46e7c1eb14a05d0d8ba38c3cf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022013100.csv",
+      "bytes": 2180,
+      "sha256": "1f950c0ee1fcb1b065496588eebd9510fa7b51832e0d070c21743bb8faa089b6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022013112.csv",
+      "bytes": 2150,
+      "sha256": "6a8a5ab72b36e64655b34ab3df7813928809df81b5e34806941881bec2a3c7bf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020100.csv",
+      "bytes": 1721,
+      "sha256": "7b379c177449b8ca2f6303a38884907a0c9b68e7d9b66375794449a531d703b9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020112.csv",
+      "bytes": 2167,
+      "sha256": "35c384cda41cc31c7fb67a329f8d3e2e0bd6a9157df995e6f2d47c29f7daaee5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020200.csv",
+      "bytes": 1676,
+      "sha256": "1f5604b43874b5c8532795fac498320c20a57e60238d177b436cae8f3b642229"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020212.csv",
+      "bytes": 1537,
+      "sha256": "9f7dd5dd58398f967adb6ecb4b9e5001cd6b3874476d799d4339eb30eb8aea43"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020300.csv",
+      "bytes": 1720,
+      "sha256": "367f0bbf809354e9b2d2eba313c1413b97df17fb1269ac14606e7448479a82a7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020312.csv",
+      "bytes": 1740,
+      "sha256": "611b28913024476e3a76a088b6ad6e6d3cf622fdb09101fb8bb14731592a23b9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020400.csv",
+      "bytes": 2755,
+      "sha256": "71248430479edea5220eecc8dea8c0b835abbe5ec9d76395ad30449ca060355c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020412.csv",
+      "bytes": 2239,
+      "sha256": "fc8b45584a144e6f8c3bdd91e5dc73b6b7b36d9967d8e9a114a942925c8fdf45"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020500.csv",
+      "bytes": 2666,
+      "sha256": "b3896fa9c427ad9b6bb2064fef1c27f88c2860810b9a90837367f90a74bfdddf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020512.csv",
+      "bytes": 2460,
+      "sha256": "e6d824dab363373b3ee06d692e220c10ceab5287fba1c6d3d5fd59abece609d6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020600.csv",
+      "bytes": 1838,
+      "sha256": "e9399db59c778a2baab44ddc37897c4cd53733f040ff39d8ce9ac91ec092f669"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020612.csv",
+      "bytes": 1548,
+      "sha256": "42c1cf2bf54845bb8acfc25f39e2ce03ec5ca654573e980150ac1645772f9bf2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020700.csv",
+      "bytes": 1677,
+      "sha256": "aaee2d88dddd1da484977144caac1d988b9e261314889e4e5f8df79c491b81ea"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020712.csv",
+      "bytes": 2046,
+      "sha256": "f768c7c741885f37abd75dec0c74694dace3d6ab1fdf7b0375ed6d76a455ae29"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020800.csv",
+      "bytes": 1974,
+      "sha256": "1b389a1b587f4761483e69863fba718421adaef8834871052b062d2f6d589010"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020812.csv",
+      "bytes": 1881,
+      "sha256": "b357bfde07655b596f3da92cbd5f1859df7f40bc1f0e2483d8624136a158452c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020900.csv",
+      "bytes": 1457,
+      "sha256": "8d6d9086213c38444e84e33fb0a334efd74413baae9c3ee08887a6c3d43edaf7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022020912.csv",
+      "bytes": 1987,
+      "sha256": "995e73d135a7faca31719d8a84ab112bc49e8b0148e47ff004b21717ccb7a6cc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021000.csv",
+      "bytes": 2610,
+      "sha256": "bc5a698545040e7408e5bcbb8cf3848450fee2c7eb7afc6230d9ef2bcb08ea16"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021012.csv",
+      "bytes": 2117,
+      "sha256": "055fcdc8f3c7ece7f2ff4642d2e44a38bf094383bf932fe6ed5c1902ee443079"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021100.csv",
+      "bytes": 1957,
+      "sha256": "46170118be92dd423ac5a7778ba37c0dd465bade39329d63c4f9799addf0fe63"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021112.csv",
+      "bytes": 1838,
+      "sha256": "e86113c2040ce52e03b1d87a83fdd13d8734c813d16f3331870f9e3f3acc4157"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021200.csv",
+      "bytes": 1861,
+      "sha256": "4422c14c8de47284effc718fb79a57fa070ad7ed99ab41db1d0fa9c028010ae6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021212.csv",
+      "bytes": 2213,
+      "sha256": "16412cf3068380c723e96ab9ae455a3ec0051aa5c4297c08a081061cd4c1c9eb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021300.csv",
+      "bytes": 1660,
+      "sha256": "5a673d632f1926c02db3c14cb87da8f7c5c21132cbaf0bbc77206fbafec478e7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021312.csv",
+      "bytes": 2250,
+      "sha256": "0bc9ef6222460646ff6a9f51f224f593a21c3c542555938e26c89754b6bf4018"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021400.csv",
+      "bytes": 2451,
+      "sha256": "c78fb48ea5e802a619082c45077be783bbc267084ed8345d9c1ed7a028aa0c64"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021412.csv",
+      "bytes": 2074,
+      "sha256": "f0457c51d2198acc7a386dc43832f54d5210225cd82530ec35943df74dfea530"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021500.csv",
+      "bytes": 2815,
+      "sha256": "bce19c7c29b7b0575d8c151307d038f43f299ab644a0304464e8e18fb888af74"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021512.csv",
+      "bytes": 2285,
+      "sha256": "530cc7a0c5021d80f8b24da1d1f162a1bf6f63a1e15194c69a072980da77b4f0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021600.csv",
+      "bytes": 3019,
+      "sha256": "291a8669efdcde6a7a89c8911368341665f888242ee83521ec3675ff51346dc2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021612.csv",
+      "bytes": 2213,
+      "sha256": "0690dc7c5f616235aed1a56e670797326cb9039cd244813798e64ffee843e0a8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021700.csv",
+      "bytes": 1717,
+      "sha256": "c8054fa39bbeb1f46b2f6f815d0f20c7b29c4bac7b5730db4fb2ad5ab032fa40"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021712.csv",
+      "bytes": 1891,
+      "sha256": "1ecd91b377680286c994590ec9f3d80dea263ceb34200f230b665061f282457e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021800.csv",
+      "bytes": 1843,
+      "sha256": "d095366c2b5180e4bb2e749653231ca117ebc15e540565c0f1b018e03a592777"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021812.csv",
+      "bytes": 1624,
+      "sha256": "f693a797e4b1e4e290259b065ef2b6361c3f5292db5acd8e6fcfb37359860054"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021900.csv",
+      "bytes": 1978,
+      "sha256": "7d94a3ae093c99bccdf6f511d0d3f148ee80395b7842df2b83e4669bceccbdb4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022021912.csv",
+      "bytes": 2301,
+      "sha256": "cced6de95f5fe291234dd7ec4f5fdedb74ce0c343da22e1957c435ac4e280cb1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022000.csv",
+      "bytes": 1846,
+      "sha256": "49c97f0ad9790434ff3c93c0c7dff05e41aca80bcde468087a57a63f8ab921e7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022012.csv",
+      "bytes": 2004,
+      "sha256": "af219502e394c627c87c1e96cc7616d4a9356a34c790c2d097d80243be1b3064"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022100.csv",
+      "bytes": 2417,
+      "sha256": "82937ef9d0f40d538973f893f533b9df75d551dcbae347710b8fa57f5ab7c440"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022112.csv",
+      "bytes": 2038,
+      "sha256": "0f71e25283bfdead3d1f522030c5da8d6abfaf1bbee69930d770dab2015291fd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022200.csv",
+      "bytes": 2253,
+      "sha256": "9456eea4de77fcfde89e7e9b693e163f3a263af2cc76960bed70c90535772c0e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022212.csv",
+      "bytes": 1408,
+      "sha256": "36185cb407e6e08b6cd16fe096c419dbe33913df202f1a8170add2ffeabea180"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022300.csv",
+      "bytes": 2304,
+      "sha256": "741691b1e710847e36266437b67f4938d2f60df1de3db04e0b62b1be28345f1e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022312.csv",
+      "bytes": 2246,
+      "sha256": "b456180fba47a4f527abc5320b21fb743ab15453c1d5e8845eaf2fce4e5d8d2a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022400.csv",
+      "bytes": 2421,
+      "sha256": "e9e0ab60ffc774bf49ec174a3dc5be19fec2a0a13129693814a2e8b6647eb217"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022412.csv",
+      "bytes": 2193,
+      "sha256": "3e141dc8c5c720d1a5017b91af56176345d323e567d4ac6ef0646eaef65967e5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022500.csv",
+      "bytes": 2608,
+      "sha256": "977f90fc0294c49d6ff4897e6fd731d5f12dd72f4cc559ddea25263707560e8a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022512.csv",
+      "bytes": 2409,
+      "sha256": "0e0cf590721e6b54ce021d29113a2bc95cee0630189e34911d8b6424d1f818ff"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022600.csv",
+      "bytes": 2309,
+      "sha256": "0f3fea2fae34efdb5bcef0103f29257868e3b97589ef3fb131152486adc5c553"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022612.csv",
+      "bytes": 2548,
+      "sha256": "06946996edceff68e7db2611eae04557d39fbe64afe957619fc597938486dd3a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022700.csv",
+      "bytes": 2471,
+      "sha256": "2ed5399e156b6bd100fdadcc301340427a083a5f19b317120a7025f795dd613a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022712.csv",
+      "bytes": 2118,
+      "sha256": "55b409d5bd103e655954569bbea33563378ebd5bb25a4cb99a997cf2b527a039"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022800.csv",
+      "bytes": 2088,
+      "sha256": "40d393ef44fc71389faf76a3b25fc0d5c105ad0e8bde63c898f1af28e6c58bfa"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022022812.csv",
+      "bytes": 1872,
+      "sha256": "064f27b74b9db0ea44846b35d848e15ba14c702c5e73c934a700ec7d8123a5ee"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030100.csv",
+      "bytes": 2183,
+      "sha256": "e12a8eaf7c12e0a9dc6f1516f9162a13cebd2b5d6c116a39afe2cec42bfbdf18"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030112.csv",
+      "bytes": 2205,
+      "sha256": "75795e410d3b18a445a13b6d6cdd892713844b017ecaf173a96e120bc15d183a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030200.csv",
+      "bytes": 2378,
+      "sha256": "03b9fc1f36f24e6ededd4f3f395ff9d4b5a4c58700981248b9d9dbf9ab4d5018"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030212.csv",
+      "bytes": 2251,
+      "sha256": "13182b0120ad082510a22c9389238e0140ee41db1b2920408113ba16dd717090"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030300.csv",
+      "bytes": 2430,
+      "sha256": "e6da9acc2a30c4c49e0cc464dbba8e1f44a63153c8494e0a4977c6b02b652223"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030312.csv",
+      "bytes": 1633,
+      "sha256": "6bb8c8590eb03455bdd77817b472682db7872934f885427baf834a065fef68ec"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030400.csv",
+      "bytes": 1881,
+      "sha256": "7e17f3d3d14bb5ca696d1058a72ef33834c65a80b416b6d35dd532d31ebdfc5b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030412.csv",
+      "bytes": 2179,
+      "sha256": "ca8e91fb8adf4fcff0a769ea6bc48723026fe6661f027fdd8528fea6ed1cc606"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030500.csv",
+      "bytes": 3109,
+      "sha256": "adff08d736c0e5b63613ab9a6c335dd815bd0911d87d0bb51b2a222703f289f6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030512.csv",
+      "bytes": 2252,
+      "sha256": "7145d276d7546c6fd722c12bed4aedef4dfd7336f3daf426e72d08fa77b5e92f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030600.csv",
+      "bytes": 1796,
+      "sha256": "00a288270f4aebecbb1b0da2758cd81fc09ac126f32e757f3fda3f73d5903c68"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030612.csv",
+      "bytes": 1526,
+      "sha256": "2d32f8300ae97b4ebab066ddaedcedc602bf231ed8e927931f827d2481f92333"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030700.csv",
+      "bytes": 2140,
+      "sha256": "260815da7c1706cfbb5a336e71ecd9542670d4a405133b225c668a151a38c280"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030712.csv",
+      "bytes": 1615,
+      "sha256": "30fc8a37d858b1cc6e6bfeb74af603bdf49279705f85be6c3f7ade5f5ce00ffb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030800.csv",
+      "bytes": 1888,
+      "sha256": "0b6972e7a3584555a9b341e97a7b75b5191013b97f597918cc37e9274b14202c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030812.csv",
+      "bytes": 2148,
+      "sha256": "a0062d95d6dab5589bc3447b957f1f286d425332ce79727b0b58d7fa361c98da"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030900.csv",
+      "bytes": 2325,
+      "sha256": "ee3d09c0445ab4d0bc9553a769233dc2b975ce4fba71f70fa1122311784d1db3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022030912.csv",
+      "bytes": 1848,
+      "sha256": "747b4264fd9eb13395e58e369a31405e25a8963287836e34786104b30e2600c5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031000.csv",
+      "bytes": 2864,
+      "sha256": "52ab4c27df22ded02ddd9bac8d0fec4c7dd6d4fd32d5a41da4e330a18209300c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031012.csv",
+      "bytes": 2239,
+      "sha256": "94c272149a11c1242d19fa1f54f08213228df8b3bad09d610676c9d6639d1642"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031100.csv",
+      "bytes": 1867,
+      "sha256": "31f4c4b00c883fa1c15d12cfc4b44250a03822321f15e13ee2586bdc5d566234"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031112.csv",
+      "bytes": 1476,
+      "sha256": "71b214fd8be866a089c39f2da0008f5d441aa815c868993eb4d726856dfbd9c3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031200.csv",
+      "bytes": 3168,
+      "sha256": "0f83ebf80e0dd489e0488d0c6f68ab3542a57dda03852b492381c9eec6566c41"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031212.csv",
+      "bytes": 1961,
+      "sha256": "5246006ab879952c071c696fabe2be846f02b738bc4475071ce674e6a4d5a9b5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031300.csv",
+      "bytes": 2234,
+      "sha256": "4b99e40e67087292bf2bcaa0d081339585741fbc3cf2ceefccc4b09cee4f7076"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031312.csv",
+      "bytes": 1558,
+      "sha256": "16863f67dc239b8aa9e75889d9bdded91d43e84df8fce6046c88f88e29bdf67e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031400.csv",
+      "bytes": 1724,
+      "sha256": "ca15ecb5625dcb9ce44661e2e71fe35079f4182d2dc4575e167bd94614921575"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031412.csv",
+      "bytes": 2451,
+      "sha256": "030258973af4e60d74e36950c531b53891cf0c1e613c7ef58296ca280db5e1af"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031500.csv",
+      "bytes": 2881,
+      "sha256": "f18f73a9d1b1867673e0be1362f7a48039c3fd519bb543edd84070a0e5a88fb5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031512.csv",
+      "bytes": 2084,
+      "sha256": "ff96b84a1748076b73d769bfc24d27ae3362da25c04646a84e657183a453cea9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031600.csv",
+      "bytes": 1833,
+      "sha256": "8610cb4857cb45b32cbb10222d6638f2237002f1838180678f6354ea3f99d065"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031612.csv",
+      "bytes": 2099,
+      "sha256": "4e287799d5294902550db09381fa3b48444f098c9d4a1dcfaf88d5f6b03582b5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031700.csv",
+      "bytes": 2384,
+      "sha256": "ee7fd227d5e2ffad2c77d9172baec99d654ebb9f00811b8c99fc3b107b30e2e5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031712.csv",
+      "bytes": 1952,
+      "sha256": "887bdd848095803ac8077f2a76fd8f97949c47c7ec5ae5950dd56496395b4fa8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031800.csv",
+      "bytes": 2615,
+      "sha256": "b7d14eeaf7117e4803e99b236f1ee8fa09e107a7e86979d15f48a980fd6f8657"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031812.csv",
+      "bytes": 2006,
+      "sha256": "bb9e687d8fc906e0c777b54b0c2e87cd564a5b356b99dc1f2d5cd45204c159ba"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031900.csv",
+      "bytes": 2813,
+      "sha256": "ba527d91b5aeeb944e33a9a42403cc9068d173248e55f4ccfb44f8215ce79966"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022031912.csv",
+      "bytes": 1906,
+      "sha256": "5ce5d6c08d512e375408e938f75c0a9f43ed6bbd3e17065ac69ec12cdca1b12b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032000.csv",
+      "bytes": 1753,
+      "sha256": "ccc71c0473192084a135f4c4bd0a5cee162b565aff485cc501b0d634ac1c11a9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032012.csv",
+      "bytes": 2272,
+      "sha256": "4dd2c5360952b93541fab0b89954bb006f806e23b1579eec6357443340253cfa"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032100.csv",
+      "bytes": 1925,
+      "sha256": "23fa497eca3d0df109230c0d80f782e230917420f095e2f4dd68916049d5f9f1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032112.csv",
+      "bytes": 1747,
+      "sha256": "99dd6db7741fe3e55b5a867ec350e34559ac46e34754709ca7963bdf94426242"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032200.csv",
+      "bytes": 1492,
+      "sha256": "ec4b28b18c373d743deea193443b4545701fb824356a9b050f869529055b555d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032212.csv",
+      "bytes": 1707,
+      "sha256": "af577b804317c90972ea39e8f7ae106f9281eb4d35ce3e18cec0a727b24802ae"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032300.csv",
+      "bytes": 2678,
+      "sha256": "2dc4dc0b3af49f33e2a0a3431bc0a945dec302299039009c3a1d140e16e40631"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032312.csv",
+      "bytes": 1941,
+      "sha256": "394c939f0ea97b7722d1f27a65dc7776c6ed1a049af123773dfe93cc4b7a7811"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032400.csv",
+      "bytes": 3661,
+      "sha256": "cd667534392021701ad19e102a4b725caf537f0045252153aa1dfe14cf1081fb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032412.csv",
+      "bytes": 1922,
+      "sha256": "ead499b0790fd550461354e09b0a73c3feff15c4c9ecfb69027806c0555c1604"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032500.csv",
+      "bytes": 2224,
+      "sha256": "5e3721e66b21cbd88019917bbdfda4dd4ca9f6ed6cbe483e362d00ce0a7b6fec"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032512.csv",
+      "bytes": 1385,
+      "sha256": "d9bf913cc57cf784aa1390c8a43b2ad96f32c8bd6cc5c278de85d32a6ee4e624"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032600.csv",
+      "bytes": 2239,
+      "sha256": "3b9cdff1ce19b18d076e98408119bd0c54dd07cf9b679fb441e94aca0dbd2b6e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032612.csv",
+      "bytes": 2037,
+      "sha256": "d77add5532ea6d54e055ad481b0cfcbfe983263286d5b5a7ec27f6f38b96f1ac"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032700.csv",
+      "bytes": 2162,
+      "sha256": "1dbd34f41db042b40a8e05d43bd2e9bd8cf0a8fb42398a84642a40f83f651423"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032712.csv",
+      "bytes": 2190,
+      "sha256": "2caea5e08406cd0a47e26876f9e575fc6f08da7c6eaa8731e817a5a0c8b081a4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032800.csv",
+      "bytes": 2879,
+      "sha256": "53c8b3b140cd43c01919d7c9c190c11bbc028ded94acf0f1de7a107a80562525"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032812.csv",
+      "bytes": 2129,
+      "sha256": "57352f86babfdaa2bf8968cfd2fcf05c74ffc6c072cf43e4f26cc880327f9fac"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032900.csv",
+      "bytes": 2433,
+      "sha256": "e5a7c54e43177b9e35907f67d56305f5c9c69b4c410996a8d3811907b291e52f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022032912.csv",
+      "bytes": 1749,
+      "sha256": "46704acaaba4ea55884dde8d34fda782d8f08815aada74d313d40b9ef85fdcdc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022033000.csv",
+      "bytes": 2478,
+      "sha256": "e3651dc46007863155160e525fa76d2ff3781a9aaf2c2714f98af9dd1d421b2b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022033012.csv",
+      "bytes": 1516,
+      "sha256": "0cfc3dc8fd7b6974076f2a5b8873b68f43142bd8b543b59de27e19fb0f2e8c7d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022033100.csv",
+      "bytes": 1868,
+      "sha256": "c162b583f60b647053c1b8bc9c90b06d8bc1b0f2b0aab64ae1d30ece5c695e82"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022033112.csv",
+      "bytes": 1703,
+      "sha256": "941d0a7f99757ae389989154a5af0ea5d0ff636e0e0a390b59c1d0246a36c9c5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040100.csv",
+      "bytes": 2486,
+      "sha256": "b6b0a771ec1491d0e3a82584cbc894e1554f52c01d692658a2ee8035e08a3f85"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040112.csv",
+      "bytes": 2030,
+      "sha256": "b348e6181607822b66efd24d309bc06b224ab15dea53a2606b4f2856e8b76956"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040200.csv",
+      "bytes": 2451,
+      "sha256": "f5939fc0481c8c30aff9588f01c33f598105e5516305f0f4ba7f7b8c7ccf2c97"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040212.csv",
+      "bytes": 1915,
+      "sha256": "6a3af7212c281e3ca133c765d3c8ec91734812c5b6a977a79694358e388be3e6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040300.csv",
+      "bytes": 2208,
+      "sha256": "82ebcfc87bb432ef1f2134dc351dfa59aab9598cae0faaece82f34b6b90e40ed"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040312.csv",
+      "bytes": 1783,
+      "sha256": "62a9ef3b49f950d1b628e724c9c4e5dc40e31722a115251a900b473539c5453f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040400.csv",
+      "bytes": 1946,
+      "sha256": "99bd12b9b36fb0361bee6cdbf85d9bc723c0bc4f7dd0ae5046f6471b512fced1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040412.csv",
+      "bytes": 2359,
+      "sha256": "83acea3d29cdd95c34a0b4d9d5caf4c00751141290eabbaaadaca84256b0d0de"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040500.csv",
+      "bytes": 1934,
+      "sha256": "12d4b727b0ed5325700a0d79e8615c6ac9e72d85faa5b9680fb4c64da7027bc5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040512.csv",
+      "bytes": 1749,
+      "sha256": "6f741bcc2cafb2e017d2093a603fc92cf148fbbfe5e3c57b63c74a07795f5751"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040600.csv",
+      "bytes": 3082,
+      "sha256": "24287347c8c9268f3f12d98f8284f3b1d7181b69c94fb36334cba5af82cd1e8a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040612.csv",
+      "bytes": 2017,
+      "sha256": "d634c6650ca8b3bc114069b651f4a1aaae9233718ebfcd677600bb848a8459c7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040700.csv",
+      "bytes": 3308,
+      "sha256": "b44bcc7f97a79c9337599e4576a87c99611a95d027c499490bf959d9f7372bd8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040712.csv",
+      "bytes": 1726,
+      "sha256": "22027b050b8d82893c7162f32bc1c15f7cdc5666163070fcd2371fff7f8ea192"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040800.csv",
+      "bytes": 1699,
+      "sha256": "9f74952bef89b4231126ecfb1a45fb4e0c4d036ed46b7ab652b21a2da5f02970"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040812.csv",
+      "bytes": 1609,
+      "sha256": "c35f4a660ebad23a7bab1aa31f9b17bd845984465ed9c3ab3c7c15df23497b1b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040900.csv",
+      "bytes": 1982,
+      "sha256": "40be95421c586359cf5cfd56f5d500ffccf39425793e93a1c70e74c3d8d5057d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022040912.csv",
+      "bytes": 1645,
+      "sha256": "e84fab35c0b486ad10b67c32fcebb0e4f85158dbbb94ac57986c55ae0dbf0dfc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041000.csv",
+      "bytes": 2923,
+      "sha256": "80b6f7118bbd3b0e47103fec566af926ab6a919197d22b29e12a1eb379e3ab64"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041012.csv",
+      "bytes": 1969,
+      "sha256": "f38846113a1f5ae2910144f6c4678412fdb89f8a0c80dc0bf06493037d0485eb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041100.csv",
+      "bytes": 3390,
+      "sha256": "8bc7dd3bc096c89654821dc5edc1a2358493672dae960f9253d2d222e2a358d8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041112.csv",
+      "bytes": 1972,
+      "sha256": "7087d3427240ab93e38af82056acc4bc10011dde6950b81f6ff6ba9e9f444606"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041200.csv",
+      "bytes": 1887,
+      "sha256": "f4a7660f7f4c1b7d91b98637162fb99b62e4315b6875bc0128f013e780dce347"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041212.csv",
+      "bytes": 2888,
+      "sha256": "9c284f9c0a61201e022cf285251f66fcd35a2b20cc4c72219d55ca74f71d2d6e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041300.csv",
+      "bytes": 2592,
+      "sha256": "a73fecef54c41aab33776f2f338a6231c243c92cd6087860f4908bdbd914b0e1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041312.csv",
+      "bytes": 1773,
+      "sha256": "1485e6af26c5c171b5222c5801a64ec062800af1dd99dbe7b56c6e6228a745a5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041400.csv",
+      "bytes": 2068,
+      "sha256": "f31e379003fccc85aec4dcf8fc2875a5da5ee0e718ac8630c1f125cad525a202"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041412.csv",
+      "bytes": 2269,
+      "sha256": "ee7eafa9116291222d3a59222e4d07a54cad1ea36358166cb645cdf992820805"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041500.csv",
+      "bytes": 2288,
+      "sha256": "57fe9ccb1b403db67e5977868507d2cfadc1855d5d07608e08f1bed528bfeba1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041512.csv",
+      "bytes": 1347,
+      "sha256": "edd48fd2ded1cebe3d489f3dd503f11b864d7a7db3b27f878840c3acc8ec25a8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041600.csv",
+      "bytes": 2161,
+      "sha256": "257c55a5719519ed10028fa39e8d5e4e4761e03d78631c5aee69e7c5b8092889"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041612.csv",
+      "bytes": 2218,
+      "sha256": "45565a17ff94055c2df65b5288b9b67e193a9e3f714e19281fc3778072a1ac8b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041700.csv",
+      "bytes": 3490,
+      "sha256": "d98dfab97a56492addf5528e0d9655de909c1567020d84ca712c10285e357c79"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041712.csv",
+      "bytes": 1639,
+      "sha256": "297132644643bdfcf421bca6fbf9a84795b77ab5a7ae1cba2cab2ed5bebda394"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041800.csv",
+      "bytes": 2090,
+      "sha256": "82508d82a3cc1aff945f7422f60dfb646b4f0b890297dd077f584e7a8de98736"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041812.csv",
+      "bytes": 1970,
+      "sha256": "2fa7a0b385b0cc370aac42cc4e259f6a00de47d45bb7c4491248df7022d01f38"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041900.csv",
+      "bytes": 2394,
+      "sha256": "87cac4f34ea290cb98a5e152ba566ae8c906392689475e762b2777f931318763"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022041912.csv",
+      "bytes": 2118,
+      "sha256": "96662ea86d1983c5ee1c06e7289a8914cbbe9b7d1d71a2d4fd5fa431c3e70c5c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042000.csv",
+      "bytes": 2213,
+      "sha256": "673f3a6e93be0b7e78ab09784740e1124faf268dada95ca5f2443393db8a8422"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042012.csv",
+      "bytes": 1733,
+      "sha256": "3658aeff5a5166bf970e9b90e11270081c079f2d28c8eaf73eb138a6152aa9a0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042100.csv",
+      "bytes": 1975,
+      "sha256": "20d829725f751015d97a9185525f2136306de230f2484da052f5a8f6c55bbedd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042112.csv",
+      "bytes": 1690,
+      "sha256": "daf6aa15b81e095d255b0f11eac2da287d28567092f798c4c8c72153bda79311"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042200.csv",
+      "bytes": 1797,
+      "sha256": "d3dc591c1144d280aab6baa70e6fdbec7afd84381f638c5163fd2b4df2fc5c0a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042212.csv",
+      "bytes": 1277,
+      "sha256": "621da00518100fea83c2316e604b4aa113fb8463668b469507f95d7bcebf2625"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042300.csv",
+      "bytes": 1989,
+      "sha256": "1e8d0eb3ae48e1f310709d51335deb0e8a8355f03dd40bc1d794396d5eb2321e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042312.csv",
+      "bytes": 2394,
+      "sha256": "54979babeb9ee9b019c192d37938582f6776555f748191971caa66bbab4e2cda"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042400.csv",
+      "bytes": 2365,
+      "sha256": "e1dcbbadfef66a5167cd5f7988cb4a9689c2c0d911df129c6bfce1d9a15c7796"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042412.csv",
+      "bytes": 1633,
+      "sha256": "a7ac0999177a33c9801ea056d7f2f2f25d4915d7be87101d670add482a81827a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042500.csv",
+      "bytes": 1673,
+      "sha256": "85267e2b04d35575d205e905de14044a63520ce18b24aebf63372d3f53ee3b08"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042512.csv",
+      "bytes": 1717,
+      "sha256": "7ab373710873f64f5d09293e7cd95a351fb3c7a857e3c37c1f124e1fc7c46f47"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042600.csv",
+      "bytes": 1917,
+      "sha256": "b01a15a651b363fbe22132cea8183e685fd37f31418a91665e6e927d9bd04aaf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042612.csv",
+      "bytes": 1737,
+      "sha256": "8b5e61973e8aeda8e2b1e5f72c0e820dc8349e2e836ead2ab6864eabb756b529"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042700.csv",
+      "bytes": 2272,
+      "sha256": "04b8286d4799767953a6ee57555642a880faa725fd4f00a9c1b94ea7c70b5db5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042712.csv",
+      "bytes": 1838,
+      "sha256": "0a25d30852a80337de22155208dbb9d9f4d9b9fcc8c37b03aef10db82d5bd2ce"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042800.csv",
+      "bytes": 1902,
+      "sha256": "640fccc509c0063170e4206cf09a4743b10e40a8b19764389ba397c35ec05d34"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042812.csv",
+      "bytes": 1660,
+      "sha256": "302f436e7f01f6a9bbfb02a9b58819ec6c237e7614c88ea0fc92bbf0de33e9f5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042900.csv",
+      "bytes": 2385,
+      "sha256": "b5b96e26df33312a7481a58916ffb68132b79d17506f267869da8aded2c26cc0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022042912.csv",
+      "bytes": 1892,
+      "sha256": "377d99981ccd45e5656aef7fc33f968a8052d657ece428f82956ab417db14815"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022043000.csv",
+      "bytes": 2722,
+      "sha256": "f1366b616a417da4e0ad2567ecd6f15426fe6a9e1d4f521c0f8598bd5060bced"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022043012.csv",
+      "bytes": 1853,
+      "sha256": "2de34e88060af6d5b9e2791350f876d167a30a0f725e575cb7aac571975dd333"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050100.csv",
+      "bytes": 2916,
+      "sha256": "5a6d145c56c94c0f95f834f2340ca1a56d98b1f12e2feebbcb2542010e59379a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050112.csv",
+      "bytes": 1800,
+      "sha256": "dd5c758b8a6412ea2725b256a445367585cced727ddfe89116e17cca035aa132"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050200.csv",
+      "bytes": 2192,
+      "sha256": "2832f285a66be25ef0fac37d095a2bfe5b3bf1fe83cd5d1965a95ae33006e19f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050212.csv",
+      "bytes": 1908,
+      "sha256": "d0621683eecc807cb4bed064f8c39701ad68f201fc52d721cccffa99c5127ff2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050300.csv",
+      "bytes": 1850,
+      "sha256": "b1951facf7f3316245180b74dc70ad98059e721befa3a4760b34a6b67ea58373"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050312.csv",
+      "bytes": 2347,
+      "sha256": "8304547d5b6564fec02d4ef2fd06a942b1e394c14a1fc34bb2568fe3b9bd1795"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050400.csv",
+      "bytes": 1922,
+      "sha256": "88a3bb8d3e232eaa391869092bf78097dbd647b4f67627296913c6a38ab4568b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050412.csv",
+      "bytes": 1884,
+      "sha256": "f07ee24b9907e2f919825b0f7adba43ec12e514147ea8e25c51657e68976c73a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050500.csv",
+      "bytes": 1800,
+      "sha256": "c6eb307f62cd38208545edf8ae4a02e48b6d40eea52b840a88ce6c78643a8da5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050512.csv",
+      "bytes": 1593,
+      "sha256": "242b262a6ceb002d94c7da90e65ff848f5834cf88e2823d16200eecfb76fce88"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050600.csv",
+      "bytes": 2789,
+      "sha256": "77957761dd02e718b4ad0fa020806b9db6715c8c86b29f89482bd1b3bfed0ce0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050612.csv",
+      "bytes": 1928,
+      "sha256": "bcf57741dbd67b9057d498789c3a3b822d05281d92aafbd696fac817ec0701e2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050700.csv",
+      "bytes": 1950,
+      "sha256": "179b1df6efc4a7324b3f1d56c5b22a7b327b9c7aff4abc98c956cc16b9e23b05"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050712.csv",
+      "bytes": 1986,
+      "sha256": "3b98f2dbb416882684d94189f6877ec33c7753de1b5ba2e7bf3d955e309e9522"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050800.csv",
+      "bytes": 2154,
+      "sha256": "01a0fbd578b8c4ae0edfd9555b8027bc3cc023205671a2b4e4f2dbfcaa7b93b8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050812.csv",
+      "bytes": 1546,
+      "sha256": "0a6c3f6b4e22d686abc0c00186b992e6f60f2fca008372359ddcd068db4bd3a7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050900.csv",
+      "bytes": 1504,
+      "sha256": "efd19e52f6669ebdcac407e6df3b745fbc1a176e64d147aa897df1896284d854"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022050912.csv",
+      "bytes": 1384,
+      "sha256": "f9b3bf2148d7859e4c9edc778eac6a3189c8a09fbf53120d0cdd337c720a97da"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051000.csv",
+      "bytes": 1975,
+      "sha256": "ec8894e7649631378b9b80f76d36fcc458092abacb1fb6aa7e1931834bba8f60"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051012.csv",
+      "bytes": 1842,
+      "sha256": "5de1f06cacc4e55b4a19ec0e31158bf73a08fdb52a9bc371642ed0204bd369e4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051100.csv",
+      "bytes": 2680,
+      "sha256": "239132a5cecd8b128659090d7adc8affeabf4af50cebf5d9d14e5df8954dd115"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051112.csv",
+      "bytes": 1877,
+      "sha256": "5fea8ca6ea1248e988db0126f24290101ed5af5572584740a92ed09f1c61616b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051200.csv",
+      "bytes": 2537,
+      "sha256": "d08cf42d9d2165645b325a954890a62eb1eefa6225bf97b4ade506a99695a427"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051212.csv",
+      "bytes": 1765,
+      "sha256": "7405db5c106fdf7e8a99864923602fef1883a42d9c9ae451612c31584219c5e9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051300.csv",
+      "bytes": 2542,
+      "sha256": "fdaa20e1cfe05c1cd3ef1fa7ac361404feeb12083d5d660a8f489c87fc2a7f38"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051312.csv",
+      "bytes": 2195,
+      "sha256": "976e76a6359ab659404a6fb1aae4e1341bb9bc8dd93105ccc390b50e075921d9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051400.csv",
+      "bytes": 2330,
+      "sha256": "21324df188ef0b514d8fdffa008841b64dd5adbdc71a240d15d6e0708604c0b5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051412.csv",
+      "bytes": 1747,
+      "sha256": "924217041cb07bb02cf3e25c63f2289e59ac2cf9d570c97048270d41a1b39f6a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051500.csv",
+      "bytes": 2256,
+      "sha256": "5cb269e46ce037106a0323f46cdbe4d56d1998f169365f3063626d235ca6381f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051512.csv",
+      "bytes": 2104,
+      "sha256": "490b3636d1d5ef8fb410c5519831ddfd53093f3e0060c0a10206cff8c6a78a67"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051600.csv",
+      "bytes": 3304,
+      "sha256": "9adab8ce210064492c4b8885883827adf9e0f95d60502f78a4d0b5ced889674a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051612.csv",
+      "bytes": 2463,
+      "sha256": "e4d98a4d510637d5e8e52ad971385f8137660dd95d53b3059a4d3a70995f617f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051700.csv",
+      "bytes": 1875,
+      "sha256": "d4b7b8e32cd297386d801280bfb6cfa27b40fc742f9f098128b7ba7c2d823f37"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051712.csv",
+      "bytes": 2235,
+      "sha256": "a3ba86d6f4dd5a3f9dfc7191cf013d5670d2c10a1f6fb7ed2919ce6fcf162816"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051800.csv",
+      "bytes": 2311,
+      "sha256": "5c9bfd7a6bd48c1a3dffaeece1d10983365baed8eacacf07b8a130d6fb5290f3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051812.csv",
+      "bytes": 1857,
+      "sha256": "61b49f9f06335eb42d44ff651ecc28f558da99444a747eb1f5b051d930f31e0f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051900.csv",
+      "bytes": 2086,
+      "sha256": "4e6f89600577c88e4ea2ed392c34740505701ac6a383bceaaaf50d6857619ed3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022051912.csv",
+      "bytes": 1285,
+      "sha256": "8a42746d9f0d2e3425a09ae389048e0e4e875b58771a0e36e1ede34551c033ba"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052000.csv",
+      "bytes": 1386,
+      "sha256": "d3b3549d29f774874e08ef4f1b78ffa20e0bac5abd4f3f3a20fa0029bfdc53a4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052012.csv",
+      "bytes": 1730,
+      "sha256": "4d5e290de7d1985daf6362d7a4f5f491837f7581865f4d770dd9d717d873797a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052100.csv",
+      "bytes": 2281,
+      "sha256": "2cf93500282a9bff98dab79d251c131dacd7382567a16a472f9ca4867b646480"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052112.csv",
+      "bytes": 1790,
+      "sha256": "d0b5c39b607731fe51cfd752ab52f5bf95b162d242de23341feef962eb5c138e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052200.csv",
+      "bytes": 2289,
+      "sha256": "40ce4006dcf830189b2002257c677b443bc3902d95611ebcdffdd8e3b308e14a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052212.csv",
+      "bytes": 2009,
+      "sha256": "8ee0eefaf6787c315855b81c3c493703d1d6fba987bec89905c9b4f23b29b317"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052300.csv",
+      "bytes": 1775,
+      "sha256": "95fcc15a5290b71b7a2d412f8f8c302cedceb9aa94f1726fa00bc0f2f5614360"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052312.csv",
+      "bytes": 1656,
+      "sha256": "377318da6f481a9f78cd5073457f1726a5bb7d57dc02a23b2eb9d9eed52b4f74"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052400.csv",
+      "bytes": 2619,
+      "sha256": "91b2fca0a0954bb4320610c6a2a6f3fb1c37868716832372a8899f9334db5a19"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052412.csv",
+      "bytes": 2289,
+      "sha256": "7f3e63fc77b6af53f51be7c6fb91c898e8d283376ae58593a7367b02375e6e66"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052500.csv",
+      "bytes": 2477,
+      "sha256": "2211650422e92448f24281c8d9867697f758328f4a9322ba4048933b537f9130"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052512.csv",
+      "bytes": 1949,
+      "sha256": "6c1faef5fc91fd5218e3d5ebbb40271704e28b95bdb34b5803cf41d07bc824d3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052600.csv",
+      "bytes": 2606,
+      "sha256": "8915606f3434ad899fde3d4ba68ebd237e6e9f5d77abfa9d979a32bb9eed9915"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052612.csv",
+      "bytes": 2856,
+      "sha256": "5edfd8c92dad7d1241ebdebd1d78969f08d52c1d2dc259ab0139bf4dbb2241a9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052700.csv",
+      "bytes": 2796,
+      "sha256": "9167d36faca45d03440a6fc2b8a0967a9247660a49ddb01db0bf465ab04a0f89"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052712.csv",
+      "bytes": 2752,
+      "sha256": "5ab20ee9fc37c3300ba28f8e40c8bffe1609739fa5694bb03ab1d37a49c40e4a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052800.csv",
+      "bytes": 1478,
+      "sha256": "a82412c8a2193608b5cc074f79e4bee9414bac83f56a811a978db4f9f0b52153"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052812.csv",
+      "bytes": 1191,
+      "sha256": "5027cc79fa5942e88aba0c1934383af51fa4333a74287f11a6db42133d685d2b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052900.csv",
+      "bytes": 1511,
+      "sha256": "dafbb2b954ede3652facd8d0d837932e7245be3ed95f000c4cec6583d5bfd3ee"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022052912.csv",
+      "bytes": 1769,
+      "sha256": "4d4ed36d06c0c857cdaed83d1f95ea204684f9582278441d5993bad403530977"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022053000.csv",
+      "bytes": 2403,
+      "sha256": "7e5533ad54dc08d6dd9d4ee36f4101e73fd7c354f679a4f97866ba3a682388d1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022053012.csv",
+      "bytes": 2057,
+      "sha256": "d493ca163ed629d003327ccf0e3f88e4dcc39eb3d7b7806c9559982d60e985d3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022053100.csv",
+      "bytes": 2832,
+      "sha256": "4a321a84a1edba6f47afd05a8e5679e80f08b84d0bacccca1563b698d61f0125"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022053112.csv",
+      "bytes": 2044,
+      "sha256": "86b867c5bc1d3635e52a7541599abf877f685828b540ca94b57fad201f3a0791"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060100.csv",
+      "bytes": 1884,
+      "sha256": "219b289187ac2228c0e9c48d7fbcc26b29293ca32bd87ffcdad0edf802ce530b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060112.csv",
+      "bytes": 1961,
+      "sha256": "36057ab6bc48aa7ce4981a835014baf3929109426855b1abd5f2b235400434ee"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060200.csv",
+      "bytes": 1843,
+      "sha256": "364180bfe34011d2957d5a01d16a1e37df8fc22ab6cc75171301e0a4e82f657f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060212.csv",
+      "bytes": 1675,
+      "sha256": "b860a2e5a784391d52358224b53f6286185a245d084d013ecf8885965dbe769b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060300.csv",
+      "bytes": 1801,
+      "sha256": "3d397d24394238aa71a8781b16403794f5b45e61243d5bef053fed28e1c86418"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060312.csv",
+      "bytes": 1569,
+      "sha256": "8533e1f8b943574536a7f3a29e245b752ebdbe810050559f4f68d30f4d612bfa"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060400.csv",
+      "bytes": 1437,
+      "sha256": "54b2c0424baafe0b1d1330e8ba411efb559a97b9b9f75e9716cdb9072823405a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060412.csv",
+      "bytes": 1339,
+      "sha256": "b6855e5644305ecb7a8b8cd2711f88e0f9342ea117bcb7281d3f2ca89af637bd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060500.csv",
+      "bytes": 2182,
+      "sha256": "8895854b0f05de65198bdbadcdcf8934be6fa48858ede6644f39d144c10babcd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060512.csv",
+      "bytes": 2042,
+      "sha256": "67902e15617a3ee1c19b942c9db94ffdc958032dd3531ff8b092dfc24b2acd9c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060600.csv",
+      "bytes": 3257,
+      "sha256": "e850cb6bae02bb3397f9579826621ab477956eabcd3a35387d02a195a6d1b8f6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060612.csv",
+      "bytes": 2340,
+      "sha256": "a7b286cbc6b39f6c663687239e16f4af4de6216e37fd91f6696e400938561e8f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060700.csv",
+      "bytes": 2445,
+      "sha256": "1f924ae43985043af331a67431530e4c2b9ed0f30cbedd14528cd19cefcb3fa6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060712.csv",
+      "bytes": 2293,
+      "sha256": "c6ade20f737ccbca02b67c1c69d30fc7cb6e8840888e86df5cb290b8a12b8233"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060800.csv",
+      "bytes": 2374,
+      "sha256": "87bdc3f5cba8a08bbac2708ddd8d1308af1c2981fcc88f4803c664ff860b4ebf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060812.csv",
+      "bytes": 2051,
+      "sha256": "cea2f7771048af5a1bc0ea034494c09b2aaa1ae2e87d469081f435986b6ce422"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060900.csv",
+      "bytes": 2009,
+      "sha256": "fb8ae56a833696057732246189363a4a58770cf45d4f953286cc1d01db18216a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022060912.csv",
+      "bytes": 2065,
+      "sha256": "8298e1b63fb912af37735bc668cc0163b8b305bfdf116b16c3b9b015e131a5ce"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061000.csv",
+      "bytes": 2036,
+      "sha256": "2b4e8df06ab24f6e9de79124a2c775c37866ef3a312f99ee175ad37e426fab89"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061012.csv",
+      "bytes": 2104,
+      "sha256": "7a1a8f0f56d80acf8afacac2f1eb9c8f8dc607e58bc1e37f27346b7c2c74a488"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061100.csv",
+      "bytes": 2166,
+      "sha256": "3b32cdc34ca1fe5f5acaf06c091c6f75cc1aa9e312186614b4ece836ff835854"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061112.csv",
+      "bytes": 2128,
+      "sha256": "f67546de36f406110f6efb9a6a99de235082811c646b783abc7293aa7a5762f1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061200.csv",
+      "bytes": 1500,
+      "sha256": "6f02345579413ce0e08cfdec2be7c29ddd55e09074405eb802d09c154d32bd3b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061212.csv",
+      "bytes": 1553,
+      "sha256": "b0cfbcb6535e5e261165022cf0ece62f7dccdf468c1ebd79119cf7873788f534"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061300.csv",
+      "bytes": 3697,
+      "sha256": "a1a3cb611cab3b6906dffe27e6d86b0c766d470e647b8c8672efe235b92de9cb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061312.csv",
+      "bytes": 1895,
+      "sha256": "249a34ab21723c5f95e0fc956b150e9f6a2e1b90d43b3a9dcf043382a59e6d32"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061400.csv",
+      "bytes": 1895,
+      "sha256": "0377813e013b8f914b2775372656fb7e61dda29aeef2f9d28bfb810a2486c176"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061412.csv",
+      "bytes": 1896,
+      "sha256": "04b0ac6f13ff913a568a309a03081e57b2830aa72f2f0cf6335b32cc6257c6e0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061500.csv",
+      "bytes": 2118,
+      "sha256": "d7420845556432744ec44ada8b9bff1955af9bacd807fc2b97132d00522ef60f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061512.csv",
+      "bytes": 1757,
+      "sha256": "8ba5562978d967376575df3761e15f7638577294dec3ac8043b77eea34ab301e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061600.csv",
+      "bytes": 2206,
+      "sha256": "6e27e3da6e0bc14b139ac4d6ad16077f85ae2a8eee491c6faded1e3c6bff44e2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061612.csv",
+      "bytes": 2403,
+      "sha256": "8169898d6139bed71bae9eb20eae28f3083cfe15e5b5ba8cee3f0cc25e606d1f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061700.csv",
+      "bytes": 1905,
+      "sha256": "b6759c6e0ce47660f9b772d75cee93c813b83093b7a7e22e2fcdbd316828c8a1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061712.csv",
+      "bytes": 1967,
+      "sha256": "55fb6ad73760e865c8f2e91c384d26a2c3ecd84c789993479c62540e8f7a43bb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061800.csv",
+      "bytes": 2150,
+      "sha256": "275dc6050d9327cb90712a4259585ac18b03bbb876aa9fa9cec8a0b6a52d8695"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061812.csv",
+      "bytes": 1828,
+      "sha256": "e1e7506c8ad44f398e8131a06f9baeed9cdd6ae66166e373abcfceb0404a50f3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061900.csv",
+      "bytes": 1693,
+      "sha256": "683adca44f112a60463173583b9d700211717aadb237be15edf0edbde42e1395"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022061912.csv",
+      "bytes": 1593,
+      "sha256": "793fc367f8243d416ca3775547004045d8941e01540f1b347e74c6b1bcf70d5c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062000.csv",
+      "bytes": 1950,
+      "sha256": "6b830a69e357979a9ab2f56c30819eb2a2bf55aac71e085a496bdfce13ea1475"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062012.csv",
+      "bytes": 2263,
+      "sha256": "1051f56bc55724534442223b8c5250bde7a193e681841e15c72d348f8a2b557f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062100.csv",
+      "bytes": 1845,
+      "sha256": "3addc6103bd0a62db0a1dc50217e1fb8d058ab6b49dc90b8ce27a5f7207e48a7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062112.csv",
+      "bytes": 2101,
+      "sha256": "dbd0c4c06aaef4f02cb907f9c9282239b5ff5628581f1aaa12db43e65ab68bb1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062200.csv",
+      "bytes": 1976,
+      "sha256": "6e4f5047f1d550f61f9fbd23ce51923744e8a63b30ad97d9df76cfc8992f712e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062212.csv",
+      "bytes": 2020,
+      "sha256": "0d4819cfb3a11479c1bc6c82836cfa82cfa63c0f707fe0c894ec24c3d9b71ff6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062300.csv",
+      "bytes": 1822,
+      "sha256": "8012bc7e6e3d8146c3b6256e6c6800e471108c0f504966b5b65dd8a332acf087"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062312.csv",
+      "bytes": 1847,
+      "sha256": "b3a9236b21e54671d9c8c7d1c1b014dfb9a1dce2be7332b20cb31d75a8853feb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062400.csv",
+      "bytes": 1435,
+      "sha256": "bf7c70d4eb1927cd9587adefe7825fb070cb38560d07fd2a889725f1c285c2a1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062412.csv",
+      "bytes": 1903,
+      "sha256": "e06a2f6e013888f3601fbd3c326325c873011a814c9eff01c292cc10c87ba90e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062500.csv",
+      "bytes": 2212,
+      "sha256": "e28d4f1116962b710df76027fbb2e25f5b73be233e03112cfb7fe2c23f2cff11"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062512.csv",
+      "bytes": 2149,
+      "sha256": "8dabc94ff5d1b8fa184fa41f6c7f33e4178021cb5b3f4256ad1d704c99c0fe40"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062600.csv",
+      "bytes": 1951,
+      "sha256": "8a77eb700cc076de2ab86a79e34750c72cd7f7a0df8537b8b0df40d4cee3dab1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062612.csv",
+      "bytes": 1534,
+      "sha256": "966a4421e1626943776505bd0feace4dcc97bbf0efcfd3f0a4f42525235869e4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062700.csv",
+      "bytes": 1594,
+      "sha256": "1a97ea43f416d588ea08c230899fc1eb4bc50ea1b36e79d0f12e2055397db614"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062712.csv",
+      "bytes": 1391,
+      "sha256": "40b1e8a4cd7f7b3ed0ff9af6f1abebe0982ad16de9d757b4e92163abdc749fca"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062800.csv",
+      "bytes": 1274,
+      "sha256": "68945bb4d74efa9a2d1baca94ef1511651f15820276a744866c91c8d9c2e29ed"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062812.csv",
+      "bytes": 2421,
+      "sha256": "fa749c2fe9f0ecc2657c9b7d1a990fbb53f9126a60d1652e14d3f3e7056594f2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062900.csv",
+      "bytes": 2195,
+      "sha256": "bc8e0d22df410490614832f79915feeda86fb0a0e3dac8dcbb7d195e5cfee5b2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022062912.csv",
+      "bytes": 2269,
+      "sha256": "fc5fb572cd8eee3584e9b61d83011ad7b53bf60fac692ab2a5091f6101caa6b9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022063000.csv",
+      "bytes": 2216,
+      "sha256": "30388d70655fb3b049ed55a68923d79175cf2fcbccda65deb7686320594a69ea"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022063012.csv",
+      "bytes": 2078,
+      "sha256": "487bf308f9df334b874eecf8191443408ccd0b3ffd2d25f44b8acf0d01181d02"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070100.csv",
+      "bytes": 2902,
+      "sha256": "f99229f2ad83d9f4914cad488c72b8983dfee00e576a7a17ed50277d2cd6b046"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070112.csv",
+      "bytes": 2080,
+      "sha256": "fe8dd3f219ec60c3b457e86e4d2dd669871f8c126ae5e2d805c53d5a8e60f544"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070200.csv",
+      "bytes": 2583,
+      "sha256": "b860950fa8d25e2310fe40af51377b3cd67a8d8a99eba77cea3c5211f046f5a3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070212.csv",
+      "bytes": 1807,
+      "sha256": "e1fb296dc8c8958ac8a76b0dfdae1fccb5f443c236e35ddaf7d9b6d807c81172"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070300.csv",
+      "bytes": 2306,
+      "sha256": "3fe34f6c30fb0b080cbb2eeda04bd9f4ef518dfe3c8eef6b8ed1a2605ddbc18a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070312.csv",
+      "bytes": 2143,
+      "sha256": "0c294044b363de2ddb145cd32954bf55be89b574e335c1fe04e4721521014131"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070400.csv",
+      "bytes": 1834,
+      "sha256": "a11ca114fd327daaebb3f5a52489e619db11f3231f19a43a8e2633a2b19b07fe"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070412.csv",
+      "bytes": 1878,
+      "sha256": "6752e297ef16f035f7a7daafb3b8bb65f7cd759b162838b37d440551cab1bf19"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070500.csv",
+      "bytes": 1778,
+      "sha256": "0ad0708aae8a55b2a9352984a73995114f69870a25c57876371db1dd4ee6291a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070512.csv",
+      "bytes": 1298,
+      "sha256": "debd61497f89d86ec79f102a8257f463132e04af373d2959df0df519110adcc1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070600.csv",
+      "bytes": 1941,
+      "sha256": "07ce7a278c1f70221a2947041d73bae1f0a24d49a81f6b6259ef62dd7457b5bb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070612.csv",
+      "bytes": 1750,
+      "sha256": "87077edcc90a44a652a039032f367a847b0a0689fa699c100adb423a1b027220"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070700.csv",
+      "bytes": 2129,
+      "sha256": "27b00d57862a8c2ee4f5c321c0dd6ee24927a07a6c64b40da18a8b4cfd705f6c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070712.csv",
+      "bytes": 1899,
+      "sha256": "4f3bf35272eb9c873872f16c7b7ffd649dab6edd48e07e6412c7eff97552ed8f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070800.csv",
+      "bytes": 1640,
+      "sha256": "9b23f03df42e8badc56319dbf03c29892abdb3b94b3f3ff72ecccd6b8bbc96e0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070812.csv",
+      "bytes": 1614,
+      "sha256": "2c89ac208ec3fa1bec175c6f511005ab634cc3e039721f749c03480bd7ad91fc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070900.csv",
+      "bytes": 1891,
+      "sha256": "02756b51e3b2127b5d648737d0d9fb208172fa9b7ebe1b4ec37a7d06c6c5f8ac"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022070912.csv",
+      "bytes": 1667,
+      "sha256": "7381b5a250087fecd0675760123432d4187b8a71f339b1291508d1f14de28e69"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071000.csv",
+      "bytes": 1815,
+      "sha256": "5b61ae45d2f75147f81b0a7df087881f42482930fdedbbf14ddf8e391fb94eda"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071012.csv",
+      "bytes": 1483,
+      "sha256": "4b72aa0a25bad10c3cad4bcf281f97bd9dd5cf1b91ccb3a8d2fec78ba765795d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071100.csv",
+      "bytes": 2176,
+      "sha256": "5e4f8317293ab57240ae6bd7053b4c4535a8e2f4f3b1d79f2e822521bdd3e6ae"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071112.csv",
+      "bytes": 1714,
+      "sha256": "c50269bc4c5e2d8401f804dc5ddfe1af1678bca52796ebd88364aa99ada3e0cd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071200.csv",
+      "bytes": 1883,
+      "sha256": "f710a14309e30716f76b4ea1d5ed1aa868a03e2d1031f002febc616a80ee8b78"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071212.csv",
+      "bytes": 2029,
+      "sha256": "5e6de999ea98efa9949cafc826f3a02b6a829b138c04204fad2b4087c67aa544"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071300.csv",
+      "bytes": 2402,
+      "sha256": "a143ae07f563a761f00d0de625d960e29644ae452ae8e4dc9f69529b796e80dd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071312.csv",
+      "bytes": 1989,
+      "sha256": "b3fea6e5eb18646f6dc2ef52a0e19c8e5d0c76efbc075209b7d77431483cb977"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071400.csv",
+      "bytes": 2324,
+      "sha256": "d625b256842e588fae500177962f18fd5d8fa15a3ddb89dad34c3a5b5c43803b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071412.csv",
+      "bytes": 2002,
+      "sha256": "542503d045a7a4b7a160baf7017a8ed2d22569f7c361919846cd621dca3623ae"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071500.csv",
+      "bytes": 2095,
+      "sha256": "826cf017028e8ab3658e01172b3b40c2e24e949df259cbad464a2264a05752da"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071512.csv",
+      "bytes": 2073,
+      "sha256": "9f52878cf905c6545c28e3c39779414ec56f97f26b5aeabdae5816be362bf07e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071600.csv",
+      "bytes": 2153,
+      "sha256": "682b97acf2f98aaf2302fa57535decf3f5e49c48f7ad8e7556904a5257c3df89"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071612.csv",
+      "bytes": 1761,
+      "sha256": "50ddb4d82e44e7f2d780f202e1ce901238956873bed447a60ef82e593dbe0c68"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071700.csv",
+      "bytes": 2088,
+      "sha256": "f3cb1348eec13643a98249e0af0ac5e9fcea187166262ca2b17d9e4e28c4604a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071712.csv",
+      "bytes": 1575,
+      "sha256": "003608ecc50def36d592e80d0246b1f3fdfdf219b66bee4566eea93532536955"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071800.csv",
+      "bytes": 2248,
+      "sha256": "4999cec2912d6fd125c6c7d53c354c65864fc2fb3ab07e295eef5d1f5d102abd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071812.csv",
+      "bytes": 2081,
+      "sha256": "55422693ed5245629446da6f0e9fd478d7c1eb69a9ea4e1ced0684ee2d8bc47e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071900.csv",
+      "bytes": 2426,
+      "sha256": "395aae7f3242bfea2ec6606a0630471369b7738a5f42bccca7928e6314adc0c5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022071912.csv",
+      "bytes": 1843,
+      "sha256": "8e6d39484cf17d324bc036f995504da07812220f8ff906301afbc2268072d21f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072000.csv",
+      "bytes": 1766,
+      "sha256": "334ff5c7b7e56f4a755b45819cc1243a82e2c3d3777edb6160b284e4596b8861"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072012.csv",
+      "bytes": 1909,
+      "sha256": "51422dfb11b75c4eb9e3993e2a1c3fb22641665f63c6a815be12cf8cab3caa4a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072100.csv",
+      "bytes": 1942,
+      "sha256": "d3d34f1afbaf83c128f9ce714dffeca20f4e26efbbf762d00eb6126bb0c70398"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072112.csv",
+      "bytes": 2225,
+      "sha256": "086f4038c85f6e30ac95a10cf02c91b133a2f9dbbad7d4790480f905cbccf603"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072200.csv",
+      "bytes": 1918,
+      "sha256": "f6dc5f040c87b5b08982fae4b6a712c4dd40cde3b5cbb1e21d4e4643ff438a78"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072212.csv",
+      "bytes": 1696,
+      "sha256": "1f1c703fdfb0e61915b526d955d3137f09ff3dbb433e3139c031ce1954b87828"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072300.csv",
+      "bytes": 3434,
+      "sha256": "4c82b3efaa1ce10acb985f44b40c7b92f8c54363cd7f5586c4a036dfb33317f8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072312.csv",
+      "bytes": 2394,
+      "sha256": "2d0ab511cce82b648a4b9df4557697a713f562ea5f82a37ff96b89a7df9825a5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072400.csv",
+      "bytes": 2368,
+      "sha256": "1753ed6c3657248019f4b803c6f2433dfd6ee184dbb62400c3c4b2ccfbbbb217"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072412.csv",
+      "bytes": 1684,
+      "sha256": "05fed05d480fbc7897724108c79bc65c2a8994181e02081c7942981d58187194"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072500.csv",
+      "bytes": 2541,
+      "sha256": "35abea723301634d6f418d11af2c8c057ad2a7ed5dc9b4fc509e70b7f1e38b7a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072512.csv",
+      "bytes": 2255,
+      "sha256": "cc347fdafd9da5c34b876cbc80ff97e6082ee98c93ae938724f14a97c7f30020"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072600.csv",
+      "bytes": 1987,
+      "sha256": "15f75a2e7ad69539273cac2d320a2e05277118138a5c46758e1b3ff8b625b5ae"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072612.csv",
+      "bytes": 2207,
+      "sha256": "ec99d3a5d674571d7c3a0f5cbd37b273153e7e60c0498505b2545cb97a7d77ee"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072700.csv",
+      "bytes": 3079,
+      "sha256": "d27903b80f73c9690ff9f57e2ab08fabab0fcc72739dc8e06481b9a5d560da9f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072712.csv",
+      "bytes": 2211,
+      "sha256": "646e3d693e51364861529d2fb539391d5896f797060fe34b394f59e8a4c02f65"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072800.csv",
+      "bytes": 2763,
+      "sha256": "45ad9c0b8cd20e87ede6934437de382fcd8d520add1826350370bf604aaf79fe"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072812.csv",
+      "bytes": 1908,
+      "sha256": "8ac9f1201a6568e9e037ae1f82e30fc3e7f5ca041391f959dcb3b748cbadde4c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072900.csv",
+      "bytes": 1895,
+      "sha256": "d00846260a80b305ff0c09528e83ab6018b6b34ac6d4f048d2bbb044f51a21f7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022072912.csv",
+      "bytes": 2099,
+      "sha256": "9d700116bda5a7ab2adc601d4194d8c68a144cf09656feca9ae8a9587cac63c3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022073000.csv",
+      "bytes": 4156,
+      "sha256": "c47e1bdd0abbb204241e2df91450f593e8a0d0ffa5ffb5005f096a5d38e39813"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022073012.csv",
+      "bytes": 2280,
+      "sha256": "9f5dfa0fd67c9cbf13783cbb1b5bcae05f9380a6601a0264fa550622ad3a0de3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022073100.csv",
+      "bytes": 2393,
+      "sha256": "e88ce68d2821b6e47bde94dc43956a26341116486c81e1031b3944c5e6e19581"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022073112.csv",
+      "bytes": 2543,
+      "sha256": "c0e88c17cf261d327e49707e02559cea6f231bea8fb4ac48db20f3101cba2b54"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080100.csv",
+      "bytes": 2365,
+      "sha256": "ea936554ecef6c8a161a0c911f209accb05588c3544a6da9f311fba9a1b7fe1c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080112.csv",
+      "bytes": 2052,
+      "sha256": "30f72cf64e4d9dc8e44449278557170f915069251a87cf7193152981abdbd0fc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080200.csv",
+      "bytes": 2163,
+      "sha256": "b466a357b4a4b492270e12ee704fe654ed7dd6274c4653162fa49ebff75bd15e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080212.csv",
+      "bytes": 1964,
+      "sha256": "af5ea7d9ad730f2c181fd6f492419a0d8541309d6b90a2b99b212572c14d3a2c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080300.csv",
+      "bytes": 1986,
+      "sha256": "c4a31b90a3922db3f90a3dbda5f5e7f936d671f5e4adcf13339b1f91727218c1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080312.csv",
+      "bytes": 1886,
+      "sha256": "3b75e3c706dd0a7dd6fc05ce870643564fa68b39664162b6e90a4141ea629ef6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080400.csv",
+      "bytes": 2607,
+      "sha256": "b562078265c82652b658f133a63392351836c3c5a9584f677f8577270ec1e9cf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080412.csv",
+      "bytes": 2189,
+      "sha256": "db42bc8c5891a6ab8b473b03a579249dbc510f4c098da33eb00547600d8eb714"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080500.csv",
+      "bytes": 1881,
+      "sha256": "d3593b9f045dfc965718686ff844ff349a97a0757979e6cd165ebd529b7a31e3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080512.csv",
+      "bytes": 1982,
+      "sha256": "bedcb4317091c0eb6709db27034a61ae1663483d9fdfd71267e4aa98191b82ca"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080600.csv",
+      "bytes": 1992,
+      "sha256": "2ef5680bb643573cf16ddf9183d9bd128e877f9e47311379b5a292fce3c41ff7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080612.csv",
+      "bytes": 1709,
+      "sha256": "9babe8581a1fe0cd5c1e98947aa7333bad7a50416339cf16f54cb5479d05c68e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080700.csv",
+      "bytes": 2075,
+      "sha256": "b25db256217fcc030b5e2079b1c17d48c05ca1c71934e87a06bdd20b276df43a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080712.csv",
+      "bytes": 1664,
+      "sha256": "739714f22530471d796fc36f0e737dd51f56ce39f750afb2de7733ea71756b85"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080800.csv",
+      "bytes": 2767,
+      "sha256": "d263e246849f5b039ad4ca7e45eb5a1d7eaed91ced2d37cf633221207cc6473c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080812.csv",
+      "bytes": 2080,
+      "sha256": "9046d7fe64f6424076c1e467d29c7dc8a5f5bac7f4f6ab5a72574384aa27c3f9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080900.csv",
+      "bytes": 2850,
+      "sha256": "7f3da1cf71966528b6070da21b9302efff7422f0cf62073da766761240070b99"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022080912.csv",
+      "bytes": 1959,
+      "sha256": "46b52ad7fdd1792f901ac91768828621368f45368252f776d511e3331390ddba"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081000.csv",
+      "bytes": 2155,
+      "sha256": "296f47516352b016400d903a8790ceabdddda417edbc1f60ca502a28b450e689"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081012.csv",
+      "bytes": 2093,
+      "sha256": "47a15a4a1a8a1088b4a00b9a750043566fed86114bcd6329e58293c45edae9d5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081100.csv",
+      "bytes": 2052,
+      "sha256": "b1bc58a5128b4db67dc854c8bf872dc066101ac23ea0c35cea75aaf030c7eac2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081112.csv",
+      "bytes": 1753,
+      "sha256": "f34fc71a1b197d2033bbe849bc17571d34aa6c7f7e8bc972c7bacad635b6356d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081200.csv",
+      "bytes": 1994,
+      "sha256": "7f672e5cea48cc8692df36d23f0dd7de13eba6350f19ad4dfb1171ff6e655ab6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081212.csv",
+      "bytes": 1522,
+      "sha256": "19e84f81c59d51df6f182f2f6ed5a7be161c4a13f0deb110228d9418c6ffe354"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081300.csv",
+      "bytes": 2419,
+      "sha256": "8f23c6b6004156a7bf7184e3da9ae9e6325c008f797988e7fb26339580b7bfd5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081312.csv",
+      "bytes": 1851,
+      "sha256": "4f33d3ed8f4db8261638b8d90d8b986d38a27d56982caf38c69613ce1c01f500"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081400.csv",
+      "bytes": 2207,
+      "sha256": "9a5ed23e9d3c0435006c88ca1e07161ec9745f492851a01b8048d59593edc511"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081412.csv",
+      "bytes": 2089,
+      "sha256": "a88d7630305efb9bd7c210c8e0ecc790be41f65f1edfb2548245a08cfa887bf1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081500.csv",
+      "bytes": 2230,
+      "sha256": "5ea848dbd5ffe9c8c2fd730d4927594497d40790e6902b93aeed48d408d2d85e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081512.csv",
+      "bytes": 1681,
+      "sha256": "b3314176922986e72686d7fe504962dd2e3b2d6c8689c742ce877899f370dfd3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081600.csv",
+      "bytes": 2178,
+      "sha256": "3ebf75be11fb5ab175ea4a8786ece680572e0962a53c178bb2db7ef7456c40ca"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081612.csv",
+      "bytes": 1954,
+      "sha256": "8c888bec2f4bdb82eb139e02ca709365f10dce161e469870f44596a87dcab15b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081700.csv",
+      "bytes": 2083,
+      "sha256": "14a2780b97b0a0a16137de1f8a711f85a29465121ac6c7eb4c18452322e15fe0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081712.csv",
+      "bytes": 1982,
+      "sha256": "213e21686626541f961d674558f8b4f59e7f58f9b401d469c45d43890fd64183"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081800.csv",
+      "bytes": 3446,
+      "sha256": "36311ecda4c37aa17b1f6fd18360a15d68159c625417f8971d483c8ab0cbf2d0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081812.csv",
+      "bytes": 1965,
+      "sha256": "18e4fb59a6f9d29726a05a3ee902a2037ed4007b9342968f9cae47958d230a8d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081900.csv",
+      "bytes": 3320,
+      "sha256": "f02c236a9ea8353d2eb098001e2c741c39d2a5ddd31a89954145f8d9253a0dd9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022081912.csv",
+      "bytes": 1939,
+      "sha256": "bc9101448917c84a336b64c2bef4aad23be192c9541d83c7e3edbd59c03b4bb6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082000.csv",
+      "bytes": 2180,
+      "sha256": "4418089c94cd3ea01dc095df33df7f028d8e501df2fba5b66a41f007832c0e19"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082012.csv",
+      "bytes": 1969,
+      "sha256": "3c1463b025a2f6b41e1e80c830aad8f7164d6e971c05f78b04190a02d846de81"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082100.csv",
+      "bytes": 2433,
+      "sha256": "50f6867828f8bd00036ef62c6d214b6b28151da856e256c59104abf39f53e3a5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082112.csv",
+      "bytes": 1780,
+      "sha256": "9d2775d69da111167b45584ae73258e777c1dcf8cf38f987a4d194b67515792b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082200.csv",
+      "bytes": 1936,
+      "sha256": "4f260c74e28f2801e2c9b9bab807249e5904896b5ef47e284da6ff32ec8cadd3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082212.csv",
+      "bytes": 1807,
+      "sha256": "94df16a770ec188560135dbe73bf27a42a47031e03e86a67d57f7c28a72b2da5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082300.csv",
+      "bytes": 2207,
+      "sha256": "093a39d601c51978ffa8a454fe4134f08f700fab82e508dd498ef29b1b2b4f4d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082312.csv",
+      "bytes": 2102,
+      "sha256": "51c0378c0298b8ba49198b38b6a302f325d01e96eda53a27dc8b9367339a9ac1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082400.csv",
+      "bytes": 2538,
+      "sha256": "626cd0536aa7133c10b093bc4992405d9e65232383c882c6b91b467833f13a40"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082412.csv",
+      "bytes": 2592,
+      "sha256": "afe63f3d0e79e58e72f57435a6b8564d2b148b0e59a53eac0215bf6e02e5f811"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082500.csv",
+      "bytes": 2761,
+      "sha256": "8fdbb2c367a032388d535787164710af7a51008b07ce328cef9bdaf61a999da3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082512.csv",
+      "bytes": 2030,
+      "sha256": "768f49c503c5a4dc5d0e167051511bc4f1e1bf8f5dbebf9b6dabdb29507fec24"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082600.csv",
+      "bytes": 1998,
+      "sha256": "4756049cd63637ec463e4ea73527d3c24c87e846d2d76f29bf6a8ce11099e71f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082612.csv",
+      "bytes": 1641,
+      "sha256": "2f5a533cccf2137ee44732dd795fbd3b0dbf5b6b71139d5d1ead21f939e4d642"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082700.csv",
+      "bytes": 1616,
+      "sha256": "61e6a574daecdffc129a5dd9ab87710d522afe33866a9c785e922c8fa92a9db5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082712.csv",
+      "bytes": 1664,
+      "sha256": "82a917e401cc40f5ce1da9bf5621b9bc61b1ba90e8cc0d22b0ef59e19605a053"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082800.csv",
+      "bytes": 2248,
+      "sha256": "12607bcd041673cbba97f7270946e89ffc92ab8adb740657651c5259154d8fdc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082812.csv",
+      "bytes": 1635,
+      "sha256": "c7bbeb839e4f52be785ab563f02bb94ecab9f837a8f8099a712fc68ac5049ef0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082900.csv",
+      "bytes": 2222,
+      "sha256": "0c0c1f89f1570f36d04bb36e5a00e44883d968aaee5130b92e75d3d4c402c57f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022082912.csv",
+      "bytes": 1830,
+      "sha256": "1ec6d3f278adc97fee7d490c7c1078b6004556995bf4538fe6b62d05e362ef76"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022083000.csv",
+      "bytes": 2623,
+      "sha256": "554f92547d22cfdf895092881081d095e199136a06738a1b536e8ad5e9636791"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022083012.csv",
+      "bytes": 2043,
+      "sha256": "2df7ce5e75af9ab2fa5c1fad3a43a60546634aad3faad57fdfa3064c023dfef3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022083100.csv",
+      "bytes": 2293,
+      "sha256": "a1434022b3224f040017d88ee91025ed75d2b23b52c4bf5ecdc2c6088b5fd669"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022083112.csv",
+      "bytes": 2025,
+      "sha256": "b053a16f6e9e71e4df5a4eb2b7e1a4239905782d62b36e9b57d85898ac01730f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090100.csv",
+      "bytes": 1860,
+      "sha256": "a34c005a67f4733c095ee8a16fa1581713d671bddd86fdb4704a5950b954e170"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090112.csv",
+      "bytes": 2227,
+      "sha256": "05a2c4a52a764f941a104d48f58016471952548b41213c72a1c0ce02b5fa3ca4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090200.csv",
+      "bytes": 3218,
+      "sha256": "74a1e3c724f08821c552e1480b2e510529c23f0b990b33cbd6cd2139990534ee"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090212.csv",
+      "bytes": 2444,
+      "sha256": "c72886291829ccfb8b63603116ce83dd18504ee338b65510bd46ec74dcaf411a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090300.csv",
+      "bytes": 2512,
+      "sha256": "07a66b70e6427b32d14a23d4c14b3f86a7edf7d4f5dc6d2b0adbb274b2d54071"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090312.csv",
+      "bytes": 2152,
+      "sha256": "9425a4d1e121d14c26ffbacfbcc75113d2c7d0cb0a8b19a66db93e44f6035c9c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090400.csv",
+      "bytes": 2348,
+      "sha256": "b34e3c9f4b5816c52afc581cfb745b970186f49fe739a9671852fbf77ce5c1b2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090412.csv",
+      "bytes": 2300,
+      "sha256": "a6a08532bbbd7cd0e3e5542e4e3f7a1a50a6b51f6c357953da317f8d74c232a2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090500.csv",
+      "bytes": 2441,
+      "sha256": "9ed44db34e341730d485c0ca37095e736e8d25ec2aaa27988366b10dd3b03859"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090512.csv",
+      "bytes": 1855,
+      "sha256": "85c8b7308dc89c8958a036c5962a14ebee0459167ff5fd09366b2e3d6217234a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090600.csv",
+      "bytes": 2246,
+      "sha256": "fc3c33e04179da7ccb3f93f0e87bb4d5c051f18853595ed89f82e4163bd10f04"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090612.csv",
+      "bytes": 1974,
+      "sha256": "0827ab648ea74d7e5f4ea93b25d9cb9a97cfa0eeb32a9250ead8b1894143062c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090700.csv",
+      "bytes": 2168,
+      "sha256": "7655878a6ab531a533ef642a01271374b816ba7ec898af619343d7c75b02b1c9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090712.csv",
+      "bytes": 2441,
+      "sha256": "5a4693f6daffb3ffd70fa6c1d1c69e8a001815b5930ccb4e4e2043db34192ee0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090800.csv",
+      "bytes": 1861,
+      "sha256": "92b2ca21be44c2b771a6c99d9cf427fbfbeed87e98eef69a4d06056d63d896cf"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090812.csv",
+      "bytes": 2418,
+      "sha256": "61e7be1c92d14272b82dabe04d639a91034c307ce6457e837126e1c2155ec83f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090900.csv",
+      "bytes": 2211,
+      "sha256": "37f75d5de67011bf8fd134c893f1deba21c9ac62b4ed170e0f71c36de00e9908"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022090912.csv",
+      "bytes": 2392,
+      "sha256": "7bd9d6f7a3abc834f3caf6fa6faac0056ef4576297af2e13cf4684ed69111cb3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091000.csv",
+      "bytes": 2273,
+      "sha256": "880a475d7e221a7603bffff9f8ae73a109364e044f2f55bea023479e38e48b95"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091012.csv",
+      "bytes": 2200,
+      "sha256": "a08b1d4715fe113cdf650f1519be37cdec24065524d260627287951073964935"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091100.csv",
+      "bytes": 2926,
+      "sha256": "c41a629100e034aec34326fdbc254580607a5811ceb21d3ef5b2ecd5d2d84ed4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091112.csv",
+      "bytes": 1853,
+      "sha256": "1e4f211f21ef336863ec097ab3d45646ed4010d1ba3ba2a651aaca7c8cbc7374"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091200.csv",
+      "bytes": 2247,
+      "sha256": "c6e531f50fada09828c657ed10af04239c13cb2a7bf989d2b2a1510724a98f81"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091212.csv",
+      "bytes": 2435,
+      "sha256": "d05af1da4e182a54b64a13ea0102fdf6b9269da839b696079a72848672a0f9dc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091300.csv",
+      "bytes": 2394,
+      "sha256": "1ee1fa846d5750ff0c1df8195d3231b4bf7181a7fa9413b85483fc4e502619fd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091312.csv",
+      "bytes": 2070,
+      "sha256": "4aa594e907ba3dd44333809472ce7da51113ee189078e74d62815202dedafd75"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091400.csv",
+      "bytes": 2644,
+      "sha256": "f2d9459a7c2c9a613f678f041132fa8a95fd3b684af8a26245522ea959c5578e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091412.csv",
+      "bytes": 1709,
+      "sha256": "9b9eb5cc61c59d19e88ff4043f961badd5e504f69fae67566471066d386e285b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091500.csv",
+      "bytes": 2077,
+      "sha256": "4fc98475103046ab0e835ed2bab5c84c48853bb8c2d538e348bcbb4ae217df47"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091512.csv",
+      "bytes": 2181,
+      "sha256": "77fee5821be86dfa8ce03d4b9e42c2c2dd1be63f8046d62fb3e3a2323f276b1e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091600.csv",
+      "bytes": 2739,
+      "sha256": "1f2d06427a183b86ff40ae4f75adaa60b212f1947284ab38a9b16172210a2977"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091612.csv",
+      "bytes": 1887,
+      "sha256": "d4e907ce85c2d78cc8f89e568f9403723005d6915a2b281013311744f813aff2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091700.csv",
+      "bytes": 2528,
+      "sha256": "b0cdd56e30987b1fd2bf40a4a9b86f4fa3634f891993337108d9bc9b9a7094d9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091712.csv",
+      "bytes": 2192,
+      "sha256": "94e99c7b0ff14a5c65282cc1935470bdffc35674bcb361037f08d2c7a0481dff"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091800.csv",
+      "bytes": 2530,
+      "sha256": "51f9b697669ac08290e91251cf8e2696cd9846d370c89988e3e083a800c0e72b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091812.csv",
+      "bytes": 2417,
+      "sha256": "ba8998658c6624fb95195e8d637c9bc86a39c4bb21a125933ed28ddc7f094aea"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091900.csv",
+      "bytes": 2738,
+      "sha256": "ff67e74571a4356f8d113e519444c9bfb2425535b2973f499959eb36551cce73"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022091912.csv",
+      "bytes": 2385,
+      "sha256": "7177ef625f6bee8e2bc840e9124ad71f5527390f1dda94cb0bd1845f0dce77f2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092000.csv",
+      "bytes": 2386,
+      "sha256": "04e15098f0c8b821fbea35948c2387697355142f701410cc9e67063e86c96fbb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092012.csv",
+      "bytes": 1887,
+      "sha256": "4f17600ecf726bbd0c1f3e7a3ebd7ec4e5e1591ac08873144928a871a046657f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092100.csv",
+      "bytes": 1998,
+      "sha256": "788f459b0ddd33dd57cb3fdfb0ccda78d4b0db6f48f788c6f9247f28d61608eb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092112.csv",
+      "bytes": 1936,
+      "sha256": "54543b9246b312c20066befd53d4b5de2e6d6f0c233df00d44b8f5dcc1f99293"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092200.csv",
+      "bytes": 2111,
+      "sha256": "bec3553badf46da0f6a1323ddfb120443be0ee3dccc47e8df3437dfd218bd049"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092212.csv",
+      "bytes": 2022,
+      "sha256": "fb03370e864969ecb6aba36631c31e5701fc32251802de94515d195c25b0a4af"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092300.csv",
+      "bytes": 2452,
+      "sha256": "8a7560b7836fc4ee5b61564562e5eab590bcc14a02ee0fb4b58a2f34a3b5f830"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092312.csv",
+      "bytes": 2482,
+      "sha256": "2731f3a8914f00d7b265e3d8e362bdd53eb052d6d28df45a10560a784ce5ac01"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092400.csv",
+      "bytes": 2139,
+      "sha256": "304387cd7f727d9a54889a82db2829e139c64158c62770a61e3986ccf1765e6f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092412.csv",
+      "bytes": 2792,
+      "sha256": "1ce90a7f04a4914ad82c9495060920b60ed18eaf18b8420eec50c04bfb3fdc42"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092500.csv",
+      "bytes": 1960,
+      "sha256": "dea227ae3d209bb3d34acf884fa9ef5d2f90ffa60a9746185ed564762fec4d4e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092512.csv",
+      "bytes": 2157,
+      "sha256": "758b4e7cce2435e7b84a4467f12cdb0067e1cd197c5e5b41d1c4426aa4fae439"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092600.csv",
+      "bytes": 2148,
+      "sha256": "287ad142bc670fb02a9fe92ae79997dc9e1352ba1df76b988bf998313b3d0e0c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092612.csv",
+      "bytes": 2427,
+      "sha256": "98ed5d3fda7a3f1ad6743cb145efdf742e8807e9b87e76e7f749706da5a84023"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092700.csv",
+      "bytes": 2469,
+      "sha256": "843443184a91577ae221d812ccba3836942655f559480b189a0d24f9b29682f1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092712.csv",
+      "bytes": 2370,
+      "sha256": "8d3330b58fb0d229894afe2d7a1d5cb0cfdcd529a5d102e129c024a66d449bec"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092800.csv",
+      "bytes": 2211,
+      "sha256": "8cb3d2dc600135f437ea0b0ff18e55cdd745e5153606e87b0928e96e0ec07f3d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092812.csv",
+      "bytes": 1577,
+      "sha256": "7b611a220d88acf0b7e1d839ce551680c5d1c5cb81adc50e6fab9c9c38711237"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092900.csv",
+      "bytes": 2591,
+      "sha256": "2220c92e71836c7e705c619d1bd7818a606043ba9e83f560bfcf14124d9e2a5a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022092912.csv",
+      "bytes": 2399,
+      "sha256": "1cf6f8924c252c71b9c4661fa36e0ce44a3fd2682b9a66eda23b280ad22a5ca8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022093000.csv",
+      "bytes": 2596,
+      "sha256": "93ef5151a0190faf978729cb7f84e360d933060c6cca21418078487e70585744"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022093012.csv",
+      "bytes": 2263,
+      "sha256": "8678f9c0c0a867be0fd06fae6a473a7bf6ffc87926fc9aa93cf79c1d12b1f98b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100100.csv",
+      "bytes": 2482,
+      "sha256": "72ad404f523f3004aeed003f8c14846143f820bc8f0b0be05241e1fb81d79f06"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100112.csv",
+      "bytes": 2260,
+      "sha256": "0f31927e8067744fc6c88ee0fe79a64302054d3509b6595dd38fadfb7e449397"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100200.csv",
+      "bytes": 2391,
+      "sha256": "c471a069b42a15082b30976ecb07c611c9dd6e5aea4fa12c8bb027ea0388afea"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100212.csv",
+      "bytes": 1691,
+      "sha256": "eac4760f4238abf3601cd2d0cd6f1e62dca76b11e1cc28ecf8789b951a056f0c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100300.csv",
+      "bytes": 1898,
+      "sha256": "284209fc61469f00f63c892f6dcd9c1a43bd8aa75d0d5cdbe9867cb598063fc8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100312.csv",
+      "bytes": 1708,
+      "sha256": "76030f00ac48cdbace82585dcbea5c2fdc6fcde88286e507322ebd0bb365ea12"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100400.csv",
+      "bytes": 2366,
+      "sha256": "0e51fd433fdb64a7e3842571912810f88f69dc4f91d28093662282e7508db107"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100412.csv",
+      "bytes": 2234,
+      "sha256": "4a31343b0805be764289e81addf1299fca2e7c86a1cd40d77390cbd362b6c858"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100500.csv",
+      "bytes": 2757,
+      "sha256": "c4ca177392adb01d24debece3ff689d56ac20692adf6a6172bea1aa774895d14"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100512.csv",
+      "bytes": 2186,
+      "sha256": "bf066f4ebe2c15c25c49c9007ce5fb87bb422a1e1b85f8615112cc6a7b0f5351"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100600.csv",
+      "bytes": 2638,
+      "sha256": "86719295be313a68dfcce5941abb045dd62a2d69c8648dbc1ad330a6250b6402"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100612.csv",
+      "bytes": 1724,
+      "sha256": "ba5a3038cd9a8511b81667b2efaf8f54b4d42eca0134e53622ca55ed389e6be8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100700.csv",
+      "bytes": 1764,
+      "sha256": "4370bf0779511b478d63d30ea250ded9beb1de6481e7134ba93d4f7d87f0406e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100712.csv",
+      "bytes": 1930,
+      "sha256": "f9d7367aede385d889ce7da7e629aa435c5dc141ca12c8509fb46f931fc6cdf7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100800.csv",
+      "bytes": 1701,
+      "sha256": "238dc5c2f2e87eaceb0b76676912e15bc57606e421e4f0da3f06d111bc831c2c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100812.csv",
+      "bytes": 1429,
+      "sha256": "1092d293ffbbebccd7b3dd33b548e4c633e589a7b965aa27e511b1230a3fad96"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100900.csv",
+      "bytes": 2181,
+      "sha256": "68ea0be05d3bfb60fcf1503c6ff887586ab361cf58b5804400f3cdf5bafd10bd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022100912.csv",
+      "bytes": 2950,
+      "sha256": "6396942f77ba110c7ffdfff04e6ff3a68b4d8d16ec79a4456bafc4916e46810b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101000.csv",
+      "bytes": 2080,
+      "sha256": "97eb341c4457fede9010781bec6294430633c53c31c480fcdafd0a442a1cb165"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101012.csv",
+      "bytes": 1521,
+      "sha256": "c1bcbeeb868ee27b6c8cff7842dda7c6aec3616cec90f9372261e7d227d5aecd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101100.csv",
+      "bytes": 1987,
+      "sha256": "19d2e2fae9b5f72fc9b3f3bc440fbb278e627260a1663a87fc71f03c3a634c3e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101112.csv",
+      "bytes": 1995,
+      "sha256": "d9a4f745c802c51f156dc93c2f431ab5df519b809de4c63ce908d57a3252d301"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101200.csv",
+      "bytes": 1839,
+      "sha256": "37a271ca5917f5b2bbfde38064b27437e775b18bfdff0b2d01e0ef8c47834ef8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101212.csv",
+      "bytes": 2052,
+      "sha256": "3a19a4f0b8d6fab7f6034582a0f64ad4aadb51b785fdb968eae449d39262e579"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101300.csv",
+      "bytes": 2313,
+      "sha256": "35edd1ba6e8fe6b8984bdca7862fd183e51df148a5148d8cc62c0b04fe2fc50c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101312.csv",
+      "bytes": 1551,
+      "sha256": "c264f16f6f0d0bafd5b9fcf4116571d6a612e26f1356f717c0b34cbb66524271"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101400.csv",
+      "bytes": 2285,
+      "sha256": "dcca3ed7ce17d0562c97823fa946a8d199d7ac26f7622ce5ea6869b4f520c7d0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101412.csv",
+      "bytes": 2142,
+      "sha256": "9fb8e6f249c8ec383a2bfdc6c1b10f263aea070995f61aa685297c54a2191ad0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101500.csv",
+      "bytes": 2292,
+      "sha256": "4b41f46e88746f430187849b29c7ff200af0b5ddc55fd6f30bf9f3ccf3e3ea01"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101512.csv",
+      "bytes": 2402,
+      "sha256": "1f27e79ad8e1a95ce59d8cbc3945516f5ed609d7583cc81ba2b449d588fa83a1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101600.csv",
+      "bytes": 1991,
+      "sha256": "108678a29b67e5bb155d20ca4c0cb151f9c838beac1f8b6efe2762006a9c5981"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101612.csv",
+      "bytes": 2212,
+      "sha256": "fa7b80c094e1fbe09919690488e69e382aa27758e605b1e67c519d73f212522c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101700.csv",
+      "bytes": 3413,
+      "sha256": "0f5f160549877de7771def8e8d9fa22df505e9f3ea6d08bd5e683d392b2d77b7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101712.csv",
+      "bytes": 2066,
+      "sha256": "7da0b8ada44ef6ad85e03321f527c4538ca996b5ef5555365ff765ade225beef"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101800.csv",
+      "bytes": 2540,
+      "sha256": "373a24f8b82e24cb23a2014711ae6571f157ac7430e9a2fdb868c945bdb00309"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101812.csv",
+      "bytes": 1870,
+      "sha256": "dca4bc04cf91ba56ccc17a6c664ea4e7658046ece5e4a62df60324cd7b8084dc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101900.csv",
+      "bytes": 1980,
+      "sha256": "8511633aec0b132f43a7d3471ed9d7be486046e1427b89778f182901cdc62713"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022101912.csv",
+      "bytes": 1988,
+      "sha256": "6c46ecd495927bb432db490acf57c72a25c90fb15e28253c77a4a217d7202ba2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102000.csv",
+      "bytes": 2445,
+      "sha256": "ccea69ebb8c11e78c09ae8ed6e92c97ee3ae1b0f3d5030aafc8c8aaa32eed7af"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102012.csv",
+      "bytes": 2069,
+      "sha256": "c29c7f79ec33a046e2c539112bdf65c867c8224a5dd6d59dddcc65bf9b0e3ddb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102100.csv",
+      "bytes": 2560,
+      "sha256": "9b79b180776e60f93d211f32d6c252d218a2c2320d6bfc05b5488bd92260cc43"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102112.csv",
+      "bytes": 2258,
+      "sha256": "0934289ab26c40c752ff84e639bfc2d357f892c1c0e1369ad0ed0ca935d41c0e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102200.csv",
+      "bytes": 2807,
+      "sha256": "0e449164c494a1d8169bf48874035f4e52175f474a86da84ffb1394a8263e612"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102212.csv",
+      "bytes": 2315,
+      "sha256": "54eb312ae4f39bd046ccce3b7ae46e3a7f161b852756bcae569d095031ef6882"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102300.csv",
+      "bytes": 2530,
+      "sha256": "e1be64b92ca676083b88debb48d660aad89b28332ce49104dd2ccd706f10c775"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102312.csv",
+      "bytes": 2245,
+      "sha256": "93ba42028534bfc0fa2460fbfd88759bdab4de932f54f031f0e1e31836fab093"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102400.csv",
+      "bytes": 2754,
+      "sha256": "fed273d66c14029d4d157afdfaeff03fc448cb7166d547d4be15fe00fb91c296"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102412.csv",
+      "bytes": 2015,
+      "sha256": "8e36fa136168b2755d558a55f902e178272c6d3755ba860b68e7ec3fea75a9d2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102500.csv",
+      "bytes": 2248,
+      "sha256": "9ed2aabeb37530f3e6eed4f2c51df4047a13c30c2c012d8ae7525103ace32e8e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102512.csv",
+      "bytes": 1710,
+      "sha256": "7785a32ca9fe6a1b2ecdf09d357c3524dd120de5e65c888f7546bb79ed989a82"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102600.csv",
+      "bytes": 1899,
+      "sha256": "5e327d27e9a20060083a2df19ecb279b4d971045a0e185b2fb3fec603ef22b66"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102612.csv",
+      "bytes": 1542,
+      "sha256": "6defd847cdbef970cbef0afbcc37e2487c745aea768eb488bc291f20a7ac4670"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102700.csv",
+      "bytes": 1600,
+      "sha256": "a18549cb7e4c547d586b6fec9c5347f80234d02467de6fbbf602dcc390fc6813"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102712.csv",
+      "bytes": 1204,
+      "sha256": "bd99832e1fe0f75ba6204565d0d3b881e7154d839b7c32c8ddf170070314f78a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102800.csv",
+      "bytes": 1564,
+      "sha256": "3b0b89457590fa3feda95c41cbcbb1f948422bcfdd0b2ce78dda7781a0f1ced4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102812.csv",
+      "bytes": 1890,
+      "sha256": "3df45815a2f12096a27aee3a9a57972a0c072cd317343886c9ca7f2f5cc0c519"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102900.csv",
+      "bytes": 2599,
+      "sha256": "ee2851eaa343372bbf80466d0e7d92327d0d4c0e0ee5a49798898c8d0c208931"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022102912.csv",
+      "bytes": 2356,
+      "sha256": "cb974ed4cf57140a3a8be853fb2420d66428b26d53a55be4c12d2bbe7df093aa"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022103000.csv",
+      "bytes": 2532,
+      "sha256": "a09cf4a7e12bbf1f75055497122a3526a51364bc738ae1d2593783c8fced343a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022103012.csv",
+      "bytes": 2544,
+      "sha256": "325c6f68dea23aa8f988d7a70c664bb9423d5ee0ee1fc7f6c15704419edf4581"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022103100.csv",
+      "bytes": 2140,
+      "sha256": "2efe1cd993d826fb7187ad167f0bb1bd503f5bf99355688841d58d16c205b136"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022103112.csv",
+      "bytes": 2080,
+      "sha256": "222bcd916a7df771a8a1531aa767933cd471ea35c1cee5b758a892500e43043d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110100.csv",
+      "bytes": 1871,
+      "sha256": "8d02c5a27650293ff285028ec6476c6c2b271d90180fa8eb55eacb4db337ef7f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110112.csv",
+      "bytes": 1747,
+      "sha256": "2b7dd59dc4f3b87ed5deb226dde25465813861ea474d2839fa6a3054607535e2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110200.csv",
+      "bytes": 2188,
+      "sha256": "ed4f405fcf55e77bc4f02a4593ce2f2a696d388e010e10f8dc88933c22fd8ed5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110212.csv",
+      "bytes": 2432,
+      "sha256": "02bd89a0990734c037dfc703d0a560c1e1780dd860f6f87ac1daa0f0e4b5c3f7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110300.csv",
+      "bytes": 2492,
+      "sha256": "d2576fae766f50d4915f8224101bf06947aa77829a523f95d7194f4c18c6792f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110312.csv",
+      "bytes": 2495,
+      "sha256": "cc7d7bfef01fd9ed1248373b0d0c574cce98fb78696e514e9fe45c3942d2a983"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110400.csv",
+      "bytes": 2690,
+      "sha256": "6e3925f764241b6f246d272f9bdc02a0b5a4378aafbb6da8d5c4d07f6bfab3ce"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110412.csv",
+      "bytes": 2560,
+      "sha256": "0fbd2f9ac14df605cd38fe31be160920891422df41a910cd4c22c66d674b08b0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110500.csv",
+      "bytes": 2529,
+      "sha256": "ad3fa9178fa952b89af8b000b472b7768e72019e4331f1de7c6bb3577277dce9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110512.csv",
+      "bytes": 2134,
+      "sha256": "8d745dfa5f6628ad67d17cb72d93873ef83dd1c5083625d304dc73834c59b1fa"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110600.csv",
+      "bytes": 2107,
+      "sha256": "b014e520bf85cf465ec23c29674a793a35a75b6fb5537e54047baf34abdbe712"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110612.csv",
+      "bytes": 2040,
+      "sha256": "d5626d0a3f5961b266369d1002813385734f9d30aeb50124ad0614d3fe1b26e4"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110700.csv",
+      "bytes": 1991,
+      "sha256": "222bab7b3a934e3c7cb14a2a6207de32185423a236589f44d8c4c73963ba18ac"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110712.csv",
+      "bytes": 2007,
+      "sha256": "3d29827cb2015133bcb74962bbf42a3185ae95896d2ff0133a704b98a34e4260"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110800.csv",
+      "bytes": 2107,
+      "sha256": "28509fa2f00b8dfc05446f7169724b0adc91438a435655dfb7289e55e92c40d7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110812.csv",
+      "bytes": 1909,
+      "sha256": "4fab3e0bd26dcf98b6711ce620cc4ab59415009c22de294fd532dd394e3cb5a5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110900.csv",
+      "bytes": 2345,
+      "sha256": "9a07c3aa49ccee91e40668f704423e3ebc72878477ad68cfa91a502c8f58c66d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022110912.csv",
+      "bytes": 2092,
+      "sha256": "0884184bbef34ed597a0600b2cc422e954e3bf493a6b9d1805aa2676a9e5c8c5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111000.csv",
+      "bytes": 2039,
+      "sha256": "a292005c90a23e55893195ec46fda1179f7d995288856dedcc19ba2092cf1383"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111012.csv",
+      "bytes": 2084,
+      "sha256": "1b62d861efc2d21de3350caf28bc3c6be8b8d8f5aa17fb6a7b8783bfc343b780"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111100.csv",
+      "bytes": 2268,
+      "sha256": "3f956386d0c8015acd725dd1499cc19c2042c4f57c2141acb5d7098eab704d3a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111112.csv",
+      "bytes": 1729,
+      "sha256": "fb5cb09f20119757b68c67e0411d18c4b486af45c124611483a71a8d541115cb"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111200.csv",
+      "bytes": 1918,
+      "sha256": "d847db1c367a7fdf316416e06bbfebb7b8d1dc189aa7cf32953273910bbf6897"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111212.csv",
+      "bytes": 2696,
+      "sha256": "4c601f67188fd2cc9626a82589c9936dc483030aca51b088158fddeab3fdaa5e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111300.csv",
+      "bytes": 1858,
+      "sha256": "cc5f25975b030a2d783cfd58448f977704e5116e9bd593e6ce609792be80656b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111312.csv",
+      "bytes": 2770,
+      "sha256": "05e516a69e2496cb8f3ce08d8978558e442a96558a21d6b3691bf9d4868d3eca"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111400.csv",
+      "bytes": 2187,
+      "sha256": "23947c09122d142d5543d69d1cfb8d643f73eef0f2e902d246822c5648c21060"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111412.csv",
+      "bytes": 1923,
+      "sha256": "678b80fe7a20b0d4458cf8fedf7cb2d8f0953322ce1cf7f9381aea12169734b7"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111500.csv",
+      "bytes": 2442,
+      "sha256": "80111ebab0220ebff4618b711e26976a00df75d4a4b45a72ba084d1b1dca2ce2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111512.csv",
+      "bytes": 2385,
+      "sha256": "0a42635b7014227dbcb6830796fb9a60786f13d3bb15e93b2813ca8e1e9d3007"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111600.csv",
+      "bytes": 2620,
+      "sha256": "d254f350a37a69ed7cc8a482b4f2754d286d34ef0fa6dd9c82d1b11ba7ea1403"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111612.csv",
+      "bytes": 2057,
+      "sha256": "9257b6cf42db1354595717350e24fb42936ccc484b68da6718ffeae248a0dbc9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111700.csv",
+      "bytes": 2019,
+      "sha256": "16fb1614b184112f58bf24e3324b66f0278a35d140061b351f59f77033f4b348"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111712.csv",
+      "bytes": 2029,
+      "sha256": "be7949beb9ef0682eea7e125fd0e6e06aec2b4182b249b9e561da178ddb76972"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111800.csv",
+      "bytes": 2626,
+      "sha256": "4051906e655aee134b5024d737ec4a3d84f904fd79a6c154555af43d8e4597ee"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111812.csv",
+      "bytes": 1734,
+      "sha256": "f90dac30aac261540689908a15be3892b83dd467841cbfa2b81a523e97fbfe0e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111900.csv",
+      "bytes": 2063,
+      "sha256": "0767931143ce862e63138e1025bbc18a28ba06f5a3f55038881918e64afcddf2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022111912.csv",
+      "bytes": 1852,
+      "sha256": "3bb09515c5bc0cf965784d51e2844c31ca9f9eac22f466f495d8c8300aacd000"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112000.csv",
+      "bytes": 1918,
+      "sha256": "54ee0e0f41ce0362159a00ebf691a156b1b48cc0b444d3f652c4dd63810db311"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112012.csv",
+      "bytes": 2140,
+      "sha256": "c1a697bbf965874f50333e0f129dc0f37107fad0d52767ebe0bbca263da5515a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112100.csv",
+      "bytes": 2479,
+      "sha256": "c2da02c5860c431e3f2a52e032a726df3817c796c08fdfba33315e7f5447874a"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112112.csv",
+      "bytes": 1990,
+      "sha256": "1e9fbcfb3edd641b460acdad6061670d7c5da28a99e2e87ac01ee2069b15a87c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112200.csv",
+      "bytes": 1769,
+      "sha256": "5141a4a8c5755acb6019a2bcaee97289cb9645084367da4290cb165bb7c33e29"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112212.csv",
+      "bytes": 2308,
+      "sha256": "c85da7c85eae1da8c5e865023e3c303158acff1aebde9ecf27a72565768d77a6"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112300.csv",
+      "bytes": 2291,
+      "sha256": "1ca3696552d0be0db2f7929f333ddee5727164c7ba24b06c51583f127f61f23e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112312.csv",
+      "bytes": 2202,
+      "sha256": "0bd2b45e2947b5e55ea8928225cc3e1ab483ae9d76b7b5dee7955ee4bdf186b9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112400.csv",
+      "bytes": 2200,
+      "sha256": "79afc27a636af0dbecb63f962656ff8b727a8d20e888c5d98f6f411fbc3bfc60"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112412.csv",
+      "bytes": 2351,
+      "sha256": "492b77867d79525283fff78d4f2af852426adacec8bbe92c016e8a996d05cbb1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112500.csv",
+      "bytes": 1977,
+      "sha256": "db8b0778c44b092a7e7d70bc229f47390eac2db5321cf5e05545eecddf49805d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112512.csv",
+      "bytes": 2249,
+      "sha256": "180b41fc6993dbf765874d900c9727803262c906080096117186d137eae69185"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112600.csv",
+      "bytes": 2085,
+      "sha256": "20550d31c2685cfdb2561d153abefb2e9b982ebe933137acda812a39bdb8cc0d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112612.csv",
+      "bytes": 2097,
+      "sha256": "65344ddbf0a24b2075ad266795c3b1eba0ff7ba04576cafae85e5dac8c66ca63"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112700.csv",
+      "bytes": 2116,
+      "sha256": "4d7938e797784c2aafa25c6a372fcab07cbef14a038d81e01e00a48350be94e1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112712.csv",
+      "bytes": 1823,
+      "sha256": "52b9b3d4b9977b596c746568d462ec87eeee7b42f4ebbab6ebe07cf40d11c40c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112800.csv",
+      "bytes": 2155,
+      "sha256": "72f7f1c59ff9f7691d9fa442148f2c67d63d9be575ffaae63e5e510d91795008"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112812.csv",
+      "bytes": 2176,
+      "sha256": "779d11a114eb19da427273b8b02e4bdb7981a4a7cad67e4a2d5ac20ef754461e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112900.csv",
+      "bytes": 1755,
+      "sha256": "7d8ac9ffcec9cea46234df93331a80c3f8a259b026cfd25ad8091079fa887627"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022112912.csv",
+      "bytes": 1779,
+      "sha256": "6039b4af3972909dd801eff5071580e06f73937dc6d916bd8b90605664276ff2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022113000.csv",
+      "bytes": 1884,
+      "sha256": "f3145ad69bf7f6187f6f945a7a3b9e72fdfa2023282367e72d5c7374af6130c8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022113012.csv",
+      "bytes": 2327,
+      "sha256": "7d82d31bcd45c56b92d4cfcf1cee5e840e4125b52737cd6260bf2f8a4f2ed2bd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120100.csv",
+      "bytes": 2405,
+      "sha256": "18bb94c1b0bf9e11c9051dc01a4fe227e9e9e01873b958bb0d80681e7dedddf5"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120112.csv",
+      "bytes": 2335,
+      "sha256": "f3db5069918e23d58d7808110d480fdd47d831afd42aaae8106d50a7bd0c5cac"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120200.csv",
+      "bytes": 2211,
+      "sha256": "49e5408ff8494b18f75267b4a8dcafaecaeb2f5d7bf5d28e9e27cc62353bdee2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120212.csv",
+      "bytes": 2483,
+      "sha256": "7979d8c884e807c2e3b8511d998742fe3ffd54aabea504d788827bf38c507982"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120300.csv",
+      "bytes": 2454,
+      "sha256": "615142af1c005e0e9f33a5c5024f04bdaec675ec5d923584d80a05823b8eddab"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120312.csv",
+      "bytes": 2099,
+      "sha256": "26a706f1bf6558fe4ec4d2dd6ee7e0a6f1cc4452dc0e07dbf865765327705f48"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120400.csv",
+      "bytes": 2487,
+      "sha256": "5605f876899a8eff988b11c501166df8a85600f8e02998f0c80895a351d59dad"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120412.csv",
+      "bytes": 2202,
+      "sha256": "efbefd74923aab4014c2a4edaa1867ea0ea64607423184db23177043fd38b667"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120500.csv",
+      "bytes": 2584,
+      "sha256": "c367899b5deb9459979ca2d77b731681ac85abcb58ac3cf5fa2e714a16ec0ef0"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120512.csv",
+      "bytes": 2157,
+      "sha256": "c39e5205b79e691a4d976e875f593029d395797f17ebd2feb0d912ee94945848"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120600.csv",
+      "bytes": 2153,
+      "sha256": "ecdba889cc4d901d2da1426708fdbc38e6460a7935a72114972561f31b649b35"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120612.csv",
+      "bytes": 2115,
+      "sha256": "b86c0b56e54980af91e704c08bbdbbb23596366a967b7e247be5ac6093af1b01"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120700.csv",
+      "bytes": 1787,
+      "sha256": "2f2fe14f52dcbcbd5cb1f96f3df4de59f2455d05288cd44c45016a70779d1528"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120712.csv",
+      "bytes": 1715,
+      "sha256": "e8681e3ca3dc7c278aeff1b3e06c6a7cebad8405ef211e3f1cda0a56b9fa1407"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120800.csv",
+      "bytes": 1960,
+      "sha256": "f2c6b9ff3df44236c3da995082d159905f930aa6c3fe91fbe702fc81a207665d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120812.csv",
+      "bytes": 2068,
+      "sha256": "b766c6a39f3c769d9e8e4855ac33b9837db05cee0907a1e715a2806e4145200f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120900.csv",
+      "bytes": 1955,
+      "sha256": "fcaa1e2954279f9c71bdb2c05d2989d45843b39d98c4a7bf4321008177b81d2e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022120912.csv",
+      "bytes": 1839,
+      "sha256": "30bd00fe8fa26906230d8e6b4e4d4a27a0255b6e6d7abf490d2e56ed449fd00b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121000.csv",
+      "bytes": 2427,
+      "sha256": "732af16055ffe4201a39f254c90aed279f6579bbd55166eadaebc2dad72d5fef"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121012.csv",
+      "bytes": 1856,
+      "sha256": "faaba7292b2b25d5bee7f1ae29cf2ffa3caed021ec1ca8d049dccc696ed28355"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121100.csv",
+      "bytes": 2829,
+      "sha256": "ba809dab77ba4a5deb18bed64c3ec9d9ad99fbc525322e9e2631ac23e8a5ac52"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121112.csv",
+      "bytes": 2405,
+      "sha256": "162ca2b3f92a30f32177d90ea3514357a01559976aec5142f202bb61b026c4da"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121200.csv",
+      "bytes": 2338,
+      "sha256": "cc4135390edba5346ebb49973fa9d98bc957cc4704075870cf379353057ac55d"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121212.csv",
+      "bytes": 2096,
+      "sha256": "bed8655f3d4efc435839eaf4df64ee81f3c8d925c490f395cdc1ec6d9e389aaa"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121300.csv",
+      "bytes": 1950,
+      "sha256": "f5c71f5acacdffc8bea50377bb9d35dffb84d822ff3ddf84ac02367ce65116ce"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121312.csv",
+      "bytes": 2528,
+      "sha256": "de0dfcf02dea3599bbe45493047d36e120d5cf9a717ae5f398f3bdf95b1b0fb2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121400.csv",
+      "bytes": 2253,
+      "sha256": "a86502547786dd1650605b69ef12a23734a8f4275a9bc1d3464e288ae4576a3c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121412.csv",
+      "bytes": 2475,
+      "sha256": "2190b4e72b0873d0a3725da81e7aa0c2793445b92ae089e8f4bf8a95ae6c5179"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121500.csv",
+      "bytes": 2767,
+      "sha256": "b7713903ecd02dd5071b3785128379ee576e7b9a471b5a11837c1db6fa41f5fd"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121512.csv",
+      "bytes": 2313,
+      "sha256": "4f28bdf6cd8d412e246eb79c4fd4799322c12ce8207f5a36bd0c6adb55040c21"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121600.csv",
+      "bytes": 1667,
+      "sha256": "7cad8f68e7bbf677c22f927e20b72fc011da43800e76c88d6e552bae9c19e1c1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121612.csv",
+      "bytes": 1854,
+      "sha256": "be868a19898084315ba7552b3983c81c7ca8b6c3125469b515bc500b15a456f2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121700.csv",
+      "bytes": 2244,
+      "sha256": "00d9d4dd79beb90c493cef70d8307e2803ba0f690854c4f8de962bbcc0aaccd2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121712.csv",
+      "bytes": 1871,
+      "sha256": "4c43614d7949f67822b42385455bf12081412574e9d80dd8d819ba421aa1a27f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121800.csv",
+      "bytes": 1753,
+      "sha256": "5cac5bebc5b20980b05be569d8463e033b0df24d034646ab24c9a184fe422446"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121812.csv",
+      "bytes": 1640,
+      "sha256": "8becda3297e2a65e82c31cd3cb1da570b26743402d62f01cc70d85552ceffdfc"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121900.csv",
+      "bytes": 1789,
+      "sha256": "e020fca3cf262532622653c7a64502fcf0196cff2a7309cceb1c76c89314ba42"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022121912.csv",
+      "bytes": 2201,
+      "sha256": "78f7371bb07926c8e4784d66896bdff37ddd1e754b48c4b3c2a2c2468df12343"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122000.csv",
+      "bytes": 2281,
+      "sha256": "9ed6641f88b57bcf546f8a19a8300a48cc7158a3d59989c5f0ba23773c562a8f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122012.csv",
+      "bytes": 1836,
+      "sha256": "c914533bf2dba82b5053f32afaa0f539e94d4f8cb41817060dc1a25c356c7a98"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122100.csv",
+      "bytes": 1753,
+      "sha256": "9939c126f62f67b29b424dd4a2cdbe74c4f05d63f76976816cc398ab660e06ce"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122112.csv",
+      "bytes": 1579,
+      "sha256": "dfa2add7962cdd102b34efa5197c7976c828fe68b6839c48570bd998486cb412"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122200.csv",
+      "bytes": 1925,
+      "sha256": "b17469ef992aba48e3a0318a75af08df1507643ddec0da61c807c04e8d4365d3"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122212.csv",
+      "bytes": 1592,
+      "sha256": "dbc1bb5219c78caced5c123c8f91a9e2ab0292be348350633c13c50f9dc631e2"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122300.csv",
+      "bytes": 2683,
+      "sha256": "aa1235867d81dc0a5f0d412d335788401a92f089a2535cfc8796f8fb85566262"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122312.csv",
+      "bytes": 1848,
+      "sha256": "e6d60e0c98340055225c7adcbf5209c1f2ff3dcbc0cb565144f7a08391510c47"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122400.csv",
+      "bytes": 2152,
+      "sha256": "81166ae082f17c01e04204c6b318b3d14ac5ffbb6162f033900f06747384bae9"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122412.csv",
+      "bytes": 1859,
+      "sha256": "d9a95b9c74c2106c7e115870c6a7d60326f9727793786d3d5ea3b554837a0cf8"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122500.csv",
+      "bytes": 2195,
+      "sha256": "8d4a1ebf7ad194d793dbfbab2edf4d442cd4d1f957e11f42fcba0db6fd8ce11e"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122512.csv",
+      "bytes": 2095,
+      "sha256": "2fa4c73731890f194d7e5f062cdeaf31998e017ee0036173f3b2b3cb0960589b"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122600.csv",
+      "bytes": 2278,
+      "sha256": "828f9e3cdf64cdf079b23993657e9f75af2eeb893bdb9d6b643e79c8164289c1"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122612.csv",
+      "bytes": 2300,
+      "sha256": "6dc6789951d33063ca96c5d096d1326a432fd1db750c53439af5299a267ee334"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122700.csv",
+      "bytes": 2578,
+      "sha256": "a259b5c53a4a79f650575f538d1ce317d564e5756bc7fb0397e747ca29f96bec"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122712.csv",
+      "bytes": 1939,
+      "sha256": "ce53cc0f47975816b8fb1ccedf6c6f1b62bc6d03829e91210207bec2eb987c7f"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122800.csv",
+      "bytes": 2400,
+      "sha256": "d33adcc5b3f129f05267522199cad22d395fd4dd18a08641917f56b28b24b189"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122812.csv",
+      "bytes": 2512,
+      "sha256": "af5777f033b1e91b410d1189faa5d076fd5cdbb289d587126a75e2a06b57df2c"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122900.csv",
+      "bytes": 2523,
+      "sha256": "beedf83746531eb4f08f70d6f0251ed3ea0b8d687b5a3b0e46498533ba56e275"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022122912.csv",
+      "bytes": 2170,
+      "sha256": "f6007c49536707efcd87986d94604698a9bfdeac793ba07bfc9373e5309188ce"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022123000.csv",
+      "bytes": 2500,
+      "sha256": "ae9d18d0ec7c1d5a42512f0674ce68dfc3e5b849ef1dfa5ff58395d401d03811"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022123012.csv",
+      "bytes": 2291,
+      "sha256": "fae3e069ee1f0ae6521eb2ba406d56f7aa29e63d00f6662f4c8eb364ac530b27"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022123100.csv",
+      "bytes": 2542,
+      "sha256": "7fb72acfc9f52806468f9bae670cfc03c01fafa3523952f51365fe4aa288b235"
+    },
+    {
+      "path": "met/upperair/2022/CHM00058424_igra_every_moment/58424_2022123112.csv",
+      "bytes": 2176,
+      "sha256": "fda19e689634d0467b1abd8bafbf6106c87fc87547f951ce5f2af0159eed0bf5"
+    },
+    {
+      "path": "met/upperair/2022/fsl_data/read62_58424_2022.lst",
+      "bytes": 50994,
+      "sha256": "fec80d3b021078f2cdd8610c2fcf25071d7f099a02910b42783ecf927f41a63c"
+    },
+    {
+      "path": "met/upperair/2022/fsl_data/up_58424_2022.dat",
+      "bytes": 1302197,
+      "sha256": "b1fa48960069543d2ae4c862ad72d3c352f03619cccf71f56c3b20e32f8e7513"
+    },
+    {
+      "path": "met/upperair/2022/igra2fsl/58424.txt",
+      "bytes": 2308970,
+      "sha256": "b2745146b09bbfc2c1088fa8b8560b3c19d2ee622a7a18d5bb5ea575590265db"
+    },
+    {
+      "path": "met/upperair/2022/pstop_hpa.txt",
+      "bytes": 6,
+      "sha256": "c4f718f0960ef64ed1badd8c204e5ead07fb99e7c33d727192a5ddbc302c6c4a"
+    },
+    {
+      "path": "met/upperair/2022/upperair_station_used_list.txt",
+      "bytes": 205,
+      "sha256": "76ad9d0aac7ab87de62bc3f7f1e5bc63fd58fa6520970d888e69d2f35389bf51"
+    },
+    {
+      "path": "met/upperair/final/stations.csv",
+      "bytes": 130,
+      "sha256": "5ef35d91c1a2493e3a66e999c3ba37c9c934aacda7f41ba2a5f164a34b691867"
+    },
+    {
+      "path": "met/upperair/final/up_58424.dat",
+      "bytes": 1303225,
+      "sha256": "ffdd54156508a1be23c9e4f484e5a68dc3aab832ad5ab65f1b260029ecac0944"
+    },
+    {
+      "path": "run/met/QAMETG.bna",
+      "bytes": 146,
+      "sha256": "cf301ff24313ef5bf77719d3573925813847e0028d54107b9d6ced3686c02b51"
+    },
+    {
+      "path": "run/met/met.dat",
+      "bytes": 64762556,
+      "sha256": "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30"
+    },
+    {
+      "path": "run/met/met.dat.aux",
+      "bytes": 231776,
+      "sha256": "f758092e77acc27b92da59ec8d24cea53ba58c1d44e171ffc22e496d70115de6"
+    },
+    {
+      "path": "run/met/met.inp",
+      "bytes": 43942,
+      "sha256": "94b6d34639abb3f54719577298c49b6939c9c6eec5b3755c79dddfaa01edc671"
+    },
+    {
+      "path": "run/met/met.lst",
+      "bytes": 430659,
+      "sha256": "4cf474120dd14ab5763ee5f08e22771a481d3e314019f21902fc59e49fb4d76d"
+    },
+    {
+      "path": "run/met/met_runtime.log",
+      "bytes": 11031,
+      "sha256": "b96b63949cf55fcfc2f00a7a5242afa9ce35939a4599363aeeec5d39d4dfc779"
+    },
+    {
+      "path": "run/puff/luse.clr",
+      "bytes": 563,
+      "sha256": "3e674b6abd826e66492bfa3427aa5f599239521fcdbd70282afe70f3e6088525"
+    },
+    {
+      "path": "run/puff/puff.con",
+      "bytes": 1896056,
+      "sha256": "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10"
+    },
+    {
+      "path": "run/puff/puff.inp",
+      "bytes": 83314,
+      "sha256": "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc"
+    },
+    {
+      "path": "run/puff/puff.lst",
+      "bytes": 9890899,
+      "sha256": "59c8d430349115462709bdaf4291ac0da002e27b3e1a7f2c0802d50301a82dbd"
+    },
+    {
+      "path": "run/puff/puff_runtime.log",
+      "bytes": 5960,
+      "sha256": "1b1a653ca0ae41a423361195396ca023033e5e83df36849cd78c6b698ab6bfb0"
+    },
+    {
+      "path": "run/puff/qagrid.bna",
+      "bytes": 438,
+      "sha256": "8842f971ba9a473ac15f2dbd6bbf132d4e4b2e3568fd28ad76af0c8645ef8401"
+    },
+    {
+      "path": "run/puff/qaluse.grd",
+      "bytes": 12555,
+      "sha256": "f0519800d05ffc2b634a04072b1d145104443b7ebf684960dd8cf73719bc3db6"
+    },
+    {
+      "path": "run/puff/qapnts.dat",
+      "bytes": 92,
+      "sha256": "16633ccb63f8aa89faa9501cb9cdbd0c6da50ba12895903583aeef69312913c0"
+    },
+    {
+      "path": "run/puff/qarecg.dat",
+      "bytes": 130019,
+      "sha256": "3a07cd50024a7b22f910e047ef294602c94f04035b1e49f9dde1b942026c417d"
+    },
+    {
+      "path": "run/puff/qaterr.grd",
+      "bytes": 30105,
+      "sha256": "8f047a664067621339043d5ee8282ee9f93e2f094593b8ab9600238c82e073b8"
+    },
+    {
+      "path": "run/read62/read62.inp",
+      "bytes": 6036,
+      "sha256": "949d89df6169d6c49068dc3be4a822e163ba9791052badcc7d496b4961d6664b"
+    },
+    {
+      "path": "run/smerge/smerge.inp",
+      "bytes": 6212,
+      "sha256": "1370681c2cb06d6b5a562b7850d30c11213a87c7067d8c414ae6f8c4be102375"
+    },
+    {
+      "path": "run/smerge/smerge.lst",
+      "bytes": 2594,
+      "sha256": "fc0173ec9f28766ee2f2bdea51fceef45cc9f47efb61f1537604aa45855eed03"
+    },
+    {
+      "path": "run/smerge/smerge_manual_sections.txt",
+      "bytes": 435,
+      "sha256": "a1fc0ce8cbdd93b30bc6bde6ca9c3d844f5aceb9a773cfa0e88702d461f75c4e"
+    },
+    {
+      "path": "run/smerge/smerge_runtime.log",
+      "bytes": 233,
+      "sha256": "6fd81ceea25724ab19670a114032d785b0918646da0911c2b5c0e3d9534f70c7"
+    },
+    {
+      "path": "run/smerge/surf.dat",
+      "bytes": 13841,
+      "sha256": "082202c9d4e87dca35869b5ab4dccde115f243ba129341e2301f123cb2672cff"
+    }
+  ],
+  "actions_variables": {
+    "P7_FROZEN_2022_MET_DAT": "project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+    "PUFF_INP": "project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+    "MET_SHA256": "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30",
+    "PUFF_SHA256": "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc"
+  },
+  "deviations": [
+    "Grid origin precision: the locked absolute geometry is XORIGKM=510.8846439571007 km, YORIGKM=3531.2689269678035 km (crop centre minus half domain). The canonical control renderers write 3 decimals, so every deck used XORIGKM=510.885 km, YORIGKM=3531.269 km; the SW corner therefore differs by 0.3560 m in x and 0.0730 m in y from the exact spec. Terrain, landuse, CALMET and CALPUFF all read this same rounded origin, so the captured chain is internally consistent; the residual offset is documented, not resolved.",
+    "Point-source coordinates are written to 3 decimals by the CALPUFF renderer: deck (513.385, 3533.769) km versus the exact crop centre (513.3846439571007, 3533.7689269678035) km, i.e. 0.3560 m / 0.0730 m.",
+    "Annual HTO release 2.63e+13 Bq/year is injected with CALPUFF IPTU=8 (Bq/s) at 833967.5291730086 Bq/s, assuming 3.1536e+07 s/year. The locked document leaves the 'release window/hourly rate' as TBD, so the year length is an explicit choice, not a verified legacy control.",
+    "Stack base elevation is 0.0 m (ground datum) because the locked document lists 'datum and original height representation' as TBD. The terrain elevation at the stack cell is available in geo/makegeo/geo.dat for a later datum decision.",
+    "NM3D=0 with IUPWND=-1: with no MM4/MM5/3D.DAT input and NOOBS=0 the initial guess field is built from the single upper-air sounding; this combination was not independently verified against the vendor documentation, only exercised end to end.",
+    "IKINE=0 / IFRADJ=1 / ISLOPE=1 / IEXTRP=-4 are the values of the real user deck and of engine/templates/met.inp; the locked document records them as deck values, not as values derived from a primary CTEAS specification."
+  ]
+}

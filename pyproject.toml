@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cteas"
+version = "0.1.0"
+description = "Tritium environmental assessment workflow based on Python, MET, and PUFF."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy==2.4.4",
+    "pandas==3.0.2",
+    "pyyaml==6.0.3",
+    "PySide6==6.11.0",
+    "matplotlib==3.10.9",
+    "imageio-ffmpeg==0.6.0",
+]
+
+[project.scripts]
+cteas = "engine.orchestrator.cli:main"
+cteas-desktop = "engine.ui.desktop.main:main"
+
+[tool.setuptools.packages.find]
+include = ["engine*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,8 @@
+# command: /usr/bin/python3 -m engine.preprocess.grid.configure_grid_cmn
+# cwd: /home/lhy/build/ref/cteas-ref
+
+配置完成 (case.yaml 驱动):
+- UTM分区=50, 半球=N
+- 研究区域左下角(X,Y) km: 510.885, 3531.269
+- 网格分辨率(km): 0.1; NX=50, NY=50, NZ=9
+- 研究时间范围: 20220101-000000 -> 20220106-230000

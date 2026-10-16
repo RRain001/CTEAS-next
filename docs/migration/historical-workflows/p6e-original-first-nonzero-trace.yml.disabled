@@ -1,0 +1,89 @@
+name: P6E root-cause original DIAGNO first nonzero source trace
+
+on:
+  push:
+    branches: [codex/p6-hourly-stateful-scheduler-20261013]
+    paths:
+      - scripts/p6d_trace_original_inter2_first_layer_143h.py
+      - .github/workflows/p6e-original-first-nonzero-trace.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  source-first-divergence-143h:
+    name: Pin original Fortran and locate earliest C++ U/V stage discrepancy
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            scripts/p6d_trace_original_inter2_first_layer_143h.py
+            native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          path: original_locked_case
+          filter: blob:none
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011
+      - name: Retrieve post-READCF effective BIAS 143h stage traces
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38371421677
+          github-token: ${{ github.token }}
+          name: p6-causal-original-case-143h
+          path: ${{ runner.temp }}/p6e-earliest-stage/native-evidence
+      - name: Check locked native source-stage artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/p6e-earliest-stage/native-evidence/native_source_stage_143h"
+          test -s "$stage/station_inter2_layer1.csv"
+          test "$(find "$stage" -name 'inter2_u_*.f32' -type f | wc -l)" -eq 143
+          test "$(find "$stage" -name 'fradj_corrected_u_*.f32' -type f | wc -l)" -eq 143
+          test "$(find "$stage" -name 'slope_corrected_u_*.f32' -type f | wc -l)" -eq 143
+      - name: Build SHA-locked original CALMET with write-only source snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/p6d_trace_original_inter2_first_layer_143h.py \
+            --vendor "$GITHUB_WORKSPACE/engine/vendor/src/CALMET_v6.5.0_L150223" \
+            --case "$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011" \
+            --candidate "$RUNNER_TEMP/p6e-earliest-stage/native-evidence/native_source_stage_143h" \
+            --require-neutral-profile \
+            --compiler gfortran-11 \
+            --out "$RUNNER_TEMP/p6e-earliest-stage/original_source_first_nonzero.json"
+      - name: Summarize source-first versus native-first floating discrepancies
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'p6e-earliest-stage/original_source_first_nonzero.json'
+          r=json.loads(p.read_text())
+          print("143h_DIAGNO_SOURCE_COMPARE_STATUS", r["status"])
+          print("WIND1_SOURCE_NEUTRAL_PROFILE",r["wind1_neutral_profile_source_check"])
+          print("FIRST_NONZERO_REAL4_SOURCE_STAGE", r["first_nonzero_source_stage"])
+          print("FIRST_OUTSIDE_TOLERANCE_HOUR",r["first_failing_hour"])
+          for key,item in r["fields"].items():
+              print(key, "nonzero", item["nonzero_values"],"max_abs",item["max_abs"],
+                    "rms",item["rms_difference"],"exceedances",item["exceedances"],
+                    "first_nonzero",item["first_nonzero"])
+          PY
+      - name: Archive original write-only Fortran stage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-source-first-nonzero-143h
+          path: |
+            ${{ runner.temp }}/p6e-earliest-stage/original_source_first_nonzero.json
+            ${{ runner.temp }}/p6e-earliest-stage/firstlayer-fortran/case/run/met/dgm_inter2_layer1.bin
+            ${{ runner.temp }}/p6e-earliest-stage/firstlayer-fortran/case/run/met/dgm_slope_layer1.bin
+            ${{ runner.temp }}/p6e-earliest-stage/firstlayer-fortran/case/run/met/dgm_wind1_neutral.bin
+          retention-days: 14
+          if-no-files-found: warn

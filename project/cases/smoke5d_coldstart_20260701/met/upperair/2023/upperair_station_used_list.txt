@@ -1,0 +1,2 @@
+id,name,lat,lon,elev_m,year,raw_txt
+CHM00058203,FUYANG,32.0,117.0,33.0,2023,/home/lhy/CTEAS/project/cases/smoke5d_coldstart_20260701/met/upperair/2023/CHM00058203-data.txt

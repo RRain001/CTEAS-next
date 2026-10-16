@@ -1,0 +1,112 @@
+name: P3 MAKEGEO independent reference and C++20 comparison
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+# Do NOT use workflow-level paths: skipped workflows can leave required checks
+# pending indefinitely. A GitHub-hosted scope job always determines whether
+# original Fortran/C++ comparison is genuinely relevant to this PR.
+jobs:
+  scope:
+    name: p3-source-scope
+    runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - name: Check changed PR files without self-hosted runner
+        id: filter
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prefixes = ["native_cpp/p1/","native_cpp/p2/","native_cpp/p3/","native_cpp/src/geo/","native_cpp/include/","calpuff_terrain_and_landuse_data_crop/hefei_5km/","engine/vendor/src/TERREL","engine/vendor/src/CTGPROC","engine/vendor/src/MAKEGEO",".github/actions/cteas-linux-toolchain/"];
+            const exact = new Set(["native_cpp/CMakeLists.txt","native_cpp/reference/capture_p1_p2.py","native_cpp/reference/capture_p3_makegeo.py","native_cpp/reference/compare_p3_makegeo.py","native_cpp/reference/prepare_p3_mixed.py",".github/workflows/p3-makegeo-reference-compare.yml"]);
+            const isRelevant = (name) => Boolean(name) && (exact.has(name) || prefixes.some((prefix) => name.startsWith(prefix)));
+            const changed = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner, repo: context.repo.repo,
+              pull_number: context.issue.number, per_page: 100
+            });
+            if (changed.length >= 3000) {
+              core.setFailed('Changed-file list reached the GitHub API 3000-file limit; do not skip original numerical parity');
+              return;
+            }
+            const matched = changed.filter((item) => isRelevant(item.filename) || isRelevant(item.previous_filename));
+            core.setOutput('relevant', matched.length ? 'true' : 'false');
+            core.info('P3 MAKEGEO SOURCE_SCOPE=' + (matched.length ? 'REQUIRES_SELF_HOSTED_NUMERIC_COMPARISON' : 'UNRELATED_CHANGE_SKIP_SELF_HOSTED')
+              + ' FILES=' + changed.length + ' MATCHED=' + matched.map((item) => item.filename).join(','));
+  
+  compare:
+    needs: scope
+    if: >-
+      needs.scope.outputs.relevant == 'true' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GitHub-hosted C++20 and Fortran toolchains
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++-12 gfortran-12
+      - name: Select C++20 and original Fortran compilers
+        uses: ./.github/actions/cteas-linux-toolchain
+      - name: Reset job-local scratch directories
+        shell: bash
+        run: |
+          rm -rf ${{ runner.temp }}/cteas-p3-build ${{ runner.temp }}/p3-compare
+      - name: Original and C++ compilers
+        run: |
+          if ! pkg-config --exists gdal; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libgdal-dev
+          fi
+          gfortran --version | head -1
+      - name: Isolated original P1/P2 capture
+        run: python3 native_cpp/reference/capture_p1_p2.py --output ${{ runner.temp }}/p3-compare
+      - name: Isolated original P3 MAKEGEO capture
+        run: python3 native_cpp/reference/capture_p3_makegeo.py --output ${{ runner.temp }}/p3-compare
+      - name: Build independent C++20 MAKEGEO subset
+        run: |
+          cmake -S native_cpp/p3 -B ${{ runner.temp }}/cteas-p3-build -DCMAKE_BUILD_TYPE=Debug
+          cmake --build ${{ runner.temp }}/cteas-p3-build -j2
+      - name: Compute modern P3 gridded geophysical parameters
+        run: |
+          ${{ runner.temp }}/cteas-p3-build/cteas_p3_makegeo \
+            ${{ runner.temp }}/p3-compare/p3/makegeo.inp \
+            ${{ runner.temp }}/p3-compare/p2/lu.dat \
+            ${{ runner.temp }}/p3-compare/p1/terrel.dat \
+            ${{ runner.temp }}/p3-compare/p3_cpp_geophysical.csv \
+            ${{ runner.temp }}/p3-compare/p3_cpp_geo.dat
+      - name: Independently check numeric fields and exact printed GEO.DAT
+        run: python3 native_cpp/reference/compare_p3_makegeo.py --reference ${{ runner.temp }}/p3-compare/p3/geo.dat --cpp ${{ runner.temp }}/p3-compare/p3_cpp_geophysical.csv --cpp-geo ${{ runner.temp }}/p3-compare/p3_cpp_geo.dat --report ${{ runner.temp }}/p3-compare/p3_scoped_comparison.json
+      - name: Independently generate and run original mixed-category MAKEGEO
+        run: python3 native_cpp/reference/prepare_p3_mixed.py --reference-dir ${{ runner.temp }}/p3-compare
+      - name: Compute synthetic 38-category P3 C++ geophysics and GEO.DAT
+        run: |
+          ${{ runner.temp }}/cteas-p3-build/cteas_p3_makegeo \
+            ${{ runner.temp }}/p3-compare/p3-mixed/run/makegeo.inp \
+            ${{ runner.temp }}/p3-compare/p3-mixed/lu.dat \
+            ${{ runner.temp }}/p3-compare/p1/terrel.dat \
+            ${{ runner.temp }}/p3-compare/p3-mixed/p3_cpp_geophysical.csv \
+            ${{ runner.temp }}/p3-compare/p3-mixed/p3_cpp_geo.dat
+      - name: Compare synthetic mixed fraction/water/weighting against original
+        run: |
+          python3 native_cpp/reference/compare_p3_makegeo.py \
+            --reference ${{ runner.temp }}/p3-compare/p3-mixed/run/geo.dat \
+            --cpp ${{ runner.temp }}/p3-compare/p3-mixed/p3_cpp_geophysical.csv \
+            --cpp-geo ${{ runner.temp }}/p3-compare/p3-mixed/p3_cpp_geo.dat \
+            --report ${{ runner.temp }}/p3-compare/p3-mixed/p3_comparison.json
+      - name: Archive immutable original outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3-makegeo-original-reference
+          path: ${{ runner.temp }}/p3-compare
+          retention-days: 7
+          if-no-files-found: warn

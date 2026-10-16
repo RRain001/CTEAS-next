@@ -1,0 +1,221 @@
+{
+  "status": "ORIGINAL_CALMET_WRITE_ONLY_INTERNAL_STATE_INSTRUMENTED",
+  "why": "CALMET.DAT records ZI/WSTAR/T-LEV but not the ZICONV/DPTT mixing-height memory nor QH/USTAR/EL/RHO/TEMP2D that produce them, so the residual P6E disagreement cannot be explained from the model output alone",
+  "no_vendor_source_edits": true,
+  "vendor_source_sha256": {
+    "calmet.for": "430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134",
+    "calutils.for": "1e1fbad6444dcebbcaefed3f5f9a65e5ab0569d45fdf12ea973ca613b8d7cad1"
+  },
+  "instrumented_sha256": {
+    "calmet_instrumented.for": "2905c67094fbe8e911baa77d407be2ed5699bcb3aea6495f417e742e8ffeb50f"
+  },
+  "helper_subroutine": {
+    "name": "DGMSTATE",
+    "vendor_lines": 40199,
+    "sha256": "fd55b1767bef1990bf2647282c7531a61e6342e6369fc2a326ebd637de9fe65a",
+    "unit": 97,
+    "output_file": "dgm_state.bin",
+    "writes_only": true
+  },
+  "points": [
+    {
+      "kpt": 1,
+      "vendor_line": 4686,
+      "when": "after ELUSTR (QH/USTAR/EL) and the optional prints, before MIXHT",
+      "fields": [
+        "QH",
+        "USTAR",
+        "EL",
+        "RHO",
+        "TEMP2D"
+      ],
+      "inserted_text_sha256": "2447d770c6ab0a202ab12a0a7826d3214b46f148047aa7847df522fdaff09815"
+    },
+    {
+      "kpt": 2,
+      "vendor_line": 4690,
+      "when": "immediately before the MIXHT/MIXHT2 call (memory entering the hour)",
+      "fields": [
+        "ZICONV",
+        "DPTT"
+      ],
+      "inserted_text_sha256": "8a38d9dfcbf9f0f5385bc479cb29343abbca1e41b49ea5882e1b2dcdd4217870"
+    },
+    {
+      "kpt": 3,
+      "vendor_line": 4699,
+      "when": "immediately after MIXHT/MIXHT2, before AVEMIX",
+      "fields": [
+        "ZI",
+        "ZICONV",
+        "DPTT"
+      ],
+      "inserted_text_sha256": "66118f6e5f61e6da8a94a6816b9b0c994833b85afb47c20b09f23baebdfb772e"
+    },
+    {
+      "kpt": 4,
+      "vendor_line": 4717,
+      "when": "immediately after the IAVEZI=1 AVEMIX averaging",
+      "fields": [
+        "ZI",
+        "ZICONV"
+      ],
+      "inserted_text_sha256": "caa86df8e37f030b6d5b76cc043e525ad09015e4d725b59aab44f6474a66d40c"
+    },
+    {
+      "kpt": 5,
+      "vendor_line": 4750,
+      "when": "immediately after WSTARR",
+      "fields": [
+        "WSTAR",
+        "ZICONV"
+      ],
+      "inserted_text_sha256": "c892ffd64cf67e42417d6dc3396ad505d9e9297aae964dd7e1612e6edf774208"
+    }
+  ],
+  "round2": {
+    "why": "P6D request 1: the ZII ELUSTR2 hands to SIMILT (the station-cell MIXHTST call overwrites it in place). P6D request 2: the whole-grid fields around SLOPE and DIVCEL in DIAGNO, to locate the planar tilt of the reference U/V field that makes every WFACE fail",
+    "helpers": {
+      "DGMCELL": {
+        "vendor_lines": 40250,
+        "sha256": "8fdb59b25adc6745f0a851ff458336a288822f44aba621516e566677e5266d89",
+        "unit": 96,
+        "output_file": "dgm_cell.bin",
+        "writes_only": true
+      },
+      "DGMFLD": {
+        "vendor_lines": 40313,
+        "sha256": "5179fe11d76a31bfcabefb4cc13a7a63cafcf02069fe0d5a5a5ce8f2a87796da",
+        "unit": 95,
+        "output_file": "dgm_fields.bin",
+        "writes_only": true
+      }
+    },
+    "points": [
+      {
+        "kpt": 6,
+        "vendor_line": 6893,
+        "when": "inside ELUSTR2, immediately before the SIMILT call (the zii it receives)",
+        "fields": [
+          "ZII_TO_SIMILT",
+          "ZICONVI_AFTER_MIXHTST",
+          "ZI_GRID_ENTERING",
+          "ZICONV_GRID_ENTERING",
+          "DPTT",
+          "EL",
+          "USTAR",
+          "QQH",
+          "RHO",
+          "ZZANEM",
+          "Z0",
+          "ZIMIN",
+          "DPTTMIN"
+        ],
+        "inserted_text_sha256": "114c0ce0ad44ccbae80d3b2d8345e41c5fd72618f7cabed52aa7b32b494aa3b2"
+      },
+      {
+        "kpt": 7,
+        "vendor_line": 5723,
+        "when": "inside DIAGNO, immediately after the SLOPE call (USLOPE/VSLOPE)",
+        "fields": [
+          "USLOPE",
+          "VSLOPE"
+        ],
+        "inserted_text_sha256": "24a1e955f758e1d33a14fcfab3d68181ee2836cd4378eb6f7099daab0500a9bc"
+      },
+      {
+        "kpt": 8,
+        "vendor_line": 5726,
+        "when": "inside DIAGNO, immediately before the UG/VG slope-flow addition",
+        "fields": [
+          "UG",
+          "VG"
+        ],
+        "inserted_text_sha256": "54492b42dc808a4cb8eca9fcee8de9a4bc3b00c7b22cb166f2b5d57dc5028883"
+      },
+      {
+        "kpt": 9,
+        "vendor_line": 5732,
+        "when": "inside DIAGNO, immediately after the UG/VG slope-flow addition",
+        "fields": [
+          "UG",
+          "VG"
+        ],
+        "inserted_text_sha256": "384210e94f829177ae64c08e687a253b43472704261e0c093b16710753e3bdef"
+      },
+      {
+        "kpt": 10,
+        "vendor_line": 6148,
+        "when": "inside DIAGNO, immediately after the DIVCEL loop and the W integration",
+        "fields": [
+          "DIV",
+          "W",
+          "U",
+          "V"
+        ],
+        "inserted_text_sha256": "b7b289158b89d99a0b6af3d33a573941a1a744b5841904ea4917f0d6c64615d0"
+      }
+    ],
+    "record_layout": {
+      "header": [
+        "kpt",
+        "packed",
+        "seconds",
+        "i0",
+        "j0",
+        "nx",
+        "ny",
+        "nz"
+      ],
+      "header_dtype": "int32 little endian",
+      "field_dtype": "float32 little endian",
+      "field_order": "i fastest, then j, then k: element ((k-1)*ny+(j-1))*nx+i for 1-based i=1..nx east, j=1..ny north, k=1..nz (or nz+1 for W)",
+      "cell_record_extra": "int32[12] tags (IS, JS, NS, IUPT, ITPROG, IPSIFCN, IHR2GMT, NEARU, ILANDU, IWAT1, IWAT2, IMIXH) then float32[13] values, no grid payload"
+    }
+  },
+  "instrumented_source_segment": {
+    "vendor_lines": [
+      4657,
+      4751
+    ],
+    "sha256": "9855666ed86d6a9dd3456fee000478e476054b5ddbe4807f0f85827b3d9fd92b"
+  },
+  "round2_source_segments": {
+    "elustr2_similt": {
+      "vendor_lines": [
+        6888,
+        6894
+      ],
+      "sha256": "92d295c12905e19217b4ce4ec123c9d4d34ada07cf1bd2cd180cb11af54892a1"
+    },
+    "diagno_slope_add": {
+      "vendor_lines": [
+        5719,
+        5733
+      ],
+      "sha256": "c94237863538f9698facd67461c00205af0d03a1e033324f7e402dd7c4616d65"
+    },
+    "diagno_divcel_w": {
+      "vendor_lines": [
+        6126,
+        6149
+      ],
+      "sha256": "6cf9b4a03cfc0664dfa6d5935f0230ffdf97c07bdfd241387b3c01bc53e4cef2"
+    }
+  },
+  "record_layout": {
+    "header": [
+      "kpt",
+      "nh",
+      "nyr",
+      "ijul",
+      "ihr",
+      "isec",
+      "nx",
+      "ny"
+    ],
+    "header_dtype": "int32 little endian",
+    "field_dtype": "float32 little endian",
+    "field_order": "i fastest: element = (j-1)*nx + i, i=1..nx, j=1..ny"
+  }
+}

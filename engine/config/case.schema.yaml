@@ -1,0 +1,32 @@
+schema_name: cteas_case
+schema_version: 1
+required_top_level:
+  - schema_version
+  - case_name
+  - paths
+  - settings
+  - preprocess
+  - met
+  - puff
+required_paths:
+  - grid_dir
+  - met_surface_dir
+  - met_upperair_dir
+  - geo_ctgproc_dir
+  - geo_terrel_dir
+  - geo_makegeo_dir
+  - run_met_dir
+  - run_puff_dir
+  - run_read62_dir
+  - run_smerge_dir
+required_settings:
+  - timezone
+required_preprocess:
+  - grid
+  - research_time
+  - upperair
+required_met:
+  - station_selection
+  - options
+required_puff:
+  - options

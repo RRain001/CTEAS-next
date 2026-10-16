@@ -1,0 +1,261 @@
+name: P6G G35 original and native 143h scientific gate
+on:
+  push:
+    branches: [codex/p6g-multistation-on-accepted-p6a-p6f-20261014]
+    paths:
+      - '.github/workflows/p6g-g35-143h-science.yml'
+      - 'native_cpp/modules/p6_calmet/tests/p6g_g19_file_backed_case_tests.cpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp'
+      - 'native_cpp/modules/p6_calmet/reference/g31_run_literal_original_calmet_multisite.py'
+      - 'native_cpp/modules/p6_calmet/reference/g35_verify_original_143h.py'
+      - 'native_cpp/modules/p6_calmet/reference/g36a_run_original_calpuff_multisite.py'
+      - 'native_cpp/modules/p6_calmet/reference/g36b_atomic_calmet_publish.py'
+      - 'native_cpp/modules/p6_calmet/reference/test_g36b_atomic_publication.py'
+      - 'native_cpp/modules/p6_calmet/reference/g36c_checkpoint_seal.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_*.hpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+  pull_request:
+    paths:
+      - '.github/workflows/p6g-g35-143h-science.yml'
+      - 'native_cpp/modules/p6_calmet/tests/p6g_g19_file_backed_case_tests.cpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp'
+      - 'native_cpp/modules/p6_calmet/reference/g31_run_literal_original_calmet_multisite.py'
+      - 'native_cpp/modules/p6_calmet/reference/g35_verify_original_143h.py'
+      - 'native_cpp/modules/p6_calmet/reference/g36a_run_original_calpuff_multisite.py'
+      - 'native_cpp/modules/p6_calmet/reference/g36b_atomic_calmet_publish.py'
+      - 'native_cpp/modules/p6_calmet/reference/test_g36b_atomic_publication.py'
+      - 'native_cpp/modules/p6_calmet/reference/g36c_checkpoint_seal.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_*.hpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  g35-original-143h:
+    name: G35 original 143h and candidate scientific scope (${{ matrix.mode }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify immutable original source, pinned original controls and toolchain
+        run: |
+          set -euo pipefail
+          test -s engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+          test -s project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp
+          command -v gfortran
+          command -v g++
+          command -v cmake
+      - name: Build G19/G21/G35 original-source and native executor
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/g35-build" -DCMAKE_BUILD_TYPE=${{ matrix.mode }}
+          cmake --build "$RUNNER_TEMP/g35-build" --parallel 2 --target \
+            cteas_p6g_g19_file_backed_case_tests \
+            cteas_p6g_g21_source_fradj_probe \
+            cteas_p6g_g34b_six_hour_selected_gate
+      - name: G35 export genuine 143h original-format 2SS/2US source and bracketed 12h upper observations
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/g35-source"
+          "$RUNNER_TEMP/g35-build/cteas_p6g_g19_file_backed_case_tests" \
+            --export-case project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp \
+            "$RUNNER_TEMP/g35-source" --fradj-stress --daylight-first-hour --hours 143
+          test -s "$RUNNER_TEMP/g35-source/SURF.DAT"
+          test -s "$RUNNER_TEMP/g35-source/UP1.DAT"
+          test -s "$RUNNER_TEMP/g35-source/UP2.DAT"
+          test "$(grep -c '^ 6201 ' "$RUNNER_TEMP/g35-source/UP1.DAT")" -eq 15
+          test "$(grep -c '^ 6201 ' "$RUNNER_TEMP/g35-source/UP2.DAT")" -eq 15
+      - name: Derive first-hour UTC source clock from native actual G35 input
+        run: |
+          "$RUNNER_TEMP/g35-build/cteas_p6g_g21_source_fradj_probe" \
+            "$RUNNER_TEMP/g35-source/met.inp" "$RUNNER_TEMP/g35-source/GEO.DAT" \
+            "$RUNNER_TEMP/g35-source/SURF.DAT" "$RUNNER_TEMP/g35-source/UP1.DAT" \
+            "$RUNNER_TEMP/g35-source/UP2.DAT" \
+            --output "$RUNNER_TEMP/g35-first-hour-native.csv" \
+            --source-stage "$RUNNER_TEMP/g35-first-hour-stage.dat"
+      - name: G35A unchanged original CALMET 6h control on extended 143h source
+        run: |
+          python3 native_cpp/modules/p6_calmet/reference/g31_run_literal_original_calmet_multisite.py \
+            --mode ${{ matrix.mode }} --hours 6 \
+            --source "$RUNNER_TEMP/g35-source" \
+            --source-clock "$RUNNER_TEMP/g35-first-hour-native.csv" \
+            --out "$RUNNER_TEMP/g35-original-6h"
+      - name: G35A unchanged original CALMET full 143h
+        run: |
+          python3 native_cpp/modules/p6_calmet/reference/g31_run_literal_original_calmet_multisite.py \
+            --mode ${{ matrix.mode }} --hours 143 \
+            --source "$RUNNER_TEMP/g35-source" \
+            --source-clock "$RUNNER_TEMP/g35-first-hour-native.csv" \
+            --out "$RUNNER_TEMP/g35-original-143h"
+      - name: G35A strict original chronology, first-six causal invariance, 143x45 record gate
+        run: |
+          python3 native_cpp/modules/p6_calmet/reference/g35_verify_original_143h.py \
+            --six-hour-original "$RUNNER_TEMP/g35-original-6h/original-met.dat" \
+            --long-original "$RUNNER_TEMP/g35-original-143h/original-met.dat" \
+            --out "$RUNNER_TEMP/g35a-original-science.json"
+      - name: Upload independent G35A original 143h evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g35a-original-143h-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/g35-original-6h/g31a-evidence.json
+            ${{ runner.temp }}/g35-original-143h/g31a-evidence.json
+            ${{ runner.temp }}/g35-original-143h/original-met.lst
+            ${{ runner.temp }}/g35a-original-science.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Compile unchanged frozen P6E numerical comparison authority
+        run: |
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/g35-frozen-comparator" -DCMAKE_BUILD_TYPE=${{ matrix.mode }}
+          cmake --build "$RUNNER_TEMP/g35-frozen-comparator" --target p6e_calmet_dat21 --parallel 2
+      # G35B is a strict required scientific gate after successful 143h
+      # independent original and native 6435-field hosted Debug/Release checks.
+      # Any native state, station-clock, or frozen numeric mismatch now fails CI.
+      - name: G35B REQUIRED real native 143h G14 transactions vs original 6435-field scientific oracle
+        id: g35b_science
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/g35-build/cteas_p6g_g34b_six_hour_selected_gate" \
+            "$RUNNER_TEMP/g35-source/met.inp" \
+            "$RUNNER_TEMP/g35-source/GEO.DAT" \
+            "$RUNNER_TEMP/g35-source/SURF.DAT" \
+            "$RUNNER_TEMP/g35-source/UP1.DAT" \
+            "$RUNNER_TEMP/g35-source/UP2.DAT" \
+            "$RUNNER_TEMP/g35-native-143h.calmet.dat" --hours 143 \
+            | tee "$RUNNER_TEMP/g35b-native-hourly-trace.txt"
+          "$RUNNER_TEMP/g35-frozen-comparator/p6e_calmet_dat21" compare \
+            --reference "$RUNNER_TEMP/g35-original-143h/original-met.dat" \
+            --candidate "$RUNNER_TEMP/g35-native-143h.calmet.dat" \
+            --out "$RUNNER_TEMP/g35b-frozen-comparator-verdict.json"
+          echo "PASS_G35B_TRUE_NATIVE_143H_6435_FIELDS_ZERO_EXCEEDANCES"
+      - name: G35B result classification (G35A success is NOT native G35B acceptance)
+        if: always()
+        run: |
+          if [ "${{ steps.g35b_science.outcome }}" = "success" ]; then
+            echo "G35B strict physical science PASS; native 143h + original 6435-field comparison passed"
+          else
+            echo "::warning::G35B BLOCKED: native 143h history/physics or frozen original comparator failed. No production or 143h parity claims."
+          fi
+      - name: G36B required durable and atomic 143h publication with READY commit marker
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p6_calmet/reference/g36b_atomic_calmet_publish.py \
+            --candidate "$RUNNER_TEMP/g35-native-143h.calmet.dat" \
+            --publish-dir "$RUNNER_TEMP/g36b-published"
+          python3 native_cpp/modules/p6_calmet/reference/g36b_atomic_calmet_publish.py \
+            --verify-only --publish-dir "$RUNNER_TEMP/g36b-published"
+      - name: G36B required post-crash negative matrix for all atomic publication boundaries
+        run: |
+          python3 native_cpp/modules/p6_calmet/reference/test_g36b_atomic_publication.py \
+            --native-met "$RUNNER_TEMP/g35-native-143h.calmet.dat" \
+            --out "$RUNNER_TEMP/g36b-adversarial-verdict.json"
+      - name: Upload G36B durable 143h publication evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g36b-atomic-p6f-143h-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/g36b-published/READY.json
+            ${{ runner.temp }}/g36b-adversarial-verdict.json
+          if-no-files-found: warn
+          retention-days: 14
+      # This is SOURCE REPLAY restart, not direct binary restoration of
+      # frozen CGammaState's private representation. Replay must exactly
+      # recover the persisted COMP memory / two-station clocks and full
+      # 71-hour P6F prefix before continuing to 143.
+      - name: G36C REQUIRED native 71h checkpoint and distinct-process bit-exact 143h source replay recovery
+        id: g36c_restart
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/g35-build/cteas_p6g_g34b_six_hour_selected_gate" \
+            "$RUNNER_TEMP/g35-source/met.inp" "$RUNNER_TEMP/g35-source/GEO.DAT" \
+            "$RUNNER_TEMP/g35-source/SURF.DAT" "$RUNNER_TEMP/g35-source/UP1.DAT" \
+            "$RUNNER_TEMP/g35-source/UP2.DAT" "$RUNNER_TEMP/g36c-should-not-be-written.dat" \
+            --hours 143 --checkpoint-hour 71 \
+            --checkpoint-dir "$RUNNER_TEMP/g36c-checkpoint-71"
+          test ! -e "$RUNNER_TEMP/g36c-should-not-be-written.dat"
+          python3 native_cpp/modules/p6_calmet/reference/g36c_checkpoint_seal.py \
+            --checkpoint-dir "$RUNNER_TEMP/g36c-checkpoint-71" \
+            --source-dir "$RUNNER_TEMP/g35-source"
+          python3 native_cpp/modules/p6_calmet/reference/g36c_checkpoint_seal.py \
+            --verify-only --checkpoint-dir "$RUNNER_TEMP/g36c-checkpoint-71" \
+            --source-dir "$RUNNER_TEMP/g35-source"
+          # A distinct NEW C++ process rebuilds G14/CGAMMA internal history,
+          # verifies persisted REAL4 arrays, AA/BB station clocks and P6F
+          # prefix bitwise at boundary N, then computes hours 72..143.
+          "$RUNNER_TEMP/g35-build/cteas_p6g_g34b_six_hour_selected_gate" \
+            "$RUNNER_TEMP/g35-source/met.inp" "$RUNNER_TEMP/g35-source/GEO.DAT" \
+            "$RUNNER_TEMP/g35-source/SURF.DAT" "$RUNNER_TEMP/g35-source/UP1.DAT" \
+            "$RUNNER_TEMP/g35-source/UP2.DAT" "$RUNNER_TEMP/g36c-replayed-143h.dat" \
+            --hours 143 --resume-hour 71 --resume-dir "$RUNNER_TEMP/g36c-checkpoint-71" \
+            | tee "$RUNNER_TEMP/g36c-replay-trace.txt"
+          grep -q 'G36C_REPLAY_STATE_BIT_EXACT_AND_PREFIX_MATCH_HOUR=71' \
+            "$RUNNER_TEMP/g36c-replay-trace.txt"
+          cmp "$RUNNER_TEMP/g35-native-143h.calmet.dat" "$RUNNER_TEMP/g36c-replayed-143h.dat"
+          echo "PASS_G36C_REPLAY_RECOVERY_143H_NATIVE_BYTES_IDENTICAL"
+      - name: G36C replay-recovery scientific classification
+        if: always()
+        run: |
+          if [ "${{ steps.g36c_restart.outcome }}" = "success" ]; then
+            echo "G36C PASS: restarted new process after hour 71; saved G14 physical memory, CGAMMA clocks, source and prefix validated; final native 143h bytes identical"
+          else
+            echo "::warning::G36C replay-based interrupted restart not yet accepted; no direct state restore or production promotion"
+          fi
+      - name: Upload G36C crash/replay 143h evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g36c-source-replay-restart-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/g36c-checkpoint-71/READY.json
+            ${{ runner.temp }}/g36c-replay-trace.txt
+          if-no-files-found: warn
+          retention-days: 14
+      # Strict G36A original CALPUFF 7.2.1 input-consumption gate.
+      # It verifies actual full 143h meteorology read, not P7 native physics parity.
+      - name: G36A REQUIRED true original CALPUFF 7.2.1 consumes ALL 143h durable P6G native MET.DAT
+        id: g36a_calpuff
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p6_calmet/reference/g36a_run_original_calpuff_multisite.py \
+            --native-met "$RUNNER_TEMP/g36b-published/met.dat" \
+            --out "$RUNNER_TEMP/g36a-original-calpuff" --max-seconds 900
+      - name: G36A original CALPUFF read-compatibility disposition
+        if: always()
+        run: |
+          if [ "${{ steps.g36a_calpuff.outcome }}" = "success" ]; then
+            echo "G36A original CALPUFF binary read and ran full 143h C++ multi-station CALMET.DAT: PASS"
+          else
+            echo "::warning::G36A original CALPUFF still BLOCKED, inspect original listing/logs. G35 physical parity remains separately accepted."
+          fi
+      - name: Upload G36A genuine original CALPUFF integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g36a-original-calpuff-full-143h-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/g36a-original-calpuff/g36a-manifest.json
+            ${{ runner.temp }}/g36a-original-calpuff/original-compile.log
+            ${{ runner.temp }}/g36a-original-calpuff/original-calpuff-runtime.log
+            ${{ runner.temp }}/g36a-original-calpuff/case/run/puff/puff.lst
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload G35B native 143h diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g35b-native-143h-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/g35b-native-hourly-trace.txt
+            ${{ runner.temp }}/g35b-frozen-comparator-verdict.json
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,39 @@
+name: P6D SLOPE source call-site map
+on:
+  pull_request:
+    paths:
+      - .github/workflows/p6d-slope-original-call-sites.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-source-call-site-map:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+      - name: Print original CALMET entry points and first-guess update stages
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib,hashlib,re
+          p=pathlib.Path('engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for')
+          data=p.read_bytes()
+          assert hashlib.sha256(data).hexdigest()=='430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134'
+          a=data.decode().splitlines()
+          targets=['call surfvar(', 'call avetmp(', 'call diagno(', 'call wind1(', 'call fradj(', 'call slope(', 'subroutine surfvar(']
+          indices=[i for i,x in enumerate(a) if any(t in x.lower() and x.lstrip().lower().startswith(('call','subroutine')) for t in targets)]
+          for idx in indices:
+              print('=== CALL SITE',idx+1,a[idx])
+              for j in range(max(0,idx-12),min(len(a),idx+16)):
+                  print(f'{j+1:5}: {a[j]}')
+          print('=== ORIGINAL DIAGNO PHYSICS ORDER')
+          for n in range(5570,5765):
+              line=a[n-1]
+              if line.lstrip().startswith(('c','C')):continue
+              print(f'{n:5}: {line}')
+          PY

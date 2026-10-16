@@ -1,0 +1,84 @@
+name: P6E original-free GEO and deck metadata envelope
+
+on:
+  push:
+    branches: [codex/p6-hourly-stateful-scheduler-20261013]
+    paths:
+      - .github/workflows/p6f-p6e-source-metadata.yml
+      - native_cpp/modules/p6_calmet/p6f/src/p6f_p6e_source_metadata_main.cpp
+      - native_cpp/modules/p6_calmet/p6f/CMakeLists.txt
+      - native_cpp/modules/p6_calmet/include/cteas/p6/read_geo.hpp
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-only-native-metadata:
+    name: C++ original-free 143h P6E source envelope; all 45 fields missing
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            native_cpp/modules/p6_calmet/p6f
+            native_cpp/modules/p6_calmet/include/cteas/p6/read_geo.hpp
+            native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/calmet_dat21.hpp
+            native_cpp/modules/p7_calpuff/reference/original_decode_calmet_hourly.py
+            project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/geo.dat
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+      - name: Build original-free P6E case source metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet/p6f \
+            -B "$RUNNER_TEMP/p6f-source-metadata" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6f-source-metadata" \
+            --target cteas_p6f_p6e_source_metadata \
+                     cteas_p6f_calmet_dat21_writer --parallel 2
+      - name: Generate original-free 143h metadata and reject non-missing payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          original=project/cases/hefei5km_2022_reference_case_20261011
+          mkdir -p "$RUNNER_TEMP/p6e-primary-inputs"
+          cp "$original/geo/makegeo/geo.dat" "$RUNNER_TEMP/p6e-primary-inputs/geo.dat"
+          cp "$original/run/met/met.inp" "$RUNNER_TEMP/p6e-primary-inputs/met.inp"
+          tool="$RUNNER_TEMP/p6f-source-metadata/cteas_p6f_p6e_source_metadata"
+          "$tool" \
+            --geo "$RUNNER_TEMP/p6e-primary-inputs/geo.dat" \
+            --deck "$RUNNER_TEMP/p6e-primary-inputs/met.inp" \
+            --out "$RUNNER_TEMP/p6e-original-free-metadata.dat" \
+            | tee "$RUNNER_TEMP/p6e-original-free-provenance.log"
+          "$RUNNER_TEMP/p6f-source-metadata/cteas_p6f_calmet_dat21_writer" \
+            check --file "$RUNNER_TEMP/p6e-original-free-metadata.dat" \
+            --report "$RUNNER_TEMP/p6e-original-free-layout.json"
+          # A header/state producer must be strict about supported case scope.
+          sed 's/! NX = 50 !/! NX = 51 !/' \
+            "$RUNNER_TEMP/p6e-primary-inputs/met.inp" \
+            > "$RUNNER_TEMP/p6e-primary-inputs/bad-met.inp"
+          if "$tool" \
+            --geo "$RUNNER_TEMP/p6e-primary-inputs/geo.dat" \
+            --deck "$RUNNER_TEMP/p6e-primary-inputs/bad-met.inp" \
+            --out "$RUNNER_TEMP/p6e-invalid-metadata.dat" \
+            > "$RUNNER_TEMP/p6e-invalid.log" 2>&1; then
+            echo "FAIL_P6E_METADATA_UNSUPPORTED_GRID_ACCEPTED"
+            exit 1
+          fi
+          grep -q "P6E_SOURCE_METADATA_REJECTED" "$RUNNER_TEMP/p6e-invalid.log"
+          echo "PASS_P6E_SOURCE_METADATA_NO_ORIGINAL_OUTPUT_INPUT"
+      - name: Preserve selected-case source-only metadata proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-genuine-source-only-metadata-143h
+          path: |
+            ${{ runner.temp }}/p6e-original-free-provenance.log
+            ${{ runner.temp }}/p6e-original-free-layout.json
+            ${{ runner.temp }}/p6e-invalid.log
+          if-no-files-found: warn
+          retention-days: 14

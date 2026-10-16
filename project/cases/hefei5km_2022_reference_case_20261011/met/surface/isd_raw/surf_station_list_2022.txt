@@ -1,0 +1,2 @@
+sid,name,lat,lon,elev,country,begin,end,source_lat,source_lon,source_elev,ifstn,relocated
+58321099999,LUOGANG / XINQIAO,31.939774444,117.141610855,63.0,CN,19560820,20260102,31.988,116.977,63.0,583210,True

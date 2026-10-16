@@ -1,0 +1,60 @@
+name: P6C original COMP source-state audit (read-only)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/comp_buffered_timeline.hpp'
+      - 'native_cpp/modules/p6_calmet/reference/check_joint_observation_2022.py'
+      - 'docs/reconstruction_cpp/CI_FULL_REGRESSION_REQUEST.md'
+      - '.github/workflows/p6c-comp-source-inspection.yml'
+  workflow_dispatch:
+jobs:
+  comp-source-audit:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision GitHub-hosted GCC12 and Fortran12
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++-12 gfortran-12
+      - name: Select isolated C++20 and Fortran compilers
+        uses: ./.github/actions/cteas-linux-toolchain
+      - name: Record immutable original COMP Fortran AA-BB scheduler and constraints
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+          test -s "$SRC"
+          sha256sum "$SRC"
+          echo '==== CALMET 6.5 original COMP source lines 4118-4412 ===='
+          sed -n '4118,4412p' "$SRC" | nl -ba -v 4118
+          echo '==== original PREPDI per-layer +/- JORDER branch 13965-13992 ===='
+          sed -n '13965,13992p' "$SRC" | nl -ba -v 13965
+          echo '==== original MAXSEP and CGAMMA definition anchors ===='
+          grep -inE 'maxsep|subroutine cgamma' "$SRC" | head -60
+          echo '==== end source audit (no vendor source modifications) ===='
+          echo '==== CALMET original CGAMMA complete 3031-3252 ===='
+          sed -n '3031,3252p' "$SRC" | nl -ba -v 3031
+          echo '==== CALMET original RDSN selected 23437-23670 ===='
+          sed -n '23437,23670p' "$SRC" | nl -ba -v 23437
+          echo '==== COMP preamble 3550-4120 ===='
+          sed -n '3550,4120p' "$SRC" | grep -inE 'subroutine comp|cgamma|rdsn|ntzaa|ntzbb|nsecdt|isnap|read|jorder|justa|rdupn|nusta|susta|wsta|prepdi' | head -140
+          echo '==== PREPDI observation and CGAMMA callsites ===='
+          grep -inE 'call cgamma|call rdsn|call prepdi|call comp\(' "$SRC" | head -80
+          echo '==== original COMP surface read and preprocessing 3850-4050 ===='
+          sed -n '3850,4050p' "$SRC" | nl -ba -v 3850
+          echo '==== original PREPDI vertical temperature route 13640-13725 ===='
+          sed -n '13640,13725p' "$SRC" | nl -ba -v 13640
+          echo '==== MISSFC declaration and original preprocessing call sites ===='
+          grep -inE 'subroutine missfc|call missfc|otempk|lcalgrd|isurft|zupt' "$SRC" | sed -n '1,135p'
+          echo '==== original missing surface data routine source if exists ===='
+          line=$(grep -in '^      subroutine missfc(' "$SRC" | head -1 | cut -d: -f1 || true)
+          if [ -n "$line" ]; then sed -n "${line},$((line+240))p" "$SRC" | nl -ba -v "$line"; fi

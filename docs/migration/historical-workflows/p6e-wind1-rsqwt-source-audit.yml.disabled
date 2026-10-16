@@ -1,0 +1,98 @@
+name: P6E original WIND1 spatial weights source audit
+
+on:
+  push:
+    branches: [codex/p6-hourly-stateful-scheduler-20261013]
+    paths:
+      - scripts/p6e_trace_original_wind1_spatial_weights.py
+      - .github/workflows/p6e-wind1-rsqwt-source-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  first-hour-real-wind1-weights:
+    name: "Original Fortran WIND1 normalized RSQWT vs native C++: first true hour"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            scripts/p6e_trace_original_wind1_spatial_weights.py
+            native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          path: original_locked_case
+          filter: blob:none
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011
+      - name: Download verified original-case native 6h C++ evidence after RSQWT capture
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38371224052
+          github-token: ${{ github.token }}
+          name: p6-causal-original-case-6h
+          path: ${{ runner.temp }}/p6e-weights/native-six
+      - name: Demand both original-case native REAL4 station weight outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/p6e-weights/native-six/hour_000/diagno/wind1_rsqwt_surface_2022-01-01_01.f32"
+          test -s "$RUNNER_TEMP/p6e-weights/native-six/hour_000/diagno/wind1_rsqwt_upper_2022-01-01_01.f32"
+          test -s "$RUNNER_TEMP/p6e-weights/native-six/hour_000/diagno/wind1_vvw_surface1_2022-01-01_01.f32"
+          test -s "$RUNNER_TEMP/p6e-weights/native-six/hour_000/diagno/wind1_vvw_upper1_2022-01-01_01.f32"
+          test -s "$RUNNER_TEMP/p6e-weights/native-six/hour_000/diagno/wind1_vvw_before_surface1_2022-01-01_01.f32"
+          test -s "$RUNNER_TEMP/p6e-weights/native-six/hour_000/diagno/wind1_vvw_before_upper1_2022-01-01_01.f32"
+      - name: Rebuild checksum-locked CALMET with write-only first-hour RSQWT trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/p6e_trace_original_wind1_spatial_weights.py \
+            --vendor "$GITHUB_WORKSPACE/engine/vendor/src/CALMET_v6.5.0_L150223" \
+            --case "$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011" \
+            --native-diagno "$RUNNER_TEMP/p6e-weights/native-six/hour_000/diagno" \
+            --compiler gfortran-11 \
+            --out "$RUNNER_TEMP/p6e-weights/original_vs_cpp_first_hour_rsqwt.json" \
+            > "$RUNNER_TEMP/p6e-weights/result.txt"
+          cat "$RUNNER_TEMP/p6e-weights/result.txt"
+          python3 - <<'PY'
+          import json, os, pathlib
+          report=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"p6e-weights/original_vs_cpp_first_hour_rsqwt.json").read_text())
+          # Fail on already-established initial normalization regression.
+          # The final VVW mismatch is the subject of THIS diagnostic and
+          # must be reported, not swept under a false PASS label.
+          for name in ("surface","upper"):
+              if report["fields"][name]["nonzero"]!=0:
+                  raise SystemExit(f"REGRESSION_RSQWT_BITS: {name}")
+          for name in ("vvw_before_surface1","vvw_before_upper1",
+                       "vvw_surface1","vvw_upper1"):
+              v=report["fields"][name]
+              print(name,"nonzero",v["nonzero"],"max_ulps",v["max_ulps"],
+                    "first_nonzero",v["first_nonzero"])
+          print("WIND1_VVW_STAGE_DIAGNOSTIC",report["status"])
+          for name in ("surface","upper","vvw_before_surface1",
+                       "vvw_before_upper1","vvw_surface1","vvw_upper1"):
+              if report["fields"][name]["nonzero"]!=0:
+                  raise SystemExit(f"FAIL_ORIGINAL_WIND1_REAL4_BITS: {name}, "+
+                                   str(report["fields"][name]))
+          print("PASS_SOURCE_REAL4_WIND1_EFFECTIVE_READCF_BIAS_2500_CELLS")
+          PY
+      - name: Persist original/native REAL4 source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-wind1-rsqwt-original-first-hour
+          path: |
+            ${{ runner.temp }}/p6e-weights/original_vs_cpp_first_hour_rsqwt.json
+            ${{ runner.temp }}/p6e-weights/result.txt
+            ${{ runner.temp }}/p6e-weights/p6e-original-rsqwt/case/run/met/p6e_wind1_rsqwt_first.bin
+            ${{ runner.temp }}/p6e-weights/p6e-original-rsqwt/case/run/met/p6e_wind1_vvw_first.bin
+            ${{ runner.temp }}/p6e-weights/p6e-original-rsqwt/case/run/met/p6e_wind1_vvw_before_first.bin
+          if-no-files-found: warn
+          retention-days: 14

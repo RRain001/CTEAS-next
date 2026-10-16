@@ -1,0 +1,148 @@
+name: P5 REAL 2-station 2-year NOAA SURF.DAT reference
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p5-real-multiyear-reference.yml'
+      - 'native_cpp/modules/p5_smerge/data_prep/tests/real_multiyear_reference.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/**'
+      - 'native_cpp/modules/p5_smerge/p5_surf_main.cpp'
+      - 'native_cpp/include/cteas/met_input/p5_smerge.hpp'
+jobs:
+  real-two-year-original-parity:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision GitHub-hosted GCC12 and Fortran12
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++-12 gfortran-12
+      - name: Select isolated C++20 and Fortran compilers
+        uses: ./.github/actions/cteas-linux-toolchain
+      - name: Reset self-hosted scratch directories
+        shell: bash
+        run: |
+          rm -rf ${{ runner.temp }}/p5-real-cpp ${{ runner.temp }}/p5-real-fortran-include \
+                 ${{ runner.temp }}/p5-real-original-smerge
+      - name: Install tools and build both INDEPENDENT original Fortran and native C++
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install -q --disable-pip-version-check numpy pandas PyYAML
+          gfortran --version | head -1
+          mkdir -p real-multiyear-evidence ${{ runner.temp }}/p5-real-fortran-include
+          src=engine/vendor/src/SMERGE_v5.7.0_L121203
+          for item in "$src"/*; do
+            name=$(basename "$item" | tr '[:upper:]' '[:lower:]')
+            if [ ! -e "${{ runner.temp }}/p5-real-fortran-include/$name" ]; then
+              ln -s "$GITHUB_WORKSPACE/$item" "${{ runner.temp }}/p5-real-fortran-include/$name"
+            fi
+          done
+          gfortran -O0 -std=legacy -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -ffixed-line-length-none \
+            -I${{ runner.temp }}/p5-real-fortran-include "$src/SMERGE.FOR" -o ${{ runner.temp }}/p5-real-original-smerge
+          cmake -S native_cpp/modules/p5_smerge -B ${{ runner.temp }}/p5-real-cpp -DCMAKE_BUILD_TYPE=Debug
+          cmake --build ${{ runner.temp }}/p5-real-cpp -j2
+          ctest --test-dir ${{ runner.temp }}/p5-real-cpp --output-on-failure
+          sha256sum "$src/SMERGE.FOR" > real-multiyear-evidence/original-fortran-source.sha256
+          git rev-parse HEAD > real-multiyear-evidence/head.sha
+      - name: Download four REAL NOAA ISD and four ISD-Lite sources and decide primary EACH year
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m native_cpp.modules.p5_smerge.data_prep.tests.real_multiyear_reference prepare \
+            2>&1 | tee real-multiyear-evidence/source-download-and-selection.log
+          python3 - <<'PY'
+          import json,pathlib
+          r=json.loads(pathlib.Path("real-multiyear-evidence/real-original-inputs.json").read_text())
+          assert len(r["input_sources"])==4
+          for y in r["annual"]:
+              assert y["primary_sid"]=="58321099999",y
+              assert len(y["station_roles"])==2
+          assert r["cross_region_software_only"]
+          print("P5_REAL_YEARLY_HIGHEST_COVERAGE_SELECTION=PASS",r["annual"])
+          PY
+      - name: Run ACTUAL P5 production Python pipeline, no fake weather
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m native_cpp.modules.p5_smerge.data_prep.prepare_inputs \
+            --skip-download --write-legacy-control --execute \
+            2>&1 | tee real-multiyear-evidence/production-p5-2022-2023.log
+          python3 -m native_cpp.modules.p5_smerge.data_prep.tests.real_multiyear_reference audit \
+            2>&1 | tee real-multiyear-evidence/source-vs-processed-validation.log
+      - name: Produce complete two-year, two-station original Fortran reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd project/current/run/smerge
+          ${{ runner.temp }}/p5-real-original-smerge smerge.inp 2>&1 | tee "$GITHUB_WORKSPACE/real-multiyear-evidence/original-smg-runtime.log"
+          test -s surf.dat
+          sha256sum surf.dat > "$GITHUB_WORKSPACE/real-multiyear-evidence/original-SURF.sha256"
+          cp smerge.lst "$GITHUB_WORKSPACE/real-multiyear-evidence/original-smg.lst"
+      - name: Run NATIVE C++20 writer on SAME real sources WITHOUT legacy sparse EOF sentinel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          root=Path("project/current").resolve()
+          working=root/"run/smerge"
+          text=(working/"smerge.inp").read_text()
+          n=[0]
+          def convert(m):
+              source=m.group(2).strip()
+              if "original_smerge_sparse_runtime" not in source:
+                  return m.group(0)
+              real=(root/"met/surface/isd2smerge_ready"/Path(source).name)
+              if not real.is_file():
+                  raise RuntimeError(f"real sparse auxiliary file missing: {real}")
+              n[0]+=1
+              return m.group(1)+os.path.relpath(real,working)+" "+m.group(3)
+          text=re.sub(r"(!\s*SFCMET\s*=\s*)([^!]+)(!)",convert,text)
+          if n[0]!=1:
+              raise RuntimeError(f"expected one real source replacing Fortran EOF adapter; got {n[0]}")
+          text,count=re.subn(r"(!\s*SURFDAT\s*=\s*)[^!]+!",r"\g<1>native_real_2022_2023.dat !",text,count=1)
+          assert count==1
+          (working/"native_real_2022_2023.inp").write_text(text)
+          print("P5_REAL_NO_NATIVE_EOF_ADAPTER=PASS",n[0])
+          PY
+          ${{ runner.temp }}/p5-real-cpp/cteas_p5_smerge \
+            project/current/run/smerge/native_real_2022_2023.inp \
+            2>&1 | tee real-multiyear-evidence/native-smg-runtime.log
+          python3 -m native_cpp.modules.p5_smerge.data_prep.tests.real_multiyear_reference parity \
+            2>&1 | tee real-multiyear-evidence/real-2022-2023-byte-parity.log
+      - name: Summarize dates and immutable source metadata
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p real-multiyear-evidence
+          if [ -s project/current/run/smerge/surf.dat ]; then
+            sha256sum project/current/run/smerge/surf.dat > real-multiyear-evidence/original-SURF.sha256
+          fi
+          if [ -s project/current/run/smerge/native_real_2022_2023.dat ]; then
+            sha256sum project/current/run/smerge/native_real_2022_2023.dat > real-multiyear-evidence/native-SURF.sha256
+          fi
+          for f in project/current/met/surface/isd_raw/station_selection_2022.json \
+                   project/current/met/surface/isd_raw/station_selection_2023.json; do
+            if [ -f "$f" ]; then
+              cp "$f" "real-multiyear-evidence/$(basename "$f")"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p5-real-2-station-2-year-noaa-original-vs-native
+          path: real-multiyear-evidence/
+          retention-days: 14
+          if-no-files-found: warn

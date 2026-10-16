@@ -1,0 +1,31 @@
+name: P7 original COMP MXSAM99 schedule source audit
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/reference/original_comp_sampling_source.py'
+      - '.github/workflows/p7-original-comp-sampling.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-original-comp-sampling-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  original-comp-sampling:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/reference/original_comp_sampling_source.py
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+      - name: Audit untouched COMP NSAM NSSTR TSAMP XSAMLEN ROLLDN
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p7_calpuff/reference/original_comp_sampling_source.py \
+            engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for

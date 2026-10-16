@@ -1,0 +1,21 @@
+# command: /usr/bin/python3 -m engine.preprocess.ctgproc.auto_select_landuse_to_ctgproc --grid /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn --ctgproc /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp --landuse-file /home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt --lulc-type GEN
+# cwd: /home/lhy/build/ref/cteas-ref
+
+已选择的土地利用文件: /home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt
+GENERIC 点文件输入 datum: ESR-S (将同步到 DNZGEN)
+已同步 CTGPROC 投影/网格参数:
+  第227行: PMAP: UTM -> UTM
+  第243行: IUTMZN: 50 -> 50
+  第247行: UTMHEM: N -> N
+  第297行: DATUM: WGS-84 -> WGS-84
+  第305行: XREFKM: 123.456 -> 510.885
+  第306行: YREFKM: 4567.891 -> 3531.269
+  第310行: NX: 100 -> 50
+  第311行: NY: 100 -> 50
+  第312行: DGRIDKM: 1 -> 0.1
+  第194行: DNZGEN: WGS-84 -> ESR-S
+
+  正在处理土地利用数据:          11          11           1  ../../../../../calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt
+ Land Use Processing Complete -- Check LIST file for Run Summary and QA Warning Messages.
+
+土地利用数据创建完成, 输出文件位置: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc

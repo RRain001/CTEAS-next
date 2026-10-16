@@ -1,0 +1,204 @@
+name: P6D original SIMILT source parity
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p6_calmet/**'
+      - '.github/workflows/p6d-similt-neutral-original-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p6d-similt-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  source-similt-neutral:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    # Isolated P6D scientific job on an ephemeral GitHub-hosted Ubuntu runner.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - name: Verify GitHub-hosted P6D environment and source transports
+        id: network
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "runner=$RUNNER_NAME os=$RUNNER_OS arch=$RUNNER_ARCH"
+          if [[ "$RUNNER_OS" != "Linux" || "$RUNNER_ARCH" != "X64" ]]; then
+            echo "::error::P6D requires a Linux/X64 GitHub-hosted runner"
+            exit 1
+          fi
+          if curl -fIsS --connect-timeout 5 --max-time 8 https://github.com/ >/dev/null 2>&1; then
+            echo "git_transport=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "git_transport=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::github.com HTTPS unavailable; trying authenticated GitHub REST"
+          fi
+          if curl -fIsS --connect-timeout 5 --max-time 8 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "rest_transport=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "rest_transport=no" >> "$GITHUB_OUTPUT"
+          fi
+          if ! grep -Eq '^(git_transport|rest_transport)=yes$' "$GITHUB_OUTPUT"; then
+            echo "::error::Both github.com and authenticated api.github.com are unavailable"
+            exit 1
+          fi
+      - name: Checkout minimal P6D and unchanged original CALMET source
+        id: checkout
+        if: steps.network.outputs.git_transport == 'yes'
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            native_cpp/modules/p6_calmet
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - name: Bootstrap immutable P6D source via GitHub REST if git checkout is blocked
+        if: (steps.network.outputs.git_transport != 'yes' || steps.checkout.outcome == 'failure') && steps.network.outputs.rest_transport == 'yes'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          import shutil
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          api = "https://api.github.com/repos/" + os.environ["GITHUB_REPOSITORY"]
+          token = os.environ["GH_TOKEN"]
+          commit_sha = os.environ["GITHUB_SHA"]
+          headers = {
+              "Authorization": "Bearer " + token,
+              "Accept": "application/vnd.github+json",
+              "User-Agent": "CTEAS-P6D-source-verified",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+          def github(path):
+              with urlopen(Request(api + path, headers=headers), timeout=30) as response:
+                  return json.load(response)
+
+          commit = github("/git/commits/" + commit_sha)
+          tree = github("/git/trees/" + commit["tree"]["sha"] + "?recursive=1")
+          if tree.get("truncated"):
+              raise RuntimeError("Git tree truncated: rejecting incomplete P6D bootstrap")
+          cpp_prefix = "native_cpp/modules/p6_calmet/"
+          original_prefix = "engine/vendor/src/CALMET_v6.5.0_L150223/"
+          required_vendor = {"calmet.for", "params.met", "grid.met",
+                             "met1.met", "ovrwat.met"}
+          blobs = [
+              item for item in tree["tree"]
+              if item["type"] == "blob" and (
+                  item["path"].startswith(cpp_prefix)
+                  or (item["path"].startswith(original_prefix)
+                      and item["path"][len(original_prefix):] in required_vendor)
+              )
+          ]
+          cpp_count = sum(item["path"].startswith(cpp_prefix) for item in blobs)
+          vendor_names = {
+              item["path"][len(original_prefix):]
+              for item in blobs if item["path"].startswith(original_prefix)
+          }
+          if cpp_count < 70 or vendor_names != required_vendor:
+              raise RuntimeError("Required C++/original Fortran sources missing from immutable tree")
+          for root in (cpp_prefix, original_prefix):
+              shutil.rmtree(root.rstrip("/"), ignore_errors=True)
+          # Parallel requests are bounded and every source blob remains verified
+          # against the immutable Git tree SHA prior to use.
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          def download_verified(item):
+              path = Path(item["path"])
+              if path.is_absolute() or ".." in path.parts:
+                  raise RuntimeError("Unsafe Git path")
+              blob = github("/git/blobs/" + item["sha"])
+              if blob.get("encoding") != "base64":
+                  raise RuntimeError("Expected base64 Git blob for " + item["path"])
+              data = base64.b64decode(blob["content"], validate=False)
+              actual_sha = hashlib.sha1(
+                  b"blob " + str(len(data)).encode() + b"\x00" + data
+              ).hexdigest()
+              if actual_sha != item["sha"]:
+                  raise RuntimeError("Git blob SHA mismatch for " + item["path"])
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(data)
+              return item["path"]
+          with ThreadPoolExecutor(max_workers=6) as pool:
+              jobs = [pool.submit(download_verified, item) for item in blobs]
+              for n, future in enumerate(as_completed(jobs), 1):
+                  future.result()
+                  if n % 20 == 0 or n == len(jobs):
+                      print(f"Verified immutable blobs {n}/{len(jobs)}", flush=True)
+          print(f"P6D REST bootstrap PASS: commit={commit_sha}, C++={cpp_count}, "
+                f"original={len(vendor_names)}, blobs={len(blobs)}")
+          PY
+      - name: Require original source and all selected P6D implementation files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in \
+            native_cpp/modules/p6_calmet/CMakeLists.txt \
+            native_cpp/modules/p6_calmet/reference/compare_original_similt_profile.py \
+            native_cpp/modules/p6_calmet/include/cteas/p6/similt_profile.hpp \
+            engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            engine/vendor/src/CALMET_v6.5.0_L150223/params.met; do
+            test -s "$path" || { echo "::error::Missing $path"; exit 1; }
+          done
+      - name: Select working C++20/Fortran compilers without privileged changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for x in cmake python3; do command -v "$x" || exit 1; done
+          cpp=""
+          for x in g++-13 g++-12 clang++-17 clang++-16 clang++-15; do
+            if command -v "$x" >/dev/null 2>&1; then cpp="$(command -v "$x")"; break; fi
+          done
+          fort=""
+          for x in gfortran-13 gfortran-12 gfortran-11 gfortran; do
+            if command -v "$x" >/dev/null 2>&1; then fort="$(command -v "$x")"; break; fi
+          done
+          if [[ -z "$cpp" || -z "$fort" ]]; then
+            echo "::error::Install g++-12+ (or clang++-15+) and gfortran on GitHub-hosted Ubuntu"
+            exit 1
+          fi
+          printf '#include <chrono>\nint main(){std::chrono::sys_seconds v{}; (void)v;}\n' | \
+            "$cpp" -std=c++20 -x c++ -fsyntax-only -
+          mkdir -p "$RUNNER_TEMP/cteas-p6d-compiler-bin"
+          ln -sfn "$fort" "$RUNNER_TEMP/cteas-p6d-compiler-bin/gfortran"
+          echo "$RUNNER_TEMP/cteas-p6d-compiler-bin" >> "$GITHUB_PATH"
+          echo "CXX=$cpp" >> "$GITHUB_ENV"
+          echo "Using C++ $cpp and Fortran $fort"
+      - name: Strict C++20 build and complete scoped P6 regression CTests
+        shell: bash
+        run: |
+          set -euo pipefail
+          build="$RUNNER_TEMP/cteas-similt-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cmake -S native_cpp/modules/p6_calmet -B "$build" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$build" --parallel 2
+          # This frozen P6D parity job runs the original P6 suite only.
+          # Newly introduced P6G source-deck tests require their own inputs
+          # and are independently executed by p6g-accepted-baseline-multistation.
+          ctest --test-dir "$build" --output-on-failure -E '^p6g_'
+      - name: Compare unchanged original SIMILT against independent C++20
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p6_calmet/reference/compare_original_similt_profile.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --cpp "$RUNNER_TEMP/cteas-similt-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/cteas_p6_similt_profile" \
+            --out "$RUNNER_TEMP/cteas-similt-parity-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+      - name: Save unchanged-source numerical comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6d-similt-neutral-source-parity
+          path: ${{ runner.temp }}/cteas-similt-parity-${{ github.run_id }}-${{ github.run_attempt }}/p6d-similt-profile-parity.json
+          if-no-files-found: warn
+          retention-days: 14

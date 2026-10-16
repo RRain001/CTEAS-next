@@ -1,0 +1,295 @@
+{
+  "status": "ORIGINAL_PUFF_CON_IDENTICAL",
+  "compiler": "/usr/bin/gfortran-11",
+  "compiler_version": "GNU Fortran (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+  "flags": [
+    "-std=legacy",
+    "-ffixed-line-length-72",
+    "-fno-automatic",
+    "-fno-align-commons",
+    "-fallow-argument-mismatch",
+    "-O0",
+    "-fdec-format-defaults"
+  ],
+  "include_handling": "lower-case symlink alias tree per vendor directory",
+  "build_commands": {
+    "original": [
+      "/usr/bin/gfortran-11",
+      "-std=legacy",
+      "-ffixed-line-length-72",
+      "-fno-automatic",
+      "-fno-align-commons",
+      "-fallow-argument-mismatch",
+      "-O0",
+      "-fdec-format-defaults",
+      "-I/home/lhy/build/dgm3/out/include-alias",
+      "/home/lhy/build/dgm3/CALPUFF_v7.2.1_L150618/modules.for",
+      "/home/lhy/build/dgm3/CALPUFF_v7.2.1_L150618/calpuff.for",
+      "-o",
+      "/home/lhy/build/dgm3/out/bin/puff-original.x"
+    ],
+    "instrumented": [
+      "/usr/bin/gfortran-11",
+      "-std=legacy",
+      "-ffixed-line-length-72",
+      "-fno-automatic",
+      "-fno-align-commons",
+      "-fallow-argument-mismatch",
+      "-O0",
+      "-fdec-format-defaults",
+      "-I/home/lhy/build/dgm3/out/include-alias",
+      "/home/lhy/build/dgm3/CALPUFF_v7.2.1_L150618/modules.for",
+      "/home/lhy/build/dgm3/out/calpuff_instrumented.for",
+      "-o",
+      "/home/lhy/build/dgm3/out/bin/puff-instrumented.x"
+    ]
+  },
+  "case": {
+    "path": "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011",
+    "inputs": {
+      "run/puff/puff.inp": {
+        "sha256": "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc",
+        "bytes": 83314
+      },
+      "deliverables/met/met.dat": {
+        "sha256": "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30",
+        "bytes": 64762556
+      }
+    }
+  },
+  "runs": {
+    "original": {
+      "command": [
+        "/home/lhy/build/dgm3/out/bin/puff-original.x",
+        "puff.inp"
+      ],
+      "cwd": "/home/lhy/build/dgm3/out/case/run/puff",
+      "returncode": 0,
+      "puff_con_sha256": "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10",
+      "puff_con_bytes": 1896056
+    },
+    "instrumented": {
+      "command": [
+        "/home/lhy/build/dgm3/out/bin/puff-instrumented.x",
+        "puff.inp"
+      ],
+      "cwd": "/home/lhy/build/dgm3/out/case/run/puff",
+      "returncode": 0,
+      "puff_con_sha256": "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10",
+      "puff_con_bytes": 1896056
+    }
+  },
+  "dump": {
+    "bytes": 89649824,
+    "sha256": "cbbdaa29c6222e6ca6aefe9f605ad13e7dd6d258f6ad243afcac07cb578108c6",
+    "records": 254687
+  },
+  "puff_con_identical": true,
+  "puff_con_matches_frozen_reference": true,
+  "frozen_reference_sha256": "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10",
+  "instrumentation": {
+    "status": "ORIGINAL_CALPUFF_WRITE_ONLY_PUFF_STEP_INSTRUMENTED",
+    "why": "P7U located the advection / step-integration chain and asked for the observable variables at named lines so the port can be diffed value by value; CALPUFF writes none of them to puff.con",
+    "request_source": {
+      "anchor_json": "native_cpp/modules/p7_calpuff/reference/p7u_source_anchor.json",
+      "ledger": "docs/reconstruction_cpp/P7_EXECUTION_LEDGER.md (P7U)"
+    },
+    "no_vendor_source_edits": true,
+    "vendor_source_sha256": {
+      "calpuff.for": "da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568",
+      "modules.for": "115ab7c7e50701a454852106d7c7536d75f1975f66a87a616b4835c5bea353b6"
+    },
+    "instrumented_sha256": {
+      "calpuff_instrumented.for": "7935827f66f2c6fbb1d404c5f5538487a4931c44d68683644a9ed1cef44ae1cc"
+    },
+    "helper_subroutines": {
+      "DGMSTEP1..DGMSTEP6, DGMSTEP8E, DGMEMIT": {
+        "vendor_lines": 88128,
+        "sha256": "1865c0674e1946e85d37140ca173fcc86121217d8fe7e9a61e98b7c62f570f90",
+        "unit": 94,
+        "output_file": "dgm_puffstep.bin",
+        "record_bytes": 352,
+        "writes_only": true
+      }
+    },
+    "points": [
+      {
+        "item": "item6_sampling_cadence",
+        "vendor_line": 10347,
+        "when": "the sampling-step cadence of this puff (nsam, nsstr, xsami, tsamp, reftsamp, iold, istype, ipno, wsvar)",
+        "inserted_text_sha256": "2fc0343e0beb9e1ea2863e5f45e1166b8a8c7d2f98a46d409bba0c1cb95f56d4"
+      },
+      {
+        "item": "item1_start_of_step",
+        "vendor_line": 10473,
+        "when": "the start-of-step puff state (the comparison's initial condition)",
+        "inserted_text_sha256": "cf80a90258f5203129b88c180b25c8569c66af3fd8072c84f9e165ee524c6f0a"
+      },
+      {
+        "item": "item2_cell_parameters",
+        "vendor_line": 10487,
+        "when": "the met cell and parameters the step uses",
+        "inserted_text_sha256": "d08fa4a699a73aa140b29693fd4b3bd6006e7eabbbf706acc5fd018360e01368"
+      },
+      {
+        "item": "item3_puffdz_return",
+        "vendor_line": 10495,
+        "when": "the averaging layer bounds from PUFFDZ",
+        "inserted_text_sha256": "8f92310e43c44eef158bfcfb3674469b268fdf1d6854a7883a93ca31c50dc523"
+      },
+      {
+        "item": "item4_advect_return",
+        "vendor_line": 10499,
+        "when": "the advective wind from ADVECT (METFM=1 -> ADVWND)",
+        "inserted_text_sha256": "aafc67987cb5b6cab6948a738cec988ab0b313069fa49319e8bde29456b5c759"
+      },
+      {
+        "item": "item5_after_adjustments",
+        "vendor_line": 10528,
+        "when": "the effective transport speed after RISEWIND and the calm treatment",
+        "inserted_text_sha256": "86249f502087f3dc7ddc28a08f2914b0b49c5d38468a8cf3c6f423b4e25f0bd6"
+      },
+      {
+        "item": "item8a_setpuf_entry",
+        "vendor_line": 10939,
+        "when": "SETPUF entry: the stored puff state and the /CURRENT/ values carried over from the previous puff",
+        "inserted_text_sha256": "bb4cd87da8c2f8e44df21e2bfd7654eeb2c55ec5cc8158b5a880e10061ed8190"
+      },
+      {
+        "item": "item7_setpuf_return",
+        "vendor_line": 10942,
+        "when": "SETPUF return and the end-of-step puff position; this call writes the record",
+        "inserted_text_sha256": "0494b169859d7e1d63fb792f8aa9023f3658220a054d4910a373bc8b9598de78"
+      }
+    ],
+    "source_segments": {
+      "comp_sampling_cadence": {
+        "vendor_lines": [
+          10335,
+          10353
+        ],
+        "sha256": "7f8fd22c5dbb5ee126d6969d4bb358d4c6a54c39e05e8b863dec4b3d2914571a"
+      },
+      "comp_step_start": {
+        "vendor_lines": [
+          10460,
+          10490
+        ],
+        "sha256": "bb4d9adf06d7e1e1f93107751319d1833fb633f9d1c50a0495a1dcb15855d6ec"
+      },
+      "comp_step_wind": {
+        "vendor_lines": [
+          10492,
+          10535
+        ],
+        "sha256": "8abc2bb0ea9e0de36669faeb3078928f78ec487a37738d4babf5ce056d1201b0"
+      },
+      "comp_setpuf_call": {
+        "vendor_lines": [
+          10936,
+          10943
+        ],
+        "sha256": "f93ed960ad2180e8ba0f5f344c2ce6dbe82482e97f12b76953835ebd02ba9be1"
+      }
+    },
+    "record_layout": {
+      "header": "int32[24]",
+      "payload": "float32[64]",
+      "record_bytes": 352,
+      "header_dtype": "int32 little endian",
+      "field_dtype": "float32 little endian",
+      "ints": [
+        "kpt",
+        "packed",
+        "seconds",
+        "ii",
+        "icode",
+        "ixs",
+        "iys",
+        "mdoms",
+        "istab",
+        "ilayer",
+        "nsam",
+        "nsstr",
+        "iold",
+        "istype",
+        "ipno",
+        "mdstep",
+        "ksam",
+        "lcalm",
+        "nspec",
+        "lpuff",
+        "islug",
+        "isrcnum",
+        "spare1",
+        "spare2"
+      ],
+      "floats": [
+        "xold",
+        "yold",
+        "zold",
+        "dpbl",
+        "el",
+        "z0m",
+        "htmet",
+        "ztop",
+        "zbot",
+        "uadv_advect",
+        "vadv_advect",
+        "ws",
+        "uadv_adjusted",
+        "vadv_adjusted",
+        "lcalm_f",
+        "xsami",
+        "tsamp",
+        "reftsamp",
+        "wsvar",
+        "xtotb_in",
+        "tmtotb_in",
+        "sigyb_in",
+        "sigzb_in",
+        "xpb_in",
+        "ypb_in",
+        "zpb_in",
+        "xb1_in",
+        "yb1_in",
+        "zb1_in",
+        "xe1_in",
+        "ye1_in",
+        "ze1_in",
+        "syb1_in",
+        "sym1_in",
+        "sye1_in",
+        "szb1_in",
+        "szm1_in",
+        "sze1_in",
+        "xnew",
+        "ynew",
+        "xtotb_out",
+        "tmtotb_out",
+        "sigyb_out",
+        "sigzb_out",
+        "xpb_out",
+        "ypb_out",
+        "zpb_out",
+        "xb1_out",
+        "yb1_out",
+        "zb1_out",
+        "xe1_out",
+        "ye1_out",
+        "ze1_out",
+        "syb1_out",
+        "sym1_out",
+        "sye1_out",
+        "szb1_out",
+        "szm1_out",
+        "sze1_out",
+        "distm",
+        "tleft",
+        "tsampsum",
+        "tsamp_effective",
+        "spare_f2"
+      ]
+    }
+  }
+}

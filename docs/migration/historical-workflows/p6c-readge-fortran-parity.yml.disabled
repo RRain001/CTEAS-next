@@ -1,0 +1,82 @@
+name: P6C READGE GEO.DAT eight-field original Fortran format parity
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/*geo*'
+      - 'native_cpp/modules/p6_calmet/src/read_geo_main.cpp'
+      - 'native_cpp/modules/p6_calmet/reference/*readge*'
+      - 'native_cpp/modules/p6_calmet/tests/p6_read_geo_tests.cpp'
+      - 'docs/reconstruction_cpp/CI_FULL_REGRESSION_REQUEST.md'
+      - '.github/workflows/p6c-readge-fortran-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selected-fortran-readge-format-parity:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Provision GitHub-hosted GCC12 and Fortran12
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++-12 gfortran-12
+      - name: Select isolated C++20 and Fortran compilers
+        uses: ./.github/actions/cteas-linux-toolchain
+      - name: Original P3 capture without modifying P3 branch
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin 5b1013baea10c0b3c3946e62ab77428dff05455e
+          git restore --source=FETCH_HEAD -- native_cpp/reference/capture_p3_makegeo.py
+      - name: Install original Fortran and P3 dependencies
+        run: |
+          set -euo pipefail
+          if ! pkg-config --exists gdal; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libgdal-dev
+          fi
+          gfortran --version | head -1
+      - name: Build C++20 READGE with strict warnings
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B /tmp/p6c-readge-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-fno-strict-aliasing
+          cmake --build /tmp/p6c-readge-build --parallel 2
+          ctest --test-dir /tmp/p6c-readge-build --output-on-failure
+      - name: Generate identical 2022 REAL P3 GEO.DAT via untouched original Fortran
+        run: |
+          set -euo pipefail
+          python3 native_cpp/reference/capture_p1_p2.py --output /tmp/p6c-readge-p3
+          python3 native_cpp/reference/capture_p3_makegeo.py --output /tmp/p6c-readge-p3
+          test -s /tmp/p6c-readge-p3/p3/geo.dat
+      - name: All 2500x8 GEO cell fields from independent native Fortran vs C++20
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,subprocess
+          from pathlib import Path
+          m=json.loads(Path('/tmp/p6c-readge-p3/manifest.json').read_text())
+          g=m['grid']
+          cmd=['python3','native_cpp/modules/p6_calmet/reference/compare_fortran_readge.py',
+            '--vendor','engine/vendor/src/CALMET_v6.5.0_L150223',
+            '--geo','/tmp/p6c-readge-p3/p3/geo.dat',
+            '--cpp','/tmp/p6c-readge-build/cteas_p6_read_geo',
+            '--origin-x',str(g['x0_km']),'--origin-y',str(g['y0_km']),
+            '--out','/tmp/p6c-readge-compare']
+          print('STUDY_ORIGIN',g['x0_km'],g['y0_km'],flush=True)
+          subprocess.run(cmd,check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p6c-original-fortran-readge-eightfield
+          path: /tmp/p6c-readge-compare/
+          retention-days: 7
+          if-no-files-found: warn

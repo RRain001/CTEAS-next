@@ -1,0 +1,66 @@
+name: P6D SLOPE original source forensics (read only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p6d-slope-fortran-source-forensics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  print-original-formulas:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+      - name: Print pinned original AVETMP and selected SURFVAR/ELUSTR signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,hashlib
+          p=pathlib.Path('engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for')
+          raw=p.read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=='430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134'
+          lines=raw.decode().splitlines()
+          for start,end in [('      subroutine avetmp(', '      subroutine barier('),
+                            ('      subroutine surfvar(', '      subroutine outhr(')]:
+              indexes=[i for i,s in enumerate(lines) if s.lower().startswith(start)]
+              stops=[i for i,s in enumerate(lines) if s.lower().startswith(end)]
+              assert len(indexes)==len(stops)==1
+              a,b=indexes[0],stops[0]
+              if start.endswith('avetmp('):
+                  assert 180<b-a<320
+                  print('===== ORIGINAL AVETMP; Fortran source lines',a+1,'through',b,'=====')
+                  for i in range(a,b): print(f'{i+1:5} {lines[i]}')
+              else:
+                  print('===== SURFVAR IAVET/AVETMP region =====')
+                  relevant=[i for i in range(a,b) if any(x in lines[i].lower() for x in ('call avetmp','iavet','temp2d(i,j)','otempk('))]
+                  selected=set()
+                  for idx in relevant:
+                      selected.update(range(max(idx-5,a),min(idx+6,b)))
+                  for i in sorted(selected):print(f'{i+1:5} {lines[i]}')
+          PY
+
+      - name: Audit actual DIAGNO original call order and every SURFVAR invocation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,hashlib
+          p=pathlib.Path("engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for")
+          raw=p.read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=="430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134"
+          a=raw.decode().splitlines()
+          print("=== DIAGNO SOURCE ORDER 5570...5745 ===")
+          for i in range(5569,5745):print(f"{i+1:5} {a[i]}")
+          print("=== SURFVAR CALL SITES ===")
+          for k,v in enumerate(a):
+              if "call surfvar(" in v.lower():
+                  print(f"--- line {k+1} ---")
+                  for i in range(max(0,k-8),min(len(a),k+6)):
+                      print(f"{i+1:5} {a[i]}")
+          PY

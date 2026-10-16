@@ -1,0 +1,40 @@
+{
+  "year": 2022,
+  "mode": "VIRTUAL_RELOCATED",
+  "station_selection_case": "EXTERNAL_SINGLE_VIRTUAL",
+  "primary_sid": "58321099999",
+  "external_raw_coverage_rule": "STRICT_GREATER_THAN_90_PERCENT_BOTH_SOURCES",
+  "stations": [
+    {
+      "sid": "58321099999",
+      "name": "LUOGANG / XINQIAO",
+      "country": "CN",
+      "begin": "19560820",
+      "end": "20260102",
+      "lat": 31.939774444,
+      "lon": 117.141610855,
+      "elev": 63.0,
+      "source_lat": 31.988,
+      "source_lon": 116.977,
+      "source_elev": 63.0,
+      "ifstn": "583210",
+      "relocated": true,
+      "raw_annual_coverage": "8692/8760=99.2237%",
+      "full_isd_raw_hours": 8692,
+      "isd_lite_raw_hours": 8692,
+      "expected_hours": 8760,
+      "full_isd_coverage": 0.9922374429223745,
+      "isd_lite_coverage": 0.9922374429223745,
+      "wind_treatment": "COMPLETE_FILL_AND_CALM_REPLACE",
+      "wind_data_source": "NOAA_ISD_LITE",
+      "wind_isd_lite": {
+        "url": "https://www.ncei.noaa.gov/pub/data/noaa/isd-lite/2022/583210-99999-2022.gz",
+        "filename": "583210-99999-2022.gz",
+        "sha256": "9e7f58aebd55171ef6c7d2c1fb40674b013a295bdf091a79a6fead33cbe73e74",
+        "original_hours": 8692,
+        "expected_hours": 8760,
+        "coverage_fraction": 0.9922374429223745
+      }
+    }
+  ]
+}

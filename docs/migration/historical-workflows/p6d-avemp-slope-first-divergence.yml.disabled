@@ -1,0 +1,87 @@
+name: P6D SLOPE AVETMP first-divergence 143h forensic
+# Historical write-only AVETMP probe, superseded by full-grid source parity.
+# Manual forensic reproduction only; not part of PR acceptance.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  avetmp-source-vs-native-trace:
+    name: Source-locked AVETMP operands at TEMP2D worst cell 12,19
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            .github/actions/cteas-linux-toolchain
+            native_cpp/modules/p6_calmet
+            scripts/p6d_forensic_avetmp_first_divergence.py
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: ./.github/actions/cteas-linux-toolchain
+      - name: Materialize frozen original CALMET case input
+        run: python3 native_cpp/modules/p6_calmet/reference/restore_frozen_case_from_git.py --mode grid
+      - name: Independently prove original/source-instrumented MET.DAT identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-avetmp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py audit \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --out "$root/original" --compiler gfortran-11
+      - name: Instrument original AVETMP in independent temporary source copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-avetmp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 scripts/p6d_forensic_avetmp_first_divergence.py original \
+            --work "$root" --audit-dir "$root/original" \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --compiler gfortran-11
+      - name: Instrument C++ AVETMP in CI-only worktree and compile source
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-avetmp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 scripts/p6d_forensic_avetmp_first_divergence.py cpp \
+            --work "$root" \
+            --header native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/avetmp.hpp \
+            --main-file native_cpp/modules/p6_calmet/src/realcase_wind_field_main.cpp
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native-build" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/native-build" \
+            --target cteas_p6_realcase_wind_field --parallel 2
+      - name: Produce 143h native AVETMP read-only operand evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-avetmp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          "$root/native-build/cteas_p6_realcase_wind_field" \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --hours 143 --out "$root/candidate" \
+            > "$root/native-143h.log" 2> "$root/cpp_avetmp_probe.log"
+          test -s "$root/cpp_avetmp_probe.log"
+          test -s "$root/original_avetmp_probe.txt"
+      - name: Report first real-case AVETMP operand and output differences
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-avetmp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 scripts/p6d_forensic_avetmp_first_divergence.py report --work "$root"
+          # FORENSIC_ONLY; never equate an instrumented build to science PASS.
+      - name: Archive reproducible original/source candidate trace and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6d-avetmp-first-divergence-143h
+          path: |
+            ${{ runner.temp }}/p6d-avetmp-${{ github.run_id }}-${{ github.run_attempt }}/avetmp_first_divergence.json
+            ${{ runner.temp }}/p6d-avetmp-${{ github.run_id }}-${{ github.run_attempt }}/cpp_avetmp_probe.log
+            ${{ runner.temp }}/p6d-avetmp-${{ github.run_id }}-${{ github.run_attempt }}/original_avetmp_probe.txt
+            ${{ runner.temp }}/p6d-avetmp-${{ github.run_id }}-${{ github.run_attempt }}/dgm_qh_pre_probe.txt
+            ${{ runner.temp }}/p6d-avetmp-${{ github.run_id }}-${{ github.run_attempt }}/dgm_qh_post_probe.txt
+            ${{ runner.temp }}/p6d-avetmp-${{ github.run_id }}-${{ github.run_attempt }}/original/dgm-audit.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,2 @@
+sid,status,detail,name,country,begin,end,lat,lon,elev
+58321099999,ok,已存在, 跳过：/home/lhy/CTEAS/project/cases/smoke5d_coldstart_20260701/met/surface/isd_raw/58321099999-2023.csv,LUOGANG / XINQIAO,CN,19560820,20260102,31.988,116.977,63.0

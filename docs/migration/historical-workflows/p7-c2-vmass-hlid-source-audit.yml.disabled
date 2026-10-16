@@ -1,0 +1,35 @@
+name: P7 C2 original VMASS and CALCPF HLID source audit
+on:
+  push:
+    branches: [codex/p7-c2-multistation-vendor-weather-20261015]
+    paths: ['.github/workflows/p7-c2-vmass-hlid-source-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Audit frozen original VMASS and DRY source without changing compilation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for')
+          buf=p.read_bytes()
+          print('ORIGINAL_VENDOR_SHA256='+hashlib.sha256(buf).hexdigest())
+          rows=buf.decode('latin-1').splitlines()
+          # Include real DRY/VDPVD and VDCOMP source arithmetic. In C2
+          # the last H1 ICODE=2 receptor first diverges at VDPVD; any
+          # physical patch must be justified against THESE vendor stages.
+          for a,b in ((10480,10715),(10850,10865),(11065,11110),
+                      (11680,11710),(26150,26290)):
+              print(f'==== VENDOR {a} TO {b} ====')
+              for i in range(a-1,min(b,len(rows))):
+                  print(f'ORIGINAL_L{i+1}: {rows[i]}')
+          PY
