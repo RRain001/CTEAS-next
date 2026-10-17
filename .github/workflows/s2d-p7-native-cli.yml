@@ -66,6 +66,20 @@ jobs:
             echo "INCORRECTLY_ACCEPTED_MISSING_MET";exit 1
           fi
           test ! -e "$work/output/bad.con"
+          echo "P7-PREEXISTING-CON-MUST-NOT-BE-TOUCHED" > "$work/output/preexisting.con"
+          cp "$work/output/preexisting.con" "$work/audit/expected-preexisting.txt"
+          if "$exe" --met "$met" --control "$control" --makegeo "$geo" --output "$work/output/preexisting.con" --hours 1 > "$work/audit/reject-existing.stdout" 2>&1; then
+            echo "INCORRECTLY_OVERWROTE_EXISTING_CON";exit 1
+          fi
+          cmp "$work/output/preexisting.con" "$work/audit/expected-preexisting.txt"
+          echo "P7_NATIVE_OUTPUT_EXISTING_NO_CLOBBER=PASS"
+          echo "partial-in-progress" > "$work/output/pre-existing-stage.con.cteas-partial"
+          if "$exe" --met "$met" --control "$control" --makegeo "$geo" --output "$work/output/pre-existing-stage.con" --hours 1 > "$work/audit/reject-partial.stdout" 2>&1; then
+            echo "INCORRECTLY_ACCEPTED_EXISTING_STAGED_OUTPUT";exit 1
+          fi
+          test ! -e "$work/output/pre-existing-stage.con"
+          grep -q 'P7_NATIVE_OUTPUT_OR_PARTIAL_ALREADY_EXISTS' "$work/audit/reject-partial.stdout"
+          echo "P7_NATIVE_STALE_PARTIAL_FAIL_CLOSED=PASS"
           echo "P7_NATIVE_INVALID_INPUT_NEGATIVES=PASS"
       - name: Real no-oracle P7 1h 6h and 143h H3 production executes
         timeout-minutes: 75
@@ -87,6 +101,7 @@ jobs:
             grep "P7_NATIVE_NO_ORIGINAL_CON_DGM=PASS HOURS=$hours" "$work/audit/native-${hours}h.log"
             grep "H3_VALUES=$((hours*2500))" "$work/audit/native-${hours}h.log"
             test -s "$work/output/native-${hours}h.con"
+            test ! -e "$work/output/native-${hours}h.con.cteas-partial"
             sha256sum "$work/output/native-${hours}h.con" >> "$work/audit/sha256.txt"
           done
           echo "P7_NATIVE_1_6_143H_NO_ORIGINAL_CON_DGM=PASS"
