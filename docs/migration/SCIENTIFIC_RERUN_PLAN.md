@@ -61,6 +61,63 @@ Source scope: `docs/reconstruction_cpp/P7_PHASE_STATUS_20261015.md`,
 `P1_P7_INTEGRATION_REHEARSAL_20261016.md` and prior P6 audit records.
 Full migrated C1/C2 143h reruns remain **NOT_RUN** here.
 
+## GitHub Actions manual 143h scientific rerun entrypoints — NOT_RUN
+
+Two new proposed workflows execute on **Ubuntu 22.04 Linux x86-64 hosted
+runners**, not the user's MacBook or an assumed Ubuntu workstation:
+
+- `.github/workflows/science-c1-143h.yml` — fresh current-head C1 native P6
+  143h MET.DAT, four original/native CALPUFF A/B/C/D 143h arms with original
+  Fortran DGM, strict H-3 IEEE REAL4 same-MET A/B and C/D
+  357,500/357,500, and independent P6 strict weather comparator. The
+  2022 **original CALMET meteorology remains the pinned SHA-checked frozen
+  reference**: this does **not** mean original 2022 Fortran CALMET is
+  freshly rerun. Native P6 and all CALPUFF A/B/C/D solver outputs are
+  independently regenerated. Flag this residual original-CALMET rerun
+  separately rather than marking a complete original-P6 fresh comparison.
+- `.github/workflows/science-c2-143h.yml` — fresh native and unchanged
+  original Fortran CALMET, true 2024 2SS/2US 143h MET.DAT, frozen
+  strict 6,435-field meteorological gate; fresh original and native
+  CALPUFF A/B/C/D 143h 12×12 H-3 arrays, strict 20,592/20,592
+  A/B and C/D REAL4 equivalence and independent different-MET
+  concentration sensitivity. Synthetic-but-original-format 2024 case is
+  *not* field-observed 2024 Hefei meteorology.
+
+Both workflows are `workflow_dispatch` **only**. Their source of truth is the
+actual triggering CTEAS-next `main` SHA; P6 and P7 must come from that same
+checkout. A second **ephemeral** checkout at the exact old `RRain001/CTEAS`
+source SHA `dfad99a78ed84d655e21411c9d25eb0d2583bf13` restores the
+excluded original Fortran/vendor/terrain assets into only the runner's local
+ignored paths through `configure_external_assets.py`; every manifest hash
+is checked. No vendor code or restricted data is committed or included in
+workflow artifacts. Only selected derived JSON, hashes and runtime traces
+are uploaded, retained 14 days. Do not upload whole scientific workspace.
+
+### Required operating and acceptance procedure
+
+1. Review workflow source, then from **Actions → C1 143h** on `main`,
+   click **Run workflow** (no automatic run on push, PR or merge).
+2. Inspect the job, verify actual test input hashes, GHA run SHA, no
+   original-MET oracle injected into native P6/P7 solver state, nonzero
+   plumes, 143/143 completed hours, A/B and C/D REAL4 bit identities.
+   If C1 fails or is blocked, stop and audit first scientific difference.
+3. Next manually run **Actions → C2 143h** on the same `main` SHA.
+   Require the original and native P6 fields and all four independently
+   executed P7 arms; no tolerance relaxation, no synthetic empty-plume pass.
+4. Record run URL, job and artifact IDs, toolchain, raw input and output
+   SHA256, actual `main` SHA, evidence locations and the **original-C1
+   CALMET-not-fresh** limitation in the new acceptance report. Do not
+   upgrade scientific status from workflow existence or historical PASS.
+5. A workflow cannot be considered verified until its own manual execution
+   completes successfully and a reviewer confirms the logs and artifacts.
+   Existing Ubuntu/Docker portable tests prove software/build behavior,
+   not the new scientific 143h claims.
+
+**Current migration baseline remains `C1=NOT_RUN; C2=NOT_RUN`** until those
+workflows have actually been executed in CTEAS-next and reviewed. In
+particular `MWET>0`/wet-deposition and arbitrary CALMET/CALPUFF options
+remain unaccepted.
+
 ## Full C1 rerun — NOT_RUN
 
 1. Restore and hash-check the local vendor package and CGIAR crop using
