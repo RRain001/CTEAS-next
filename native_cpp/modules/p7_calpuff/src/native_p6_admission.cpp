@@ -24,24 +24,24 @@ std::string file_text(const std::string& p) {
 }
 std::string json_string(const std::string& text,const std::string& key) {
     const std::regex re("\""+key+"\"\\s*:\\s*\"([^\"]*)\"");
-    const std::vector<std::sregex_iterator> hits{
-        std::sregex_iterator(text.begin(),text.end(),re),std::sregex_iterator()};
-    insist(hits.size()==1U,"P7_P6_PRODUCER_MANIFEST_SCHEMA");
-    return (*hits[0])[1].str();
+    const auto first=std::sregex_iterator(text.begin(),text.end(),re);
+    insist(std::distance(first,std::sregex_iterator{})==1,
+           "P7_P6_PRODUCER_MANIFEST_SCHEMA");
+    return (*first)[1].str();
 }
 bool json_bool(const std::string& text,const std::string& key) {
     const std::regex re("\""+key+"\"\\s*:\\s*(true|false)");
-    const std::vector<std::sregex_iterator> hits{
-        std::sregex_iterator(text.begin(),text.end(),re),std::sregex_iterator()};
-    insist(hits.size()==1U,"P7_P6_PRODUCER_MANIFEST_SCHEMA");
-    return (*hits[0])[1].str()=="true";
+    const auto first=std::sregex_iterator(text.begin(),text.end(),re);
+    insist(std::distance(first,std::sregex_iterator{})==1,
+           "P7_P6_PRODUCER_MANIFEST_SCHEMA");
+    return (*first)[1].str()=="true";
 }
 int json_int(const std::string& text,const std::string& key) {
     const std::regex re("\""+key+"\"\\s*:\\s*([0-9]+)");
-    const std::vector<std::sregex_iterator> hits{
-        std::sregex_iterator(text.begin(),text.end(),re),std::sregex_iterator()};
-    insist(hits.size()==1U,"P7_P6_PRODUCER_MANIFEST_SCHEMA");
-    return std::stoi((*hits[0])[1].str());
+    const auto first=std::sregex_iterator(text.begin(),text.end(),re);
+    insist(std::distance(first,std::sregex_iterator{})==1,
+           "P7_P6_PRODUCER_MANIFEST_SCHEMA");
+    return std::stoi((*first)[1].str());
 }
 bool digest(const std::string& value) {
     return value.size()==64U &&
