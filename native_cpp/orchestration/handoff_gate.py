@@ -21,7 +21,9 @@ EXPECTED = {
     "p6": {
         "p3_geo": ("geo/makegeo/geo.dat", "P3_NATIVE"),
         "p4_upper": ("met/upperair/final/up_58424.dat", "P4_NATIVE"),
+        "p4_station_metadata": ("met/upperair/final/stations.csv", "P4_PREP_METADATA"),
         "p5_surface": ("met/surface/final/surf.dat", "P5_NATIVE"),
+        "p5_station_metadata": ("met/surface/final/stations.csv", "P5_PREP_METADATA"),
         "met_control": ("run/met/met.inp", "FROZEN_DECK"),
     },
     "p7": {
