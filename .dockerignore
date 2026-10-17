@@ -1,0 +1,28 @@
+# Do not send repository internals or locally recovered restricted files
+# into the public multi-stage container build context.
+/.git
+/.github
+/.venv
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/CMakeFiles
+**/cmake-build*
+/historical-workflows
+/docs
+/engine/vendor
+/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm
+/calpuff_terrain_and_landuse_data/
+/bin/
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe
+*.x
+*.otf
+*.ttf
+*.log
+.DS_Store

@@ -1,0 +1,81 @@
+name: Linux multi-architecture C++ portable container
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: docker-portable-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-and-verify:
+    name: ${{ matrix.arch }} portable image and regressions
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record build platform
+        run: |
+          uname -a
+          docker version
+          docker info --format '{{.Architecture}}'
+      - name: Build and execute software verification inside Docker
+        run: |
+          docker build --progress=plain \
+            --file docker/cpp/Dockerfile --target verification \
+            --tag "cteas-next:verification-${{ matrix.arch }}" .
+      - name: Package data-free runtime stage
+        run: |
+          docker build --progress=plain \
+            --file docker/cpp/Dockerfile --target runtime \
+            --tag "cteas-next:portable-${{ matrix.arch }}" .
+      - name: Validate image architecture, executable inventory, and unprivileged execution
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: |
+          set -eu
+          image="cteas-next:portable-$EXPECTED_ARCH"
+          arch="$(docker image inspect --format '{{.Architecture}}' "$image")"
+          test "$arch" = "$EXPECTED_ARCH"
+          docker run --rm "$image"
+          docker run --rm "$image" /bin/sh -ec '
+            test "$(id -u)" = 10001
+            test "$(find /opt/cteas/bin -maxdepth 1 -type f | wc -l)" -eq 11
+            for cmd in cteas_p1_terrain cteas_p2_gen_fraction cteas_p3_makegeo \
+                       cteas_p4_read62 cteas_p5_smerge cteas_p6_realcase_wind_field \
+                       cteas_p6_native_hourly_driver cteas_p6f_calmet_dat21_writer \
+                       cteas_p7_calmet21_inspect cteas_p7_native_met_hours \
+                       cteas_p7_2022_case_ledger; do
+              command -v "$cmd" >/dev/null
+              test -x "/opt/cteas/bin/$cmd"
+            done
+            test ! -e /src && test ! -e /engine/vendor
+            test -d /cases && test -d /results
+          '
+      - name: Collect portable regression logs from verification image
+        if: always()
+        run: |
+          mkdir -p "${{ runner.temp }}/container-evidence"
+          id="$(docker create "cteas-next:verification-${{ matrix.arch }}")" || exit 0
+          docker cp "$id:/tmp/cteas-software" "${{ runner.temp }}/container-evidence/" || true
+          docker cp "$id:/tmp/cteas-python" "${{ runner.temp }}/container-evidence/" || true
+          docker rm "$id"
+      - name: Upload regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-${{ matrix.arch }}-portable-evidence
+          path: ${{ runner.temp }}/container-evidence/
+          if-no-files-found: warn
