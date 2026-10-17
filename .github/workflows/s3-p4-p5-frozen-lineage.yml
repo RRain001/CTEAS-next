@@ -87,5 +87,5 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
           path: |
-            {{ runner.temp }}/s3/scoped-native-producers/audit/*.json
-            {{ runner.temp }}/s3/scoped-native-producers/audit/*.log
+            ${{ runner.temp }}/s3/scoped-native-producers/audit/*.json
+            ${{ runner.temp }}/s3/scoped-native-producers/audit/*.log
