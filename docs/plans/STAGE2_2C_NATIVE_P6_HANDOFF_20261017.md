@@ -30,3 +30,12 @@ python3 -m unittest native_cpp.orchestration.tests.test_handoff_gate -v
 5. No G5, no `project/current`, no original/vendor redistribution, no general wind or wet physics claim.
 
 Status: `S2_2C=IN_PROGRESS_CONTRACT_ONLY`; full numerical status `NOT_RUN` until authentic execution logs exist.
+
+## 2026-10-17 implementation increment after initial preflight
+
+- Implemented `native_cpp/orchestration/run_p6.py`: audited, **opt-in** Python process wrapper using the existing native P6 C++ hourly coordinator. Requires validated frozen case YAML, existing native P3/P4/P5 file SHA verification, executable existence/hashes, new work directory and absence of the original frozen `run/met/met.dat`.
+- It pins native source-only P6E metadata mode via `--p6e-source-builder`; 143h additionally requires `--p6f-writer --p6f-direct-hourly`. The resulting native manifest is checked for 1/6/143 hour count, COMP ownership, original-MET-exclusion claim and P6 MET hash; full 143h independent header hash is additionally checked.
+- Implemented `native_cpp/orchestration/tests/test_run_p6.py`, with mocked positive/negative 1h, 6h and 143h command execution. These tests do **not** run real CALMET physics, and mocked output is not retained as science data.
+- Exact-source lightweight [Actions #39026417596](https://github.com/RRain001/CTEAS-next/actions/runs/39026417596) **SUCCESS**, source commit `066a0957876927eefa00ac89e77e038f95179415`; previous manifest-only [Actions #39026219678](https://github.com/RRain001/CTEAS-next/actions/runs/39026219678) also **SUCCESS**. Neither run tested G5, actual original/native P6, P7, wet deposition or 143h numerical fields.
+
+Remaining critical blocker: real authorized P3/P4/P5 artifacts with verifiable producer-lineage, real P6 source-independent full 143h run and independent same-source 45-field scientific comparator **have not been executed** for this PR. A self-asserted SHA/provenance manifest and a fake process-test do not remove this blocker. Scientific status remains `NOT_RUN`; keep Draft until actual execution and review.
