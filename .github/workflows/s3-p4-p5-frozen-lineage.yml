@@ -51,8 +51,10 @@ jobs:
           case=root/"project/cases/hefei5km_2022_reference_case_20261011"
           work=pathlib.Path(os.environ["RUNNER_TEMP"])/"s3"
           report=json.loads((work/"scoped-native-producers/audit/lineage.json").read_text())
-          assert report["status"]=="PASS_SCOPED_P4_P5_CPP_WRITER_BYTE_IDENTITY"
-          assert report["p4_final_updat_reproduced_this_run"] is False
+          assert report["status"]=="PASS_SCOPED_P4_FINAL_AND_P5_CPP_WRITER_BYTE_IDENTITY"
+          assert report["p4_final_updat_reproduced_this_run"] is True
+          assert report["p4_final_calmet_updat"]["status"]=="EXACT_BYTE_PARITY"
+          assert report["p4_final_calmet_station_metadata"]["status"]=="EXACT_BYTE_PARITY"
           assert report["raw_igra_to_fsl_reproduced_this_run"] is False
           assert report["raw_isd_to_generic_reproduced_this_run"] is False
           assert report["native_p6_rerun_with_new_p4p5"] is False
