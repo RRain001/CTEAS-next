@@ -1,7 +1,11 @@
 # Container packaging — portable C++20 research subset
 
-**Status: validation pending** until the GitHub Actions matrix has built and
-verified both Linux platforms. This packaging change does not re-certify the
+**Status: PORTABLE_SOFTWARE_VALIDATED** for Linux AMD64/ARM64 by
+[GitHub Actions run #38995287227](https://github.com/RRain001/CTEAS-next/actions/runs/38995287227).
+Both architecture jobs built the container, executed the portable C++/Python
+and G5 headless checks, constructed the minimal runtime image, checked the
+runtime architecture and 11 executable entrypoints, verified non-root startup,
+and uploaded software regression evidence. This packaging change does not re-certify the
 original 143-hour scientific workflows and does not add any physical formulas.
 
 ## Build and inspect locally
@@ -102,8 +106,9 @@ P6/P7 only reconstruct selected scientific branches. In particular,
 
 The CTest selection explicitly comprises 33 portable software tests, and the
 Python discovery is limited to P4/P5 data preparation and G5, with one
-vendor-dependent test omitted (historically 73 selected PASS). The actual
-number of successful tests on each architecture must come from a **new**
-workflow run; no historical Ubuntu evidence is presented as Docker results.
+vendor-dependent test omitted (historically 73 selected PASS). The newly completed
+Docker [CI run #38995287227](https://github.com/RRain001/CTEAS-next/actions/runs/38995287227)
+provides the architecture-specific software results; its success does not
+replace full C1/C2 scientific reruns or expand physics option acceptance.
 
 Neither `Dockerfile` nor the CI workflow mutates P1–P7 numerical implementation.
