@@ -20,3 +20,15 @@ Authority: [S2 roadmap](CTEAS_NEXT_FOUR_STAGE_PLAN_20261017.md), [issue #26](htt
 Implementation may begin before 2C merges, but **integration acceptance is blocked on 2C full fresh 143h native MET physical/source-provenance gates**. Existing `native_cpp.orchestration.plan` remains dry-run blocked; G5 `preprocess/upperair/met/puff/all` remain fail-closed. No changes to scientific tolerance, C1/C2 frozen oracles or Fortran vendor sources.
 
 Status: `S2_2D=IN_PROGRESS_SOURCE_AUDIT_ONLY`, `P7_NATIVE_CONCENTRATION_EXECUTION=NOT_RUN`.
+
+## Verified source-level blocker from the existing six-hour driver
+
+Read-only inspection of `native_cpp/modules/p7_calpuff/tests/original_hefei_sixhour_native_receptors_tests.cpp` and its CMake targets establishes:
+
+- The existing test can run **6 hours by default**, with an explicit `CTEAS_P7_PROBE_HOURS=7..143` extension, and separate C1/C2 integration environment selections. It is a test executable, not a clean solver command.
+- That test **unconditionally reads original `puff.con`** with `read_conc_species_fields(argv[3],...)`, and may read an original DGM binary unless the special integration mode is chosen. Its post-solve comparator purpose is valid but **these inputs cannot be part of a new production P7 solver authority**. The new CLI must separate native advance/write from independent original comparison.
+- The file supports `CTEAS_P7_NATIVE_PUFF_CON` to write original-compatible native WROUT1 output, and uses `create_original_hefei_2022_wrout1_writer(...)`. The writer and actual hour calculation are the viable reuse surfaces; the test driver's DGM/reference controls are not.
+- `src/original_comp_hourly.cpp` implements `OriginalCompMultiPuffHours::advance_hour_pg`, which holds native puff state across hours and commits after complete current-hour success; caller remains responsible for correct source admission, retirement and sampling. This by itself is not the entire CALPUFF source-dependent production path.
+- The `cteas_p7_receptors` CMake library builds `src/receptors.cpp`, `src/conc_file.cpp`, `src/hourly_conc.cpp`; P7 also has native step/cadence tests. **No reviewed, independently accepted general concentration CLI was found.**
+
+**Next code boundary:** factor the scientific test-only reference reader/checker behind an independent comparator, while extracting the accepted native-only step/cadence/output path into a new constrained entrypoint. Preserve C1 test semantics and existing CTest; all original DGM/CON read logic stays comparator-only and must be impossible to trigger in `--execute` mode. An integration test that supplies only freshly produced native P6 MET + locked puff deck, with original `puff.con` and original DGM *physically absent*, is mandatory before any S2-2D execution PASS is claimed.
