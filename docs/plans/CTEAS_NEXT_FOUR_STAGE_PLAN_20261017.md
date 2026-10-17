@@ -4,7 +4,7 @@
 
 ## 0. 当前基线与不可变原则
 
-- GitHub：`RRain001/CTEAS-next`；制定计划时 `main=e06db8ff5f448a1dd2186935ca0fa671a1e4f9e8`（PR #12 已合并）；[PR #13](https://github.com/RRain001/CTEAS-next/pull/13) 基于此提交，head `0d0cb09012b6cacd7f6f3a406b865e3b2a38c671`，待软件回归验收，未合并。
+- GitHub：`RRain001/CTEAS-next`；制定计划时 `main=e06db8ff5f448a1dd2186935ca0fa671a1e4f9e8`（PR #12 已合并）；[PR #13](https://github.com/RRain001/CTEAS-next/pull/13) 已经针对相同 head `0d0cb09012b6cacd7f6f3a406b865e3b2a38c671` 完成限定软件验证并合并至 `main@8aaae018ddadc9cbed61c468231632747942d9b4`。
 - [PR #11](https://github.com/RRain001/CTEAS-next/pull/11) 已合并科学验收报告；[Issue #6](https://github.com/RRain001/CTEAS-next/issues/6) 已针对 **143h C1/C2 限定范围**关闭。
 - C1（2022 单站 143h）：`PASS_SCOPED`；原版 CALMET 的气象输入是冻结参考，而非本次重新运行原版 CALMET；同气象输入 P7 H-3 REAL4 浓度逐位相同。证据：[Actions #39001955056](https://github.com/RRain001/CTEAS-next/actions/runs/39001955056)。
 - C2（2024 人工构造的 2 地面站/2 高空站 143h）：`PASS_SCOPED`；原版与原生 CALMET 均实际运行，6,435 个 field-hour 比较无超限；P7 同气象输入 H-3 REAL4 值逐位相同。该案例不是独立实测气象验证；整个 `puff.con` 文件**不**声明逐字节一致。证据：[Actions #39012460127](https://github.com/RRain001/CTEAS-next/actions/runs/39012460127)。
@@ -17,8 +17,8 @@
 
 | 阶段 | 核心交付物 | 依赖 | 截至制订计划时的事实状态 | 关闭标准 |
 | --- | --- | --- | --- | --- |
-| **S1 / Repo Stabilization** | PR #13 路径/冻结数据回归、Ubuntu/CTest、Python/G5、Docker | PR #12 已合并 | **IN_PROGRESS; REGRESSION_NOT_RUN** | PR #13 实际测试通过并合并；归档 SHA/日志/输出分母 |
-| **S2 / Native P1–P7 Execution** | 可复用的**选定物理范围** P1→P7 单案例原生执行链、清单/错误/恢复接口 | S1 | **DESIGN_NOT_STARTED** | 在准入配置上，从 `case.yaml` 至浓度产物可运行/可重跑；无需旧版 Fortran 执行回退，独立物理验证 |
+| **S1 / Repo Stabilization** | PR #13 路径/冻结数据回归、Ubuntu/CTest、P4/P5 Python、Docker native-only（G5 延后） | PR #12 已合并 | **DONE_SCOPED; PASS_SOFTWARE** | PR #13 实际测试通过并合并；归档 SHA/日志/输出分母 |
+| **S2 / Native P1–P7 Execution** | 可复用的**选定物理范围** P1→P7 单案例原生执行链、清单/错误/恢复接口 | S1 | **2A_STATIC_AUDIT_DONE; IMPLEMENTATION_PENDING** | 在准入配置上，从 `case.yaml` 至浓度产物可运行/可重跑；无需旧版 Fortran 执行回退，独立物理验证 |
 | **S3 / Verified Fixture Externalization** | 可验证按需恢复的冻结基准、独立许可/数据存储、精简 checkout | S1 且 S2 核心科学依赖明确 | **NOT_STARTED** | SHA/文件长度/原版路径一致，离线/缺数据 fail-closed，CI 测试通过；不损害可复现性 |
 | **S4 / Physics-option Expansion** | 降水数据契约、湿沉降及其他选择分支逐项验证 | S2 的基准执行链 | **NOT_STARTED** | 每一物理选项有输入模板、原版同输入对照、质量守恒及独立审计；选项矩阵逐行更新 |
 
@@ -34,14 +34,14 @@
 ### 必须执行的回归门槛（在 PR #13 **同一个 head SHA** 上）
 1. **Git/静态预检**：确认 PR #13 只有预期删除与参考路径改写；比较保留/删除的冻结参考 blob、验证 sha256、检查 CMake/脚本/Actions 输入没有悬空路径；两套 GUI 的源码 SHA 与旧 `main` 一致，4 条 Actions 工作流仍不变。
 2. **Ubuntu nine-suite**（有 GCC12/GFortran11/GDAL 的主机）：`python3 scripts/migration/validate_ubuntu.py --portable --out /tmp/cteas-pr13-ubuntu --jobs 2`；保留逐 suite configure/build/CTest/未运行项清单、退出码。由于原版 vendor 不随仓库分发，显式 `NOT_RUN` 的外部专有科学项不能算 PASS。
-3. **Python/G5 回归**：`python3 scripts/migration/validate_python.py --portable --out /tmp/cteas-pr13-python`；保留测试计数和结果。G5 必须继续拒绝 `all/met/puff` 等未支持路径，绝不回退旧模型。
-4. **Docker AMD64**：`docker build --file docker/cpp/Dockerfile --target verification --tag cteas-next:pr13-verify .`（需 BuildKit、联网获取受控基础镜像）；查看 `CONTAINER_CPP_PORTABLE=PASS`、`CONTAINER_PYTHON_PORTABLE=PASS` 和 `CONTAINER_G5_OFFSCREEN_AND_FAIL_CLOSED=PASS_SOFTWARE`。ARM64 可追加平台适配测试，但不得将未运行标 PASS。
+3. **P4/P5 Python 便携回归**：仅运行现有 Python 验证器的 P4、P5 测试选择，明确排除原版 SMERGE/CALMET 专有源码依赖项并记录 `NOT_RUN`。2026-10-17 本轮实测为 **58 tests、0 failures、0 errors、1 external-only NOT_RUN**。**G5 按用户授权暂缓测试，保留原有 fail-closed，不将 G5 记为 PASS。**
+4. **Docker AMD64 native-only**：`docker build --file docker/cpp/Dockerfile --target runtime --tag cteas-next:pr13-native-amd64 .`，验证 builder/runtime 镜像和原生执行入口。此轮**不运行**包含 G5 的 `verification` target；ARM64、G5 仍待后续阶段。
 5. **冻结基准一致性**：明确 2022 `run/met/met.dat` SHA256 = `b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30`；2022 `run/puff/puff.con` SHA256 = `0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10`。凡发生静态引用/恢复异常，先整改后验收。
 6. **独立 PR 审核**：记录完整 Action Run ID（或 Ubuntu 本地报告、所用 commit SHA、命令、结果），确保 `PR13=PASS_SOFTWARE` 后才合并。**不因本次仅移除历史文件而自动重复完整 143h C1/C2**；如果发现真实科学输入变动则需重新评估重跑必要性。
 
-**当前发现/障碍：** `PR #13@0d0cb090` 的 GitHub check-runs 返回 **0**，现有 Ubuntu/Docker Workflows 仅支持手动触发；旧代码 SHA 上的成功历史不是 PR #13 验收结果。当前连接没有可用的 Actions workflow_dispatch 操作，需由具有运行权限的工作环境手动触发或在本地 Ubuntu 执行上述命令；没有执行结果就保持 `REGRESSION_NOT_RUN`、不合并。
+**实测证据：** [Actions #39021059327](https://github.com/RRain001/CTEAS-next/actions/runs/39021059327) SUCCESS，所有九组 C++/CTest job、P4/P5 Python 58 项和 Docker AMD64 builder/runtime job 均通过，源码固定为 PR #13 head `0d0cb090...`。该记录发生在临时测试请求分支，故 PR HEAD 上的 check-runs 数量不直接等同于验证未执行。本会话也通过独立临时分支的 push 工作流触发了 [九组 C++ 测试 #39021083453](https://github.com/RRain001/CTEAS-next/actions/runs/39021083453)（九组通过，附带一项因未排除外部源的 Python job 失败）及 [P4/P5 专项修正 #39021231208](https://github.com/RRain001/CTEAS-next/actions/runs/39021231208)（58/58 PASS、1 外部项不运行）。无原版完整 143h 重跑。
 
-**S1 Done 定义：** Ubuntu+Python/G5 全通过，Docker AMD64 验证通过（或有批准的明确环境豁免）、冻结数据哈希与引用验证通过、验收证据回写 PR #13、合并 main 后新 SHA 静态检查。此门以前不得标 S1 PASS。
+**S1 实际结论：`DONE_SCOPED / PASS_SOFTWARE`。** Ubuntu 九组 C++、P4/P5 Python、Docker AMD64 native-only 与冻结 SHA 验证通过；PR #13 已合并。**G5=NOT_RUN_BY_OWNER_SCOPE**，未验证 G5 就不得对它做任何新的软件/科学 PASS 声明。
 
 ## S2：搭建选定范围原生 P1–P7 执行链（先契约后代码）
 
@@ -92,9 +92,9 @@
 
 ## 近期执行队列与责任界限
 
-1. **立即：** 记录 S1 的 PR #13 head SHA，对其触发有权限的 Ubuntu/Python/G5 与 Docker software verification；取得可核验日志并回写 PR。当前本会话不能执行 GitHub Actions workflow_dispatch，报告中必须保持 `NOT_RUN`。
-2. **可以并行的文档工作：** 完成 S2 2A “原生入口与 I/O 契约审计”、建立设计 Issue、记录 Stage 2 实验设计；不修改物理结果、不解锁 G5。
-3. **S1 PASS 后：** 审核合并 PR #13，进入 S2 2B/2C/2D/2E 实现验证链。
+1. **S1 已收口：** PR #13 已合并，证据为 [Actions #39021059327](https://github.com/RRain001/CTEAS-next/actions/runs/39021059327)，G5 暂不测试。后续不再为纯清理任务重复触发大规模计算。
+2. **S2 2A 已完成静态入口审计：** [PR #17](https://github.com/RRain001/CTEAS-next/pull/17) 已合并，[入口缺口报告](STAGE2_NATIVE_ENTRYPOINT_AUDIT_20261017.md) 识别 P1/P2 CSV 与 P3 原版格式、P6 冻结案例与 P7 测试驱动等边界；下一步先完成 case/schema/dry-run/原版格式适配。
+3. **S2 下一步：** 开发选定物理范围的 P1/P2→P3 接口和统一运行契约，再集成 P4/P5/P6/P7；G5 解锁须等待实际端到端验收。
 4. **S2 成功后：** 实施 S3 的按需恢复（尤其及时解决 G3 原始文件长期保存）；之后逐一开展 S4 物理功能分支。
 
 更新规则：每次对阶段状态的修改必须附带 **PR/commit、实际执行命令、日志或 Actions 链接、通过/未运行/失败数目和下一 blocker**。此计划不授权自动合并未验收的 PR、不授权公开第三方资产、不授权昂贵 143h 科学工作流在每次普通提交时执行。
