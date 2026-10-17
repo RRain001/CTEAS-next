@@ -29,6 +29,17 @@ SOURCE_STAGES = (
 )
 EXPECTED_MET = {"npsta": 0, "ifradj": 1, "ikine": 0, "iobr": 0, "noobs": 0}
 EXPECTED_PUFF = {"nspec": 2, "nse": 1, "mchem": 0, "idry": 0, "iwet": 0, "ndecay": 0}
+# Every control in the checked-in frozen 2022 reference deck is part of the
+# selected case authority, not just the physics subset called out above.
+FROZEN_MET_CONTROLS = {
+    "lcfiles": True, "irtype": 1, "lcalgrd": True, "lsave": True, "lprint": False,
+    "noobs": 0, "npsta": 0, "icloud": 0, "iforms": 2, "iformp": 2,
+    "iformc": 2, "iwfcod": 1, "ifradj": 1, "ikine": 0, "iobr": 0,
+}
+FROZEN_PUFF_CONTROLS = {
+    "lcfiles": True, "source_mode": "case_yaml", "nspec": 2, "nse": 1,
+    "mchem": 0, "idry": 0, "iwet": 0, "ndecay": 0,
+}
 
 
 class ContractError(ValueError):
@@ -109,6 +120,21 @@ def validate_frozen_profile(data: dict[str, Any], location: Path) -> dict[str, A
         raise ContractError("research_time outside frozen reference window")
     if child(data, "preprocess", "upperair", "station_id") != "CHM00058424":
         raise ContractError("unsupported upper-air station policy")
+    for name, expected in (("met", FROZEN_MET_CONTROLS),
+                           ("puff", FROZEN_PUFF_CONTROLS)):
+        actual = mapping(child(data, name, "options"), name + ".options")
+        if set(actual) != set(expected):
+            raise ContractError(name + ".options: changed control set outside frozen scope")
+        for key, value in expected.items():
+            got = actual[key]
+            if isinstance(value, bool):
+                if got is not value:
+                    raise ContractError(name + ".options." + key + ": changed boolean control")
+            elif isinstance(value, str):
+                if got != value or not isinstance(got, str):
+                    raise ContractError(name + ".options." + key + ": changed string control")
+            else:
+                eq_number(got, value, name + ".options." + key)
     for key, value in EXPECTED_MET.items():
         eq_number(child(data, "met", "options", key), value, "met.options." + key)
     for key, value in EXPECTED_PUFF.items():
