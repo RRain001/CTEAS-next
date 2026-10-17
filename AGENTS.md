@@ -1,158 +1,20 @@
-# AGENTS.md
+# CTEAS-next agent instructions
 
-## CTEAS-next authoritative scope and reference (supersedes legacy CTEAS overview below)
+## Scope and acceptance
+- This is the **partial C++20** reconstruction of selected P1–P7 CALMET/CALPUFF pathways, **not** a whole-option Fortran replacement. Consult `README.md` and `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.{md,csv}` before implementing or changing physics.
+- C1 (2022 143h) and C2 (controlled synthetic 2024 143h) each **PASS_SCOPED**, as audited in `docs/science_acceptance/C1_C2_143H_RERUN_20261017.md`; Issue #6 is closed for these limited cases. **Full science acceptance NOT_READY.** Do not infer generic P6/P7 or `MWET>0` acceptance from these results.
+- C1 original CALMET input was an SHA-locked frozen MET, not freshly rerun original Fortran CALMET. C2 is not independently measured atmospheric observations. Preserve these scientific qualifications.
 
-- This repository is **CTEAS-next**, a clean-history migration containing
-  **selected, partially reconstructed** CALMET/CALPUFF C++20 physical branches
-  (P6/P7) and P1–P5 preparation—not a complete replacement for every option
-  supported by the original Fortran packages.
-- For any physical change, **read**
-  `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.md` and the machine-readable
-  `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.csv` first. These are a
-  source/option *audit index*, not blanket proof that an option is implemented.
-  Amend the option row, true C++ entrypoint, original control branch and
-  independently measured scientific test status when changing physics.
-- **Original vendor source is NOT tracked here.** It resides in the *old*
-  repository `RRain001/CTEAS` at the pinned source commit
-  `dfad99a78ed84d655e21411c9d25eb0d2583bf13`. CALMET 6.5.0 source:
-  `engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for`; CALPUFF 7.2.1:
-  `engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for`. See
-  `docs/physics/VENDOR_SOURCE_LOCATOR.md` for original controls,
-  provenance/hash checking and authorized temporary restoration.
-- Never add the excluded `engine/vendor/**` sources, restricted CGIAR terrain
-  crop, or fonts to the CTEAS-next Git tree, public artifacts or container
-  layers. A locally recovered file is not evidence of redistribution rights.
-  Respect `docs/migration/THIRD_PARTY_ASSETS.md`.
-- Treat `project/cases/**` tracked during the 2026-10-16 migration as an
-  **explicit frozen-fixture exception** to the legacy guidance below. Preserve
-  the existing pinned test files; new/untracked case workspaces and simulation
-  outputs still stay outside version control.
-- **Scientific acceptance is per option/branch/case**: original CTEAS
-  historical scoped acceptance is not the same as new CTEAS-next scientific
-  reruns. See `docs/migration/SCIENTIFIC_RERUN_PLAN.md` and Issue #6.
-  `NPSTA=0`, `MWET=0` dry reference tests do not validate precipitation
-  adapters or wet deposition; unsupported cases must fail closed.
-- Large software or 143-hour scientific GitHub Actions workflows must be
-  intentionally invoked via their documented manual/validated-request
-  mechanisms, not indiscriminately enabled for normal pushes and PRs.
+## Source ownership and trusted scientific baseline
+- Native C++ sources/tests: `native_cpp/`; Python legacy engine and GUI: `engine/`; G5 explicitly native-only authority: `engine/gui_g5/pipeline.py`, currently rejects generic P6/P7/all. Do **not** route G5 through `engine.orchestrator.cli` or legacy model executables.
+- The unchanged original CALMET 6.5.0 Fortran source is at old `RRain001/CTEAS@dfad99a78ed84d655e21411c9d25eb0d2583bf13:engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for`; CALPUFF 7.2.1 at `engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for`. Follow `docs/physics/VENDOR_SOURCE_LOCATOR.md`.
+- Never add external `engine/vendor/**`, restricted CGIAR/SRTM terrain or fonts to the public repository, Action artifacts, logs or Docker images. Restore only from authorized local sources via `scripts/migration/configure_external_assets.py` with hash checks; see `docs/migration/THIRD_PARTY_ASSETS.md`.
+- New physics work requires option-specific code authority, frozen input/source provenance, original-versus-native comparison, first differences and an updated option matrix. **Never** silently relax numerical tolerances or fake a PASS from empty plumes.
 
-## Legacy CTEAS project overview (historical guidance below; defer to CTEAS-next rules above)
-
-This project is CTEAS, a tritium environmental assessment software package.
-
-It contains:
-
-- Python application code, including the retained PySide6 desktop GUI
-- YAML-based case and configuration files
-- Native compiled executables with `.x` suffix
-- Fortran/C/C++ source files for part of the native toolchain
-- Docker-based native binary rebuild workflow
-- Platform-specific binary directories under `bin/<platform>/`
-
-The project was originally developed for Linux x86_64. Existing `.x` files are platform-specific and must not be assumed to work on Linux ARM64 or Windows.
-
-## Current project state
-
-The current goal is to keep the migrated project runnable and maintainable, not to rewrite it.
-
-Current known state:
-
-1. Ubuntu / Linux x86_64 migration has been validated for a cold-start small case.
-2. The end-to-end path from terrain preprocessing to meteorology and puff modeling has been run successfully on Ubuntu.
-3. Runtime now expects platform-specific native binaries under `bin/<platform>/`.
-4. Docker is retained as a rebuild path for native binaries, but Docker is not required for normal runtime on the validated Ubuntu host.
-5. The supported GUI is the PySide6 desktop GUI. Legacy `webgui` and `streamlitgui` entrypoints are removed and should not be treated as supported.
-
-Reference docs:
-
-- `docs/ubuntu_migration_acceptance.md`
-- `docs/docker_build.md`
-- `docs/git_tracking_plan.md`
-- `docs/terrain_landuse_crop.md`
-
-## Terrain / landuse data
-
-- Full datasets live in `calpuff_terrain_and_landuse_data/` and are **not** tracked in Git.
-- Small per-site crops of those datasets live in `calpuff_terrain_and_landuse_data_crop/<site>/`
-  and **are** tracked; they are generated by `scripts/crop_terrain_landuse_data.py`
-  (requires `rasterio`, data preparation only, not a runtime dependency).
-- Cropped landuse is a CTGPROC `GENERIC.LANDUSE 1.0` point file
-  (`eausgs2_0la_<site>.generic.txt`), because CTGPROC's `GLAZAS` reader addresses the
-  fixed-size 13000x12000 raw raster and cannot read a resized crop.
-  Use `--lulc-type GEN`; the script syncs `DNZGEN` from the file header.
-- Cropped terrain is a normal GeoTIFF plus a `<name>.bbox` companion file; the tile
-  picker in `auto_select_srtm_to_terrel.py` uses the companion file when present.
-
-## Supported platforms
-
-Primary target platforms:
-
-- `linux-x86_64`
-- `linux-arm64`
-- `windows-x86_64` later
-
-Current validation status:
-
-- `linux-x86_64`: runtime validated on Ubuntu
-- `linux-arm64`: build/rebuild work may proceed, but runtime acceptance is not yet established
-- `windows-x86_64`: future work
-
-Do not work on macOS packaging or macOS-specific logic unless explicitly requested.
-
-Do not work on Windows ARM64.
-
-## Environment and execution expectations
-
-- Preferred environment bootstrap entry is `./bootstrap_venv.sh`.
-- Minimum supported Python version is `3.11`.
-- `uv` is preferred when available, with fallback to standard `venv` / `pip`.
-- Existing `.venv` environments using Python `< 3.11` should be treated as invalid and rebuilt, not silently reused.
-- `PYTHON_BIN`, `UV_PYTHON`, and `PIP_INDEX` are supported environment overrides for setup.
-
-## Git tracking policy
-
-Track in Git:
-
-- `engine/`
-- `scripts/`
-- `docs/`
-- `docker/`
-- `calpuff-cli`
-- `requirements*.txt`
-- `pyproject.toml`
-- `AGENTS.md`
-- `plan.md`
-- `.gitignore`
-- `.gitattributes`
-
-Do not track in Git:
-
-- `project/` case workspace content
-- `.venv/` and other local virtual environments
-- large downloaded terrain / landuse datasets
-- native binaries such as `bin/linux-x86_64/*.x`
-
-If long-term test or migration evidence matters, record it in `docs/` rather than committing `project/` data.
-
-## Platform-specific binary layout
-
-Use this layout for native executables:
-
-```text
-bin/
-  linux-x86_64/
-    *.x
-
-  linux-arm64/
-    *.x
-
-  windows-x86_64/
-    *.exe
-```
-
-## Working rules
-
-- Prefer keeping existing GUI and workflow behavior stable.
-- Do not assume a native binary can be regenerated unless its source and build path have been identified.
-- Do not assume local case data in `project/` is reproducible or suitable for Git tracking.
-- When updating migration or environment behavior, keep docs and scripts aligned in the same round when practical.
+## Files and runtime
+- Preserve existing tracked `project/cases/**` frozen fixtures as a deliberate scientific migration exception. Do not commit new generated case outputs, raw downloaded station data, binaries, virtual environments, giant artifacts or unrestricted local `project/` workspaces.
+- `docs/migration/SOURCE_MANIFEST.json` records the **frozen pre-cleanup migration export**. Its original content can be checked on the historical commit, not assumed to describe the lean current `main` tree.
+- Previously archived 119 disabled workflows, one-off P6 scripts and obsolete deployment helpers were removed from current head on 2026-10-17. Restore historical code from pre-cleanup `2f1747434e4217a99b9b9c6fed4d413e90006bd5` via `git show` only if an explicitly authorized scientific task requires it. See `docs/maintenance/REPOSITORY_CLEANUP_20261017.md`.
+- Keep C++ work compatible with Ubuntu GCC/GFortran; packaging can target Linux AMD64/ARM64. Python minimum 3.11. `./bootstrap_venv.sh` sets up Python.
+- Portable software tests: `scripts/migration/validate_ubuntu.py --portable` and `scripts/migration/validate_python.py --portable`, with `--out` **outside** the checkout. Four active Actions workflows in `.github/workflows/` are manual or strictly validated-request only; no default expensive push/PR runs.
+- Preserve existing supported legacy PySide6 entrypoints unless expressly migrating them. Current core GUI windows are still separate; do not casually conflate legacy and G5 execution.
