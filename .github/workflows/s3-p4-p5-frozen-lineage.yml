@@ -55,6 +55,8 @@ jobs:
           assert report["p4_final_updat_reproduced_this_run"] is True
           assert report["p4_final_calmet_updat"]["status"]=="EXACT_BYTE_PARITY"
           assert report["p4_final_calmet_station_metadata"]["status"]=="EXACT_BYTE_PARITY"
+          assert report["p5_final_station_metadata_reproduced_this_run"] is True
+          assert report["p5_final_calmet_station_metadata"]["status"]=="EXACT_BYTE_PARITY"
           assert report["raw_igra_to_fsl_reproduced_this_run"] is False
           assert report["raw_isd_to_generic_reproduced_this_run"] is False
           assert report["native_p6_rerun_with_new_p4p5"] is False
