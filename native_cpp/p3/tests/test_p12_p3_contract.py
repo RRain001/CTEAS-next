@@ -8,6 +8,7 @@ import argparse
 import csv
 import json
 import math
+import re
 import subprocess
 import sys
 import tempfile
@@ -103,6 +104,32 @@ class P12ToP3Contract(unittest.TestCase):
         self.assertEqual(data["status"],"PASS_SCOPED")
         self.assertEqual(data["failures"],0)
         self.assertEqual(sum(v["compared_cells"] for v in data["writer_exact_formatted_value_gate"].values()),20000)
+
+    def test_p3_rejects_unapproved_origin_precision(self):
+        self.write_both()
+        source = self.control.read_text(encoding="utf-8")
+        for key, changed in (("XREFKM", "510.884643957"),
+                             ("YREFKM", "3531.268926968"),
+                             ("XREFKM", "510.886")):
+            modified, count = re.subn(
+                rf"(!\s*{key}\s*=\s*)([^!]*)(!)",
+                lambda match: match.group(1) + changed + " " + match.group(3),
+                source, count=1,
+            )
+            self.assertEqual(count, 1, key)
+            control = self.tmp / f"{key}-{changed}.inp"
+            control.write_text(modified, encoding="utf-8")
+            result_csv = self.tmp / f"{key}-{changed}.csv"
+            result_geo = self.tmp / f"{key}-{changed}.dat"
+            process = subprocess.run(
+                [str(P3), str(control), str(self.lu), str(self.terrel),
+                 str(result_csv), str(result_geo)],
+                capture_output=True, text=True, timeout=35,
+            )
+            self.assertNotEqual(process.returncode, 0)
+            self.assertIn("GRID_ORIGIN_", process.stderr)
+            self.assertFalse(result_csv.exists())
+            self.assertFalse(result_geo.exists())
 
     def corrupt(self,file,index,field,value):
         lines=file.read_text().splitlines()

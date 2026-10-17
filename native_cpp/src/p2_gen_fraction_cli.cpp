@@ -1,4 +1,5 @@
 #include "cteas/geo/landuse_fraction.hpp"
+#include "cteas/geo/grid_origin.hpp"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -8,9 +9,12 @@ using namespace cteas::reconstruction::geo;
 int main(int argc,char** argv) {
   if(argc!=5){std::cerr<<"usage: p2_gen_fraction GEN_FILE X0_KM Y0_KM OUT_CSV\n";return 2;}
   try {
+    // The fixed-grid P1/P2-to-P3 serializer uses the frozen 3-decimal
+    // kilometer origin. Reject sub-meter coordinates before any sampling.
+    require_frozen_hefei_origin_km(argv[2],argv[3]);
     auto input=read_generic_landuse(argv[1]);
-    auto r=compute_generic_utm50n(input,{std::stod(argv[2])*1000.,
-                                        std::stod(argv[3])*1000.,100.,50,50});
+    auto r=compute_generic_utm50n(input,{three_decimal_origin_km(argv[2])*1000.,
+                                        three_decimal_origin_km(argv[3])*1000.,100.,50,50});
     std::ofstream out(argv[4]);
     if(!out)throw std::runtime_error("cannot open P2 CSV output");
     out<<"i,j,samples";

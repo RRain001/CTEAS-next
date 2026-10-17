@@ -253,8 +253,13 @@ int main(int argc,char** argv){
         run({str(o.p6e),"merge-native-hours","--manifest",str(manifest),
              "--out",str(output)},o.work/"writer.log");
         require(output);
-        if(fs::file_size(output)<1000000U)
-            throw std::runtime_error("merged native 45-field file incomplete");
+        // Each hour contains 45 full 50x50 REAL4 fields (450,000 payload
+        // bytes); a fixed 1 MB lower bound wrongly rejected valid 1h
+        // checkpoints. Keep the established 143h check strictly bounded
+        // to the actual selected 50x50x9 source and do not change physics.
+        constexpr std::uintmax_t kHourPayloadMin=45ULL*50ULL*50ULL*sizeof(float);
+        if(fs::file_size(output)<kHourPayloadMin*static_cast<std::uintmax_t>(o.hours))
+            throw std::runtime_error("merged native 45-field hourly payload incomplete");
         // Optional selected-case P6F production handoff. Preserve the frozen
         // "native_causal_calmet.dat" output byte for byte for the G3/G4 and
         // Python-vs-C++ gates. Independently rebuild the OUTHD header and all

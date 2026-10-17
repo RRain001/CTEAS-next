@@ -18,3 +18,8 @@ add_executable(cteas_p1_cellind_tests ../tests/p1_cellind_tests.cpp)
 target_link_libraries(cteas_p1_cellind_tests PRIVATE cteas_p1_grid)
 enable_testing()
 add_test(NAME cteas_p1_cellind_scoped COMMAND cteas_p1_cellind_tests)
+
+# Enforce case-grid precision independently from data availability.
+add_executable(cteas_grid_origin_precision_tests ${CMAKE_CURRENT_SOURCE_DIR}/../tests/grid_origin_precision_tests.cpp)
+target_include_directories(cteas_grid_origin_precision_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+add_test(NAME cteas_grid_origin_three_decimal_km COMMAND cteas_grid_origin_precision_tests)

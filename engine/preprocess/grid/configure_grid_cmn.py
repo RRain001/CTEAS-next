@@ -218,6 +218,18 @@ def sync_grid_templates_from_source() -> None:
         shutil.copyfile(SOURCE_RESEARCH_TIME, RESEARCH_TIME)
 
 
+def canonical_grid_origin_km(value: float) -> float:
+    """Three decimal places in km (one-metre origin grid) are authoritative.
+
+    Conversion from geographical coordinates may retain full precision for
+    geodetic uses, but the *computational* P1/P2/P3/6 origin is quantized
+    exactly once before sampling, never only formatted for grid.cmn.
+    """
+    if not math.isfinite(value):
+        raise ValueError("GRID_ORIGIN_PRECISION: nonfinite UTM grid origin")
+    return float(f"{value:.3f}")
+
+
 def update_grid_file(
     zone: int,
     hemisphere: str,
@@ -228,6 +240,11 @@ def update_grid_file(
     ny: int,
     nz: int,
 ) -> None:
+    if (xref_km != canonical_grid_origin_km(xref_km)
+            or yref_km != canonical_grid_origin_km(yref_km)):
+        raise ValueError(
+            "GRID_ORIGIN_PRECISION: grid.cmn may only receive already-quantized "
+            "3-decimal-km origin coordinates")
     if not GRID_CMN.exists():
         raise FileNotFoundError(f"未找到文件: {GRID_CMN}")
 
@@ -300,8 +317,8 @@ def main() -> int:
     x_center_km = float(conv["x_km"])
     y_center_km = float(conv["y_km"])
 
-    xref_km = x_center_km - length_km / 2.0
-    yref_km = y_center_km - width_km / 2.0
+    xref_km = canonical_grid_origin_km(x_center_km - length_km / 2.0)
+    yref_km = canonical_grid_origin_km(y_center_km - width_km / 2.0)
     nx = math.ceil(length_km / dgrid_km)
     ny = math.ceil(width_km / dgrid_km)
 

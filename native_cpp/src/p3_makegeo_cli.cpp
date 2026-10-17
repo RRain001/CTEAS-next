@@ -1,3 +1,4 @@
+#include "cteas/geo/grid_origin.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -107,6 +108,9 @@ Setup parse_controls(const std::string& path) {
     require(numopt(c,"IUTMZN")==50,"only zone 50 supported");
     require(str_opt(c,"UTMHEM")=="N","only Northern UTM supported");
     require(str_opt(c,"DATUM")=="WGS-84","only WGS84 supported");
+    // No P3 header rounding that conceals a finer P1/P2 sample origin.
+    cteas::reconstruction::geo::require_frozen_hefei_origin_km(
+        str_opt(c,"XREFKM"),str_opt(c,"YREFKM"));
     c.nx=numopt(c,"NX");c.ny=numopt(c,"NY");
     require(c.nx==50&&c.ny==50&&std::fabs(floatopt(c,"DGRIDKM")-0.1f)<1e-6,
             "only Hefei 50x50 at 100m supported");
