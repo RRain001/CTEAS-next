@@ -49,11 +49,11 @@ class P12ToP3Contract(unittest.TestCase):
         self.csv1,self.csv2 = self.tmp/"p1.csv",self.tmp/"p2.csv"
         self.terrel,self.lu = self.tmp/"terrel.dat",self.tmp/"lu.dat"
         with self.csv1.open("w", newline="") as f:
-            w=csv.writer(f);w.writerow(("i","j","hits","elevation_m"))
+            w=csv.writer(f,lineterminator="\n");w.writerow(("i","j","hits","elevation_m"))
             for n,z in enumerate(self.heights):
                 w.writerow((n%50+1,n//50+1,1,f"{z:.9f}"))
         with self.csv2.open("w", newline="") as f:
-            w=csv.writer(f);w.writerow(("i","j","samples",*(f"cat{n}" for n in CATS)))
+            w=csv.writer(f,lineterminator="\n");w.writerow(("i","j","samples",*(f"cat{n}" for n in CATS)))
             for n,values in enumerate(self.fractions):
                 w.writerow((n%50+1,n//50+1,1,*(f"{x:.12f}" for x in values)))
 
