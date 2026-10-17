@@ -1,14 +1,17 @@
 name: S2D P6 native MET to standalone P7 real original same-MET science
 on:
-  push:
-    branches:
-      - codex/s2-2d-p7-native-executor
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - .github/workflows/s2d-p7-native-p6-integrated.yml
+      - native_cpp/modules/p6_calmet/**
+      - native_cpp/modules/p7_calpuff/src/**
+      - native_cpp/modules/p7_calpuff/include/**
+      - native_cpp/modules/p7_calpuff/CMakeLists.txt
 permissions:
   contents: read
 concurrency:
-  group: s2d-p7-native-p6-same-met-${{ github.ref }}
+  group: s2d-p7-native-p6-same-met-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
   independently-validated-p6-to-p7:
