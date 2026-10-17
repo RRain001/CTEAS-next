@@ -1451,6 +1451,44 @@ if(EXISTS "${P7G_LOCKED_CASE_MET}" AND EXISTS "${P7_HEFEI_POINT_INP}"
       "${P7G_LOCKED_CASE_MET}" "${P7_HEFEI_POINT_INP}" "${P7_HEFEI_REFERENCE_CON}")
 endif()
 
+# S2-2D: genuine standalone Hefei 2022 no-oracle P7 emitter.
+# Reuse the identical production physics libraries linked to the validated
+# frozen-C1 143h test-driver; the executable source does not accept or open
+# original `puff.con`/DGM. Scientific parity remains an INDEPENDENT test.
+# Runtime P6 admission integrity checks reuse the audited SHA-256 implementation.
+# Source SHA comes from the checked-out git commit at *configure time*,
+# not from the caller-supplied admission file.
+execute_process(COMMAND git rev-parse HEAD
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  OUTPUT_VARIABLE CTEAS_P7_SOURCE_COMMIT
+  OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE CTEAS_P7_SOURCE_RESULT)
+string(LENGTH "${CTEAS_P7_SOURCE_COMMIT}" CTEAS_P7_SOURCE_SHA_LENGTH)
+if(NOT CTEAS_P7_SOURCE_RESULT EQUAL 0 OR
+   NOT CTEAS_P7_SOURCE_SHA_LENGTH EQUAL 40 OR
+   NOT CTEAS_P7_SOURCE_COMMIT MATCHES "^[0-9a-f]+$")
+  message(FATAL_ERROR "P7 source commit missing: no unpinned production builds")
+endif()
+add_library(cteas_p7_native_p6_admission STATIC
+  src/sha256.cpp src/native_p6_admission.cpp)
+target_include_directories(cteas_p7_native_p6_admission PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(cteas_p7_native_hefei_2022 src/native_hefei_2022_main.cpp)
+target_compile_definitions(cteas_p7_native_hefei_2022 PRIVATE
+  P7_EXPECTED_SOURCE_SHA="${CTEAS_P7_SOURCE_COMMIT}")
+target_link_libraries(cteas_p7_native_hefei_2022 PRIVATE
+  cteas_p7_native_p6_admission)
+target_link_libraries(cteas_p7_native_hefei_2022 PRIVATE
+  cteas_p7_original_comp_rise_hourly cteas_p7_original_point_prfin
+  cteas_p7_calmet21 cteas_p7_control
+  cteas_p7_original_native_terrain cteas_p7_original_flat_calcpf
+  cteas_p7_receptors cteas_p7_dry_deposition)
+if(MSVC)
+  target_compile_options(cteas_p7_native_hefei_2022 PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p7_native_hefei_2022 PRIVATE
+    -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 # Production native COMP post-rise calm IDOPT=1 opt-in,
 # original TURBSET minima, transaction and unsupported branch rollback.
 add_executable(cteas_p7_original_comp_calm_integrated_tests

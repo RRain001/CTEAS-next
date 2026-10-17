@@ -1,0 +1,111 @@
+name: S2D P7 scoped 143h frozen-C1 PR science regression
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2d-p7-pr-science.yml
+      - native_cpp/modules/p7_calpuff/**
+      - docs/plans/STAGE2_2D_NATIVE_P7_EXECUTION_20261017.md
+      - docs/plans/STAGE2_2D_P7_PRODUCTION_EXECUTOR_ACCEPTANCE_20261017.md
+permissions:
+  contents: read
+jobs:
+  p7-scope-diagnostic:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout exact PR28 native P7 source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Verify source and pinned real C1 original MET, deck, concentration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          root="$RUNNER_TEMP/s2d"
+          mkdir -p "$root/audit" "$root/build"
+          echo "PR28_SOURCE_SHA=${{ github.event.pull_request.head.sha }}" > "$root/audit/source-sha.txt"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          echo "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  $case/run/met/met.dat" | sha256sum --check
+          echo "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10  $case/run/puff/puff.con" | sha256sum --check
+          echo "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc  $case/run/puff/puff.inp" | sha256sum --check
+          echo "e87b166346abe1c16136a790cda3acffdec6e29d9fb558ab2c9738ef426238b7  $case/geo/makegeo/makegeo.inp" | sha256sum --check
+          echo "INPUTS=FROZEN_ORIGINAL_C1_REFERENCE_NOT_FRESH_NATIVE_P6_MET" >> "$root/audit/source-sha.txt"
+      - name: Configure real native P7 without running GUI or G5
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p7_calpuff -B "$RUNNER_TEMP/s2d/build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CXX_FLAGS=-O2
+      - name: Compile real P7 native state and concentration executables
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/s2d/build" --parallel 2 --target \
+            cteas_p7_original_comp_neutral_tests \
+            cteas_p7_original_comp_hourly_tests \
+            cteas_p7_hourly_conc_tests \
+            cteas_p7_hefei_sixhour_native_h3_receptors_tests
+      - name: Native P7 independent stateful 1h 6h 143h and WROUT1 serialization CTests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --test-dir "$RUNNER_TEMP/s2d/build" --output-on-failure -R '^(cteas_p7_native_comp_pg_multipuff_(1|6|143)h|cteas_p7_native_comp_neutral_pg_(1|6|143)h_persistent|cteas_p7e_native_143h_hourly_data_writer_contract)$' \
+            2>&1 | tee "$RUNNER_TEMP/s2d/audit/stateful-ctest.txt"
+      - name: Actual native CALPUFF 6h C1 real H3 strict REAL4 original diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s2d"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          export CTEAS_P7_NATIVE_PUFF_CON="$root/native-sixhour-puff.con"
+          "$root/build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            "$case/run/met/met.dat" "$case/run/puff/puff.inp" "$case/run/puff/puff.con" \
+            > "$root/audit/p7-actual-sixhour.log" 2>"$root/audit/p7-actual-sixhour.stderr" || {
+              tail -n 100 "$root/audit/p7-actual-sixhour.log" || true
+              tail -n 60 "$root/audit/p7-actual-sixhour.stderr" || true
+              exit 1
+            }
+          grep 'P7_HEFEI_REAL_6H_COMPUTATION_AND_PRECISION_DIAGNOSTIC=PASS' "$root/audit/p7-actual-sixhour.log"
+          grep 'REAL_6H_SCIENTIFIC_PARITY=PASS' "$root/audit/p7-actual-sixhour.log"
+          test -s "$root/native-sixhour-puff.con"
+          sha256sum "$root/native-sixhour-puff.con" > "$root/audit/native-sixhour-puff-sha.txt"
+          echo "S2D_NATIVE_REAL_C1_SIXHOUR=PASS_SCOPED_ORIGINAL_INPUT"
+      - name: Actual stateful native CALPUFF 143h C1 real H3 output and per-value comparison
+        shell: bash
+        timeout-minutes: 105
+        env:
+          CTEAS_P7_INTEGRATION_C1: "1"
+          CTEAS_P7_PROBE_HOURS: "143"
+          CTEAS_P7_MAKEGEO_INP: project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s2d"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          export CTEAS_P7_NATIVE_PUFF_CON="$root/native-143hour-puff.con"
+          "$root/build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            "$case/run/met/met.dat" "$case/run/puff/puff.inp" "$case/run/puff/puff.con" \
+            > "$root/audit/p7-actual-143hour.log" 2>"$root/audit/p7-actual-143hour.stderr" || {
+              echo "P7_143H_REAL_SCIENCE=FAIL_CAPTURED"
+              tail -n 110 "$root/audit/p7-actual-143hour.log" || true
+              tail -n 100 "$root/audit/p7-actual-143hour.stderr" || true
+              exit 1
+            }
+          grep 'P7_C1_NATIVE_ON_PR53_MET' "$root/audit/p7-actual-143hour.log" | tail -n 1
+          grep 'REAL4_MATCHED=357500/357500' "$root/audit/p7-actual-143hour.log"
+          grep 'SAME_MET_VENDOR_PARITY=PASS' "$root/audit/p7-actual-143hour.log"
+          test -s "$root/native-143hour-puff.con"
+          sha256sum "$root/native-143hour-puff.con" > "$root/audit/native-143hour-puff-sha.txt"
+          echo "S2D_NATIVE_C1_143H_H3=PASS_SCOPED_FROZEN_SAME_MET_NOT_PRODUCTION_CLI"
+      - name: Upload audit text and SHA only (no frozen CON MET or vendor data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s2d-p7-first-real-c1-tests-metrics-only
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/s2d/audit/*.txt
+            ${{ runner.temp }}/s2d/audit/*.log
+            ${{ runner.temp }}/s2d/audit/*.stderr

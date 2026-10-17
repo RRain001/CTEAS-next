@@ -1,0 +1,99 @@
+name: S2D P7 source-pinned CLI build and negative-admission smoke
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2d-p7-native-cli.yml
+      - native_cpp/modules/p7_calpuff/**
+permissions:
+  contents: read
+jobs:
+  native-no-oracle-execution:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 105
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Configure and compile production P7 CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p7_calpuff -B "$RUNNER_TEMP/p7-build" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/p7-build" --parallel 2 \
+            --target cteas_p7_native_hefei_2022
+      - name: Build self-contained scoped MET, control and MAKEGEO staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/p7-native"
+          mkdir -p "$work/input" "$work/output" "$work/audit"
+          base=project/cases/hefei5km_2022_reference_case_20261011
+          cp "$base/run/met/met.dat" "$work/input/met.dat"
+          cp "$base/run/puff/puff.inp" "$work/input/puff.inp"
+          cp "$base/geo/makegeo/makegeo.inp" "$work/input/makegeo.inp"
+          echo "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  $work/input/met.dat" | sha256sum -c -
+          echo "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc  $work/input/puff.inp" | sha256sum -c -
+          echo "e87b166346abe1c16136a790cda3acffdec6e29d9fb558ab2c9738ef426238b7  $work/input/makegeo.inp" | sha256sum -c -
+          # Source reference files absent from this isolated execution path:
+          # without original CON/DGM available in the source checkout either,
+          # production CLI cannot accidentally consult those oracle binaries.
+          rm -f "$base/run/puff/puff.con"
+          find native_cpp/modules/p7_calpuff/reference -type f -name '*.bin' -delete
+          test ! -e "$base/run/puff/puff.con"
+          ! find native_cpp/modules/p7_calpuff/reference -type f -name '*.bin' | grep -q .
+          if find "$work" -iname '*.con' -o -iname '*dgm*' | grep -q .; then
+            echo "UNEXPECTED_ORIGINAL_ORACLE_IN_INPUT_STAGE";exit 1
+          fi
+          echo "ORIGINAL_CON_DGM_PHYSICALLY_ABSENT=PASS"
+      - name: Fail closed when admission is absent, invalid or original reference MET is offered
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/p7-native"
+          exe="$RUNNER_TEMP/p7-build/cteas_p7_native_hefei_2022"
+          python3 - "$work" "$exe" <<'PY'
+          import pathlib,subprocess,sys
+          root=pathlib.Path(sys.argv[1]); exe=sys.argv[2]
+          met=root/"input/met.dat"
+          ctl=root/"input/puff.inp"
+          geo=root/"input/makegeo.inp"
+          out=root/"output/should-not-be-created.con"
+          base=["--met",str(met),"--control",str(ctl),"--makegeo",str(geo),
+                "--output",str(out),"--hours","143",
+                "--p6-admission",str(root/"input/missing-admission.txt"),
+                "--p6-manifest",str(root/"input/missing-producer.json"),
+                "--p6-driver",str(root/"input/missing-driver")]
+          for key,value in (("--hours","144"),("--hours","143"),
+                            ("--met",str(root/"input/no-such-met.dat"))):
+              cmd=list(base); cmd[cmd.index(key)+1]=value
+              p=subprocess.run([exe,*cmd],capture_output=True,text=True,timeout=15)
+              assert p.returncode!=0 and not out.exists()
+              print("P7_REFERENCE_OR_INVALID_INPUT_FAIL_CLOSED=PASS",key,value)
+          existing=root/"output/existing.con"
+          existing.write_text("NO_CLOBBER")
+          cmd=list(base);cmd[cmd.index("--output")+1]=str(existing)
+          p=subprocess.run([exe,*cmd],capture_output=True,text=True,timeout=15)
+          assert p.returncode!=0 and existing.read_text()=="NO_CLOBBER"
+          print("P7_EXISTING_OUTPUT_NO_CLOBBER=PASS")
+          PY
+          echo "P7_PRODUCER_ADMISSION_IS_REQUIRED=PASS"
+      - name: Declare positive numerical science authority separate from frozen-reference smoke
+        shell: bash
+        run: |
+          echo "FROZEN_REFERENCE_MET_DOES_NOT_AUTHENTICATE_NATIVE_P6=EXPECTED"
+          echo "REAL_1_6_143H_NATIVE_P6_P7=SEE_FULL_INTEGRATED_PR_SCIENCE_WORKFLOW"
+      - name: Upload bounded scientific audit records, not binary CON or original model data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s2d-standalone-p7-no-oracle-audit
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/p7-native/audit/*.txt
+            ${{ runner.temp }}/p7-native/audit/*.log
+            ${{ runner.temp }}/p7-native/audit/*.err
+            ${{ runner.temp }}/p7-native/audit/*.json
