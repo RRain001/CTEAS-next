@@ -49,7 +49,8 @@ jobs:
           echo "P6_P7_NATIVE_SOURCE_SHA=$(git rev-parse HEAD)" > "$root/audit/source-sha.txt"
           echo "ORIGINAL_CALPUFF_REF=dfad99a78ed84d655e21411c9d25eb0d2583bf13" >> "$root/audit/source-sha.txt"
           echo "CANONICAL_UTM_KM=510.885,3531.269" >> "$root/audit/source-sha.txt"
-          echo "P4_P5=FROZEN_VALIDATED_NOT_NEWLY_REGENERATED" >> "$root/audit/source-sha.txt"
+          echo "P4_P5=FRESH_CPP_FSL_GENERIC_TO_FINAL_UP_SURF_STATIONS" >> "$root/audit/source-sha.txt"
+          echo "RAW_IGRA_ISD_TO_FSL_GENERIC=FROZEN_PREPARED_SOURCE" >> "$root/audit/source-sha.txt"
       - name: Compile actual 143h native P6 CALMET chain and standalone P7
         shell: bash
         run: |
@@ -85,6 +86,7 @@ jobs:
           test -s "$producers/met/upperair/final/up_58424.dat"
           test -s "$producers/met/upperair/final/stations.csv"
           test -s "$producers/run/smerge/surf.dat"
+          test -s "$producers/met/surface/final/stations.csv"
           mkdir -p "$root/cases"
           cp -a "$frozen" "$root/cases/$case_id"
           current="$root/cases/$case_id"
@@ -93,12 +95,15 @@ jobs:
           cp "$producers/met/upperair/final/stations.csv" \
              "$current/met/upperair/final/stations.csv"
           cp "$producers/run/smerge/surf.dat" "$current/met/surface/final/surf.dat"
-          # P5 station metadata remains a frozen separately checked preparer
-          # artifact in this stage; do not claim fresh source-table production.
+          cp "$producers/met/surface/final/stations.csv" "$current/met/surface/final/stations.csv"
+          # Both final station tables are freshly regenerated from their
+          # preserved source selection metadata, not copied from frozen finals.
           test "$(sha256sum "$producers/met/upperair/final/up_58424.dat" | cut -d' ' -f1)" = \
                "$(sha256sum "$current/met/upperair/final/up_58424.dat" | cut -d' ' -f1)"
           test "$(sha256sum "$producers/run/smerge/surf.dat" | cut -d' ' -f1)" = \
                "$(sha256sum "$current/met/surface/final/surf.dat" | cut -d' ' -f1)"
+          test "$(sha256sum "$producers/met/surface/final/stations.csv" | cut -d' ' -f1)" = \
+               "$(sha256sum "$current/met/surface/final/stations.csv" | cut -d' ' -f1)"
           cp "$producers/audit/lineage.json" "$root/audit/new-p4-p5-lineage.json"
           echo "S3_NEW_P4_P5_CPP_FINAL_BYTES_STAGED_FOR_NATIVE_P6=PASS" |
             tee -a "$root/audit/source-sha.txt"
