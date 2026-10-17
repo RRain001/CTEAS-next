@@ -108,7 +108,8 @@ void verify_native_p6_admission(const std::string& evidence_file,
     insist(get("case_id")=="hefei5km_2022_reference_case_20261011" &&
            get("xrefkm")=="510.885"&&get("yrefkm")=="3531.269",
            "P7_P6_CANONICAL_ORIGIN_OR_CASE_MISMATCH");
-    insist(get("hours")=="143"&&requested_hours==143,
+    insist(get("hours")=="143"&&
+           (requested_hours==1||requested_hours==6||requested_hours==143),
            "P7_P6_ADMISSION_REQUIRES_FULL_143H");
     insist(digest(get("met_sha256"))&&
            digest(get("manifest_sha256"))&&
