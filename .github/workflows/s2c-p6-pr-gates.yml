@@ -1,0 +1,56 @@
+name: S2C P6 native PR regression gates
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2c-p6-pr-gates.yml
+      - engine/preprocess/grid/**
+      - native_cpp/**
+      - AGENTS.md
+permissions:
+  contents: read
+
+jobs:
+  p6-grid-contracts:
+    name: P6 grid precision and contract regression
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile toolchain / contract dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cmake g++-12 libgdal-dev
+          python3 -m pip install --disable-pip-version-check PyYAML==6.0.3
+      - name: Negative and positive Python contract regressions
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v \
+            engine.preprocess.grid.tests.test_grid_origin_precision \
+            native_cpp.orchestration.tests.test_handoff_gate \
+            native_cpp.orchestration.tests.test_run_p6
+      - name: Build native P1 P2 P3 exactly from PR HEAD
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/p1 -B /tmp/p1-review -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build /tmp/p1-review --parallel 2
+          cmake -S native_cpp -B /tmp/p2-review -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build /tmp/p2-review --parallel 2
+          cmake -S native_cpp/p3 -B /tmp/p3-review -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build /tmp/p3-review --parallel 2
+      - name: Native P1 P2 P3 controls including three-decimal rejection
+        run: |
+          set -euo pipefail
+          ctest --test-dir /tmp/p1-review --output-on-failure
+          ctest --test-dir /tmp/p2-review --output-on-failure
+          ctest --test-dir /tmp/p3-review --output-on-failure
+      - name: Preserve code state without asserting science acceptance
+        run: |
+          set -euo pipefail
+          echo "REGRESSION=PASS_SOFTWARE_SCOPE_ONLY"
+          echo "HEAD=$GITHUB_SHA"
+          echo "SCIENTIFIC_143H=SEPARATE_SCIENCE_GATES_39034270535"
+          echo "STANDALONE_P7=NOT_IMPLEMENTED"
