@@ -1,5 +1,6 @@
-name: CTEAS-next SCIENCE C1 2022 143h same-head four-arm (manual)
-# Manual full science verification; never run on push or pull_request.
+name: CTEAS-next SCIENCE C1 143h (manual or agent-request)
+# Runs only on explicit manual dispatch or validated science-request branch push.
+# No main-branch push, PR or merge triggers.
 # The original CALMET MET.DAT is a SHA-pinned 2022 frozen reference; current
 # CTEAS-next P6 meteorology and both P7 solver arms are freshly executed.
 on:
@@ -80,7 +81,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$GITHUB_REF" = "refs/heads/main"
+          test "$(git rev-parse HEAD)" = "$SCIENCE_SOURCE_SHA"
           case="project/cases/hefei5km_2022_reference_case_20261011"
           met="$case/run/met/met.dat"
           con="$case/run/puff/puff.con"

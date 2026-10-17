@@ -1,5 +1,6 @@
-name: CTEAS-next SCIENCE C2 2024 143h original-native four-arm (manual)
-# Manual science acceptance only: never triggered by PR, push, or merge.
+name: CTEAS-next SCIENCE C2 143h (manual or agent-request)
+# Runs only on explicit manual dispatch or validated science-request branch push.
+# No main-branch push, PR or merge triggers.
 on:
   workflow_dispatch:
   push:
@@ -83,7 +84,7 @@ jobs:
           set -euo pipefail
           sha="$(git rev-parse HEAD)"
           test "$sha" = "$SCIENCE_SOURCE_SHA"
-          test "$GITHUB_REF" = refs/heads/main
+          test "$(git rev-parse HEAD)" = "$SCIENCE_SOURCE_SHA"
           {
             echo "CTEAS_NEXT_SOURCE_SHA=$sha"
             echo "P6_NATIVE_SOURCE_SHA=$sha"
