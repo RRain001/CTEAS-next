@@ -96,6 +96,14 @@ jobs:
             --reference "$frozen" --candidate "$native" \
             --out "$root/audit/native-P6-vs-frozen-MET-45fields.json"
           sha256sum "$native" "$frozen" > "$root/audit/native-original-met-sha256.txt"
+          # Trusted exact-source runner issues the integrity record ONLY after
+          # real P6 execution, native manifest and MET hash have been verified.
+          python3 native_cpp/modules/p7_calpuff/reference/build_native_p6_admission.py \
+            --met "$native" \
+            --manifest "$root/native-p6/native_cpp_hourly_manifest.json" \
+            --p6-driver "$root/p6d/cteas_p6_native_hourly_driver" \
+            --source-sha "$(git rev-parse HEAD)" \
+            --out "$root/audit/native-p6-to-p7-admission.txt"
           echo "S2D_FRESH_NATIVE_P6_143H_MET=PASS_SCIENCE" >> "$root/audit/source-sha.txt"
       - name: Independently rerun unmodified original CALPUFF on EXACT new native P6 MET
         shell: bash
@@ -116,6 +124,72 @@ jobs:
             }
           test -s "$root/results/C-original-calpuff.con"
           echo "S2D_SAME_MET_VENDOR_C=PASS" >> "$root/audit/source-sha.txt"
+      - name: Fail-closed negative provenance, MET tampering and changed puff controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7integration"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          mkdir -p "$root/native-p7-input"
+          cp "$case/run/puff/puff.inp" "$root/native-p7-input/puff.inp"
+          cp "$case/geo/makegeo/makegeo.inp" "$root/native-p7-input/makegeo.inp"
+          python3 - "$root" <<'PY'
+          import pathlib,subprocess,sys
+          root=pathlib.Path(sys.argv[1])
+          exe=root/"p7/cteas_p7_native_hefei_2022"
+          met=root/"native-p6/native_causal_independent_header_calmet.dat"
+          ctl=root/"native-p7-input/puff.inp"
+          geo=root/"native-p7-input/makegeo.inp"
+          evidence=root/"audit/native-p6-to-p7-admission.txt"
+          manifest=root/"native-p6/native_cpp_hourly_manifest.json"
+          driver=root/"p6d/cteas_p6_native_hourly_driver"
+          target=root/"results/rejected-native-p7.con"
+          base=["--met",str(met),"--control",str(ctl),
+                "--makegeo",str(geo),"--p6-admission",str(evidence),
+                "--p6-manifest",str(manifest),"--p6-driver",str(driver),
+                "--output",str(target),"--hours","143"]
+          variants={}
+          tampered_evidence=root/"audit/tampered-source-admission.txt"
+          tampered_evidence.write_text(evidence.read_text().replace(
+              "source_sha=","source_sha=0000000000000000000000000000000000000000\n#").replace(
+              "\n#","\n",1))
+          # Safer deterministic one-line tamper with the expected key.
+          lines=evidence.read_text().splitlines()
+          variants["wrong_head"]={"--p6-admission":root/"audit/wrong-head.txt"}
+          variants["wrong_head"]["--p6-admission"].write_text(
+              "\n".join("source_sha="+"0"*40 if v.startswith("source_sha=") else v for v in lines)+"\n")
+          variants["wrong_met_hash"]={"--p6-admission":root/"audit/wrong-met.txt"}
+          variants["wrong_met_hash"]["--p6-admission"].write_text(
+              "\n".join("met_sha256="+"0"*64 if v.startswith("met_sha256=") else v for v in lines)+"\n")
+          variants["wrong_driver_hash"]={"--p6-admission":root/"audit/wrong-driver.txt"}
+          variants["wrong_driver_hash"]["--p6-admission"].write_text(
+              "\n".join("p6_driver_sha256="+"0"*64 if v.startswith("p6_driver_sha256=") else v for v in lines)+"\n")
+          control_bad=root/"native-p7-input/tampered-control.inp"
+          control_bad.write_bytes(ctl.read_bytes().replace(b"IWET",b"IWET",1)+b"\n! COMMENT TAMPERED !\n")
+          variants["tampered_control"]={"--control":control_bad}
+          broken_met=root/"native-p7-input/tampered-met.dat"
+          b=bytearray(met.read_bytes())
+          b[-24]^=1
+          broken_met.write_bytes(b)
+          variants["tampered_met"]={"--met":broken_met}
+          duplicate=root/"audit/duplicate-record.txt"
+          duplicate.write_text(evidence.read_text()+"met_sha256="+"0"*64+"\n")
+          variants["duplicate_record"]={"--p6-admission":duplicate}
+          missing=root/"audit/does-not-exist.txt"
+          variants["missing_evidence"]={"--p6-admission":missing}
+          bad_manifest=root/"audit/tampered-manifest.json"
+          bad_manifest.write_bytes(manifest.read_bytes()+b" ")
+          variants["tampered_manifest"]={"--p6-manifest":bad_manifest}
+          for name,changes in variants.items():
+              cmd=list(base)
+              for key,value in changes.items():
+                  cmd[cmd.index(key)+1]=str(value)
+              result=subprocess.run([str(exe),*cmd],capture_output=True,text=True,timeout=30)
+              if result.returncode==0 or target.exists() or pathlib.Path(str(target)+".cteas-partial").exists():
+                  raise AssertionError(f"FAIL_CLOSED_NEGATIVE={name} unexpectedly accepted")
+              print("P7_P6_ADMISSION_NEGATIVE=PASS",name,result.stderr.strip()[:260])
+          print("P7_P6_ADMISSION_ALL_NEGATIVES=PASS count=",len(variants))
+          PY
       - name: Execute standalone native P7 143h with all original CON/DGM absent in compute case
         timeout-minutes: 65
         shell: bash
@@ -133,6 +207,9 @@ jobs:
             --met "$root/native-p6/native_causal_independent_header_calmet.dat" \
             --control "$root/native-p7-input/puff.inp" \
             --makegeo "$root/native-p7-input/makegeo.inp" \
+            --p6-admission "$root/audit/native-p6-to-p7-admission.txt" \
+            --p6-manifest "$root/native-p6/native_cpp_hourly_manifest.json" \
+            --p6-driver "$root/p6d/cteas_p6_native_hourly_driver" \
             --output "$root/results/D-new-native-met-standalone-native-p7.con" \
             --hours 143 > "$root/audit/native-P7-on-native-P6-143h.log" 2>"$root/audit/native-P7.stderr" || {
               tail -n 90 "$root/audit/native-P7-on-native-P6-143h.log";cat "$root/audit/native-P7.stderr";exit 1;
