@@ -149,8 +149,15 @@ inline Merge merge_utc_hourly(const std::vector<Station>& stations,const Window&
   record.by_station.reserve(stations.size());
   for(std::size_t i=0;i<stations.size();++i){
    const auto it=lookup[i].find(time);
-   if(it==lookup[i].end()){record.by_station.push_back(std::nullopt);++out.missing_hours_by_station[i];}
-   else record.by_station.push_back(it->second);
+   if(it==lookup[i].end()){
+    record.by_station.emplace_back();
+    ++out.missing_hours_by_station[i];
+   }else{
+    // Construct SurfaceRecord directly within its engaged optional.
+    // Avoid a temporary optional move that GCC 11 diagnoses as
+    // potentially reading an inactive optional payload under -Werror.
+    record.by_station.emplace_back(std::in_place,it->second);
+   }
   }
   out.hours.push_back(std::move(record));
  }
