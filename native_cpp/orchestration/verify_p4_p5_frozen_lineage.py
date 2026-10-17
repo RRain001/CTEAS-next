@@ -32,6 +32,7 @@ SOURCE_ROLE_FILES = {
     "p4_frozen_station_meta": "met/upperair/final/stations.csv",
     "p4_original_read62_deck": "run/read62/read62.inp",
     "p5_generic": SURF_INPUT,
+    "p5_selection_record_2022": "met/surface/isd_raw/station_selection_2022.json",
     "p5_frozen_smerge_deck": SURF_CONTROL,
     "p5_frozen_surfdat": SURF_OUTPUT,
     "p5_frozen_calmet_final_surfdat": "met/surface/final/surf.dat",
@@ -183,9 +184,33 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
     surf = work / SURF_OUTPUT
     p5_result = byte_identity(surf, checked_file(case, SURF_OUTPUT),
                               "P5 six-day SURF.DAT")
-    p5_final_result = byte_identity(surf,
-                                    checked_file(case, "met/surface/final/surf.dat"),
-                                    "P5 CALMET final SURF.DAT")
+    # Reuse the scoped P5 original-format Python station publisher from the
+    # real prepared selection manifest and SMERGE control, never copy the
+    # historical final stations.csv to the new calculation stage.
+    p5_selection = work / "met/surface/isd_raw/station_selection_2022.json"
+    p5_selection.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(checked_file(case, SOURCE_ROLE_FILES["p5_selection_record_2022"]),
+                    p5_selection)
+    p5_publisher = repo_root / "native_cpp/modules/p5_smerge/data_prep/run_smerge_and_monitor.py"
+    publisher_spec = importlib.util.spec_from_file_location("s3_scoped_p5_publisher",
+                                                             p5_publisher)
+    if publisher_spec is None or publisher_spec.loader is None:
+        raise ValueError("scoped P5 metadata publisher unavailable")
+    publisher = importlib.util.module_from_spec(publisher_spec)
+    publisher_spec.loader.exec_module(publisher)
+    publisher.CASE_ROOT = work
+    publisher.WORK_DIR = work / "run/smerge"
+    publisher.SURFACE_FINAL_DIR = work / "met/surface/final"
+    publisher.SURFACE_FINAL_DAT = publisher.SURFACE_FINAL_DIR / "surf.dat"
+    publisher.SURFACE_STATIONS_CSV = publisher.SURFACE_FINAL_DIR / "stations.csv"
+    published_surf, published_meta = publisher.publish_final_surface_outputs(
+        control, surf)
+    p5_final_result = byte_identity(
+        published_surf, checked_file(case, "met/surface/final/surf.dat"),
+        "P5 CALMET final SURF.DAT")
+    p5_final_meta_result = byte_identity(
+        published_meta, checked_file(case, "met/surface/final/stations.csv"),
+        "P5 CALMET final stations.csv")
     report = {
         "schema": "CTEAS_S3_FROZEN_INTERMEDIATE_NATIVE_WRITER_V1",
         "status": "PASS_SCOPED_P4_FINAL_AND_P5_CPP_WRITER_BYTE_IDENTITY",
@@ -203,7 +228,10 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
         "p4_final_merge_source_sha256": sha256(merge_path),
         "p5_intermediate_six_days": p5_result,
         "p5_final_six_days": p5_final_result,
+        "p5_final_calmet_station_metadata": p5_final_meta_result,
+        "p5_final_publisher_sha256": sha256(p5_publisher),
         "p4_final_updat_reproduced_this_run": True,
+        "p5_final_station_metadata_reproduced_this_run": True,
         "raw_igra_to_fsl_reproduced_this_run": False,
         "raw_isd_to_generic_reproduced_this_run": False,
         "native_p6_rerun_with_new_p4p5": False,
@@ -214,6 +242,7 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print("S3_P4_FULL_YEAR_NATIVE_READ62_BYTE_IDENTITY=PASS")
     print("S3_P4_FINAL_CALMET_UPDAT_AND_STATIONS_BYTE_IDENTITY=PASS")
+    print("S3_P5_FINAL_CALMET_STATIONS_BYTE_IDENTITY=PASS")
     print("S3_P5_SIX_DAY_NATIVE_SMERGE_BYTE_IDENTITY=PASS")
     print("S3_P4_P5_FINAL_STATUS=" + report["status"])
     return report
