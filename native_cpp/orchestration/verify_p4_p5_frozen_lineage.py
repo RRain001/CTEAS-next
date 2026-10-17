@@ -108,7 +108,7 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
         "IFSTN": "583210", "ASTZ": "UTC+0000",
     }
     for key, wanted in required_control.items():
-        found = re.findall(r"!\\s*" + key + r"\\s*=\\s*([^!]+)!", control,
+        found = re.findall(r"!\s*" + key + r"\s*=\s*([^!]+)!", control,
                            flags=re.IGNORECASE)
         if len(found) != 1 or found[0].strip() != wanted:
             raise ValueError(f"P5 unsupported control {key} ({found}); no option fallback")
