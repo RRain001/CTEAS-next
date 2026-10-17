@@ -1,8 +1,7 @@
 name: Ubuntu C++20 packaging and software regression
+# Resource-intensive portable C++20/Python regression: explicit dispatch only.
+# No automatic PR creation/update, push, or merge runs.
 on:
-  pull_request:
-  push:
-    branches: [main, codex/bootstrap-p1-p7]
   workflow_dispatch:
 permissions:
   contents: read

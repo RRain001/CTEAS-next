@@ -1,8 +1,7 @@
 name: Linux multi-architecture C++ portable container
+# Resource-intensive AMD64/ARM64 software verification: explicit dispatch only.
+# No automatic PR creation/update, push, or merge runs.
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       export_images:

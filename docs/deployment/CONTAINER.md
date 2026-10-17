@@ -8,6 +8,32 @@ runtime architecture and 11 executable entrypoints, verified non-root startup,
 and uploaded software regression evidence. This packaging change does not re-certify the
 original 143-hour scientific workflows and does not add any physical formulas.
 
+## CI trigger policy — manual only
+
+The Ubuntu software regression and Linux AMD64/ARM64 Docker verification
+workflows **run only via GitHub Actions → select workflow → Run workflow**.
+Creating or updating a PR, pushing to a feature branch and merging into
+`main` no longer start these suites automatically. Choose the exact branch
+and inspect the completed run's commit SHA; successful checks from another
+commit do not validate later changes.
+
+For a change involving C++, Python, CMake, Docker, data interfaces or testing
+scripts, manually run **both**:
+
+- [Ubuntu C++20 packaging and software regression](https://github.com/RRain001/CTEAS-next/actions/workflows/ubuntu-bootstrap.yml)
+- [Linux multi-architecture C++ portable container](https://github.com/RRain001/CTEAS-next/actions/workflows/docker-portable.yml)
+
+A PR may be reviewed and merged without green checks automatically appearing;
+that tradeoff is deliberate and reviewers must require manual evidence before
+claiming a new revision is software-validated. The `export_images` option is
+off by default and remains gated to manually dispatched runs on `main`, after
+both architecture-specific verification and runtime smoke tests.
+
+**Scope reminder:** these are portable software regression suites, not the full
+historical 143-hour C1/C2 CALMET/CALPUFF science comparison. Full scientific
+acceptance is `NOT_RUN` in this repository's migration and requires authorized
+external vendor assets and the frozen case rerun plan.
+
 ## Choose a build path
 
 Both targets share the **same `builder` stage**, which configures and compiles
