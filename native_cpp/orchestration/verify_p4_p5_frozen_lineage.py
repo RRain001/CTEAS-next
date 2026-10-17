@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path, PurePosixPath
 
 CASE_ID = "hefei5km_2022_reference_case_20261011"
@@ -122,6 +124,48 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
         work, work / "audit" / "p4-native-writer.log",
     )
     p4_result = byte_identity(up, checked_file(case, FSL_OUTPUT), "P4 full-year READ62")
+    # S3-B: Run the EXISTING scoped P4 final CALMET merge from the genuinely
+    # new C++ full-year UP.DAT. Imported merger globals are rebound only to a
+    # wholly isolated scratch root, not the repository's project/current.
+    scratch_year = work / FSL_OUTPUT
+    scratch_year.parent.mkdir(parents=True)
+    shutil.copyfile(up, scratch_year)
+    scratch_station = work / "met/upperair/2022/upperair_station_used_list.txt"
+    scratch_station.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(checked_file(case, "met/upperair/2022/upperair_station_used_list.txt"),
+                    scratch_station)
+    scratch_period = work / "grid/research_time"
+    scratch_period.parent.mkdir(parents=True)
+    shutil.copyfile(checked_file(case, "grid/research_time"), scratch_period)
+    repo_root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(repo_root))
+    merge_path = repo_root / "native_cpp/modules/p4_read62/data_prep/merge_final_upperair.py"
+    module_spec = importlib.util.spec_from_file_location("s3_scoped_p4_final_merge", merge_path)
+    if module_spec is None or module_spec.loader is None:
+        raise ValueError("P4 scoped merge source missing")
+    merge = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(merge)
+    merge.CASE_ROOT = work
+    merge.UPPERAIR_ROOT = work / "met/upperair"
+    merge.RESEARCH_TIME_FILE = scratch_period
+    merge.FINAL_STATIONS_CSV = work / "met/upperair/final/stations.csv"
+    begin, end = merge.parse_research_time(scratch_period)
+    station_files = merge.collect_station_files([2022])
+    station_meta = merge.collect_station_metadata([2022])
+    if set(station_files) != {"58424"} or set(station_meta) != {"58424"}:
+        raise ValueError("P4 final merge source station selection mismatch")
+    final_dir = work / "met/upperair/final"
+    final_up = merge.merge_station_files("58424", station_files["58424"],
+                                         begin, end, final_dir)
+    merge.write_station_metadata_csv(final_dir, station_meta)
+    p4_final_result = byte_identity(final_up,
+                                    checked_file(case, "met/upperair/final/up_58424.dat"),
+                                    "P4 actual CALMET UP.DAT")
+    p4_final_station_result = byte_identity(
+        merge.FINAL_STATIONS_CSV,
+        checked_file(case, "met/upperair/final/stations.csv"),
+        "P4 actual CALMET stations.csv",
+    )
     # Stage the P5 control and GENERIC in their original relative positions.
     # Do not run P5 against original case (would overwrite its frozen surf.dat).
     target_deck = work / SURF_CONTROL
@@ -144,7 +188,7 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
                                     "P5 CALMET final SURF.DAT")
     report = {
         "schema": "CTEAS_S3_FROZEN_INTERMEDIATE_NATIVE_WRITER_V1",
-        "status": "PASS_SCOPED_P4_P5_CPP_WRITER_BYTE_IDENTITY",
+        "status": "PASS_SCOPED_P4_FINAL_AND_P5_CPP_WRITER_BYTE_IDENTITY",
         "case": CASE_ID, "source_head": source_head,
         "p4_source_path": FSL, "p4_control": "JDAT2_IFMT1_PSTOP500_FULL_2022",
         "p5_source_path": SURF_INPUT,
@@ -154,18 +198,22 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
                                "p5_smerge": file_source(p5)},
         "input_roles": inputs,
         "p4_intermediate_full_year": p4_result,
+        "p4_final_calmet_updat": p4_final_result,
+        "p4_final_calmet_station_metadata": p4_final_station_result,
+        "p4_final_merge_source_sha256": sha256(merge_path),
         "p5_intermediate_six_days": p5_result,
         "p5_final_six_days": p5_final_result,
-        "p4_final_updat_reproduced_this_run": False,
+        "p4_final_updat_reproduced_this_run": True,
         "raw_igra_to_fsl_reproduced_this_run": False,
         "raw_isd_to_generic_reproduced_this_run": False,
         "native_p6_rerun_with_new_p4p5": False,
         "scientific_acceptance": "INTERMEDIATE_BYTES_ONLY_NOT_P6_SCIENCE",
-        "frozen_calmet_updat_only_hashed_not_recomputed": True,
+        "frozen_calmet_updat_only_hashed_not_recomputed": False,
     }
     (work / "audit" / "lineage.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print("S3_P4_FULL_YEAR_NATIVE_READ62_BYTE_IDENTITY=PASS")
+    print("S3_P4_FINAL_CALMET_UPDAT_AND_STATIONS_BYTE_IDENTITY=PASS")
     print("S3_P5_SIX_DAY_NATIVE_SMERGE_BYTE_IDENTITY=PASS")
     print("S3_P4_P5_FINAL_STATUS=" + report["status"])
     return report
