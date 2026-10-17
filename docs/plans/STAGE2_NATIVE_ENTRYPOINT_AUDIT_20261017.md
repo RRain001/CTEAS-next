@@ -2,7 +2,7 @@
 
 **类型：** 只读源码审计 / 生产接口设计。**并未运行新案例，也未更改任何物理程序。**
 **依据：** `main@1b0abf54960b032691f7c836fb641bb53ffefbd6`，主路线 [四阶段计划](CTEAS_NEXT_FOUR_STAGE_PLAN_20261017.md)，跟踪 [Issue #16](https://github.com/RRain001/CTEAS-next/issues/16)。
-**阶段门槛：** S1 PR #13 的 Ubuntu/Python/G5/Docker 回归尚未通过，2A 只允许设计和只读审计；不得修改/解除 `engine/gui_g5/pipeline.py` 的 fail-closed 限制。
+**本文基准时刻：** 此段是初始 S2-2A 审计的历史门槛。S1 后来已在 G5 暂缓的获批范围内通过（[Actions #39021059327](https://github.com/RRain001/CTEAS-next/actions/runs/39021059327)）；最新 S2-2B P1–P3 结果见本文第 7 节。未验收的 `engine/gui_g5/pipeline.py` 阶段继续 fail-closed。
 
 ## 1. 已存在的入口与真实产品性质
 
@@ -83,3 +83,22 @@ RunManifest:
 `S2_2A_ENTRYPOINT_AUDIT=COMPLETE_STATIC`；`S2_NATIVE_P1_P7_GENERAL_PIPELINE=BLOCKED`；
 `S1_PR13_SOFTWARE_REGRESSION=NOT_RUN`；`C1=C2=PASS_SCOPED`（仅原独立 143h 验收提交）。
 没有新的科学计算、生产运行或普适物理选项验收。
+
+## 7. S2-2B 后续实施与同源科学验收（2026-10-17）
+
+**结果：`S2_P1_P2_P3_NATIVE_CHAIN=PASS_SCOPED`，不是全场址/全选项 P1–P3 PASS，更不是 P1–P7 全流程验收。**
+
+- **实现：** [PR #23](https://github.com/RRain001/CTEAS-next/pull/23)，合并后 `main@b7245363108ee280f32decd0fde00e49f0b67da1`。独立 C++20 `native_cpp/p3/p12_native_dat_adapter.cpp` 将真实 C++ P1/P2 CSV 严格写出 `TERREL.DAT 2.0`（北→南地形）与 `LU.DAT 2.1`（南→北 38 类）供**未经修改的** P3 `cteas_p3_makegeo` 使用。缺测、行列错误、类别/比例损坏或覆盖原文件都会拒绝。P3 CMake 已注册独立 `cteas_p12_p3_scoped_file_contract` CTest；[格式门 #39024141606](https://github.com/RRain001/CTEAS-next/actions/runs/39024141606) `PASS_SOFTWARE`。
+- **实际原生 P2：** [Actions #39024361165](https://github.com/RRain001/CTEAS-next/actions/runs/39024361165) 从本仓库固定 `GENERIC.LANDUSE` 执行 C++ P2，比较 95,000 个原版展示值，**0 mismatch**；用该真正原生 P2 与冻结原版 P1 `TERREL.DAT` 执行 P3，20,000 个展示字段均通过（此步是明确的**混合输入验证**）。
+- **独立同源原版重跑：** [Actions #39025117223](https://github.com/RRain001/CTEAS-next/actions/runs/39025117223) `SUCCESS`；从 `RRain001/CTEAS@dfad99a78ed84d655e21411c9d25eb0d2583bf13` 在**临时 runner** 取原版 TERREL 7.0.0、CTGPROC 7.0.0、MAKEGEO 3.2 并实际重新运行，另用本仓库 `main@b7245363108ee280f32decd0fde00e49f0b67da1` 重新编译/执行 C++ P1、P2、P3，逐级采用**相同源数据**和经过 SHA256 校验的 `SRTM c4211914fce527d2ad41ecac1e668d7faa2904bbbfd9135868ee83ef0d32123f`、`GEN bd937d99fb13b49ac6185c080359bef050afe76fc63945ac53b7d676547d43dc`。全部物理选项维持 50×50@100m、UTM50N/WGS84、无雪单输入源的限定配置。
+
+| 独立比较 | 分母 | 实际结果 |
+| --- | ---: | --- |
+| P1 TERREL 已显示地形高度 | 2,500 | **0 mismatch**；严格未舍入 REAL4 均值审计 `PASS_SCOPED` |
+| P2 CTGPROC 已显示分类比例 | 95,000 | **0 mismatch**；原版/原生有效采样计数审计 `PASS` |
+| P3 MAKEGEO `GEO.DAT` 展示字段 | 20,000 | **0 mismatch**；`PASS_SCOPED` |
+| 原版对照头/输入 | 2,500 TERREL + 2,500×38 LU | 新生成原版兼容输入均可由未经修改的 P3 读取；格式/异常路径 CTest PASS |
+
+**重要基准区分：** 一次试验 [#39024659472](https://github.com/RRain001/CTEAS-next/actions/runs/39024659472) 把新原生 P1 与 2022 长期冻结目录下的另一份 `TERREL.DAT`（SHA256 `b35d48762e1e060dcf9236a6edd90f2fd8b8bd5a819f5ecd92cc94be03e9175e`）比较，发现 18 个高度显示值不同并在 P3 产生 36 个字段差异；该测试**不能**升级为 PASS，其数据来源/控制差异应另行追溯。与之相反，在**同源、重新执行原版**的门 `#39025117223` 中，原版 `TERREL.DAT` SHA256 `d74a5a1045ea4cf25e120099196a3962ab012aaebdf37354ec8264fad0e27678` 与新 C++ 算法对照没有超差。不得通过更换容差、改写原冻结文件或掩盖失败来混淆这两个独立基准。之前临时诊断的“32 m 未舍入最大误差”存在行索引错误，不作为有效统计值使用。
+
+**保留限制：** 新 writer 固定于已验收的合肥 50×50 配置，不是任意分辨率/投影/输入格式执行器；G5 未测试且未解锁；P4/P5→P6→P7 原生调度与多站/其他物理选项仍未完成。原版源码和 TIFF 仅在短命 CI 工作目录恢复，**没有**加入当前 Git、Docker 或公开发布文件；本次上传的只包含审计 JSON。Actions 二进制产物和源再现的长期保存另由 [Issue #18](https://github.com/RRain001/CTEAS-next/issues/18) 跟踪，摘要不等于原始数据归档。
