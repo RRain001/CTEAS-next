@@ -1,6 +1,6 @@
 # S2-2A1 native case contract — read-only
 
-This module implements **only** a bounded, JSON-producing `dry-run` contract for the frozen Hefei 2022 case. It is *not* a runner, general case planner or claim of numerical/scientific acceptance.
+The original **S2-2A1 `plan.py` component** implements only a bounded, JSON-producing `dry-run` contract for the frozen Hefei 2022 case. It is *not* an executor, general case planner or claim of numerical/scientific acceptance. The separate S2-2C experimental `run_p6.py` is described below; its presence does not change `plan.py` or imply science acceptance.
 
 ```bash
 python -m native_cpp.orchestration.plan --case-yaml project/cases/hefei5km_2022_reference_case_20261011/case.yaml
@@ -11,7 +11,7 @@ The CLI **only reads the YAML** and prints a JSON object with immutable source-Y
 
 Strictly accepted *schema profile for planning*: exact 2022 Hefei case identity, 50x50x9 @ 100 m, UTM50N WGS84, locked UTC dates/station/source and known dry-deposition-free wet/chemistry switches. Case file SHA is reported, not claimed as independent source provenance. No implicit assumption about a 143-hour execution is made from the inclusive 2022-01-01..2022-01-06 labels.
 
-This intentionally differs from `engine/gui_g5/pipeline.py` and neither imports nor modifies it. Existing C++/Fortran numerical kernels and P3 independent reference outputs remain unmodified. Next: build source-audited TERREL.DAT/LU.DAT writers and test their exact I/O contract before linking P3, then integrate P4/P5, P6/P7 under separately accepted stage permissions.
+This intentionally differs from `engine/gui_g5/pipeline.py` and neither imports nor modifies it. Existing C++/Fortran numerical kernels and P3 independent reference outputs remain unmodified. The P1/P2→P3 native bridge has since been accepted in its restricted same-source Hefei scope; P4/P5→P6 and P6→P7 production connections remain separately gated.
 
 ## S2-2C Draft — opted-in scoped P6 execution (experimental)
 
