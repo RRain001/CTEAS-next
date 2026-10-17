@@ -1,4 +1,5 @@
 #include "cteas/geo/terrain_grid.hpp"
+#include "cteas/geo/grid_origin.hpp"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -6,9 +7,12 @@
 int main(int argc,char** argv) {
   if(argc!=5) {std::cerr<<"usage: cteas_p1_terrain SRTM_TIF X0_KM Y0_KM OUTPUT_CSV\n";return 2;}
   try {
+    // No silent high-precision origin: the P1/P2/P3 case is defined by
+    // the historical three-decimal kilometer grid.cmn, not the crop center.
+    cteas::reconstruction::geo::require_frozen_hefei_origin_km(argv[2],argv[3]);
+    const auto x0=cteas::reconstruction::geo::three_decimal_origin_km(argv[2])*1000.0;
+    const auto y0=cteas::reconstruction::geo::three_decimal_origin_km(argv[3])*1000.0;
     const auto source=cteas::reconstruction::geo::read_srtm_geotiff(argv[1]);
-    const auto x0=std::stod(argv[2])*1000.0;
-    const auto y0=std::stod(argv[3])*1000.0;
     const auto r=cteas::reconstruction::geo::grid_geotiff_terrain_utm50n(
        source,{x0,y0,100.0,50,50});
     std::ofstream out(argv[4]);
