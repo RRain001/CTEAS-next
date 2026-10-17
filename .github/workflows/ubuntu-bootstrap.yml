@@ -29,8 +29,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y g++-12 gfortran-11 libgdal-dev
           python -m pip install numpy==2.4.4 pandas==3.0.2 pyyaml==6.0.3
-      - name: Verify frozen tracked-file snapshot
-        run: python scripts/migration/verify_snapshot.py
+      # Frozen 2026-10-16 source provenance is audited separately at its pinned commit.
+      # Do not gate future pull requests on historic source-file SHA256 values.
       - name: Build and run upstream software regressions (no external assets; not full 143h acceptance)
         env:
           CXX: /usr/bin/g++-12

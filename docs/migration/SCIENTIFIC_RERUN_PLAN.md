@@ -25,6 +25,42 @@ G5 still rejects generic `met` (P6), `puff` (P7), and `all`, and retains its
 existing restrictions on generic preprocessing/upper-air orchestration. There
 is no acceptance for arbitrary grids, sites, station sets or continuous years.
 
+## Option coverage and input readiness — selected reconstruction only
+
+**Classification:** `ACCEPTED_SCOPED` is limited to the exact frozen scientific
+deck(s) already evaluated in upstream CTEAS. `IMPLEMENTED_PARTIAL` means some
+code and scoped tests exist but general execution is not validated.
+`UNACCEPTED` covers both branches not implemented and branches whose physical
+equivalence remains unproven; it must **not** be interpreted as a definitive
+source-level inventory of absent routines. Nothing here upgrades the migrated
+repository's scientific status.
+
+| Component | Scope with prior evidence (source CTEAS) | Unaccepted generalization / present boundary |
+|---|---|---|
+| P1–P3 preprocessors | Scoped 50×50, 100 m terrain/GEN/MAKEGEO reference comparisons; no-snow P3 case | Other algorithms, domains, terrain/land-use configurations, missing-data and geospatial choices are not automatically covered. |
+| P4 READ62 | Selected sounding format and reference-year original-vs-native tests | Other input formats, arbitrary station/year scheduling and G5 generic publication are not accepted. |
+| P5 SMERGE | Selected data-preparation and SURF input contracts / source-derived tests | Not a complete all-option original SMERGE replacement or a general validated precipitation adapter. |
+| P6 CALMET | Reference-case 143h single-station C1 and selected 2024 2-surface/2-upper station C2 original-vs-native comparisons; enabled terrain/diagnostic wind/thermal branches are case-specific | General station/layout/time combinations, CALMET optional wind/terrain/overwater/prognostic configurations, all option settings, and verified precipitation fields are **UNACCEPTED**. |
+| P7 CALPUFF | Selected continuous single-source Hefei 2022 143h, `METFM=1, MCTADJ=2, MDISP=3, MDRY=1, MTRANS=1, MWET=0`, with original CALPUFF comparison; selected C2 meteorology/solver arms | No all-option equivalence. Other source/dispersion/terrain/plume-rise/deposition settings, multisource, and arbitrary receptor configurations require separate validation. `MWET>0` is **UNACCEPTED**; the accepted reference is dry-only. |
+| G5 GUI pipeline | GUI boot/isolated native dispatch and software-stage contracts | General P6 `met`, P7 `puff`, and `all` **fail closed**; preprocessing/upper-air generic execution also remains restricted. |
+
+**Precipitation/wet-removal blocker:** The selected upstream CALMET case records
+`NPSTA=0`, precipitation observations/code fields do not provide a qualified
+hourly precipitation series, and the accepted CALPUFF deck sets `MWET=0`.
+There is currently **no validated project-specific precipitation-station input
+template/format and parser→CALMET→CALPUFF provenance chain** for wet
+deposition. A formal wet-scavenging work package must first pin the original
+CALMET/CALPUFF input contract (station/header/record/time-zone/time-step units,
+missing codes and spatial/temporal alignment), construct authentic rain/no-rain
+test fixtures, and compare `MWET>0` reference-vs-native physics, inventories
+and deposition fields. Never fabricate rainfall or infer wet-deposition support
+from unrelated P6F MET.DAT binary-reader tests.
+
+Source scope: `docs/reconstruction_cpp/P7_PHASE_STATUS_20261015.md`,
+`P7_C1_C2_CALMET_TO_CALPUFF_INTEGRATION_20261015.md`,
+`P1_P7_INTEGRATION_REHEARSAL_20261016.md` and prior P6 audit records.
+Full migrated C1/C2 143h reruns remain **NOT_RUN** here.
+
 ## Full C1 rerun — NOT_RUN
 
 1. Restore and hash-check the local vendor package and CGIAR crop using

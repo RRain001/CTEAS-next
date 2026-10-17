@@ -1,7 +1,7 @@
 # Third-party assets and local scientific dependencies
 
-Checked on 2026-10-16 (Asia/Shanghai). This is a private research migration, not
-an assertion of public redistribution rights. The owner clarified that rights
+Checked on 2026-10-16 (Asia/Shanghai). This repository is publicly accessible as of 2026-10-17. This migration is not
+an assertion of public redistribution rights for third-party materials. The owner clarified that rights
 in the self-developed P1–P7 C++20 implementation do **not** establish rights to
 redistribute original CALMET/CALPUFF Fortran or CGIAR data. Documentary redistribution authorization has not been established. No third-party license
 is granted by this repository.

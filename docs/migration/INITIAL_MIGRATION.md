@@ -119,6 +119,18 @@ self-hosted runner assumptions, artifact-fetching experiments and historical
 forensic jobs in the new repository. The only original composite helper is
 retained byte-for-byte but is not needed by the new explicit toolchain workflow.
 
+**Post-review R1 CI distinction (2026-10-17):** The initial source snapshot
+is a historical, immutable provenance record, not the baseline for every future
+pull request's source contents. `scripts/migration/verify_snapshot.py` is
+retained unchanged and should be run manually against pinned migration commit
+`699b09e7ff554218d0b184fbc138b367052a94da` (for example in a detached
+read-only worktree) when verifying the original migration. It is deliberately
+**not** invoked by the general pull-request CI: legitimate future native/Python
+source changes must be checked by builds and runnable tests, not automatically
+rejected solely for differing from the 2026-10-16 source hashes. The historical
+tree/hash and test evidence remains unchanged. This is an execution-policy
+change, not a physical source or numerical-tolerance change.
+
 One new read-only `ubuntu-bootstrap.yml` workflow builds all nine CMake projects,
 runs the explicit external-free portable CTest/Python selections, starts G5
 with offscreen Qt, and uploads command/result/selection logs. It does not restore
@@ -184,7 +196,11 @@ codes, initial failures and reruns retained in [evidence/](evidence/).
 | p7 | 0 | 0 | 109 PASS | [log](evidence/p7-local/p7-ctest.log.txt) |
 
 **212 distinct local CTests passed after targeted retries**, plus all **74**
-local Python tests. This is not one uninterrupted green CTest invocation: P6F's
+local Python tests **discovered under precisely three configured directories**:
+`native_cpp/modules/p4_read62/data_prep/tests`,
+`native_cpp/modules/p5_smerge/data_prep/tests` and `engine/gui_g5/tests`.
+The 74 count does not assert repository-wide Python test discovery, coverage
+of archived/historical workflows, or scientific end-to-end acceptance. This is not one uninterrupted green CTest invocation: P6F's
 first pass returned 8 with three 180-second timeouts. Each of those exact test
 commands was then rerun successfully with the same Debug binaries, data and
 assertions and a 600-second limit. The sequential driver was stopped after
