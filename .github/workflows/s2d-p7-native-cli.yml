@@ -1,0 +1,139 @@
+name: S2D native-only P7 CLI executable smoke
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2d-p7-native-cli.yml
+      - native_cpp/modules/p7_calpuff/**
+permissions:
+  contents: read
+jobs:
+  native-no-oracle-execution:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 105
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Configure and compile production P7 CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p7_calpuff -B "$RUNNER_TEMP/p7-build" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/p7-build" --parallel 2 \
+            --target cteas_p7_native_hefei_2022
+      - name: Build self-contained scoped MET, control and MAKEGEO staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/p7-native"
+          mkdir -p "$work/input" "$work/output" "$work/audit"
+          base=project/cases/hefei5km_2022_reference_case_20261011
+          cp "$base/run/met/met.dat" "$work/input/met.dat"
+          cp "$base/run/puff/puff.inp" "$work/input/puff.inp"
+          cp "$base/geo/makegeo/makegeo.inp" "$work/input/makegeo.inp"
+          echo "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  $work/input/met.dat" | sha256sum -c -
+          echo "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc  $work/input/puff.inp" | sha256sum -c -
+          echo "e87b166346abe1c16136a790cda3acffdec6e29d9fb558ab2c9738ef426238b7  $work/input/makegeo.inp" | sha256sum -c -
+          # Source reference files absent from this isolated execution path:
+          # without original CON/DGM available in the source checkout either,
+          # production CLI cannot accidentally consult those oracle binaries.
+          rm -f "$base/run/puff/puff.con"
+          find native_cpp/modules/p7_calpuff/reference -type f -name '*.bin' -delete
+          test ! -e "$base/run/puff/puff.con"
+          ! find native_cpp/modules/p7_calpuff/reference -type f -name '*.bin' | grep -q .
+          if find "$work" -iname '*.con' -o -iname '*dgm*' | grep -q .; then
+            echo "UNEXPECTED_ORIGINAL_ORACLE_IN_INPUT_STAGE";exit 1
+          fi
+          echo "ORIGINAL_CON_DGM_PHYSICALLY_ABSENT=PASS"
+      - name: Deny bad CLI geometry/hours and nonexistent input
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/p7-native"
+          exe="$RUNNER_TEMP/p7-build/cteas_p7_native_hefei_2022"
+          control="$work/input/puff.inp"
+          geo="$work/input/makegeo.inp"
+          met="$work/input/met.dat"
+          test ! -e "$work/output/bad.con"
+          if "$exe" --met "$met" --control "$control" --makegeo "$geo" --output "$work/output/bad.con" --hours 144 > "$work/audit/reject-144.stdout" 2>&1; then
+            echo "INCORRECTLY_ACCEPTED_144H";exit 1
+          fi
+          test ! -e "$work/output/bad.con"
+          if "$exe" --met "$work/input/not-present.dat" --control "$control" --makegeo "$geo" --output "$work/output/bad.con" --hours 1 > "$work/audit/reject-missing.stdout" 2>&1; then
+            echo "INCORRECTLY_ACCEPTED_MISSING_MET";exit 1
+          fi
+          test ! -e "$work/output/bad.con"
+          echo "P7_NATIVE_INVALID_INPUT_NEGATIVES=PASS"
+      - name: Real no-oracle P7 1h 6h and 143h H3 production executes
+        timeout-minutes: 75
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/p7-native"
+          exe="$RUNNER_TEMP/p7-build/cteas_p7_native_hefei_2022"
+          for hours in 1 6 143; do
+            "$exe" --met "$work/input/met.dat" --control "$work/input/puff.inp" \
+              --makegeo "$work/input/makegeo.inp" \
+              --output "$work/output/native-${hours}h.con" --hours "$hours" \
+              > "$work/audit/native-${hours}h.log" 2> "$work/audit/native-${hours}h.err" || {
+                echo "P7_NATIVE_NO_ORACLE_EXECUTION_FAIL_HOURS=$hours"
+                tail -n 60 "$work/audit/native-${hours}h.log" || true
+                cat "$work/audit/native-${hours}h.err" || true
+                exit 1
+              }
+            grep "P7_NATIVE_NO_ORIGINAL_CON_DGM=PASS HOURS=$hours" "$work/audit/native-${hours}h.log"
+            grep "H3_VALUES=$((hours*2500))" "$work/audit/native-${hours}h.log"
+            test -s "$work/output/native-${hours}h.con"
+            sha256sum "$work/output/native-${hours}h.con" >> "$work/audit/sha256.txt"
+          done
+          echo "P7_NATIVE_1_6_143H_NO_ORIGINAL_CON_DGM=PASS"
+      - name: Verify true product timestamps and 143h H3 with independent file parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,struct,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'p7-native'
+          results={}
+          for hours in (1,6,143):
+              filename=root/'output'/f'native-{hours}h.con'
+              raw=filename.read_bytes()
+              i=0
+              frames=[]
+              while i<len(raw):
+                  if i+8>len(raw):raise ValueError("truncated Fortran framing")
+                  n=struct.unpack_from('<I',raw,i)[0]
+                  if i+8+n>len(raw):raise ValueError("payload beyond EOF")
+                  if struct.unpack_from('<I',raw,i+4+n)[0]!=n:
+                      raise ValueError("bad Fortran record end marker")
+                  frames.append(raw[i+4:i+4+n])
+                  i+=n+8
+              assert len(frames)==6+3*hours,(hours,len(frames))
+              fields=[v for v in frames if len(v)==15+4*2500 and v[:3]==b'H-3']
+              assert len(fields)==hours,(hours,len(fields))
+              total_positive=0
+              for field in fields:
+                  vals=struct.unpack_from('<2500f',field,15)
+                  total_positive+=sum(v>0 for v in vals)
+              assert total_positive>0
+              results[str(hours)]={'records':len(frames),'h3_fields':len(fields),
+                                   'positive_values':total_positive,'output_bytes':len(raw)}
+          (root/'audit'/'p7-native-output-physical-fields.json').write_text(json.dumps(results,indent=2)+'\n')
+          print("P7_NATIVE_WROUT1_INDEPENDENT_143H=PASS",results)
+          PY
+      - name: Upload bounded scientific audit records, not binary CON or original model data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s2d-standalone-p7-no-oracle-audit
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/p7-native/audit/*.txt
+            ${{ runner.temp }}/p7-native/audit/*.log
+            ${{ runner.temp }}/p7-native/audit/*.err
+            ${{ runner.temp }}/p7-native/audit/*.json
