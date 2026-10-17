@@ -1,0 +1,128 @@
+{
+  "status": "PASS_SCOPED",
+  "model": "Original MAKEGEO v3.2 L110401 no-snow 100m Hefei",
+  "original_geo_sha256": "d1b8c2a079fcf6dd2f4f353f6fb4b115d34066719c7d384dbcf58dae0089c998",
+  "cpp_csv_sha256": "6d4feb982ce0ae6114681e56b7cdf258f58bdd533ad3e1ff500902278b6295cf",
+  "grid": "50x50 @ 100m UTM 50N WGS84",
+  "float_field_count": 17500,
+  "category_field_count": 2500,
+  "failures": 0,
+  "metrics": {
+    "category": {
+      "cells": 2500,
+      "max_abs_error": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "predeclared_tolerance": 0.0,
+      "bad_cells": 0,
+      "bad_first_20": []
+    },
+    "elevation_m": {
+      "cells": 2500,
+      "max_abs_error": 7.629999991820569e-07,
+      "mae": 1.068199994023189e-08,
+      "rmse": 9.027937698496738e-08,
+      "predeclared_tolerance": 0.0050001,
+      "bad_cells": 0,
+      "bad_first_20": []
+    },
+    "z0_m": {
+      "cells": 2500,
+      "max_abs_error": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "predeclared_tolerance": 5.001e-05,
+      "bad_cells": 0,
+      "bad_first_20": []
+    },
+    "albedo": {
+      "cells": 2500,
+      "max_abs_error": 5.999999996841865e-09,
+      "mae": 5.999999996841865e-09,
+      "rmse": 5.9999999968419054e-09,
+      "predeclared_tolerance": 0.0050001,
+      "bad_cells": 0,
+      "bad_first_20": []
+    },
+    "bowen": {
+      "cells": 2500,
+      "max_abs_error": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "predeclared_tolerance": 0.0050001,
+      "bad_cells": 0,
+      "bad_first_20": []
+    },
+    "soil_heat": {
+      "cells": 2500,
+      "max_abs_error": 5.999999996841865e-09,
+      "mae": 5.999999996841865e-09,
+      "rmse": 5.9999999968419054e-09,
+      "predeclared_tolerance": 0.0050001,
+      "bad_cells": 0,
+      "bad_first_20": []
+    },
+    "anthropogenic_heat": {
+      "cells": 2500,
+      "max_abs_error": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "predeclared_tolerance": 0.0050001,
+      "bad_cells": 0,
+      "bad_first_20": []
+    },
+    "lai": {
+      "cells": 2500,
+      "max_abs_error": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "predeclared_tolerance": 0.0050001,
+      "bad_cells": 0,
+      "bad_first_20": []
+    }
+  },
+  "cpp_geo_sha256": "771c7b502087873ada3bad75e798280876d32d3665dc308f975fe4fdc856ad1d",
+  "writer_exact_formatted_value_gate": {
+    "category": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0
+    },
+    "elevation_m": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0.0
+    },
+    "z0_m": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0.0
+    },
+    "albedo": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0.0
+    },
+    "bowen": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0.0
+    },
+    "soil_heat": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0.0
+    },
+    "anthropogenic_heat": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0.0
+    },
+    "lai": {
+      "compared_cells": 2500,
+      "displayed_value_mismatch_count": 0,
+      "max_abs_error": 0.0
+    }
+  },
+  "limits": "Only original input LU.DAT + TERREL.DAT; integrated modern upstream not verified"
+}

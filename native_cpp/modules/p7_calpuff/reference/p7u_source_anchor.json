@@ -1,0 +1,123 @@
+{
+  "gate": "P7U_ADVECTION_STEP_SOURCE_LOCATION",
+  "vendor_source": "calpuff.for",
+  "vendor_source_sha256": "da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568",
+  "located_by": "routine-header scan plus content anchors confined to the enclosing unit",
+  "units": {
+    "advwnd": {
+      "first_line": 2438,
+      "last_line": 2538,
+      "lines": 101,
+      "sha256": "2130c73fd7f1acf542d83b4d74aabe62e813c213444abb60459764eb3c598487",
+      "calls": [
+        "zfind"
+      ]
+    },
+    "advect": {
+      "first_line": 2540,
+      "last_line": 2765,
+      "lines": 226,
+      "sha256": "58ffad50fdb81a40909b167a9ea20ed799fc95e0f8824066592932fbe5d8a56d",
+      "calls": [
+        "advwnd",
+        "powlaw",
+        "xtprf"
+      ]
+    },
+    "puffdz": {
+      "first_line": 2882,
+      "last_line": 3005,
+      "lines": 124,
+      "sha256": "90e9530b0554b0f3fa53e097221684ab1c23bdd126dcbb994fe2bd62c6f89a51",
+      "calls": []
+    },
+    "zfind": {
+      "first_line": 18381,
+      "last_line": 18419,
+      "lines": 39,
+      "sha256": "b4002b55ce56003085ffd40f6617bd2eb0fe0b7cbdaf6f28fd7021883206151e",
+      "calls": []
+    },
+    "powlaw": {
+      "first_line": 33463,
+      "last_line": 33516,
+      "lines": 54,
+      "sha256": "9f0c2eaf7c03444d11d3fea7cd2d1d0b24156261901eba73cfb40b99a114a3c4",
+      "calls": []
+    },
+    "xtprf": {
+      "first_line": 33192,
+      "last_line": 33461,
+      "lines": 270,
+      "sha256": "576f4c067c28f93d20a0e1d5d0a277c204c45f3284782bcde63e6c7cb5ac9f6b",
+      "calls": [
+        "c"
+      ]
+    }
+  },
+  "inline": {
+    "comp_step_start": {
+      "enclosing_unit": "comp",
+      "first_line": 10465,
+      "last_line": 10473,
+      "lines": 9,
+      "sha256": "3dc832ec8acd86bd7c071da7b1eecd4d173b5c201b0123acaf85059f7af83dc9",
+      "statements": [
+        "xold=xpb(ii)",
+        "yold=ypb(ii)",
+        "zold=zpb(ii)",
+        "else",
+        "xold=0.5*(xpb(ii)+xpe(ii))",
+        "yold=0.5*(ypb(ii)+ype(ii))",
+        "zold=0.5*(zpb(ii)+zpe(ii))",
+        "endif"
+      ]
+    },
+    "comp_step_wind": {
+      "enclosing_unit": "comp",
+      "first_line": 10494,
+      "last_line": 10519,
+      "lines": 26,
+      "sha256": "f443a9b052fac7362b69f459089586b4197f4aee2303c61409745a26e1c45af0",
+      "statements": [
+        "&               ztop,zbot)",
+        "&               zbot,ztop,uadv,vadv)",
+        "ws=SQRT(uadv**2+vadv**2)",
+        "if((MOD(icode,2).EQ.1).AND.",
+        "&      (xtotb(ii).LT.xfinal(ii))) then",
+        "if(metfm.EQ.1 .OR. metfm.EQ.4 .OR. metfm.EQ.5) then",
+        "ipnum=ii",
+        "zfrise=zfinal(ii)-(ht0(ii)-stipdw(ii))",
+        "xfrise=xfinal(ii)",
+        "xshift=xshift0(ii)",
+        "dzb=ztop-htmet",
+        "&                       el,dpbl,istab,tsamp,uadv,vadv,ws)",
+        "endif",
+        "endif"
+      ]
+    }
+  },
+  "chain": [
+    "PUFFDZ",
+    "ADVECT",
+    "ADVWND",
+    "ZFIND"
+  ],
+  "off_path": [
+    "POWLAW (METFM 2/3)",
+    "XTPRF (METFM 4/5)",
+    "RISEWIND (rise-wind weighting)"
+  ],
+  "ported": {},
+  "not_ported": [
+    "advect",
+    "advwnd",
+    "puffdz",
+    "zfind",
+    "powlaw",
+    "xtprf",
+    "the inline step integration of COMP"
+  ],
+  "note": "The advective wind (ADVECT for METFM=1 -> ADVWND -> ZFIND) and the puff's vertical extent (PUFFDZ) are located and pinned; porting them is the next round's entry point, and the ledger records the exact instrumentation request for the inline step integration.",
+  "not_modified": true
+}

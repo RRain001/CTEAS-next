@@ -1,0 +1,27 @@
+COMMAND: ["ctest", "--test-dir", "/tmp/cteas-next-clean-validation/build-p7", "--output-on-failure", "--timeout", "180", "--no-tests=error", "-R", "^(cteas_p7_control_contract|cteas_p7_fortran_record_contract|cteas_p7_calmet21_typed_field_contract|cteas_p7c_release_advection_inventory_contract|cteas_p7d_dispersion_contract|cteas_p7_calm_idopt1_native_subset|cteas_p7f_dry_deposition_contract|cteas_p7h_vertical_coupling_contract|cteas_p7i_ctsg_support_contract|cteas_p7e_receptor_sampling_conc_contract)$"]
+Internal ctest changing into directory: /tmp/cteas-next-clean-validation/build-p7
+Test project /tmp/cteas-next-clean-validation/build-p7
+      Start  1: cteas_p7_control_contract
+ 1/10 Test  #1: cteas_p7_control_contract ........................   Passed    0.02 sec
+      Start  2: cteas_p7_fortran_record_contract
+ 2/10 Test  #2: cteas_p7_fortran_record_contract .................   Passed    0.01 sec
+      Start  3: cteas_p7_calmet21_typed_field_contract
+ 3/10 Test  #3: cteas_p7_calmet21_typed_field_contract ...........   Passed    0.01 sec
+      Start  8: cteas_p7c_release_advection_inventory_contract
+ 4/10 Test  #8: cteas_p7c_release_advection_inventory_contract ...   Passed    0.02 sec
+      Start 11: cteas_p7d_dispersion_contract
+ 5/10 Test #11: cteas_p7d_dispersion_contract ....................   Passed    0.03 sec
+      Start 13: cteas_p7_calm_idopt1_native_subset
+ 6/10 Test #13: cteas_p7_calm_idopt1_native_subset ...............   Passed    0.01 sec
+      Start 16: cteas_p7f_dry_deposition_contract
+ 7/10 Test #16: cteas_p7f_dry_deposition_contract ................   Passed    0.04 sec
+      Start 21: cteas_p7h_vertical_coupling_contract
+ 8/10 Test #21: cteas_p7h_vertical_coupling_contract .............   Passed    0.01 sec
+      Start 22: cteas_p7i_ctsg_support_contract
+ 9/10 Test #22: cteas_p7i_ctsg_support_contract ..................   Passed    0.01 sec
+      Start 25: cteas_p7e_receptor_sampling_conc_contract
+10/10 Test #25: cteas_p7e_receptor_sampling_conc_contract ........   Passed    0.33 sec
+
+100% tests passed, 0 tests failed out of 10
+
+Total Test time (real) =   0.51 sec

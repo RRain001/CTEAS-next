@@ -1,0 +1,44 @@
+-------------------------------------------------------------------------------
+                     GRID FILE
+                  ---------------
+
+! IMAP = UTM       !
+! IUTMZN =  50       !
+! LSOHEM =  N       !
+* LCCRLAT0 =             *
+* LCCRLON0 =             *
+* LCCRLAT1 =             *
+* LCCRLAT2 =             *
+* LCCFEAST =             *
+* LCCFNORTH =             *
+* TTMRLAT0 =             *
+* TTMRLON0 =             *
+* TTMFEAST =             *
+* TTMFNORTH =             *
+* PSRLAT0 =             *
+* PSRLON0 =             *
+* PSRLAT1 =             *
+* EMRLAT0 =             *
+* EMRLON0 =             *
+* LZRLAT0 =             *
+* LZRLON0 =             *
+* LAZAFEAST =             *
+* LAZAFNORTH =             *
+! DATUM = WGS-84       !
+! XREFKM =  510.885       !
+! YREFKM =  3531.269       !
+! DGRIDKM =  0.1       !
+! NX =  50       !
+! NY =  50       !
+! NZ =  9       !
+! XBTZ =  0       !
+! ZFACE =  0        !
+! ZFACE =  20        !
+! ZFACE =  40        !
+! ZFACE =  80        !
+! ZFACE =  160        !
+! ZFACE =  320        !
+! ZFACE =  640        !
+! ZFACE =  1200        !
+! ZFACE =  2000        !
+! ZFACE =  3000        !

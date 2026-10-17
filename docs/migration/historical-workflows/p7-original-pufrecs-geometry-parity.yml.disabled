@@ -1,0 +1,45 @@
+name: P7 original SLGFRAC PUFRECS geometry REAL4 parity
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/**'
+      - '.github/workflows/p7-original-pufrecs-geometry-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-pufrecs-geometry-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  original-pufrecs-geometry:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/**
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+            /project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+      - name: Source-ported SLGFRAC, PUFFCT2 and native CALMET terrain parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v gfortran
+          cmake -S native_cpp/modules/p7_calpuff -B "$RUNNER_TEMP/p7-pufrecs" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$RUNNER_TEMP/p7-pufrecs" --parallel 2 --target cteas_p7_original_pufrecs_geometry_probe cteas_p7_original_pufrecs_geometry_tests cteas_p7_original_puffct2_probe cteas_p7_original_puffct2_tests cteas_p7_original_native_terrain_frozen_met_tests cteas_p7_original_native_terrain_tests
+          "$RUNNER_TEMP/p7-pufrecs/cteas_p7_original_pufrecs_geometry_tests"
+          python3 native_cpp/modules/p7_calpuff/reference/compare_original_pufrecs_geometry.py \
+            --vendor engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for \
+            --probe "$RUNNER_TEMP/p7-pufrecs/cteas_p7_original_pufrecs_geometry_probe"
+          ctest --test-dir "$RUNNER_TEMP/p7-pufrecs" -R '^cteas_p7_original_native_terrain_real_input_adapter$' --output-on-failure
+          ctest --test-dir "$RUNNER_TEMP/p7-pufrecs" -R '^cteas_p7_original_puffct2_source_contract$' --output-on-failure
+          ctest --test-dir "$RUNNER_TEMP/p7-pufrecs" -R '^cteas_p7_hefei_frozen_met_terrain_source$' --output-on-failure
+          "$RUNNER_TEMP/p7-pufrecs/cteas_p7_original_native_terrain_frozen_met_tests" \
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+          python3 native_cpp/modules/p7_calpuff/reference/compare_original_puffct2.py \
+            --vendor engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for \
+            --probe "$RUNNER_TEMP/p7-pufrecs/cteas_p7_original_puffct2_probe"

@@ -1,0 +1,33 @@
+name: P7 VMASS original source extraction
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p7-vmass-source-extract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vendor-vmass-source:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+      - name: Pin and extract original VMASS and calling COMP branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          src=engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+          echo 'da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568  '${src} | sha256sum -c -
+          echo 'P7_ORIGINAL_VMASS_BEGIN 11590 12090'
+          sed -n '11590,12090{=;p;}' "$src" | paste - -
+          echo 'P7_ORIGINAL_VMASS_END'
+          echo 'P7_ORIGINAL_COMP_LID_BEGIN'
+          sed -n '11375,11415{=;p;}' "$src" | paste - -
+          echo 'P7_ORIGINAL_COMP_LID_END'

@@ -1,0 +1,97 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test"
+    ],
+    "files" : 
+    [
+      "/home/lhy/CTEAS-next/native_cpp/CMakeLists.txt"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 20,
+        "parent" : 0
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 23,
+        "parent" : 2
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 33,
+        "parent" : 4
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 1,
+      "command" : 
+      [
+        "/tmp/cteas-next-gcc-validation/build-inputs/cteas_p1_input_tests"
+      ],
+      "name" : "cteas_p1_input_contracts",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-gcc-validation/build-inputs"
+        }
+      ]
+    },
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "/tmp/cteas-next-gcc-validation/build-inputs/cteas_p2_input_tests"
+      ],
+      "name" : "cteas_p2_input_contracts",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-gcc-validation/build-inputs"
+        }
+      ]
+    },
+    {
+      "backtrace" : 5,
+      "command" : 
+      [
+        "/tmp/cteas-next-gcc-validation/build-inputs/cteas_p2_gen_tests"
+      ],
+      "name" : "cteas_p2_gen_fraction_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-gcc-validation/build-inputs"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

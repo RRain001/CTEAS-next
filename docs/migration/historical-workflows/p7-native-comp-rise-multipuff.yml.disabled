@@ -1,0 +1,40 @@
+name: P7 native rising multi-puff COMP 143h
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/**'
+      - '.github/workflows/p7-native-comp-rise-multipuff.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-native-rise-multipuff-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  multipuff-rise-143h:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/**
+      - name: GRISE RISEWIND native multi-puff COMP hour and source mass
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v g++-12 >/dev/null 2>&1; then cpp=$(command -v g++-12);
+          elif command -v g++-11 >/dev/null 2>&1; then cpp=$(command -v g++-11);
+          else cpp=$(command -v c++); fi
+          build="${RUNNER_TEMP}/p7-rise-multipuff-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cmake -S native_cpp/modules/p7_calpuff -B "$build" \
+            -DCMAKE_CXX_COMPILER="$cpp" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$build" --parallel 2 --target cteas_p7_original_comp_rise_hourly_tests cteas_p7_original_rolldn_tests
+          ctest --test-dir "$build" -R '^cteas_p7_native_rise_comp_pg_multipuff_(1|6|143)h$' --output-on-failure
+          ctest --test-dir "$build" -R '^cteas_p7_original_rolldn_slot_order$' --output-on-failure
+          echo 'P7_NATIVE_MULTI_RISE_143H=PASS SOURCE_ONLY_NO_DGM_INPUT=YES'
+          echo 'P7_ORIGINAL_RELEASE_143H_CONCENTRATION=NOT_YET_ACCEPTED'

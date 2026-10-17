@@ -1,0 +1,44 @@
+name: P7 original CALCPF TFRACT REAL4 source anchor
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p7-tfract-source-precision.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-tfract-source:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+      - name: Pin untouched original and print exact CALCPF time weighting source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for')
+          raw=p.read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=='da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568'
+          lines=raw.decode('latin-1').splitlines()
+          seen=set()
+          for start,end in ((3890,4330),(10300,10590),(11080,11240)):
+              for i in range(start-1,end):
+                  line=lines[i]
+                  if not any(word in line.lower() for word in ('tfract','call calcpf','tsamp','fsec','avetime','pgtime')):
+                      continue
+                  for j in range(max(start-1,i-2),min(end,i+3)):
+                      if j not in seen:
+                          print(f'P7_VENDOR_CALCPF_TFRACT_REAL4 {j+1:6d} {lines[j]}')
+                          seen.add(j)
+          assert any('xtemp=f1*tfract' in line.lower().replace(' ','')
+                     for line in lines[4297:4310])
+          print('P7_VENDOR_CALCPF_TFRACT_SOURCE_ANCHOR=PASS')
+          PY

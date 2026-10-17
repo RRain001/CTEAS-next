@@ -1,0 +1,76 @@
+schema_version: 1
+case_name: smoke5d_coldstart_20260701
+paths:
+  grid_dir: project/current/grid
+  met_surface_dir: project/current/met/surface
+  met_upperair_dir: project/current/met/upperair
+  geo_ctgproc_dir: project/current/geo/ctgproc
+  geo_terrel_dir: project/current/geo/terrel
+  geo_makegeo_dir: project/current/geo/makegeo
+  run_met_dir: project/current/run/met
+  run_puff_dir: project/current/run/puff
+  run_read62_dir: project/current/run/read62
+  run_smerge_dir: project/current/run/smerge
+settings:
+  timezone: UTC+0000
+  pstop_hpa_default: 500
+preprocess:
+  grid:
+    center:
+      longitude: 117.0
+      latitude: 32.0
+    domain:
+      length_km: 50
+      width_km: 50
+    resolution_km: 1
+    nz: 9
+  research_time:
+    begin: 20230101-000000
+    end: 20230105-230000
+  upperair:
+    pstop_hpa: 500
+    auto_select_all: true
+met:
+  station_selection:
+    isurft_mode: spatial
+    iupt_mode: spatial
+    iupwnd_mode: spatial
+  options:
+    lcfiles: true
+    irtype: 1
+    lcalgrd: true
+    lsave: true
+    lprint: false
+    noobs: 0
+    npsta: 0
+    icloud: 0
+    iforms: 2
+    iformp: 2
+    iformc: 2
+    iwfcod: 1
+    ifradj: 1
+    ikine: 0
+    iobr: 0
+puff:
+  options:
+    lcfiles: true
+    source_mode: case_yaml
+    nspec: 2
+    nse: 1
+    mchem: 0
+    idry: 0
+    iwet: 0
+    ndecay: 0
+  point_sources:
+  - name: P1
+    x_km: 500.0
+    y_km: 3540.436
+    stack_height_m: 70.0
+    base_elev_m: 0.0
+    stack_diameter_m: 2.0
+    exit_velocity_mps: 11.11
+    exit_temp_k: 293.0
+    building_downwash_flag: 0.0
+    zpltfm_m: 0.0
+    fmfac: 1.0
+    emissions: [222222.0, 0.0]

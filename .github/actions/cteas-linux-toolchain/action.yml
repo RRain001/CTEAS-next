@@ -1,0 +1,50 @@
+name: CTEAS isolated modern Linux compilers
+description: 'Fail-closed Linux/X64 C++20/Fortran toolchain selection; no implicit host changes'
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        if [[ "$RUNNER_OS" != "Linux" || "$RUNNER_ARCH" != "X64" ]]; then
+          echo "::error::CTEAS CI requires Linux/X64"
+          exit 1
+        fi
+        if command -v g++-13 >/dev/null 2>&1; then
+          cpp="$(command -v g++-13)"
+        elif command -v g++-12 >/dev/null 2>&1; then
+          cpp="$(command -v g++-12)"
+        else
+          echo "::error::Install g++-12 or later on this runner"
+          exit 1
+        fi
+        if command -v gfortran-13 >/dev/null 2>&1; then
+          fort="$(command -v gfortran-13)"
+        elif command -v gfortran-12 >/dev/null 2>&1; then
+          fort="$(command -v gfortran-12)"
+        elif command -v gfortran-11 >/dev/null 2>&1; then
+          fort="$(command -v gfortran-11)"
+        else
+          echo "::error::Install gfortran-11 or later on this runner"
+          exit 1
+        fi
+        # Verify this compiler's standard library actually implements the
+        # calendrical C++20 sys_seconds requirement; GCC 11.x does not.
+        printf '#include <chrono>\nint main(){std::chrono::sys_seconds s{}; (void)s;}\n' | "$cpp" -std=c++20 -x c++ -fsyntax-only -
+        command -v cmake
+        command -v python3
+        "$cpp" --version | head -1
+        "$fort" --version | head -1
+        tool_bin="$RUNNER_TEMP/cteas-toolchain-$GITHUB_RUN_ID"
+        mkdir -p "$tool_bin"
+        ln -sfn "$fort" "$tool_bin/gfortran"
+        echo "$tool_bin" >> "$GITHUB_PATH"
+        echo "CXX=$cpp" >> "$GITHUB_ENV"
+        echo "FC=$fort" >> "$GITHUB_ENV"
+        # Do not advertise GitHub-hosted execution as self-hosted; keep
+        # the historical compatibility marker only for legacy runners.
+        echo "CTEAS_CI_RUNNER_KIND=${RUNNER_ENVIRONMENT:-unknown}" >> "$GITHUB_ENV"
+        if [[ "${RUNNER_ENVIRONMENT:-}" == "self-hosted" ]]; then
+          echo "CTEAS_CI_SELF_HOSTED=1" >> "$GITHUB_ENV"
+        fi
+        echo "CI toolchain: CXX=$cpp FC=$fort (job-local gfortran shim)"

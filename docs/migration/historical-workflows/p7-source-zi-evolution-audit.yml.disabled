@@ -1,0 +1,29 @@
+name: P7 original ZIOLD ZIMAX source write audit
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p7-source-zi-evolution-audit.yml'
+      - 'native_cpp/modules/p7_calpuff/reference/zi_source_scan.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-zi-source:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/reference/zi_source_scan.py
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+      - name: Inventory all ZIOLD/ZIMAX physical writes in immutable original
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p7_calpuff/reference/zi_source_scan.py \
+            engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for

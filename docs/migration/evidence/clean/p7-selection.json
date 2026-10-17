@@ -1,0 +1,547 @@
+[
+  {
+    "name": "cteas_p7_control_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_fortran_record_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_calmet21_typed_field_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7g_locked_case_static_decode",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_2022_native_met_hourly_bytes",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_case_stage_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_historical_2023_scope_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7c_release_advection_inventory_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_2022_case_ledger_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_2022_ledger_real_2023_refusal",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7d_dispersion_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7d_sigma_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_calm_idopt1_native_subset",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_calm_idopt1_original_fortran_subset",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_turbset_mdisp3_hefei_minima",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7f_dry_deposition_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7c_locked_original_point_input",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7f_locked_case_dry_deposition",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7e_native_143h_hourly_data_writer_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7e_original_wrout1_full_native_header",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7h_vertical_coupling_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7i_ctsg_support_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7i_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7h_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7e_receptor_sampling_conc_contract",
+    "status": "SCHEDULED",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7e_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7f_drydep_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7m_ctsg_kernel_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7m_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7m_real_grid_ctsg",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7n_plume_rise_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7n_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7n_locked_case_rise",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7o_release_scheduler_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7o_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7o_locked_case_release",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7p_step_bookkeeping_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7p_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7p_locked_case_step",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7q_sigma_update_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7q_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7q_locked_case_sigma",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7r_terrain_constraints_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7r_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7r_locked_case_terrain",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7s_terrain_state_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7s_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7s_locked_case_relief",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7t_valley_width_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7t_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7t_locked_case_valley",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7v_advection_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7v_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7v_locked_case_advection",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7w_rise_wind_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7g_conc_structure",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7x_step_integration_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7w_source_parity",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7w_dgm_step_comparison",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_2022_qa_real4_coordinates",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_grid_preprocess_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_2022_met_header_grid_qa",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_fortran_cpp_precision_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_vendor_substep_order_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_first_hour_advance_real4",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_wrout1_header_avefactor_audit",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_first_hour_state_persistence_real4",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_met_cell_advection_first_hour",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_puffdz_first_hour",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_vertical_released_persistent_real4",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_vertical_original_first_step_real4",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_vmass_source_branch_mass_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_neutral_1h_persistent",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_neutral_6h_persistent",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_neutral_143h_persistent",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_neutral_pg_1h_persistent",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_neutral_pg_6h_persistent",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_neutral_pg_143h_persistent",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_metfm1_grise_risewind",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_pg_multipuff_1h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_pg_multipuff_6h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_pg_multipuff_143h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_rise_comp_pg_1h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_rise_comp_pg_6h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_rise_comp_pg_143h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_rise_comp_pg_multipuff_1h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_rise_comp_pg_multipuff_6h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_rise_comp_pg_multipuff_143h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_point_hourly_cadence_1h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_point_hourly_cadence_6h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_point_hourly_cadence_143h",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_windset_release_synthetic",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_windset_rlsmet_2022_first_hour",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_point_hourly_cadence_native_rlsmet",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_comp_new_cadence_original_first_hour",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_first_hour_fstep_controller",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_comp_exit_source_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_pufrecs_geometry",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_puffct2_source_contract",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_native_terrain_real_input_adapter",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_hefei_frozen_met_terrain_source",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_hefei_source_met_stack_bridge",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_hefei_real_54_puff_native_admissions",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_hefei_real_firsthour_h3_receptor_diagnostic",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_hefei_real_sixhour_comp_precision_diagnostic",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_calm_idopt1_transaction",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_calm_branch_atomic",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_native_comp_mxsam99_unsplit",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  },
+  {
+    "name": "cteas_p7_original_rolldn_slot_order",
+    "status": "NOT_RUN",
+    "reason": "portable software subset"
+  }
+]

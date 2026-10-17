@@ -1,0 +1,86 @@
+name: P6E native hour reference meteorological payload isolation
+
+on:
+  push:
+    branches: [codex/p6-hourly-stateful-scheduler-20261013]
+    paths:
+      - scripts/p6e_native_reference_hourly_mutation_audit.py
+      - .github/workflows/p6e-native-reference-hourly-value-isolation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  original-hourly-payload-cannot-leak:
+    name: "P6E: mutated reference hourly fields cannot change native C++ output"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            scripts/p6e_native_reference_hourly_mutation_audit.py
+            native_cpp/modules/p6_calmet/p6e
+            native_cpp/modules/p6_calmet/include
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          path: original_locked_case
+          filter: blob:none
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/geo.dat
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+      - name: Obtain frozen completed native first-six-hour C++ inputs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38372382572
+          github-token: ${{ github.token }}
+          name: p6-causal-original-case-6h
+          path: ${{ runner.temp }}/p6e-reference-isolation/source
+      - name: Fail if actual native P6D station state or observation bridge is missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/p6e-reference-isolation/source"
+          test -s "$src/observations.csv"
+          test -s "$src/hour_000/diagno/station_elustr2.csv"
+          test -s "$src/hour_000/diagno/wind_metadata.json" || test -s "$src/hour_000/diagno/produced_hours.txt"
+          test -s "$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+      - name: Build real P6E native implementation (GCC12 Werror)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet/p6e \
+            -B "$RUNNER_TEMP/p6e-isolation-build" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6e-isolation-build" \
+            --target p6e_calmet_dat21 --parallel 2
+      - name: Run P6E twice with only original reference hourly payload changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011"
+          native="$RUNNER_TEMP/p6e-reference-isolation/source"
+          python3 scripts/p6e_native_reference_hourly_mutation_audit.py \
+            --reference "$root/run/met/met.dat" \
+            --geo "$root/geo/makegeo/geo.dat" \
+            --observations "$native/observations.csv" \
+            --diagno "$native/hour_000/diagno" \
+            --station-flux "$native/hour_000/diagno/station_elustr2.csv" \
+            --p6e "$RUNNER_TEMP/p6e-isolation-build/p6e_calmet_dat21" \
+            --work "$RUNNER_TEMP/p6e-reference-isolation/comparison" \
+            --report "$RUNNER_TEMP/p6e-reference-isolation/p6e-reference-hourly-isolation.json"
+      - name: Preserve exact reference-value isolation verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-realcase-native-reference-hourly-isolation
+          path: |
+            ${{ runner.temp }}/p6e-reference-isolation/p6e-reference-hourly-isolation.json
+            ${{ runner.temp }}/p6e-reference-isolation/comparison/unmodified/p6e.log
+            ${{ runner.temp }}/p6e-reference-isolation/comparison/mutated/p6e.log
+          retention-days: 14
+          if-no-files-found: warn

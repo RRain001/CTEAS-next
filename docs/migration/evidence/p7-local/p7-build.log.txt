@@ -1,0 +1,360 @@
+COMMAND: ["cmake", "--build", "/tmp/cteas-next-p7-local-validation/build-p7", "--parallel", "8"]
+[  0%] Building CXX object CMakeFiles/cteas_p7_records.dir/src/fortran_records.cpp.o
+[  0%] Building CXX object CMakeFiles/cteas_p7_calm_sigma_tests.dir/tests/original_calm_sigma_tests.cpp.o
+[  1%] Building CXX object CMakeFiles/cteas_p7_control.dir/src/control.cpp.o
+[  1%] Building CXX object CMakeFiles/cteas_p7_plume_rise.dir/src/plume_rise.cpp.o
+[  2%] Building CXX object CMakeFiles/cteas_p7_step.dir/src/step.cpp.o
+[  2%] Building CXX object CMakeFiles/cteas_p7_release.dir/src/release.cpp.o
+[  3%] Building CXX object CMakeFiles/cteas_p7_calm_sigma_probe.dir/src/original_calm_sigma_probe.cpp.o
+[  3%] Building CXX object CMakeFiles/cteas_p7_terrain.dir/src/terrain_constraints.cpp.o
+[  4%] Linking CXX executable cteas_p7_calm_sigma_tests
+[  5%] Linking CXX static library libcteas_p7_records.a
+[  5%] Built target cteas_p7_calm_sigma_tests
+[  5%] Building CXX object CMakeFiles/cteas_p7_terrain_state.dir/src/terrain_relief.cpp.o
+[  5%] Built target cteas_p7_records
+[  6%] Building CXX object CMakeFiles/cteas_p7_valley_width.dir/src/terrain_width.cpp.o
+[  7%] Linking CXX static library libcteas_p7_plume_rise.a
+[  7%] Built target cteas_p7_plume_rise
+[  8%] Building CXX object CMakeFiles/cteas_p7_advection.dir/src/advection.cpp.o
+[  8%] Linking CXX executable cteas_p7_calm_sigma_probe
+[  8%] Linking CXX static library libcteas_p7_step.a
+[  9%] Linking CXX static library libcteas_p7_terrain.a
+[  9%] Linking CXX static library libcteas_p7_release.a
+[  9%] Built target cteas_p7_calm_sigma_probe
+[  9%] Built target cteas_p7_step
+[  9%] Built target cteas_p7_terrain
+[  9%] Building CXX object CMakeFiles/cteas_p7_precision_contract_tests.dir/tests/original_precision_contract_tests.cpp.o
+[  9%] Building CXX object CMakeFiles/cteas_p7_step_integration.dir/src/step_integration.cpp.o
+[  9%] Built target cteas_p7_release
+[  9%] Building CXX object CMakeFiles/cteas_p7_vendor_order_tests.dir/tests/vendor_order_tests.cpp.o
+[  9%] Building CXX object CMakeFiles/cteas_p7_vmass.dir/src/original_vmass.cpp.o
+[  9%] Linking CXX static library libcteas_p7_terrain_state.a
+[  9%] Built target cteas_p7_terrain_state
+[  9%] Linking CXX static library libcteas_p7_valley_width.a
+[  9%] Building CXX object CMakeFiles/cteas_p7_original_comp_exit.dir/src/original_comp_exit.cpp.o
+[  9%] Built target cteas_p7_valley_width
+[  9%] Building CXX object CMakeFiles/cteas_p7_original_rolldn.dir/src/original_rolldn.cpp.o
+[  9%] Linking CXX static library libcteas_p7_advection.a
+[ 10%] Linking CXX executable cteas_p7_vendor_order_tests
+[ 10%] Built target cteas_p7_advection
+[ 11%] Linking CXX static library libcteas_p7_step_integration.a
+[ 11%] Building CXX object CMakeFiles/cteas_p7_original_pufrecs_geometry.dir/src/original_pufrecs_geometry.cpp.o
+[ 11%] Built target cteas_p7_step_integration
+[ 11%] Built target cteas_p7_vendor_order_tests
+[ 13%] Building CXX object CMakeFiles/cteas_p7_original_native_terrain.dir/src/original_native_terrain.cpp.o
+[ 13%] Building CXX object CMakeFiles/cteas_p7_original_puffct2.dir/src/original_puffct2.cpp.o
+[ 14%] Linking CXX static library libcteas_p7_vmass.a
+[ 15%] Linking CXX static library libcteas_p7_original_rolldn.a
+[ 15%] Built target cteas_p7_vmass
+[ 15%] Linking CXX static library libcteas_p7_original_comp_exit.a
+[ 15%] Building CXX object CMakeFiles/cteas_p7_records_tests.dir/tests/fortran_records_tests.cpp.o
+[ 15%] Linking CXX executable cteas_p7_precision_contract_tests
+[ 15%] Built target cteas_p7_original_rolldn
+[ 15%] Built target cteas_p7_original_comp_exit
+[ 15%] Building CXX object CMakeFiles/cteas_p7_calmet21.dir/src/calmet21.cpp.o
+[ 16%] Building CXX object CMakeFiles/cteas_p7_calmet21.dir/src/gregorian.cpp.o
+[ 16%] Building CXX object CMakeFiles/cteas_p7n_tests.dir/tests/p7n_tests.cpp.o
+[ 16%] Built target cteas_p7_precision_contract_tests
+[ 16%] Linking CXX static library libcteas_p7_original_puffct2.a
+[ 16%] Building CXX object CMakeFiles/cteas_p7_calmet21.dir/src/original_met_hours.cpp.o
+[ 16%] Built target cteas_p7_original_puffct2
+[ 17%] Building CXX object CMakeFiles/cteas_p7o_tests.dir/tests/p7o_tests.cpp.o
+[ 18%] Linking CXX static library libcteas_p7_original_pufrecs_geometry.a
+[ 18%] Built target cteas_p7_original_pufrecs_geometry
+[ 18%] Building CXX object CMakeFiles/cteas_p7p_tests.dir/tests/p7p_tests.cpp.o
+[ 18%] Linking CXX executable cteas_p7n_tests
+[ 18%] Linking CXX executable cteas_p7o_tests
+[ 18%] Linking CXX static library libcteas_p7_original_native_terrain.a
+[ 18%] Built target cteas_p7n_tests
+[ 19%] Building CXX object CMakeFiles/cteas_p7_sigma_update.dir/src/sigma_update.cpp.o
+[ 19%] Built target cteas_p7_original_native_terrain
+[ 19%] Built target cteas_p7o_tests
+[ 20%] Building CXX object CMakeFiles/cteas_p7r_tests.dir/tests/p7r_tests.cpp.o
+[ 20%] Building CXX object CMakeFiles/cteas_p7s_tests.dir/tests/p7s_tests.cpp.o
+[ 21%] Linking CXX executable cteas_p7_records_tests
+[ 21%] Built target cteas_p7_records_tests
+[ 21%] Building CXX object CMakeFiles/cteas_p7t_tests.dir/tests/p7t_tests.cpp.o
+[ 22%] Building CXX object CMakeFiles/cteas_p7v_tests.dir/tests/p7v_tests.cpp.o
+[ 22%] Linking CXX static library libcteas_p7_sigma_update.a
+[ 22%] Built target cteas_p7_sigma_update
+[ 23%] Building CXX object CMakeFiles/cteas_p7_rise_wind.dir/src/rise_wind.cpp.o
+[ 24%] Linking CXX executable cteas_p7p_tests
+[ 24%] Linking CXX static library libcteas_p7_calmet21.a
+[ 24%] Built target cteas_p7_calmet21
+[ 24%] Built target cteas_p7p_tests
+[ 24%] Building CXX object CMakeFiles/cteas_p7x_tests.dir/tests/p7x_tests.cpp.o
+[ 24%] Building CXX object CMakeFiles/cteas_p7_original_motion.dir/src/original_motion_lifecycle.cpp.o
+[ 24%] Linking CXX static library libcteas_p7_control.a
+[ 24%] Linking CXX executable cteas_p7v_tests
+[ 24%] Built target cteas_p7_control
+[ 25%] Building CXX object CMakeFiles/cteas_p7_original_met_cell.dir/src/original_met_cell.cpp.o
+[ 25%] Built target cteas_p7v_tests
+[ 26%] Linking CXX executable cteas_p7s_tests
+[ 27%] Building CXX object CMakeFiles/cteas_p7_puffdz_state_trace.dir/tests/puffdz_state_trace.cpp.o
+[ 27%] Linking CXX static library libcteas_p7_rise_wind.a
+[ 27%] Built target cteas_p7_rise_wind
+[ 27%] Built target cteas_p7s_tests
+[ 28%] Building CXX object CMakeFiles/cteas_p7_vmass_tests.dir/tests/original_vmass_tests.cpp.o
+[ 28%] Building CXX object CMakeFiles/cteas_p7_vmass_probe.dir/src/original_vmass_probe.cpp.o
+[ 28%] Linking CXX executable cteas_p7t_tests
+[ 28%] Linking CXX executable cteas_p7r_tests
+[ 28%] Built target cteas_p7t_tests
+[ 29%] Building CXX object CMakeFiles/cteas_p7_original_comp_cadence_trace.dir/tests/original_comp_cadence_trace.cpp.o
+[ 29%] Built target cteas_p7r_tests
+[ 29%] Building CXX object CMakeFiles/cteas_p7_original_fstep_trace.dir/tests/original_comp_fstep_trace.cpp.o
+[ 29%] Linking CXX executable cteas_p7_vmass_probe
+[ 30%] Linking CXX executable cteas_p7x_tests
+[ 30%] Built target cteas_p7_vmass_probe
+[ 30%] Linking CXX static library libcteas_p7_original_met_cell.a
+[ 30%] Linking CXX executable cteas_p7_vmass_tests
+[ 31%] Building CXX object CMakeFiles/cteas_p7_original_comp_exit_tests.dir/tests/original_comp_exit_tests.cpp.o
+[ 31%] Built target cteas_p7x_tests
+[ 31%] Built target cteas_p7_original_met_cell
+[ 31%] Linking CXX static library libcteas_p7_original_motion.a
+[ 31%] Linking CXX executable cteas_p7_puffdz_state_trace
+[ 31%] Building CXX object CMakeFiles/cteas_p7_original_pufrecs_geometry_tests.dir/tests/original_pufrecs_geometry_tests.cpp.o
+[ 31%] Building CXX object CMakeFiles/cteas_p7_original_pufrecs_geometry_probe.dir/src/original_pufrecs_geometry_probe.cpp.o
+[ 31%] Built target cteas_p7_vmass_tests
+[ 31%] Built target cteas_p7_original_motion
+[ 32%] Building CXX object CMakeFiles/cteas_p7_original_puffct2_probe.dir/src/original_puffct2_probe.cpp.o
+[ 32%] Building CXX object CMakeFiles/cteas_p7_original_puffct2_tests.dir/tests/original_puffct2_tests.cpp.o
+[ 32%] Built target cteas_p7_puffdz_state_trace
+[ 32%] Building CXX object CMakeFiles/cteas_p7_original_native_terrain_tests.dir/tests/original_native_terrain_tests.cpp.o
+[ 32%] Linking CXX executable cteas_p7_original_pufrecs_geometry_tests
+[ 32%] Linking CXX executable cteas_p7_original_fstep_trace
+[ 33%] Linking CXX executable cteas_p7_original_puffct2_tests
+[ 33%] Built target cteas_p7_original_pufrecs_geometry_tests
+[ 34%] Building CXX object CMakeFiles/cteas_p7_original_native_terrain_frozen_met_tests.dir/tests/original_native_terrain_frozen_met_tests.cpp.o
+[ 35%] Linking CXX executable cteas_p7_original_pufrecs_geometry_probe
+[ 35%] Built target cteas_p7_original_puffct2_tests
+[ 35%] Built target cteas_p7_original_fstep_trace
+[ 35%] Building CXX object CMakeFiles/cteas_p7_original_rolldn_tests.dir/tests/original_rolldn_tests.cpp.o
+[ 35%] Building CXX object CMakeFiles/cteas_p7_control_tests.dir/tests/control_tests.cpp.o
+[ 35%] Linking CXX executable cteas_p7_original_puffct2_probe
+[ 35%] Built target cteas_p7_original_pufrecs_geometry_probe
+[ 35%] Linking CXX executable cteas_p7_original_comp_cadence_trace
+[ 36%] Building CXX object CMakeFiles/cteas_p7_calmet21_inspect.dir/src/calmet21_inspect.cpp.o
+[ 36%] Linking CXX executable cteas_p7_original_comp_exit_tests
+[ 36%] Built target cteas_p7_original_puffct2_probe
+[ 37%] Building CXX object CMakeFiles/cteas_p7_calmet21_tests.dir/tests/calmet21_tests.cpp.o
+[ 37%] Built target cteas_p7_original_comp_cadence_trace
+[ 38%] Building CXX object CMakeFiles/cteas_p7_native_met_hours.dir/src/native_met_hours_cli.cpp.o
+[ 38%] Built target cteas_p7_original_comp_exit_tests
+[ 39%] Building CXX object CMakeFiles/cteas_p7_transport.dir/src/transport.cpp.o
+[ 39%] Linking CXX executable cteas_p7_original_rolldn_tests
+[ 39%] Linking CXX executable cteas_p7_calmet21_inspect
+[ 40%] Linking CXX executable cteas_p7_original_native_terrain_frozen_met_tests
+[ 40%] Linking CXX executable cteas_p7_control_tests
+[ 40%] Built target cteas_p7_original_rolldn_tests
+[ 41%] Building CXX object CMakeFiles/cteas_p7_case_ledger.dir/src/sha256.cpp.o
+[ 41%] Built target cteas_p7_calmet21_inspect
+[ 41%] Building CXX object CMakeFiles/cteas_p7_case_ledger.dir/src/case_ledger.cpp.o
+[ 41%] Built target cteas_p7_original_native_terrain_frozen_met_tests
+[ 42%] Linking CXX executable cteas_p7_original_native_terrain_tests
+[ 42%] Building CXX object CMakeFiles/cteas_p7_dispersion.dir/src/dispersion.cpp.o
+[ 42%] Built target cteas_p7_control_tests
+[ 43%] Building CXX object CMakeFiles/cteas_p7_original_turbset_mdisp3_tests.dir/tests/original_turbset_mdisp3_tests.cpp.o
+[ 43%] Built target cteas_p7_original_native_terrain_tests
+[ 44%] Building CXX object CMakeFiles/cteas_p7_dry_deposition.dir/src/dry_deposition.cpp.o
+[ 44%] Building CXX object CMakeFiles/cteas_p7_coupling.dir/src/coupling.cpp.o
+[ 44%] Linking CXX executable cteas_p7_native_met_hours
+[ 44%] Built target cteas_p7_native_met_hours
+[ 44%] Building CXX object CMakeFiles/cteas_p7n_probe.dir/src/plume_rise_probe.cpp.o
+[ 44%] Linking CXX static library libcteas_p7_transport.a
+[ 45%] Linking CXX static library libcteas_p7_coupling.a
+[ 45%] Built target cteas_p7_transport
+[ 45%] Linking CXX static library libcteas_p7_dispersion.a
+[ 46%] Building CXX object CMakeFiles/cteas_p7o_probe.dir/src/release_probe.cpp.o
+[ 46%] Built target cteas_p7_coupling
+[ 46%] Built target cteas_p7_dispersion
+[ 46%] Building CXX object CMakeFiles/cteas_p7q_tests.dir/tests/p7q_tests.cpp.o
+[ 47%] Building CXX object CMakeFiles/cteas_p7r_probe.dir/src/terrain_probe.cpp.o
+[ 47%] Linking CXX executable cteas_p7_original_turbset_mdisp3_tests
+[ 47%] Linking CXX static library libcteas_p7_case_ledger.a
+[ 47%] Built target cteas_p7_case_ledger
+[ 47%] Built target cteas_p7_original_turbset_mdisp3_tests
+[ 47%] Building CXX object CMakeFiles/cteas_p7s_probe.dir/src/terrain_state_probe.cpp.o
+[ 47%] Linking CXX executable cteas_p7_calmet21_tests
+[ 47%] Building CXX object CMakeFiles/cteas_p7t_probe.dir/src/terrain_width_probe.cpp.o
+[ 47%] Built target cteas_p7_calmet21_tests
+[ 48%] Building CXX object CMakeFiles/cteas_p7v_probe.dir/src/advection_probe.cpp.o
+[ 48%] Linking CXX executable cteas_p7o_probe
+[ 48%] Linking CXX executable cteas_p7q_tests
+[ 49%] Linking CXX executable cteas_p7n_probe
+[ 49%] Built target cteas_p7q_tests
+[ 49%] Building CXX object CMakeFiles/cteas_p7w_tests.dir/tests/p7w_tests.cpp.o
+[ 49%] Built target cteas_p7o_probe
+[ 49%] Building CXX object CMakeFiles/cteas_p7w_probe.dir/src/puff_step_probe.cpp.o
+[ 49%] Built target cteas_p7n_probe
+[ 49%] Building CXX object CMakeFiles/cteas_p7_initial_dgm_tests.dir/tests/initial_dgm_oracle_tests.cpp.o
+[ 50%] Linking CXX executable cteas_p7s_probe
+[ 50%] Built target cteas_p7s_probe
+[ 50%] Building CXX object CMakeFiles/cteas_p7_first_hour_advance_tests.dir/tests/dgm_first_hour_advance_tests.cpp.o
+[ 51%] Linking CXX executable cteas_p7t_probe
+[ 51%] Linking CXX executable cteas_p7r_probe
+[ 52%] Linking CXX executable cteas_p7_first_hour_advance_tests
+[ 52%] Built target cteas_p7t_probe
+[ 52%] Building CXX object CMakeFiles/cteas_p7_first_hour_lifecycle_tests.dir/tests/dgm_first_hour_lifecycle_tests.cpp.o
+[ 52%] Built target cteas_p7r_probe
+[ 53%] Linking CXX executable cteas_p7w_tests
+[ 53%] Building CXX object CMakeFiles/cteas_p7_original_met_cell_trace.dir/tests/original_met_cell_trace.cpp.o
+[ 54%] Linking CXX executable cteas_p7_initial_dgm_tests
+[ 54%] Built target cteas_p7_first_hour_advance_tests
+[ 55%] Building CXX object CMakeFiles/cteas_p7_original_vertical.dir/src/original_vertical_lifecycle.cpp.o
+[ 55%] Linking CXX executable cteas_p7v_probe
+[ 55%] Built target cteas_p7w_tests
+[ 55%] Building CXX object CMakeFiles/cteas_p7_original_rise_met.dir/src/original_rise_met.cpp.o
+[ 55%] Built target cteas_p7_initial_dgm_tests
+[ 55%] Building CXX object CMakeFiles/cteas_p7_original_vertical_divergence.dir/src/original_vertical_divergence.cpp.o
+[ 55%] Built target cteas_p7v_probe
+[ 55%] Linking CXX static library libcteas_p7_dry_deposition.a
+[ 56%] Building CXX object CMakeFiles/cteas_p7_original_release_wind.dir/src/original_release_wind.cpp.o
+[ 56%] Built target cteas_p7_dry_deposition
+[ 57%] Building CXX object CMakeFiles/cteas_p7_transport_tests.dir/tests/transport_tests.cpp.o
+[ 58%] Linking CXX executable cteas_p7_original_met_cell_trace
+[ 58%] Built target cteas_p7_original_met_cell_trace
+[ 58%] Linking CXX static library libcteas_p7_original_vertical.a
+[ 58%] Building CXX object CMakeFiles/cteas_p7_met_replay.dir/src/met_replay.cpp.o
+[ 58%] Built target cteas_p7_original_vertical
+[ 58%] Building CXX object CMakeFiles/cteas_p7_2022_case_ledger.dir/src/case_ledger_main.cpp.o
+[ 59%] Linking CXX static library libcteas_p7_original_rise_met.a
+[ 59%] Built target cteas_p7_original_rise_met
+[ 60%] Building CXX object CMakeFiles/cteas_p7_case_ledger_tests.dir/tests/case_ledger_tests.cpp.o
+[ 61%] Linking CXX executable cteas_p7_first_hour_lifecycle_tests
+[ 62%] Linking CXX static library libcteas_p7_original_vertical_divergence.a
+[ 62%] Built target cteas_p7_original_vertical_divergence
+[ 63%] Building CXX object CMakeFiles/cteas_p7d_sigma_probe.dir/src/dispersion_probe.cpp.o
+[ 63%] Linking CXX static library libcteas_p7_original_release_wind.a
+[ 64%] Linking CXX executable cteas_p7w_probe
+[ 64%] Built target cteas_p7_first_hour_lifecycle_tests
+[ 64%] Built target cteas_p7_original_release_wind
+[ 65%] Building CXX object CMakeFiles/cteas_p7_dispersion_tests.dir/tests/dispersion_tests.cpp.o
+[ 65%] Building CXX object CMakeFiles/cteas_p7f_drydep_probe.dir/src/drydep_probe.cpp.o
+[ 65%] Linking CXX executable cteas_p7_2022_case_ledger
+[ 65%] Built target cteas_p7w_probe
+[ 65%] Linking CXX executable cteas_p7_transport_tests
+[ 65%] Linking CXX static library libcteas_p7_met_replay.a
+[ 65%] Building CXX object CMakeFiles/cteas_p7_dry_deposition_tests.dir/tests/dry_deposition_tests.cpp.o
+[ 65%] Built target cteas_p7_2022_case_ledger
+[ 65%] Built target cteas_p7_met_replay
+[ 66%] Building CXX object CMakeFiles/cteas_p7_receptors.dir/src/receptors.cpp.o
+[ 66%] Building CXX object CMakeFiles/cteas_p7p_probe.dir/src/step_probe.cpp.o
+[ 66%] Built target cteas_p7_transport_tests
+[ 66%] Building CXX object CMakeFiles/cteas_p7_receptors.dir/src/conc_file.cpp.o
+[ 66%] Linking CXX executable cteas_p7d_sigma_probe
+[ 66%] Built target cteas_p7d_sigma_probe
+[ 67%] Building CXX object CMakeFiles/cteas_p7_receptors.dir/src/hourly_conc.cpp.o
+[ 67%] Linking CXX executable cteas_p7_case_ledger_tests
+[ 67%] Linking CXX executable cteas_p7_dispersion_tests
+[ 67%] Built target cteas_p7_dispersion_tests
+[ 67%] Building CXX object CMakeFiles/cteas_p7q_probe.dir/src/sigma_update_probe.cpp.o
+[ 67%] Built target cteas_p7_case_ledger_tests
+[ 68%] Building CXX object CMakeFiles/cteas_p7_native_vertical_tests.dir/tests/native_vertical_lifecycle_tests.cpp.o
+[ 68%] Building CXX object CMakeFiles/cteas_p7_original_comp_neutral.dir/src/original_comp_neutral.cpp.o
+[ 68%] Linking CXX executable cteas_p7f_drydep_probe
+[ 69%] Linking CXX executable cteas_p7_dry_deposition_tests
+[ 69%] Building CXX object CMakeFiles/cteas_p7_original_rise_met_tests.dir/tests/original_rise_met_tests.cpp.o
+[ 69%] Built target cteas_p7_dry_deposition_tests
+[ 69%] Built target cteas_p7f_drydep_probe
+[ 70%] Building CXX object CMakeFiles/cteas_p7_original_comp_rise.dir/src/original_comp_rise.cpp.o
+[ 70%] Building CXX object CMakeFiles/cteas_p7_original_point_prfin.dir/src/original_point_prfin.cpp.o
+[ 71%] Linking CXX executable cteas_p7q_probe
+[ 72%] Linking CXX executable cteas_p7p_probe
+[ 73%] Linking CXX executable cteas_p7_original_rise_met_tests
+[ 73%] Built target cteas_p7p_probe
+[ 74%] Building CXX object CMakeFiles/cteas_p7_original_release_wind_tests.dir/tests/original_release_wind_tests.cpp.o
+[ 74%] Linking CXX static library libcteas_p7_original_point_prfin.a
+[ 74%] Built target cteas_p7q_probe
+[ 74%] Built target cteas_p7_original_point_prfin
+[ 75%] Building CXX object CMakeFiles/cteas_p7c_met_replay.dir/src/met_replay_inspect.cpp.o
+[ 76%] Building CXX object CMakeFiles/cteas_p7_original_hefei_source_met_bridge_tests.dir/tests/original_hefei_source_met_bridge_tests.cpp.o
+[ 76%] Built target cteas_p7_original_rise_met_tests
+[ 77%] Linking CXX static library libcteas_p7_original_comp_neutral.a
+[ 77%] Built target cteas_p7_original_comp_neutral
+[ 78%] Building CXX object CMakeFiles/cteas_p7_original_comp_neutral_tests.dir/tests/original_comp_neutral_tests.cpp.o
+[ 78%] Building CXX object CMakeFiles/cteas_p7_original_comp_hourly.dir/src/original_comp_hourly.cpp.o
+[ 78%] Linking CXX executable cteas_p7_native_vertical_tests
+[ 78%] Linking CXX static library libcteas_p7_original_comp_rise.a
+[ 78%] Built target cteas_p7_native_vertical_tests
+[ 78%] Built target cteas_p7_original_comp_rise
+[ 79%] Building CXX object CMakeFiles/cteas_p7_original_comp_rise_tests.dir/tests/original_comp_rise_tests.cpp.o
+[ 79%] Building CXX object CMakeFiles/cteas_p7_original_comp_rise_hourly.dir/src/original_comp_rise_hourly.cpp.o
+[ 79%] Linking CXX executable cteas_p7_original_release_wind_tests
+[ 79%] Built target cteas_p7_original_release_wind_tests
+[ 79%] Linking CXX executable cteas_p7c_met_replay
+[ 79%] Built target cteas_p7c_met_replay
+[ 80%] Linking CXX executable cteas_p7_original_comp_rise_tests
+[ 80%] Linking CXX static library libcteas_p7_original_comp_hourly.a
+[ 80%] Built target cteas_p7_original_comp_hourly
+[ 81%] Building CXX object CMakeFiles/cteas_p7_original_comp_hourly_tests.dir/tests/original_comp_hourly_tests.cpp.o
+[ 81%] Linking CXX executable cteas_p7_original_comp_neutral_tests
+[ 81%] Built target cteas_p7_original_comp_rise_tests
+[ 81%] Built target cteas_p7_original_comp_neutral_tests
+[ 81%] Linking CXX static library libcteas_p7_receptors.a
+[ 81%] Built target cteas_p7_receptors
+[ 81%] Linking CXX static library libcteas_p7_original_comp_rise_hourly.a
+[ 81%] Building CXX object CMakeFiles/cteas_p7_hourly_conc_tests.dir/tests/hourly_conc_tests.cpp.o
+[ 81%] Building CXX object CMakeFiles/cteas_p7e_probe.dir/src/p7e_probe.cpp.o
+[ 82%] Building CXX object CMakeFiles/cteas_p7_ctsg.dir/src/ctsg.cpp.o
+[ 82%] Building CXX object CMakeFiles/cteas_p7h_tests.dir/tests/p7h_tests.cpp.o
+[ 82%] Building CXX object CMakeFiles/cteas_p7e_tests.dir/tests/p7e_tests.cpp.o
+[ 82%] Built target cteas_p7_original_comp_rise_hourly
+[ 83%] Building CXX object CMakeFiles/cteas_p7_original_grid_qa_tests.dir/tests/original_grid_qa_tests.cpp.o
+[ 83%] Linking CXX executable cteas_p7_original_hefei_source_met_bridge_tests
+[ 83%] Built target cteas_p7_original_hefei_source_met_bridge_tests
+[ 83%] Building CXX object CMakeFiles/cteas_p7_original_met_grid_tests.dir/tests/p7_original_met_grid_tests.cpp.o
+[ 83%] Linking CXX executable cteas_p7h_tests
+[ 84%] Linking CXX static library libcteas_p7_ctsg.a
+[ 84%] Linking CXX executable cteas_p7_original_grid_qa_tests
+[ 84%] Linking CXX executable cteas_p7_original_comp_hourly_tests
+[ 85%] Linking CXX executable cteas_p7_original_met_grid_tests
+[ 85%] Built target cteas_p7_ctsg
+[ 86%] Building CXX object CMakeFiles/cteas_p7_original_comp_rise_hourly_tests.dir/tests/original_comp_rise_hourly_tests.cpp.o
+[ 86%] Built target cteas_p7h_tests
+[ 86%] Built target cteas_p7_original_grid_qa_tests
+[ 86%] Building CXX object CMakeFiles/cteas_p7_original_point_hourly_cadence_tests.dir/tests/original_point_hourly_cadence_tests.cpp.o
+[ 86%] Building CXX object CMakeFiles/cteas_p7_original_flat_calcpf.dir/src/original_flat_calcpf.cpp.o
+[ 87%] Linking CXX executable cteas_p7e_tests
+[ 87%] Built target cteas_p7_original_comp_hourly_tests
+[ 87%] Building CXX object CMakeFiles/cteas_p7_hefei_firsthour_native_comp_tests.dir/tests/original_hefei_firsthour_native_comp_tests.cpp.o
+[ 87%] Built target cteas_p7_original_met_grid_tests
+[ 87%] Building CXX object CMakeFiles/cteas_p7_original_comp_calm_integrated_tests.dir/tests/original_comp_calm_integrated_tests.cpp.o
+[ 88%] Linking CXX executable cteas_p7e_probe
+[ 88%] Built target cteas_p7e_tests
+[ 88%] Building CXX object CMakeFiles/cteas_p7_original_comp_calm_tests.dir/tests/original_comp_calm_tests.cpp.o
+[ 88%] Built target cteas_p7e_probe
+[ 88%] Building CXX object CMakeFiles/cteas_p7_original_pfscrn_probe.dir/src/original_pfscrn_probe.cpp.o
+[ 89%] Linking CXX static library libcteas_p7_original_flat_calcpf.a
+[ 89%] Built target cteas_p7_original_flat_calcpf
+[ 90%] Building CXX object CMakeFiles/cteas_p7i_tests.dir/tests/p7i_tests.cpp.o
+[ 91%] Linking CXX executable cteas_p7_original_point_hourly_cadence_tests
+[ 92%] Linking CXX executable cteas_p7_original_pfscrn_probe
+[ 93%] Linking CXX executable cteas_p7_hourly_conc_tests
+[ 93%] Built target cteas_p7_original_pfscrn_probe
+[ 93%] Linking CXX executable cteas_p7_original_comp_rise_hourly_tests
+[ 93%] Building CXX object CMakeFiles/cteas_p7m_tests.dir/tests/p7m_tests.cpp.o
+[ 93%] Built target cteas_p7_hourly_conc_tests
+[ 94%] Linking CXX executable cteas_p7_original_comp_calm_tests
+[ 94%] Building CXX object CMakeFiles/cteas_p7m_probe.dir/src/ctsg_probe.cpp.o
+[ 94%] Built target cteas_p7_original_point_hourly_cadence_tests
+[ 94%] Building CXX object CMakeFiles/cteas_p7_original_comp_mxsam99_unsplit_tests.dir/tests/original_comp_mxsam99_unsplit_tests.cpp.o
+[ 94%] Linking CXX executable cteas_p7_hefei_firsthour_native_comp_tests
+[ 94%] Linking CXX executable cteas_p7i_tests
+[ 94%] Built target cteas_p7i_tests
+[ 95%] Building CXX object CMakeFiles/cteas_p7_hefei_firsthour_native_h3_receptors_tests.dir/tests/original_hefei_firsthour_native_receptors_tests.cpp.o
+[ 95%] Built target cteas_p7_original_comp_rise_hourly_tests
+[ 96%] Building CXX object CMakeFiles/cteas_p7_hefei_sixhour_native_h3_receptors_tests.dir/tests/original_hefei_sixhour_native_receptors_tests.cpp.o
+[ 96%] Built target cteas_p7_original_comp_calm_tests
+[ 97%] Linking CXX executable cteas_p7_original_comp_calm_integrated_tests
+[ 97%] Built target cteas_p7_hefei_firsthour_native_comp_tests
+[ 98%] Linking CXX executable cteas_p7m_tests
+[ 98%] Built target cteas_p7_original_comp_calm_integrated_tests
+[ 98%] Built target cteas_p7m_tests
+[ 99%] Linking CXX executable cteas_p7m_probe
+[ 99%] Built target cteas_p7m_probe
+[ 99%] Linking CXX executable cteas_p7_hefei_firsthour_native_h3_receptors_tests
+[ 99%] Built target cteas_p7_hefei_firsthour_native_h3_receptors_tests
+[100%] Linking CXX executable cteas_p7_original_comp_mxsam99_unsplit_tests
+[100%] Built target cteas_p7_original_comp_mxsam99_unsplit_tests
+[100%] Linking CXX executable cteas_p7_hefei_sixhour_native_h3_receptors_tests
+[100%] Built target cteas_p7_hefei_sixhour_native_h3_receptors_tests

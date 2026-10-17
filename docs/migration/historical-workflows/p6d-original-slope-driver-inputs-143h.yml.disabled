@@ -1,0 +1,270 @@
+name: P6D 143h source SLOPE driver audit
+
+on:
+  push:
+    branches: [audit/p6d-source-slope-drivers-143h-20261012]
+    paths:
+      - 'scripts/p6d_trace_and_compare_slope_drivers_143h.py'
+      - 'native_cpp/modules/p6_calmet/src/realcase_wind_field_main.cpp'
+      - '.github/workflows/p6d-original-slope-driver-inputs-143h.yml'
+  pull_request:
+    paths:
+      - 'scripts/p6d_trace_and_compare_slope_drivers_143h.py'
+      - 'native_cpp/modules/p6_calmet/src/realcase_wind_field_main.cpp'
+      - '.github/workflows/p6d-original-slope-driver-inputs-143h.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Keep strict source-scoped evidence for each immutable commit even when
+  # sibling forensic work advances the shared Draft PR head.
+  group: p6d-slope-driver-bisection-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  slope-driver-real-143h:
+    # This intentionally noncausal producer omits prior-hour CGAMMA/COMP.
+    # Its numeric differences are informative but cannot gate P6D/P6E.
+    # The immediately following slope-causal-original-143h job is the
+    # authoritative strict science gate.
+    name: Standalone SLOPE input forensics (noncausal; not science acceptance)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            .github/actions/cteas-linux-toolchain
+            native_cpp/modules/p6_calmet
+            scripts
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: ./.github/actions/cteas-linux-toolchain
+      - name: Materialize exactly frozen original case
+        run: python3 native_cpp/modules/p6_calmet/reference/restore_frozen_case_from_git.py --mode grid
+      - name: Independent original and write-only-instrumented MET.DAT hash gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-inputs-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py audit \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --out "$root/original" --compiler gfortran-11
+      - name: Produce autonomous native 143-hour QH and TERSET input fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-inputs-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/build" --target cteas_p6_realcase_wind_field --parallel 1
+          "$root/build/cteas_p6_realcase_wind_field" \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --hours 143 --out "$root/candidate"
+      - name: Record original source comparison (no standalone science promotion)
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-inputs-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 scripts/p6d_trace_and_compare_slope_drivers_143h.py \
+            --original-dir "$root/original" \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --candidate "$root/candidate" \
+            --compiler gfortran-11 \
+            --out "$root/p6d_slope_driver_143h.json"
+          # Keep every reference threshold and original-source output
+          # unchanged. Only suppress a *full-physics* exit status for this
+          # deliberately noncausal forensic producer.
+          python3 - "$root/p6d_slope_driver_143h.json" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1]))
+          assert r["candidate_layout"]=="standalone_143h"
+          assert all(r["fields"][x]["exceedances"]==0 for x in
+                     ("QH","HMAX","HMIN","DISTHMAX","DISTHMIN"))
+          print("STANDALONE_NONCAUSAL_NOT_SCIENTIFIC_ACCEPTANCE",
+                r["scientific_verdict"],
+                {x:r["fields"][x]["exceedances"] for x in r["fields"]})
+          PY
+      - name: Archive original source hash proof and forensic numerical differences
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: p6d-original-slope-drivers-143h
+          path: |
+            ${{ runner.temp }}/p6d-slope-inputs-${{ github.run_id }}-${{ github.run_attempt }}/p6d_slope_driver_143h.json
+            ${{ runner.temp }}/p6d-slope-inputs-${{ github.run_id }}-${{ github.run_attempt }}/original/dgm-audit.json
+          if-no-files-found: warn
+          retention-days: 7
+  slope-causal-original-143h:
+    name: Original SLOPE drivers vs full native causal P6D-P6E 143h
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            .github/actions/cteas-linux-toolchain
+            native_cpp/modules/p6_calmet
+            scripts
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: ./.github/actions/cteas-linux-toolchain
+      # The current checkout's --mode grid restores scientific grid inputs,
+      # but the coordinator also validates the frozen CALMET.DAT envelope.
+      # Supply it from the immutable accepted Hefei case, never invent it.
+      - uses: actions/checkout@v4
+        with:
+          ref: 3b94cdbfbb5f44146ba51a4ef112114f199d28b9
+          filter: blob:none
+          path: original_locked_case
+          sparse-checkout: |
+            project/cases/hefei5km_2022_reference_case_20261011
+      - name: Restore immutable source case
+        run: python3 native_cpp/modules/p6_calmet/reference/restore_frozen_case_from_git.py --mode grid
+      - name: Prove unmodified original source and freeze original MET.DAT
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-causal-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py audit \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --out "$root/original" --compiler gfortran-11
+      - name: Build previously accepted native physical hourly binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-causal-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/p6d" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p6d" --parallel 2 \
+            --target cteas_p6_realcase_wind_field cteas_p6_native_cgamma_grid_143h cteas_p6_native_hourly_driver
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$root/p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p6e" --parallel 2 \
+            --target p6e_calmet_dat21 p6e_p6c_hourly_bridge
+      - name: Produce fully causal 143 hours with native CGAMMA and previous COMP states
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-causal-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          "$root/p6d/cteas_p6_native_hourly_driver" \
+            --case "$GITHUB_WORKSPACE/original_locked_case/project/cases/hefei5km_2022_reference_case_20261011" \
+            --p6d "$root/p6d/cteas_p6_realcase_wind_field" \
+            --p6e "$root/p6e/p6e_calmet_dat21" \
+            --bridge "$root/p6e/p6e_p6c_hourly_bridge" \
+            --cgamma "$root/p6d/cteas_p6_native_cgamma_grid_143h" \
+            --work "$root/causal" --hours 143
+          test -s "$root/causal/hour_142/diagno/produced_hours.txt"
+      - name: Compare actual per-hour post-ELUSTR QH TEMP2D and TERSET with original SLOPE inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-causal-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 scripts/p6d_trace_and_compare_slope_drivers_143h.py \
+            --original-dir "$root/original" \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --candidate "$root/causal" \
+            --compiler gfortran-11 --require-numeric-parity \
+            --out "$root/p6d_slope_causal_driver_143h.json"
+      - name: Forensic source-stage QH bisection HEATFX vs ELUSTR (not acceptance)
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-causal-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          if test -d "$root/causal" && test -s "$root/original/dgm-audit.json"; then
+            python3 scripts/p6d_qh_heatfx_elustr_source_audit.py \
+              --original-dir "$root/original" \
+              --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+              --case project/cases/hefei5km_2022_reference_case_20261011 \
+              --candidate "$root/causal" --compiler gfortran-11 \
+              --out "$root/qh_heatfx_elustr_143h.json"
+          fi
+      - name: Archive strict causal SLOPE driver evidence even when mismatched
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6d-slope-causal-original-143h
+          path: |
+            ${{ runner.temp }}/p6d-slope-causal-${{ github.run_id }}-${{ github.run_attempt }}/p6d_slope_causal_driver_143h.json
+            ${{ runner.temp }}/p6d-slope-causal-${{ github.run_id }}-${{ github.run_attempt }}/qh_heatfx_elustr_143h.json
+            ${{ runner.temp }}/p6d-slope-causal-${{ github.run_id }}-${{ github.run_attempt }}/original/dgm-audit.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  slope-no-fma-original-143h:
+    name: Forensic only - SLOPE source inputs with C++ FP contraction disabled
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            .github/actions/cteas-linux-toolchain
+            native_cpp/modules/p6_calmet
+            scripts
+            engine/vendor/src/CALMET_v6.5.0_L150223
+      - uses: ./.github/actions/cteas-linux-toolchain
+      - name: Restore pinned real Hefei grids
+        run: python3 native_cpp/modules/p6_calmet/reference/restore_frozen_case_from_git.py --mode grid
+      - name: Recreate independently sourced original CALMET input oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-no-fma-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 native_cpp/modules/p6_calmet/reference/original_internal_state_dump.py audit \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --out "$root/original" --compiler gfortran-11
+      - name: Build original standalone producer with strict C++ REAL4 FP evaluation flags
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-no-fma-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          # Diagnostic build only; do NOT modify frozen accepted P6D/E/F kernels.
+          cmake -S native_cpp/modules/p6_calmet -B "$root/build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            "-DCMAKE_CXX_FLAGS=-ffp-contract=off -fno-fast-math"
+          cmake --build "$root/build" --target cteas_p6_realcase_wind_field --parallel 2
+          "$root/build/cteas_p6_realcase_wind_field" \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --hours 143 --out "$root/candidate"
+      - name: Compare strict-FP synthetic-independent original SLOPE input trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p6d-slope-no-fma-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 scripts/p6d_trace_and_compare_slope_drivers_143h.py \
+            --original-dir "$root/original" \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223 \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --candidate "$root/candidate" \
+            --compiler gfortran-11 \
+            --out "$root/p6d_slope_no_fma_driver_143h.json"
+          # Forensic experiment, never promotes a numerical FAIL to physics PASS.
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/(
+              "p6d-slope-no-fma-"+os.environ["GITHUB_RUN_ID"]+"-"+os.environ["GITHUB_RUN_ATTEMPT"])/"p6d_slope_no_fma_driver_143h.json"
+          r=json.loads(p.read_text())
+          print("SLOPE_NO_FMA_FORENSIC_ONLY",r["scientific_verdict"],
+                {k:(v["exceedances"],v["max_abs"]) for k,v in r["fields"].items()})
+          assert r["candidate_layout"] == "standalone_143h"
+          assert r["source_sha256"] and r["frozen_met_sha256"]
+          PY
+      - name: Archive no-FMA numerical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6d-slope-no-fma-original-143h
+          path: |
+            ${{ runner.temp }}/p6d-slope-no-fma-${{ github.run_id }}-${{ github.run_attempt }}/p6d_slope_no_fma_driver_143h.json
+            ${{ runner.temp }}/p6d-slope-no-fma-${{ github.run_id }}-${{ github.run_attempt }}/original/dgm-audit.json
+          if-no-files-found: warn
+          retention-days: 14

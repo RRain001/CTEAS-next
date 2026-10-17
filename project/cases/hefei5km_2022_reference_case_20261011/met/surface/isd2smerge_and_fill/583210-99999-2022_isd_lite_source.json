@@ -1,0 +1,12 @@
+{
+  "station": "58321099999",
+  "year": 2022,
+  "wind_source": "NOAA_ISD_LITE",
+  "source_file": "/home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/surface/isd_raw/isd_lite/583210-99999-2022.gz",
+  "source_sha256": "9e7f58aebd55171ef6c7d2c1fb40674b013a295bdf091a79a6fead33cbe73e74",
+  "original_lite_hour_count": 8692,
+  "original_full_isd_hour_count": 8692,
+  "union_hour_count": 8692,
+  "wind_variables_only": true,
+  "do_not_use_isd_wnd_fallback": true
+}

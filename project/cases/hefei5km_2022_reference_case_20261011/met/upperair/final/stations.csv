@@ -1,0 +1,2 @@
+station_id,station_name,lat,lon,elev_m,tz_hour,source_file
+58424,ANQING,31.9398,117.1416,62.0,0,met/upperair/final/up_58424.dat

@@ -1,0 +1,37 @@
+name: CTEAS GitHub-hosted Linux CI smoke
+on:
+  pull_request:
+    paths:
+      - '.github/actions/cteas-linux-toolchain/**'
+      - '.github/workflows/cteas-selfhosted-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  hosted-p6-cmake-ctest:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Install GitHub-hosted Linux compilers
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++-12 gfortran-12
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/cteas-linux-toolchain
+      - name: Compile original Fortran smoke, C++20 chrono and P6 CTest
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '      program hello\n      print *, 123\n      end\n' > "$RUNNER_TEMP/cteas-smoke.for"
+          gfortran "$RUNNER_TEMP/cteas-smoke.for" -o "$RUNNER_TEMP/cteas-fortran-smoke"
+          "$RUNNER_TEMP/cteas-fortran-smoke" | grep -q 123
+          build="$RUNNER_TEMP/cteas-github-hosted-smoke-$GITHUB_RUN_ID"
+          cmake -S native_cpp/modules/p6_calmet -B "$build" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$build" --parallel 2
+          ctest --test-dir "$build" --output-on-failure

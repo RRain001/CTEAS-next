@@ -1,0 +1,10 @@
+COMMAND: ["/home/lhy/CTEAS-next/.venv/bin/python", "/home/lhy/CTEAS-next/scripts/migration/configure_external_assets.py", "--root", "/tmp/cteas-next-restore-check", "--source-repo", "/home/lhy/CTEAS"]
+EXPECTED_RETURN_CODE=1 ACTUAL=1
+{
+  "status": "FAIL",
+  "assets": 211,
+  "errors": [
+    "SHA256 mismatch (refusing overwrite): calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/srtm_60_06_hefei_5km.bbox"
+  ]
+}
+MISMATCH_REFUSED_WITHOUT_OVERWRITE=PASS

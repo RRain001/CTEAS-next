@@ -1,0 +1,190 @@
+name: P7 frozen first-hour PRFIN source and MET bridge
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/tests/original_hefei_source_met_bridge_tests.cpp'
+      - 'native_cpp/modules/p7_calpuff/tests/original_hefei_firsthour_native_comp_tests.cpp'
+      - 'native_cpp/modules/p7_calpuff/include/cteas/puff/original_ptlaps.hpp'
+      - 'native_cpp/modules/p7_calpuff/include/cteas/puff/original_comp_neutral.hpp'
+      - 'native_cpp/modules/p7_calpuff/src/original_comp_rise.cpp'
+      - 'native_cpp/modules/p7_calpuff/CMakeLists.txt'
+      - '.github/workflows/p7-firsthour-prfin-source-met.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-firsthour-prfin-source-met-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  first-hour-input:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/**
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+            /project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+            /project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp
+            /native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin
+      - name: Pin original POINTS1 PRFIN RLSMET physical order
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, pathlib, re
+          source=pathlib.Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for')
+          data=source.read_bytes()
+          digest=hashlib.sha256(data).hexdigest()
+          assert digest=='da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568',digest
+          lines=data.decode('latin-1').splitlines()
+          spans=((15415,15755),(15925,16013),(18250,18385))
+          terms=re.compile(r'\b(?:RLSMET|PRFIN|PRFPP|STKTIP|SQRTS|PTGINV|WSNEW|FLUXB|FLUXM|FMIX|HEFF|ZFINAL|XFIN|TEMPK|TEMP|DTEMP|FMFPT1|DPBL|ISTAB|TI|PTLAPS|TSTAK|THETA|TGRAD|ZINV|TINV|SINV)\b',re.I)
+          shown=set()
+          for lo,hi in spans:
+              for idx in range(lo-1,min(hi,len(lines))):
+                  if not terms.search(lines[idx]): continue
+                  for j in range(max(lo-1,idx-2),min(hi,idx+3)):
+                      if j not in shown:
+                          print(f'P7_VENDOR_FIRST_HOUR {j+1:6d} {lines[j]}')
+                          shown.add(j)
+          print('P7_FIRST_HOUR_VENDOR_SOURCE_SHA=PASS LINES_PRINTED='+str(len(shown)))
+          PY
+      - name: Audit original POINTS1 admission sigma/BIDSQ and frozen DGM first-hour anatomy
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,struct
+          source=pathlib.Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for').read_bytes().decode('latin-1').splitlines()
+          for first,last in ((15585,15620),(15645,15688),(15880,15974),(15972,16190)):
+              for i in range(first-1,last):
+                  print(f'P7_POINT_ADMISSION_SOURCE {i+1:6d} {source[i]}')
+          path=pathlib.Path('native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin')
+          row=struct.Struct('<24i64f')
+          raw=path.read_bytes()
+          assert len(raw)==1275*row.size
+          for index in (0,1,53,54,1274):
+              values=row.unpack_from(raw,index*row.size)
+              i=values[:24];f=values[24:]
+              print(f'P7_FIRST_HOUR_DGM row={index+1} ii={i[3]} ksam={i[16]} nsam={i[10]} '
+                    f'nsstr={i[11]} old={i[12]} icode={i[4]} '
+                    f'x={f[0]:.9g} y={f[1]:.9g} z={f[2]:.9g} '
+                    f'xynew=({f[38]:.9g},{f[39]:.9g}) sigin=({f[21]:.9g},{f[22]:.9g})')
+          print('P7_ORIGINAL_ADMISSION_SOURCE_REVIEW=PASS NATIVE_ADMISSIONS=NOT_YET_ACCEPTED')
+          PY
+      - name: Source-audit SETPUF horizontal SY0SQ BIDFNL and POINTS1 source initialization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,hashlib,re
+          path=pathlib.Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for')
+          raw=path.read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=='da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568'
+          rows=raw.decode('latin-1').splitlines()
+          for start,end in ((48476,48525),(48565,48612),(48638,48676),(15590,15680)):
+              for i in range(start-1,end):
+                  print(f'P7_VENDOR_HORIZONTAL_SIGMA {i+1:6d} {rows[i]}')
+          tokens=('sy0sq','sy0(','syipt1','sysrc','bidfnl','symin','sigyb(')
+          hits=[i for i,row in enumerate(rows) if any(t in row.lower() for t in tokens) and not row.lower().startswith('c')]
+          nearby=[i for i in hits if 9000<i<11500 or 15400<i<16200 or 48000<i<49000]
+          shown=set()
+          for i in nearby:
+              for j in range(max(0,i-2),min(len(rows),i+4)):
+                  if j not in shown:
+                      print(f'P7_VENDOR_HORIZONTAL_ASSIGN {j+1:6d} {rows[j]}')
+                      shown.add(j)
+          print('P7_VENDOR_HORIZONTAL_SOURCE_PIN=PASS')
+          PY
+      - name: Trace original first-hour pre-SETPUF SIGZB vertical adjustment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,re
+          src=pathlib.Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for').read_bytes().decode('latin-1').splitlines()
+          shown=set()
+          tokens=re.compile(r'\b(?:SIGZB|VDIV|DIV|WZ|WADV|WINDW|WDIV|FZD|SIGZ|VERTICAL|SHEAR|DW|DWDZ)\b',re.I)
+          for start,stop in ((10000,10960),(48500,48695)):
+              for i in range(start-1,stop):
+                  if not tokens.search(src[i]):continue
+                  if src[i].lstrip().lower().startswith('c '):continue
+                  for j in range(max(start-1,i-3),min(stop,i+5)):
+                      if j not in shown:
+                          print(f'P7_VENDOR_SIGZ_PRE_SETPUF {j+1:6d} {src[j]}')
+                          shown.add(j)
+          print('P7_VENDOR_SIGZ_FIRST_DIVERGENCE_AUDIT=PASS NATIVE_PRESETUP_SIGZ_PARITY=OPEN')
+          PY
+      - name: Trace vendor WDIV generation and CDIV branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,re
+          src=pathlib.Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for').read_bytes().decode('latin-1').splitlines()
+          hits=[i for i,s in enumerate(src) if re.search(r'\bwdiv\s*\(|\bldiv\b|\bcdiv\s*\(',s,re.I) and not s.lstrip().lower().startswith('c ')]
+          print('P7_VENDOR_WDIV_SOURCE_MATCHES='+str(len(hits)))
+          shown=set()
+          for i in hits:
+              for j in range(max(0,i-3),min(len(src),i+5)):
+                  if j not in shown:
+                      print(f'P7_VENDOR_WDIV {j+1:6d} {src[j]}')
+                      shown.add(j)
+          PY
+      - name: Audit vendor CTADJ2 BVF and SIGTZ dependence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,re
+          src=pathlib.Path('engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for').read_bytes().decode('latin-1').splitlines()
+          shown=set()
+          for a,b in ((9350,9450),(10400,11100),(15580,15625),(18320,18380),(20450,20860)):
+              for i in range(a-1,b):
+                  line=src[i]
+                  if line.lstrip().lower().startswith('c '): continue
+                  if re.search(r'\bbvf\b|\bctadj2\b|\bstrain\b|\bszb1\b|\bszm1\b|\bsze1\b|\bsigr?tz\b|\bptgrad\b',line,re.I):
+                      for j in range(max(a-1,i-2),min(b,i+4)):
+                          if j not in shown:
+                              print(f'P7_ORIGINAL_CTADJ2_CONTEXT {j+1:6d} {src[j]}')
+                              shown.add(j)
+          print('P7_MCTADJ2_BVF_VENDOR_SOURCE_AUDIT=PASS REAL_HEFEI_SIGMA_PARITY=OPEN')
+          PY
+      - name: Source-audit PTLAPS without changing production inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,re
+          root=pathlib.Path('engine/vendor/src/CALPUFF_v7.2.1_L150618')
+          count=0
+          for p in sorted(root.rglob('*.for')):
+              src=p.read_bytes().decode('latin-1').splitlines()
+              for i,s in enumerate(src):
+                  if re.match(r'^      subroutine ptlaps',s,re.I):
+                      stop=next((j for j in range(i+1,len(src)) if src[j].strip().lower()=='end'),min(i+180,len(src)-1))
+                      print('P7_PT_LAPSE_FILE='+p.name+' RANGE='+str(i+1)+'-'+str(stop+1))
+                      for j in range(i,stop+1):
+                          print('P7_PT_LAPSE_LINE '+str(j+1)+' '+src[j])
+                      count+=1
+          print('P7_PT_LAPSE_SOURCE_ROUTINES='+str(count))
+          PY
+      - name: Execute real Hefei source and 54 puff admission gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+          test -s project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp
+          test -s native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin
+          build="${RUNNER_TEMP}/p7-firsthour-input-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cmake -S native_cpp/modules/p7_calpuff -B "$build" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$build" --parallel 2 --target \
+            cteas_p7_original_hefei_source_met_bridge_tests \
+            cteas_p7_hefei_firsthour_native_comp_tests
+          ctest --test-dir "$build" -R '^cteas_p7_hefei_(source_met_stack_bridge|real_54_puff_native_admissions)$' --output-on-failure -V
+          echo 'P7_FIRST_HOUR_NATIVE_PRFIN_AND_POINT_ADMISSIONS=PASS FULL_COMP_PARITY=OPEN'

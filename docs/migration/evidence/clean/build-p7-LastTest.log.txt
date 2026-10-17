@@ -1,0 +1,193 @@
+Start testing: Oct 16 16:43 CST
+----------------------------------------------------------
+1/109 Testing: cteas_p7_control_contract
+1/109 Test: cteas_p7_control_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7_control_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7_control_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+P7B_SYNTHETIC_CONTROL_SCOPED=PASS
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7_control_contract" end time: Oct 16 16:43 CST
+"cteas_p7_control_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/109 Testing: cteas_p7_fortran_record_contract
+2/109 Test: cteas_p7_fortran_record_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7_records_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7_fortran_record_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7_fortran_record_contract" end time: Oct 16 16:43 CST
+"cteas_p7_fortran_record_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/109 Testing: cteas_p7_calmet21_typed_field_contract
+3/109 Test: cteas_p7_calmet21_typed_field_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7_calmet21_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7_calmet21_typed_field_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7_calmet21_typed_field_contract" end time: Oct 16 16:43 CST
+"cteas_p7_calmet21_typed_field_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/109 Testing: cteas_p7c_release_advection_inventory_contract
+8/109 Test: cteas_p7c_release_advection_inventory_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7_transport_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7c_release_advection_inventory_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7c_release_advection_inventory_contract" end time: Oct 16 16:43 CST
+"cteas_p7c_release_advection_inventory_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/109 Testing: cteas_p7d_dispersion_contract
+11/109 Test: cteas_p7d_dispersion_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7_dispersion_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7d_dispersion_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+P7D_DISPERSION_OPTION_FAIL_CLOSED=PASS
+P7D_DISPERSION_ENVIRONMENT_FAIL_CLOSED=PASS
+P7D_DISPERSION_INCREMENT_SCREENING=PASS
+P7D_DISPERSION_HAND_DERIVED_VALUES=PASS
+P7D_DISPERSION_PSEUDO_DISTANCE_AND_HEFFTER=PASS
+P7D_DISPERSION_ROUGHNESS_ADJUSTMENT=PASS
+P7D_DISPERSION_CONTROL_AUDIT=PASS
+P7D_DISPERSION_AVERAGING_FACTOR=PASS
+P7D_DISPERSION_MDISP3_CONTRACT=PASS
+P7D_DISPERSION_IS_NOT_A_CONCENTRATION_TEST=true
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7d_dispersion_contract" end time: Oct 16 16:43 CST
+"cteas_p7d_dispersion_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/109 Testing: cteas_p7_calm_idopt1_native_subset
+13/109 Test: cteas_p7_calm_idopt1_native_subset
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7_calm_sigma_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7_calm_idopt1_native_subset" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+P7_CALM_IDOPT1_NATIVE_SUBSET=PASS ELS_LE_ZERO=YES STABLE_LOG_SECANT=YES FULL_COMP=NOT_ACCEPTED
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7_calm_idopt1_native_subset" end time: Oct 16 16:43 CST
+"cteas_p7_calm_idopt1_native_subset" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/109 Testing: cteas_p7f_dry_deposition_contract
+16/109 Test: cteas_p7f_dry_deposition_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7_dry_deposition_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7f_dry_deposition_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+P7F_DRYDEP_METHOD_FAIL_CLOSED=PASS
+P7_NATIVE_ORIGINAL_GAUSSIAN_DRY_MASS=PASS VCBAR_IN_EXPONENT=YES GAUSSIAN_VDPVD=ONE H3_DEPLETED_HE3_UNTOUCHED=YES CODE_4_99_SKIPPED=YES QM_REAL4=YES INTEGRATED_COMP=NOT_YET_ACCEPTED\nP7_NATIVE_ORIGINAL_UNIFORM_DRY_MASS=PASS VDPVD_FROM_NATIVE_DRYSOURCE=YES H3_DEPLETED_HE3_PRESERVED=YES ICODE4_SKIP=YES\nP7F_DRYI_REAL4_DIFFUSIVITY_BITS=PASS H3_PDIFF=0x377d2b0f DOUBLE_PROMOTION_REJECTED=YES\nP7F_DRYDEP_SETUP_FROM_CONTROL=PASS ZREF_M=10 RD1=4.9801
+P7F_DRYDEP_SETUP_FAIL_CLOSED=PASS
+P7F_DRYDEP_RESISTANCE_MODEL=PASS H3_VD=0.00289783 RA=31.969
+P7F_DRYDEP_REMOVAL_FRACTION=PASS FRACDRY=0.980451 DIFFK=25
+P7F_DRYDEP_ENVIRONMENT_FAIL_CLOSED=PASS
+P7F_DRYDEP_MDRY1_CONTRACT=PASS
+P7F_DRYDEP_IS_NOT_A_CONCENTRATION_TEST=true
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7f_dry_deposition_contract" end time: Oct 16 16:43 CST
+"cteas_p7f_dry_deposition_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/109 Testing: cteas_p7h_vertical_coupling_contract
+21/109 Test: cteas_p7h_vertical_coupling_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7h_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7h_vertical_coupling_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+P7H_VCOUP_CONTRACT=PASS
+P7H_VCBAR_CONTRACT=PASS
+P7H_ACCUMULATION_WIRING=PASS VCBAR_1_PER_M=0.00913245
+P7H_VERTICAL_COUPLING_CONTRACT=PASS
+P7H_IS_NOT_A_CONCENTRATION_PARITY_TEST=true
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7h_vertical_coupling_contract" end time: Oct 16 16:43 CST
+"cteas_p7h_vertical_coupling_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/109 Testing: cteas_p7i_ctsg_support_contract
+22/109 Test: cteas_p7i_ctsg_support_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7i_tests"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7i_ctsg_support_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+P7I_QATR_CONTRACT=PASS SIN=2 X2=0.333333
+P7I_TFAC_CONTRACT=PASS
+P7I_ROTATE_CONTRACT=PASS
+P7I_CTSG_SUPPORT_CONTRACT=PASS
+P7I_IS_NOT_A_CONCENTRATION_PARITY_TEST=true
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7i_ctsg_support_contract" end time: Oct 16 16:43 CST
+"cteas_p7i_ctsg_support_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+25/109 Testing: cteas_p7e_receptor_sampling_conc_contract
+25/109 Test: cteas_p7e_receptor_sampling_conc_contract
+Command: "/tmp/cteas-next-clean-validation/build-p7/cteas_p7e_tests" "--control" "/tmp/cteas-next-clean/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp" "--frozen-conc" "/tmp/cteas-next-clean/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con"
+Directory: /tmp/cteas-next-clean-validation/build-p7
+"cteas_p7e_receptor_sampling_conc_contract" start time: Oct 16 16:43 CST
+Output:
+----------------------------------------------------------
+P7E_RECEPTOR_GEOMETRY=PASS GRID_RECEPTORS=2500 SPACING_KM=0.1
+P7E_ORIGINAL_PFSCRN_REAL4=PASS MOVING=YES CALM=YES INCLUSIVE_RADIUS=YES FAIL_CLOSED=YES
+P7E_PFSAMP_AND_ERFDIF=PASS
+P7E_RECEPTOR_ACCUMULATION=PASS
+P7E_CONC_FILE_ROUND_TRIP=PASS
+P7E_LOCKED_CASE_RECEPTORS=PASS GRID_RECEPTORS=2500 DISCRETE=0
+P7E_ORIGINAL_WROUT1_32BYTE_METADATA=PASS RECORDS=286 HOURS=143
+P7E_FROZEN_STRUCTURE_PARITY=PASS RECORDS=3655 PERIODS=143 FIELDS=143 FIELD_BYTES=10015
+P7E_RECEPTOR_SAMPLING_CONC_CONTRACT=PASS
+P7E_VALUE_COMPARISON_WITH_FROZEN_CONC=NOT_CLAIMED_FULL_MODEL_MISSING
+<end of output>
+Test time =   0.33 sec
+----------------------------------------------------------
+Test Passed.
+"cteas_p7e_receptor_sampling_conc_contract" end time: Oct 16 16:43 CST
+"cteas_p7e_receptor_sampling_conc_contract" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 16 16:43 CST

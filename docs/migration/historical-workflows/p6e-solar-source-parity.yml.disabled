@@ -1,0 +1,184 @@
+name: P6E independent original micrometeorology parity
+on:
+  push:
+    branches:
+      - 'codex/cteas-p6e-*'
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p6_calmet/p6e/**'
+      - '.github/workflows/p6e-solar-source-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+# Avoid duplicate push/PR source-parity runs piling up on one machine.
+concurrency:
+  group: p6e-micromet-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  p6e-solar-original:
+    # Dedicated P6E host: do not share generic self-hosted queue with P6D.
+    # lhy-desktop-2 must be registered with custom GitHub runner LABEL
+    # lhy-desktop-2 (a runner's display name alone is NOT a scheduling label).
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      # Official GitHub-hosted runners are ephemeral and already have
+      # authenticated source checkout. No retired workstation is required.
+      - name: Checkout immutable PR commit
+        uses: actions/checkout@v4
+      - name: Require complete immutable source set
+        shell: bash
+        run: |
+          test -f native_cpp/modules/p6_calmet/include/cteas/p6/comp_buffered_timeline.hpp || {
+            echo "::error::P6C COMP buffered hourly contract missing"; exit 1;
+          }
+          test -f native_cpp/modules/p6_calmet/p6e/CMakeLists.txt || {
+            echo "::error::P6E CMake source not retrieved via checkout or REST"; exit 1;
+          }
+          test -f engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for || {
+            echo "::error::Original CALMET vendor source not retrieved"; exit 1;
+          }
+          test -f engine/vendor/src/CALMET_v6.5.0_L150223/gen.met || {
+            echo "::error::MIXHMC original GEN.MET common block not retrieved"; exit 1;
+          }
+      - name: Provision GitHub-hosted GCC12 and original Fortran compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++-12 gfortran-12
+      - name: Verify isolated Linux C++20 and Fortran toolchain
+        uses: ./.github/actions/cteas-linux-toolchain
+      - name: Propagate selected C++20 compiler for original P6E CMake
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${CXX:?GitHub-hosted GCC selection is required}"
+          echo "P6E_CXX=$CXX" >> "$GITHUB_ENV"
+      - name: C++20 Werror and software CTest
+        run: |
+          # CMake may cache the old GNU 9.5 compiler in this persistent runner.
+          rm -rf build/p6e
+          cmake -S native_cpp/modules/p6_calmet/p6e -B build/p6e \
+            -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER="$P6E_CXX"
+          cmake --build build/p6e --parallel 2
+          ctest --test-dir build/p6e --output-on-failure
+      - name: Source-locked unchanged Fortran SOLAR comparison
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_solar.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_solar_reference \
+            --out build/p6e/solar-original-parity.json
+      - name: Source-locked unchanged Fortran PGTSTB comparison
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_pgtstb.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_pgtstb_reference \
+            --out build/p6e/pgtstb-original-parity.json
+      - name: Unmodified full Fortran SURFVAR selected observed-path comparison
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_surfvar_observed.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_surfvar_observed_reference \
+            --out build/p6e/surfvar-observed-original-parity.json
+      - name: Original unmodified HEATFX sensible and shortwave source comparison
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_heatfx.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_heatfx_reference \
+            --out build/p6e/heatfx-original-parity.json
+      - name: Compare original ELUSTR stable QH/ustar/Monin-Obukhov pathway
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_elustr_stable.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_elustr_stable_reference \
+            --out build/p6e/elustr-stable-original-parity.json
+      - name: Compare unchanged CALMET WSTARR convective velocity scaling
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_wstarr.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_wstarr_reference \
+            --out build/p6e/wstarr-original-parity.json
+      - name: Compare full original MIXHT stable mechanical height branch
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_mixht_stable.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_mixht_stable_reference \
+            --out build/p6e/mixht-stable-original-parity.json
+      - name: Source-locked full ELUSTR daytime PSIUD and PSIUC original comparison
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_elustr_daytime.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_elustr_daytime_reference \
+            --out build/p6e/elustr-daytime-original-parity.json
+      - name: Original unchanged CLOUD3 cloud-fraction source comparison
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_cloud3.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_cloud3_reference \
+            --out build/p6e/cloud3-original-parity.json
+      - name: Full original SURFVAR observed multistation TEMP RH IRAD 1 2 comparison
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_surfvar_multistation.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_surfvar_multistation_reference \
+            --out build/p6e/surfvar-multistation-original-parity.json
+      - name: Original unmodified MIXHMC convective growth ILAPSE 2 source parity
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_mixhmc.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_mixhmc_reference \
+            --out build/p6e/mixhmc-original-parity.json
+      - name: Original unmodified Batchvarova-Gryning MIXHBG convective height source parity
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_mixhbg.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_mixhbg_reference \
+            --out build/p6e/mixhbg-original-parity.json
+      - name: Original unchanged MIXDT observed sounding lapse-rate numerical parity
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_mixdt.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_mixdt_reference \
+            --out build/p6e/mixdt-original-parity.json
+      - name: Original MIXHT and MIXDT and MIXHMC coupled AA BB source parity
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_mixht_observed_mc.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_mixht_observed_mc_reference \
+            --out build/p6e/mixht-observed-mc-original-parity.json
+      - name: Original TEMP3D all-land observed AA BB face-temperature numerical parity
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/reference/compare_original_temp3d_observed_land.py \
+            --vendor engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp build/p6e/p6e_temp3d_observed_land_reference \
+            --out build/p6e/temp3d-observed-land-original-parity.json
+      - name: Validate replay of original-backed actual 2022 observation trace
+        run: |
+          python3 native_cpp/modules/p6_calmet/p6e/tests/verify_real_2022_p6c_temp3d_replay.py \
+            --fixture native_cpp/modules/p6_calmet/p6e/reference/data/hefei_2022_p6c_original_obs.zlib.b64 \
+            --cpp build/p6e/p6e_temp3d_observed_land_reference \
+            --out build/p6e/e18-real2022-observed-replay.json
+      - name: Save scientific gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6e-solar-original-parity
+          path: |
+            build/p6e/solar-original-parity.json
+            build/p6e/pgtstb-original-parity.json
+            build/p6e/surfvar-observed-original-parity.json
+            build/p6e/heatfx-original-parity.json
+            build/p6e/elustr-stable-original-parity.json
+            build/p6e/wstarr-original-parity.json
+            build/p6e/mixht-stable-original-parity.json
+            build/p6e/elustr-daytime-original-parity.json
+            build/p6e/cloud3-original-parity.json
+            build/p6e/surfvar-multistation-original-parity.json
+            build/p6e/mixhmc-original-parity.json
+            build/p6e/mixhbg-original-parity.json
+            build/p6e/mixdt-original-parity.json
+            build/p6e/mixht-observed-mc-original-parity.json
+            build/p6e/temp3d-observed-land-original-parity.json
+            build/p6e/e18-real2022-observed-replay.json
+          if-no-files-found: warn

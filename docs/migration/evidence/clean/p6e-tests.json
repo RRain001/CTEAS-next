@@ -1,0 +1,728 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test"
+    ],
+    "files" : 
+    [
+      "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/CMakeLists.txt"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 20,
+        "parent" : 0
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 38,
+        "parent" : 2
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 42,
+        "parent" : 4
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 65,
+        "parent" : 6
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 78,
+        "parent" : 8
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 91,
+        "parent" : 10
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 104,
+        "parent" : 12
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 117,
+        "parent" : 14
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 130,
+        "parent" : 16
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 143,
+        "parent" : 18
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 156,
+        "parent" : 20
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 169,
+        "parent" : 22
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 182,
+        "parent" : 24
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 195,
+        "parent" : 26
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 208,
+        "parent" : 28
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 221,
+        "parent" : 30
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 232,
+        "parent" : 32
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 253,
+        "parent" : 34
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 257,
+        "parent" : 36
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 263,
+        "parent" : 38
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 282,
+        "parent" : 40
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 292,
+        "parent" : 42
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 303,
+        "parent" : 44
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 318,
+        "parent" : 46
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 336,
+        "parent" : 48
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 359,
+        "parent" : 50
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 364,
+        "parent" : 52
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 1,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_solar_tests"
+      ],
+      "name" : "p6e_solar_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_coordlib_pj09z0_tests"
+      ],
+      "name" : "p6e_coordlib_pj09z0_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 5,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/reference/compare_original_coordlib_utm.py",
+        "--vendor",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/../../../../engine/vendor/src/CALMET_v6.5.0_L150223/coordlib.for",
+        "--cpp",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_coordlib_utm_reference",
+        "--gfortran",
+        "/usr/bin/gfortran-11",
+        "--out",
+        "/tmp/cteas-next-clean-validation/build-p6e/coordlib-utm-original-parity.json"
+      ],
+      "name" : "p6e_coordlib_utm_original_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 7,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_pgtstb_tests"
+      ],
+      "name" : "p6e_pgtstb_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 9,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_surfvar_observed_tests"
+      ],
+      "name" : "p6e_surfvar_observed_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 11,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_heatfx_tests"
+      ],
+      "name" : "p6e_heatfx_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 13,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_elustr_stable_tests"
+      ],
+      "name" : "p6e_elustr_stable_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 15,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_wstarr_tests"
+      ],
+      "name" : "p6e_wstarr_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 17,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_mixht_stable_tests"
+      ],
+      "name" : "p6e_mixht_stable_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 19,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_elustr_daytime_tests"
+      ],
+      "name" : "p6e_elustr_daytime_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 21,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_cloud3_tests"
+      ],
+      "name" : "p6e_cloud3_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 23,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_surfvar_multistation_tests"
+      ],
+      "name" : "p6e_surfvar_multistation_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 25,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_mixhmc_tests"
+      ],
+      "name" : "p6e_mixhmc_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 27,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_mixdt_tests"
+      ],
+      "name" : "p6e_mixdt_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 29,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_mixht_observed_mc_tests"
+      ],
+      "name" : "p6e_mixht_observed_mc_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 31,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_temp3d_observed_land_tests"
+      ],
+      "name" : "p6e_temp3d_observed_land_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 33,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_p6c_hourly_bridge_tests"
+      ],
+      "name" : "p6e_p6c_143h_hourly_boundary_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 35,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_p6c_143h_physics_tests"
+      ],
+      "name" : "p6e_p6c_143h_mixht_temp3d_sequential_invariants",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 37,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/tests/verify_p6c_cli_formatted_143h.py",
+        "--cpp",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_p6c_hourly_bridge"
+      ],
+      "name" : "p6e_p6c_143h_formatted_input_cli",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 39,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/tests/verify_real_2022_p6c_temp3d_replay.py",
+        "--fixture",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/reference/data/hefei_2022_p6c_original_obs.zlib.b64",
+        "--cpp",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_temp3d_observed_land_reference",
+        "--out",
+        "/tmp/cteas-next-clean-validation/build-p6e/e18-real2022-observed-replay.json"
+      ],
+      "name" : "p6e_e18_real_2022_p6c_observed_temp3d_smoke",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 41,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_mixhbg_tests"
+      ],
+      "name" : "p6e_mixhbg_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 43,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_realcase_options_tests"
+      ],
+      "name" : "p6e_realcase_option_profile_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 45,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/tests/verify_calmet_dat21_contract.py",
+        "--tool",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_calmet_dat21",
+        "--harness",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/reference/compare_calmet_dat21.py"
+      ],
+      "name" : "p6e_calmet_dat21_output_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 47,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/tests/verify_calmet_dat21_contract.py",
+        "--tool",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_calmet_dat21",
+        "--harness",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/reference/compare_calmet_dat21.py",
+        "--real-reference",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "--real-reference-sha256",
+        "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30"
+      ],
+      "name" : "p6e_calmet_dat21_real_reference_round_trip",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 49,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/tests/verify_real_2022_full_field_reference.py",
+        "--repo-root",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/../../../..",
+        "--bridge",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_p6c_hourly_bridge",
+        "--tool",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_calmet_dat21",
+        "--work",
+        "/tmp/cteas-next-clean-validation/build-p6e/e42-real-full-field"
+      ],
+      "name" : "p6e_calmet_dat21_real_full_field_reference",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 900.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 51,
+      "command" : 
+      [
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_avetmp_tests"
+      ],
+      "name" : "p6e_avetmp_software",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    },
+    {
+      "backtrace" : 53,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/reference/compare_original_avetmp.py",
+        "--vendor",
+        "/tmp/cteas-next-clean/native_cpp/modules/p6_calmet/p6e/../../../../engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for",
+        "--cpp",
+        "/tmp/cteas-next-clean-validation/build-p6e/p6e_avetmp_reference",
+        "--gfortran",
+        "/usr/bin/gfortran-11",
+        "--out",
+        "/tmp/cteas-next-clean-validation/build-p6e/avetmp-original-parity.json"
+      ],
+      "name" : "p6e_avetmp_original_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-clean-validation/build-p6e"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

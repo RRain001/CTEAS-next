@@ -1,0 +1,2 @@
+id,name,manual_url,save_path,error
+CHM00058203,FUYANG,https://www.ncei.noaa.gov/data/integrated-global-radiosonde-archive/access/data-por/CHM00058203-data.txt.zip,/home/lhy/CTEAS/project/cases/smoke5d_coldstart_20260701/met/upperair/2023/CHM00058203-data.txt,<urlopen error [Errno 1] Operation not permitted>

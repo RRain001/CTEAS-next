@@ -1,0 +1,112 @@
+
+
+
+                          SMERGE OUTPUT SUMMARY
+                 VERSION:  5.7.0        LEVEL:  121203  
+
+
+
+
+ -------------------------------------------------
+ NOTICE: Starting year in control file sets the
+         expected century for the simulation.  All
+         YY years are converted to YYYY years in
+         the range:         1973        2072
+ -------------------------------------------------
+
+
+ Control file name: /home/lhy/CTEAS/project/cases/smoke5d_coldstart_20260701/run/smerge/smerge.inp                                                      
+ Output list file name: smerge.lst                                                                                                                          
+ Output file name: surf.dat                                                                                                                            
+ Continuation Run?  F
+
+
+
+ Station ID    Time Zone      Generic Format Data  
+                                   Input Files 
+
+      58321  UTC+0000    ../../met/surface/isd2smerge_ready/583210-99999.csv                                                                                 
+
+
+ Period to Extract (in time zone:UTC+0000):    1/ 1/2023   0:   0  to   1/ 5/2023  23:   0
+
+Missing       sky cover at: 2023   1  2    0
+Missing       sky cover at: 2023   1  5    0
+Missing       sky cover at: 2023   1  8    0
+Missing       sky cover at: 2023   1 11    0
+Missing       sky cover at: 2023   1 17    0
+Missing       sky cover at: 2023   1 20    0
+Missing       sky cover at: 2023   1 23    0
+Missing       sky cover at: 2023   2  2    0
+Missing       sky cover at: 2023   2  5    0
+Missing       sky cover at: 2023   2  7    0
+Missing       sky cover at: 2023   2  8    0
+Missing       sky cover at: 2023   2 11    0
+Missing       sky cover at: 2023   2 17    0
+Missing       sky cover at: 2023   2 20    0
+Missing       sky cover at: 2023   2 23    0
+Missing       sky cover at: 2023   3  2    0
+Missing       sky cover at: 2023   3  5    0
+Missing       sky cover at: 2023   3  8    0
+Missing       sky cover at: 2023   3 11    0
+Missing       sky cover at: 2023   3 17    0
+Missing       sky cover at: 2023   3 20    0
+Missing       sky cover at: 2023   3 23    0
+Missing       sky cover at: 2023   4  2    0
+Missing       sky cover at: 2023   4  3    0
+Missing       sky cover at: 2023   4  4    0
+Missing       sky cover at: 2023   4  5    0
+Missing       sky cover at: 2023   4  6    0
+Missing       sky cover at: 2023   4  7    0
+Missing       sky cover at: 2023   4  8    0
+Missing       sky cover at: 2023   4  9    0
+Missing       sky cover at: 2023   4 10    0
+Missing       sky cover at: 2023   4 11    0
+Missing       sky cover at: 2023   4 17    0
+Missing       sky cover at: 2023   4 20    0
+Missing       sky cover at: 2023   4 23    0
+Missing       sky cover at: 2023   5  2    0
+Missing       sky cover at: 2023   5  5    0
+Missing       sky cover at: 2023   5  8    0
+Missing       sky cover at: 2023   5 11    0
+Missing       sky cover at: 2023   5 17    0
+Missing       sky cover at: 2023   5 20    0
+ Number of records with all stations missing for   WS    WD ICEIL   ICC TEMPK   IRH  PRES
+                                                    0     0     0    41     0     0     0
+
+
+Total number of data records processed (NTOTAL) =    119
+
+                Number of valid records & calms                                         Percentage of valid data & calms
+   Station      WS      WD Ceiling   Cloud    Temp      RH   Press  Precip   Calms      WS      WD Ceiling   Cloud    Temp      RH   Press  Precip   Calms
+                            Height   Cover                            Code                          Height   Cover                            Code
+     58321     119     119     119      78     119     119     119       0       0   100.0   100.0   100.0    65.5   100.0   100.0   100.0     0.0     0.0
+
+
+                          ********************
+
+
+
+ Characteristics of SMERGE Output (SURF.DAT) File:
+
+   Time Zone:     0
+   File Format (1=unformatted, 2=formatted):  2
+
+ Surface Stations in Output File:  
+    No.       ID
+     1       58321
+
+
+
+
+
+  LAST DAY/HOUR PROCESSED:
+     Year: 2023  Month:  1   Day:  5   Julian day:   5   Hour: 23
+
+
+  End of run -- Clock time: 20:58:16
+                      Date: 01-Jul-2026 
+
+        Elapsed Clock Time:            0 (seconds)
+
+                  CPU Time:            0 (seconds)

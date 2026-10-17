@@ -1,0 +1,19 @@
+COMMAND: ["ctest", "--test-dir", "/tmp/cteas-next-clean-validation/build-p6", "--output-on-failure", "--timeout", "180", "--no-tests=error", "-R", "^(p6a_calmet_scoped_contracts|p6c_terrain_envelope_software|p6d_froude_adjust_software|p6c_station_geometry_software|p6_native_cpp_hourly_driver_fail_closed_missing_case|p6_native_cpp_comp_history_state_and_rollback)$"]
+Internal ctest changing into directory: /tmp/cteas-next-clean-validation/build-p6
+Test project /tmp/cteas-next-clean-validation/build-p6
+    Start 27: p6a_calmet_scoped_contracts
+1/6 Test #27: p6a_calmet_scoped_contracts ............................   Passed    0.01 sec
+    Start 28: p6c_terrain_envelope_software
+2/6 Test #28: p6c_terrain_envelope_software ..........................   Passed    0.62 sec
+    Start 29: p6d_froude_adjust_software
+3/6 Test #29: p6d_froude_adjust_software .............................   Passed    0.01 sec
+    Start 30: p6c_station_geometry_software
+4/6 Test #30: p6c_station_geometry_software ..........................   Passed    0.01 sec
+    Start 60: p6_native_cpp_hourly_driver_fail_closed_missing_case
+5/6 Test #60: p6_native_cpp_hourly_driver_fail_closed_missing_case ...   Passed    0.01 sec
+    Start 61: p6_native_cpp_comp_history_state_and_rollback
+6/6 Test #61: p6_native_cpp_comp_history_state_and_rollback ..........   Passed    0.07 sec
+
+100% tests passed, 0 tests failed out of 6
+
+Total Test time (real) =   0.74 sec

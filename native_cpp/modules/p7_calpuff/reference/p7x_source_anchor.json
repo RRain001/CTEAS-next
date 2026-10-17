@@ -1,0 +1,42 @@
+{
+  "gate": "P7X_STEP_INTEGRATION_SOURCE_ANCHOR",
+  "vendor_source": "calpuff.for",
+  "vendor_source_sha256": "da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568",
+  "located_by": "inline COMP spans pinned by line number and content hash",
+  "spans": {
+    "cadence_old_puff": {
+      "first_line": 10136,
+      "last_line": 10147,
+      "lines": 12,
+      "sha256": "d67e36f9fc3e914d45f04116f92eb614b5413c077757ff2b868ed60a288b7fa6"
+    },
+    "cadence_new_puff": {
+      "first_line": 10158,
+      "last_line": 10318,
+      "lines": 161,
+      "sha256": "2fcf01d107ad0cfa8a49360567e91ca5e48f2f7b593306ae18fe0aef0b56f394"
+    },
+    "substep_length": {
+      "first_line": 10548,
+      "last_line": 10582,
+      "lines": 35,
+      "sha256": "d7b051988befa1bd9b625645203fd2f508bc97b0f557f5ca35ebd43290258d19"
+    },
+    "position_update": {
+      "first_line": 10607,
+      "last_line": 10619,
+      "lines": 13,
+      "sha256": "e000efc840a9d741cbfdd1003e78cea0f7e96628f80eeeb196cdfdd4a8320adf"
+    }
+  },
+  "ported": {
+    "sampling_cadence": true,
+    "substep_length": true,
+    "position_update": true
+  },
+  "not_ported": [
+    "the vertical position update (SETPUF's ze1)",
+    "the dispersion update"
+  ],
+  "not_modified": true
+}

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+PYTHON_BIN="${CALPUFF_PYTHON:-}"
+if [[ -z "$PYTHON_BIN" ]]; then
+  if [[ -x "$SCRIPT_DIR/.venv/bin/python" ]]; then
+    PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python"
+  else
+    PYTHON_BIN="python3"
+  fi
+fi
+
+if [[ "${1:-}" == "webgui" ]]; then
+  echo "WebGUI has been removed. Use ./calpuff-cli desktopgui for the PySide6 desktop GUI." >&2
+  exit 2
+fi
+
+if [[ "${1:-}" == "desktopgui" ]]; then
+  shift
+  exec "$PYTHON_BIN" -m engine.ui.desktop.main "$@"
+fi
+
+if [[ "${1:-}" == "streamlitgui" ]]; then
+  echo "Streamlit GUI has been removed. Use ./calpuff-cli desktopgui for the PySide6 desktop GUI." >&2
+  exit 2
+fi
+
+exec "$PYTHON_BIN" -m engine.orchestrator.cli "$@"

@@ -1,0 +1,18 @@
+Start testing: Oct 16 16:26 CST
+----------------------------------------------------------
+1/1 Testing: p4_fsl_input_contracts
+1/1 Test: p4_fsl_input_contracts
+Command: "/tmp/cteas-next-gcc-validation/build-p4/cteas_p4_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p4
+"p4_fsl_input_contracts" start time: Oct 16 16:26 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"p4_fsl_input_contracts" end time: Oct 16 16:26 CST
+"p4_fsl_input_contracts" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 16 16:26 CST

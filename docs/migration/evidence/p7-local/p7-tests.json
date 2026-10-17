@@ -1,0 +1,2976 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test"
+    ],
+    "files" : 
+    [
+      "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/CMakeLists.txt"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 21,
+        "parent" : 0
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 41,
+        "parent" : 2
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 55,
+        "parent" : 4
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 61,
+        "parent" : 6
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 63,
+        "parent" : 8
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 69,
+        "parent" : 10
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 72,
+        "parent" : 12
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 87,
+        "parent" : 14
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 120,
+        "parent" : 16
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 121,
+        "parent" : 18
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 144,
+        "parent" : 20
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 146,
+        "parent" : 22
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 164,
+        "parent" : 24
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 166,
+        "parent" : 26
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 192,
+        "parent" : 28
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 216,
+        "parent" : 30
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 250,
+        "parent" : 32
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 254,
+        "parent" : 34
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 285,
+        "parent" : 36
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 290,
+        "parent" : 38
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 314,
+        "parent" : 40
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 333,
+        "parent" : 42
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 334,
+        "parent" : 44
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 338,
+        "parent" : 46
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 343,
+        "parent" : 48
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 395,
+        "parent" : 50
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 400,
+        "parent" : 52
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 415,
+        "parent" : 54
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 420,
+        "parent" : 56
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 425,
+        "parent" : 58
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 446,
+        "parent" : 60
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 451,
+        "parent" : 62
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 456,
+        "parent" : 64
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 477,
+        "parent" : 66
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 482,
+        "parent" : 68
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 487,
+        "parent" : 70
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 508,
+        "parent" : 72
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 513,
+        "parent" : 74
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 518,
+        "parent" : 76
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 539,
+        "parent" : 78
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 544,
+        "parent" : 80
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 549,
+        "parent" : 82
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 571,
+        "parent" : 84
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 576,
+        "parent" : 86
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 581,
+        "parent" : 88
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 602,
+        "parent" : 90
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 607,
+        "parent" : 92
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 612,
+        "parent" : 94
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 632,
+        "parent" : 96
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 637,
+        "parent" : 98
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 642,
+        "parent" : 100
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 662,
+        "parent" : 102
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 666,
+        "parent" : 104
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 671,
+        "parent" : 106
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 693,
+        "parent" : 108
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 703,
+        "parent" : 110
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 715,
+        "parent" : 112
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 720,
+        "parent" : 114
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 726,
+        "parent" : 116
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 747,
+        "parent" : 118
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 761,
+        "parent" : 120
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 785,
+        "parent" : 122
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 805,
+        "parent" : 124
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 817,
+        "parent" : 126
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 834,
+        "parent" : 128
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 836,
+        "parent" : 130
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 857,
+        "parent" : 132
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 865,
+        "parent" : 134
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 894,
+        "parent" : 136
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 936,
+        "parent" : 138
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 951,
+        "parent" : 140
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 975,
+        "parent" : 142
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 978,
+        "parent" : 144
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 993,
+        "parent" : 146
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1023,
+        "parent" : 148
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1023,
+        "parent" : 150
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1023,
+        "parent" : 152
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1028,
+        "parent" : 154
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1030,
+        "parent" : 156
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1032,
+        "parent" : 158
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1054,
+        "parent" : 160
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1075,
+        "parent" : 162
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1075,
+        "parent" : 164
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1075,
+        "parent" : 166
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1116,
+        "parent" : 168
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1116,
+        "parent" : 170
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1116,
+        "parent" : 172
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1138,
+        "parent" : 174
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1138,
+        "parent" : 176
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1138,
+        "parent" : 178
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1152,
+        "parent" : 180
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1152,
+        "parent" : 182
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1152,
+        "parent" : 184
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1187,
+        "parent" : 186
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1191,
+        "parent" : 188
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1199,
+        "parent" : 190
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1213,
+        "parent" : 192
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1232,
+        "parent" : 194
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1262,
+        "parent" : 196
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1291,
+        "parent" : 198
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1316,
+        "parent" : 200
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1340,
+        "parent" : 202
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1355,
+        "parent" : 204
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1377,
+        "parent" : 206
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1400,
+        "parent" : 208
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1426,
+        "parent" : 210
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1449,
+        "parent" : 212
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1466,
+        "parent" : 214
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1482,
+        "parent" : 216
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1518,
+        "parent" : 218
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1538,
+        "parent" : 220
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 1,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_control_tests"
+      ],
+      "name" : "cteas_p7_control_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_records_tests"
+      ],
+      "name" : "cteas_p7_fortran_record_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 5,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_calmet21_tests"
+      ],
+      "name" : "cteas_p7_calmet21_typed_field_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 7,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_calmet21_tests",
+        "--met",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+      ],
+      "name" : "cteas_p7g_locked_case_static_decode",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 9,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/original_met_hourly_parity.py",
+        "--binary",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_native_met_hours",
+        "--met",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+      ],
+      "name" : "cteas_p7_original_2022_native_met_hourly_bytes",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 11,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/original_reference_staging_tests.py"
+      ],
+      "name" : "cteas_p7_original_case_stage_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 13,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/legacy_2023_scope_tests.py"
+      ],
+      "name" : "cteas_p7_historical_2023_scope_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 15,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_transport_tests"
+      ],
+      "name" : "cteas_p7c_release_advection_inventory_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 17,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_case_ledger_tests"
+      ],
+      "name" : "cteas_p7_2022_case_ledger_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 19,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/case_ledger_real_2023_tests.py",
+        "--binary",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_2022_case_ledger"
+      ],
+      "name" : "cteas_p7_2022_ledger_real_2023_refusal",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 21,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_dispersion_tests"
+      ],
+      "name" : "cteas_p7d_dispersion_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 23,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/sigma_fortran_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7d_sigma_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7d_sigma_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 25,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_calm_sigma_tests"
+      ],
+      "name" : "cteas_p7_calm_idopt1_native_subset",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 27,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/calm_sigma_fortran_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_calm_sigma_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7_calm_idopt1_original_fortran_subset",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 29,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_turbset_mdisp3_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+      ],
+      "name" : "cteas_p7_original_turbset_mdisp3_hefei_minima",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 31,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_dry_deposition_tests"
+      ],
+      "name" : "cteas_p7f_dry_deposition_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 33,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_transport_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp"
+      ],
+      "name" : "cteas_p7c_locked_original_point_input",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 35,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_dry_deposition_tests",
+        "--control",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp"
+      ],
+      "name" : "cteas_p7f_locked_case_dry_deposition",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 37,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_hourly_conc_tests"
+      ],
+      "name" : "cteas_p7e_native_143h_hourly_data_writer_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 39,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_hourly_conc_tests",
+        "--frozen",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+      ],
+      "name" : "cteas_p7e_original_wrout1_full_native_header",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 41,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7h_tests"
+      ],
+      "name" : "cteas_p7h_vertical_coupling_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 43,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7i_tests"
+      ],
+      "name" : "cteas_p7i_ctsg_support_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 45,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7i_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7i_tests",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7i_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 47,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7h_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7e_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7h_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 49,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7e_tests",
+        "--control",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "--frozen-conc",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con"
+      ],
+      "name" : "cteas_p7e_receptor_sampling_conc_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 51,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7e_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7e_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7e_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 53,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/drydep_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7f_drydep_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7f_drydep_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 55,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7m_tests"
+      ],
+      "name" : "cteas_p7m_ctsg_kernel_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 57,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7m_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7m_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7m_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 59,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7m_probe",
+        "--real-grid",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "2.63e13",
+        "513.385",
+        "3533.769",
+        "70.800"
+      ],
+      "name" : "cteas_p7m_real_grid_ctsg",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 61,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7n_tests"
+      ],
+      "name" : "cteas_p7n_plume_rise_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 63,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7n_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7n_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7n_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 65,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7n_probe",
+        "--deck-rise",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800",
+        "1.600",
+        "17.260",
+        "298.150"
+      ],
+      "name" : "cteas_p7n_locked_case_rise",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 67,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7o_tests"
+      ],
+      "name" : "cteas_p7o_release_scheduler_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 69,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7o_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7o_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7o_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 71,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7o_probe",
+        "--deck-release",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800",
+        "1.600",
+        "17.260",
+        "298.150",
+        "8.340E+05"
+      ],
+      "name" : "cteas_p7o_locked_case_release",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 73,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7p_tests"
+      ],
+      "name" : "cteas_p7p_step_bookkeeping_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 75,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7p_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7p_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7p_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 77,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7p_probe",
+        "--deck-step",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800"
+      ],
+      "name" : "cteas_p7p_locked_case_step",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 79,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7q_tests"
+      ],
+      "name" : "cteas_p7q_sigma_update_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 81,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7q_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7q_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7q_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 83,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7q_probe",
+        "--deck-sigma",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800",
+        "1.0",
+        "1.0",
+        "100.0"
+      ],
+      "name" : "cteas_p7q_locked_case_sigma",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 85,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7r_tests"
+      ],
+      "name" : "cteas_p7r_terrain_constraints_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 87,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7r_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7r_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7r_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 89,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7r_probe",
+        "--deck-terrain",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800",
+        "89.152",
+        "0.9",
+        "1.396",
+        "0.02"
+      ],
+      "name" : "cteas_p7r_locked_case_terrain",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 91,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7s_tests"
+      ],
+      "name" : "cteas_p7s_terrain_state_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 93,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7s_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7s_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7s_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 95,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7s_probe",
+        "--deck-relief",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800",
+        "89.152",
+        "0.9",
+        "1.396",
+        "0.02"
+      ],
+      "name" : "cteas_p7s_locked_case_relief",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 97,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7t_tests"
+      ],
+      "name" : "cteas_p7t_valley_width_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 99,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7t_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7t_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7t_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 101,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7t_probe",
+        "--deck-valley",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800"
+      ],
+      "name" : "cteas_p7t_locked_case_valley",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 103,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7v_tests"
+      ],
+      "name" : "cteas_p7v_advection_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 105,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7v_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7v_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7v_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 107,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7v_probe",
+        "--deck-advection",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "0",
+        "513.385",
+        "3533.769",
+        "70.800",
+        "89.152"
+      ],
+      "name" : "cteas_p7v_locked_case_advection",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 109,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7w_tests"
+      ],
+      "name" : "cteas_p7w_rise_wind_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 111,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7g_structure_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7e_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7g_conc_structure",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 113,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7x_tests"
+      ],
+      "name" : "cteas_p7x_step_integration_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 115,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7w_parity_tests.py",
+        "--probe",
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7w_probe",
+        "--repo-root",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../.."
+      ],
+      "name" : "cteas_p7w_source_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 117,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7w_probe",
+        "--dgm-steps",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "513.385",
+        "3533.769",
+        "70.800",
+        "1.600",
+        "17.260",
+        "298.150"
+      ],
+      "name" : "cteas_p7w_dgm_step_comparison",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 119,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_grid_qa_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/qapnts.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/qarecg.dat"
+      ],
+      "name" : "cteas_p7_original_2022_qa_real4_coordinates",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 121,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/tests/p7_grid_preprocess_contract.py",
+        "--grid",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn",
+        "--puff",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "--center",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/grid/center_location",
+        "--negative"
+      ],
+      "name" : "cteas_p7_original_grid_preprocess_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 123,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_met_grid_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/qapnts.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/qarecg.dat"
+      ],
+      "name" : "cteas_p7_original_2022_met_header_grid_qa",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 125,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_precision_contract_tests"
+      ],
+      "name" : "cteas_p7_original_fortran_cpp_precision_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 127,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_vendor_order_tests"
+      ],
+      "name" : "cteas_p7_vendor_substep_order_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 129,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_initial_dgm_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin"
+      ],
+      "name" : "cteas_p7_original_initial_internal_xy",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 131,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/audit_vendor_order_and_dgm.py",
+        "--vendor",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for",
+        "--dgm-tool",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/original_puff_step_dump.py",
+        "--metadata",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep.json",
+        "--first-hour",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin",
+        "--control",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "--audit-record",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm-audit.json"
+      ],
+      "name" : "cteas_p7_original_source_dgm_execution_order",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 133,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_first_hour_advance_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin"
+      ],
+      "name" : "cteas_p7_original_first_hour_advance_real4",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 135,
+      "command" : 
+      [
+        "/home/lhy/CTEAS-next/.venv/bin/python",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/audit_vendor_wrout1_output.py",
+        "--control",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "--original-con",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con"
+      ],
+      "name" : "cteas_p7_original_wrout1_header_avefactor_audit",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 137,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_first_hour_lifecycle_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin"
+      ],
+      "name" : "cteas_p7_first_hour_state_persistence_real4",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 139,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_met_cell_trace",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin"
+      ],
+      "name" : "cteas_p7_original_met_cell_advection_first_hour",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 141,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_puffdz_state_trace",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin",
+        "1"
+      ],
+      "name" : "cteas_p7_native_puffdz_first_hour",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 143,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_native_vertical_tests"
+      ],
+      "name" : "cteas_p7_native_vertical_released_persistent_real4",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 145,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_native_vertical_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin"
+      ],
+      "name" : "cteas_p7_native_vertical_original_first_step_real4",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 147,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_vmass_tests"
+      ],
+      "name" : "cteas_p7_native_vmass_source_branch_mass_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 149,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_neutral_tests",
+        "1"
+      ],
+      "name" : "cteas_p7_native_comp_neutral_1h_persistent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 151,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_neutral_tests",
+        "6"
+      ],
+      "name" : "cteas_p7_native_comp_neutral_6h_persistent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 153,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_neutral_tests",
+        "143"
+      ],
+      "name" : "cteas_p7_native_comp_neutral_143h_persistent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 155,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_neutral_tests",
+        "pg"
+      ],
+      "name" : "cteas_p7_native_comp_neutral_pg_1h_persistent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 157,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_neutral_tests",
+        "pg6"
+      ],
+      "name" : "cteas_p7_native_comp_neutral_pg_6h_persistent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 159,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_neutral_tests",
+        "pg143"
+      ],
+      "name" : "cteas_p7_native_comp_neutral_pg_143h_persistent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 161,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_rise_met_tests"
+      ],
+      "name" : "cteas_p7_native_metfm1_grise_risewind",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 163,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_hourly_tests",
+        "1"
+      ],
+      "name" : "cteas_p7_native_comp_pg_multipuff_1h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 165,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_hourly_tests",
+        "6"
+      ],
+      "name" : "cteas_p7_native_comp_pg_multipuff_6h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 167,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_hourly_tests",
+        "143"
+      ],
+      "name" : "cteas_p7_native_comp_pg_multipuff_143h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 169,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_rise_tests",
+        "1"
+      ],
+      "name" : "cteas_p7_native_rise_comp_pg_1h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 171,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_rise_tests",
+        "6"
+      ],
+      "name" : "cteas_p7_native_rise_comp_pg_6h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 173,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_rise_tests",
+        "143"
+      ],
+      "name" : "cteas_p7_native_rise_comp_pg_143h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 175,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_rise_hourly_tests",
+        "1"
+      ],
+      "name" : "cteas_p7_native_rise_comp_pg_multipuff_1h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 177,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_rise_hourly_tests",
+        "6"
+      ],
+      "name" : "cteas_p7_native_rise_comp_pg_multipuff_6h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 179,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_rise_hourly_tests",
+        "143"
+      ],
+      "name" : "cteas_p7_native_rise_comp_pg_multipuff_143h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 181,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_point_hourly_cadence_tests",
+        "1"
+      ],
+      "name" : "cteas_p7_point_hourly_cadence_1h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 183,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_point_hourly_cadence_tests",
+        "6"
+      ],
+      "name" : "cteas_p7_point_hourly_cadence_6h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 185,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_point_hourly_cadence_tests",
+        "143"
+      ],
+      "name" : "cteas_p7_point_hourly_cadence_143h",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 187,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_release_wind_tests"
+      ],
+      "name" : "cteas_p7_native_windset_release_synthetic",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 189,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_release_wind_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin"
+      ],
+      "name" : "cteas_p7_native_windset_rlsmet_2022_first_hour",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 191,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_point_hourly_cadence_tests",
+        "rlsmet"
+      ],
+      "name" : "cteas_p7_point_hourly_cadence_native_rlsmet",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 193,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_cadence_trace",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin",
+        "1"
+      ],
+      "name" : "cteas_p7_comp_new_cadence_original_first_hour",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 195,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_fstep_trace",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin",
+        "1"
+      ],
+      "name" : "cteas_p7_original_first_hour_fstep_controller",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 197,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_exit_tests"
+      ],
+      "name" : "cteas_p7_original_comp_exit_source_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 199,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_pufrecs_geometry_tests"
+      ],
+      "name" : "cteas_p7_original_pufrecs_geometry",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 201,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_puffct2_tests"
+      ],
+      "name" : "cteas_p7_original_puffct2_source_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 203,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_native_terrain_tests"
+      ],
+      "name" : "cteas_p7_original_native_terrain_real_input_adapter",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 205,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_native_terrain_frozen_met_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+      ],
+      "name" : "cteas_p7_hefei_frozen_met_terrain_source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 207,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_hefei_source_met_bridge_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp"
+      ],
+      "name" : "cteas_p7_hefei_source_met_stack_bridge",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 209,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_hefei_firsthour_native_comp_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep_hour202200100.bin"
+      ],
+      "name" : "cteas_p7_hefei_real_54_puff_native_admissions",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 211,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_hefei_firsthour_native_h3_receptors_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con"
+      ],
+      "name" : "cteas_p7_hefei_real_firsthour_h3_receptor_diagnostic",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 213,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_hefei_sixhour_native_h3_receptors_tests",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
+        "/home/lhy/CTEAS-next/native_cpp/modules/p7_calpuff/../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con"
+      ],
+      "name" : "cteas_p7_hefei_real_sixhour_comp_precision_diagnostic",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 215,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_calm_integrated_tests"
+      ],
+      "name" : "cteas_p7_native_comp_calm_idopt1_transaction",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 217,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_calm_tests"
+      ],
+      "name" : "cteas_p7_native_comp_calm_branch_atomic",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 219,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_comp_mxsam99_unsplit_tests"
+      ],
+      "name" : "cteas_p7_native_comp_mxsam99_unsplit",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    },
+    {
+      "backtrace" : 221,
+      "command" : 
+      [
+        "/tmp/cteas-next-p7-local-validation/build-p7/cteas_p7_original_rolldn_tests"
+      ],
+      "name" : "cteas_p7_original_rolldn_slot_order",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/tmp/cteas-next-p7-local-validation/build-p7"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

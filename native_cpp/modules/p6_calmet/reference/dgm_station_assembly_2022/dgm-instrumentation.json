@@ -1,0 +1,126 @@
+{
+  "status": "ORIGINAL_CALMET_WRITE_ONLY_STATION_ASSEMBLY_INSTRUMENTED",
+  "why": "P6D's round-17 request: separate the surface observation assembly, the upper-air low-level interpolation and the analysis weights; level 1 of U/V is the observed surface wind and CALMET.DAT exposes only the analysed result",
+  "request_source": "P6D PR #23, round 17 (Instrumentation request, DGM format)",
+  "no_vendor_source_edits": true,
+  "vendor_source_sha256": {
+    "calmet.for": "430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134",
+    "calutils.for": "1e1fbad6444dcebbcaefed3f5f9a65e5ab0569d45fdf12ea973ca613b8d7cad1"
+  },
+  "instrumented_sha256": {
+    "calmet_instrumented.for": "532f7f0aa10fed48c2ad08720b96aa6f4e2f42d3e2c90ebd9c397ba2b5438251"
+  },
+  "helper_subroutines": {
+    "DGMSURFIN, DGMSURFADJ, DGMSOUND": {
+      "vendor_lines": 40199,
+      "sha256": "994459d9e3a793cff9728a31017a6fa9293c0c002b11284b8f81b48d596e9502",
+      "unit": 94,
+      "output_file": "dgm_station.bin",
+      "record_bytes": 4160,
+      "writes_only": true
+    }
+  },
+  "points": [
+    {
+      "kpt": 1,
+      "vendor_line": 13906,
+      "when": "PREPDI: the surface station column as it enters the analysis (level 1 only; the rest are the EDIT missing value)",
+      "inserted_text_sha256": "27e7b210134b28ce64e2afc68c14a4cae5c72b908a9a9a4bee5f2cab931611a3"
+    },
+    {
+      "kpt": 2,
+      "vendor_line": 5958,
+      "when": "DIAGNO: the same column after the per-station anemometer-to-ZMID(1) adjustment / similarity-theory extrapolation",
+      "inserted_text_sha256": "86e2679713c9b59c876adce37d89562474fb01459a961bc772e29ca4d733cd59"
+    },
+    {
+      "kpt": 3,
+      "vendor_line": 4392,
+      "when": "COMP: the RDUPN AA/BB sounding columns and the VERTAV nine-level averages (fires only when a new sounding is read)",
+      "inserted_text_sha256": "3ad7e6928d9c8a7ea963d8cdbdb728b9464d7e82e9c051737a6c31934b51dbab"
+    },
+    {
+      "kpt": 4,
+      "vendor_line": 4423,
+      "when": "COMP: immediately before the PREPDI call - the same columns as the analysis consumes them this hour (fires every hour)",
+      "inserted_text_sha256": "d9a6c2c86f4be6d714f921df733748d9df813e824119ea1b15cb3d5565fb1130"
+    }
+  ],
+  "source_segments": {
+    "prepdi_station_conversion": {
+      "vendor_lines": [
+        13868,
+        13907
+      ],
+      "sha256": "7b747db63ccd4ffab602545bd3af756337558afa1b729db3d3b6054660b5ab5e"
+    },
+    "diagno_station_loop": {
+      "vendor_lines": [
+        5797,
+        5959
+      ],
+      "sha256": "a2645907a62175d506aff204dac80468b31813afa9374a5e04788f5dbe2cfcdd"
+    },
+    "comp_vertav_aa": {
+      "vendor_lines": [
+        4379,
+        4393
+      ],
+      "sha256": "64bd07eeba15a0d4c8d1c5902d9c9f3b5d1656b4601fab3f5923dd76f0d33b07"
+    },
+    "comp_prepdi_call": {
+      "vendor_lines": [
+        4416,
+        4427
+      ],
+      "sha256": "6a260cec16a322ffe4d9901fd9579b8015c04f866733f0feaadafdf279e62126"
+    }
+  },
+  "record_layout": {
+    "header": "int32[16]",
+    "payload": "float32[512]",
+    "record_bytes": 4160,
+    "header_dtype": "int32 little endian",
+    "field_dtype": "float32 little endian",
+    "ints": [
+      "kpt",
+      "packed",
+      "seconds",
+      "nssta",
+      "nusta",
+      "npsta",
+      "nz",
+      "nlaa",
+      "nlbb",
+      "nsurf",
+      "iu",
+      "l",
+      "justa",
+      "ntzaa",
+      "ntzbb",
+      "jusdt"
+    ],
+    "float_slots": [
+      "US_ENTER_1..nz",
+      "VS_ENTER_1..nz",
+      "US_ADJUSTED_1..nz",
+      "VS_ADJUSTED_1..nz",
+      "ZLAA_1..99",
+      "UAA_1..99",
+      "VAA_1..99",
+      "ZLBB_1..99",
+      "UBB_1..99",
+      "VBB_1..99",
+      "UAVERAA_1..nz",
+      "VAVERAA_1..nz",
+      "UAVERBB_1..nz",
+      "VAVERBB_1..nz",
+      "spare_666..1023"
+    ]
+  },
+  "index_order": {
+    "UPMET sounding arrays": "station-major: uaa(mxus,mxlev), element (iu,k) - level varies fastest",
+    "VERTAV outputs": "level-major: uaveaa(mxnz,mxus), element (k,iu) - station varies fastest",
+    "D1 US/VS": "level-major: us(mxnz,mxwnd), element (k,l)"
+  }
+}

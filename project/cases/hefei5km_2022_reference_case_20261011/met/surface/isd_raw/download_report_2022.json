@@ -1,0 +1,33 @@
+{
+  "year": 2022,
+  "mode": "VIRTUAL_RELOCATED",
+  "research_bbox": [
+    117.11514649431365,
+    117.16807521568634,
+    31.917316664625226,
+    31.962232223374777
+  ],
+  "stack_latlon": [
+    31.939774444,
+    117.141610855
+  ],
+  "candidates": [
+    {
+      "sid": "58321099999",
+      "distance_to_stack_km": 16.428531569982518,
+      "full_isd_download_success": true,
+      "raw_annual_coverage": "full_ISD_source_hours=8692/8760; coverage=99.2237%",
+      "isd_lite_wind_download_success": true,
+      "isd_lite_wind_original_hour_coverage": "original_ISD_Lite_hours=8692/8760; coverage=99.2237%",
+      "full_isd_source_hours": 8692,
+      "isd_lite_source_hours": 8692,
+      "expected_calendar_hours": 8760,
+      "strict_external_gt90_both_sources": true,
+      "selected": true
+    }
+  ],
+  "source_coverage_rule": "no in-domain: nearest station with >90% unique original UTC hours in BOTH ISD and ISD-Lite, per calendar year; any in-domain station: no coverage threshold",
+  "station_selection_case": "EXTERNAL_SINGLE_VIRTUAL",
+  "primary_sid": "58321099999",
+  "primary_selection_metric": "ISD_LITE_UNIQUE_ORIGINAL_HOURS_THEN_FULL_ISD"
+}

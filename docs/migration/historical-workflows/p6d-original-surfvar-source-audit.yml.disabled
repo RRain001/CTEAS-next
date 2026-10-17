@@ -1,0 +1,31 @@
+name: P6D CALMET original SURFVAR one-station formula audit
+on:
+  pull_request:
+    paths:
+      - .github/workflows/p6d-original-surfvar-source-audit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-literal:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+      - name: Audit original SURFVAR exactly in frozen vendor source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib,hashlib
+          p=pathlib.Path("engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for")
+          raw=p.read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=="430381b4fb87f15127e20b13cc3e99be8a0e0fccf1d5821110af7f980558d134"
+          lines=raw.decode().splitlines()
+          print("=== CALMET source SURFVAR stations, weights and tsurf ===")
+          for i in range(12708-1,12881):
+              print(f"{i+1:5} {lines[i]}")
+          PY

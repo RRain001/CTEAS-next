@@ -1,0 +1,338 @@
+name: CTEAS P6 P7 same-HEAD C2 143h four-arm science
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/integration-p1-p7-143h-science.yml'
+      - 'native_cpp/modules/p6_calmet/**'
+      - 'native_cpp/modules/p7_calpuff/**'
+      - 'engine/vendor/src/**'
+      - 'project/cases/hefei5km_2022_reference_case_20261011/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/integration-p1-p7-143h-science.yml'
+      - 'native_cpp/modules/p6_calmet/**'
+      - 'native_cpp/modules/p7_calpuff/**'
+      - 'engine/vendor/src/**'
+      - 'project/cases/hefei5km_2022_reference_case_20261011/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: integration-p1-p7-science-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  g35-double-meteorology-original-calpuff:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout C2 audit scripts and comparator
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout same integrated HEAD for reconstructed CALMET P6 source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: p6pr63
+          persist-credentials: false
+      - name: Confirm P6 and P7 source checkouts use the same integration HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C p6pr63 rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          cat > "$RUNNER_TEMP/integration-physical-source-identity.txt" <<EOF
+          P6_NATIVE_SOURCE_SHA=$GITHUB_SHA
+          P7_NATIVE_SOURCE_SHA=$GITHUB_SHA
+          FROZEN_PR63_REFERENCE=7a13cc6a2f2d7b4c99e18b8866043a0319733454
+          BOTH_MODELS_FROM_IDENTICAL_INTEGRATION_COMMIT=YES
+          EOF
+          cat "$RUNNER_TEMP/integration-physical-source-identity.txt"
+          echo "INTEGRATION_P1_P7_SAME_HEAD_SOURCE=PASS HEAD=$GITHUB_SHA"
+
+      - name: Build frozen PR63 multi-station source and true G14 physical scheduler
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S p6pr63/native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p7-c2/g35-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p7-c2/g35-build" --parallel 2 --target \
+            cteas_p6g_g19_file_backed_case_tests \
+            cteas_p6g_g21_source_fradj_probe \
+            cteas_p6g_g34b_six_hour_selected_gate
+          cmake -S p6pr63/native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/p7-c2/p6e-comparator" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p7-c2/p6e-comparator" --parallel 2 --target p6e_calmet_dat21
+
+      - name: Generate genuine 143h original-format 2SS/2US source once for both CALMET solvers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/p7-c2/source"
+          "$RUNNER_TEMP/p7-c2/g35-build/cteas_p6g_g19_file_backed_case_tests" \
+            --export-case p6pr63/project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp \
+            "$RUNNER_TEMP/p7-c2/source" --fradj-stress --daylight-first-hour --hours 143
+          test "$(grep -c '^ 6201 ' "$RUNNER_TEMP/p7-c2/source/UP1.DAT")" -eq 15
+          test "$(grep -c '^ 6201 ' "$RUNNER_TEMP/p7-c2/source/UP2.DAT")" -eq 15
+          "$RUNNER_TEMP/p7-c2/g35-build/cteas_p6g_g21_source_fradj_probe" \
+            "$RUNNER_TEMP/p7-c2/source/met.inp" "$RUNNER_TEMP/p7-c2/source/GEO.DAT" \
+            "$RUNNER_TEMP/p7-c2/source/SURF.DAT" "$RUNNER_TEMP/p7-c2/source/UP1.DAT" \
+            "$RUNNER_TEMP/p7-c2/source/UP2.DAT" \
+            --output "$RUNNER_TEMP/p7-c2/g35-first-hour-native.csv" \
+            --source-stage "$RUNNER_TEMP/p7-c2/g35-first-hour-stage.dat"
+
+      - name: Execute unchanged original CALMET 6.5.0 for all 143 hours
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 p6pr63/native_cpp/modules/p6_calmet/reference/g31_run_literal_original_calmet_multisite.py \
+            --mode Release --hours 143 --source "$RUNNER_TEMP/p7-c2/source" \
+            --source-clock "$RUNNER_TEMP/p7-c2/g35-first-hour-native.csv" \
+            --out "$RUNNER_TEMP/p7-c2/original"
+          test -s "$RUNNER_TEMP/p7-c2/original/original-met.dat"
+
+      - name: Execute PR63 real native G14 143h and strict 6,435-field CALMET gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/p7-c2/g35-build/cteas_p6g_g34b_six_hour_selected_gate" \
+            "$RUNNER_TEMP/p7-c2/source/met.inp" "$RUNNER_TEMP/p7-c2/source/GEO.DAT" \
+            "$RUNNER_TEMP/p7-c2/source/SURF.DAT" "$RUNNER_TEMP/p7-c2/source/UP1.DAT" \
+            "$RUNNER_TEMP/p7-c2/source/UP2.DAT" \
+            "$RUNNER_TEMP/p7-c2/native-met.dat" --hours 143 \
+            | tee "$RUNNER_TEMP/p7-c2/native-trace.log"
+          "$RUNNER_TEMP/p7-c2/p6e-comparator/p6e_calmet_dat21" compare \
+            --reference "$RUNNER_TEMP/p7-c2/original/original-met.dat" \
+            --candidate "$RUNNER_TEMP/p7-c2/native-met.dat" \
+            --out "$RUNNER_TEMP/p7-c2/original-vs-native-45field.json"
+          sha256sum "$RUNNER_TEMP/p7-c2/original/original-met.dat" \
+                    "$RUNNER_TEMP/p7-c2/native-met.dat" \
+            | tee "$RUNNER_TEMP/p7-c2/dual-met-sha256.txt"
+          echo 'P7_C2_DUAL_REAL_MET_READY=PASS HOURS=143 FIELDS=6435'
+
+      - name: Run nonzero-controlled original CALPUFF A and C with SAME source inside true 12x12 grid
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p7_calpuff/reference/run_c2_vendor_inside_grid_pair.py \
+            --pr63-root p6pr63 \
+            --original-met "$RUNNER_TEMP/p7-c2/original/original-met.dat" \
+            --native-met "$RUNNER_TEMP/p7-c2/native-met.dat" \
+            --out "$RUNNER_TEMP/p7-c2/internal-source-science" \
+            | tee "$RUNNER_TEMP/p7-c2/C2-vendor-pair.log"
+          test -s "$RUNNER_TEMP/p7-c2/internal-source-science/C2-A-vs-C-science.json"
+          echo 'P7_C2_VENDOR_ORIGINAL_AND_PR63_MET_H3_TRANSPORT=MEASURED_NONZERO'
+          echo 'P7_C2_NATIVE_P7_MULTISTATION=A_B_C_D_STILL_OPEN'
+
+      - name: Capture original Fortran H1 receptor 4-6 intermediates without changing puff.con
+        id: vendor_stage
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2"
+          python3 native_cpp/modules/p7_calpuff/reference/c2_vendor_receiver_stage_trace.py \
+            --pr63-root p6pr63 \
+            --weather "$root/original/original-met.dat" \
+            --control "$root/internal-source-science/C2-source-inside-multistation-domain.inp" \
+            --baseline-con "$root/internal-source-science/A-original-calpuff.con" \
+            --out "$root/H1-readonly-stage" \
+            | tee "$root/C2-vendor-H1-readonly-stage.log"
+
+      - name: Build full original-source P7 C++ COMP for the actual 2024 12x12 G35 case
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p7_calpuff -B "$RUNNER_TEMP/p7-c2/p7-build" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$RUNNER_TEMP/p7-c2/p7-build" --parallel 2 \
+            --target cteas_p7_hefei_sixhour_native_h3_receptors_tests cteas_p7_original_native_terrain_tests
+          "$RUNNER_TEMP/p7-c2/p7-build/cteas_p7_original_native_terrain_tests"
+
+      - name: Protect accepted P7 2022 single-station first six hours after shared CALCPF change
+        id: protected_2022
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2"
+          CTEAS_P7_MAKEGEO_INP=project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp \
+            "$root/p7-build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat \
+            project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp \
+            project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con \
+            > "$root/P7-2022-frozen-sixhour-protection.log" 2>&1 || {
+              tail -n 80 "$root/P7-2022-frozen-sixhour-protection.log"
+              exit 1
+            }
+          grep -F 'P7_HEFEI_REAL_6H_COMPUTATION_AND_PRECISION_DIAGNOSTIC=PASS' \
+            "$root/P7-2022-frozen-sixhour-protection.log"
+
+      - name: C2 physics preflight same original MET, first six authentic 2024 hours
+        id: smoke_original
+        continue-on-error: true # diagnostic run may produce real physics differences
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2"
+          CTEAS_P7_INTEGRATION_C2=1 \
+          CTEAS_P7_C2_H1_RECEIVER_TRACE="$root/H1-readonly-stage/C2-native-H1-receptor-4-6-stage.txt" \
+          CTEAS_P7_MAKEGEO_INP=project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp \
+            "$root/p7-build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            "$root/original/original-met.dat" \
+            "$root/internal-source-science/C2-source-inside-multistation-domain.inp" \
+            "$root/internal-source-science/A-original-calpuff.con" \
+            > "$root/C2-original-P7-first6h.log" 2>&1 || {
+              tail -n 90 "$root/C2-original-P7-first6h.log"
+              exit 1
+            }
+          grep -F 'P7_C2_NATIVE_ON_PR63_MET HOURS=6' "$root/C2-original-P7-first6h.log"
+
+      - name: Compare read-only H1 vendor/native CALCPF stage operands
+        if: always()
+        id: h1_stage_compare
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2/H1-readonly-stage"
+          python3 native_cpp/modules/p7_calpuff/reference/c2_compare_readonly_receiver_stages.py \
+            --vendor-json "$root/C2-vendor-H1-receptor-4-6-stage.json" \
+            --native-trace "$root/C2-native-H1-receptor-4-6-stage.txt" \
+            --out "$root/C2-vendor-native-H1-first-stage-comparison.json"
+
+      - name: C2 same original MET true 143h B native P7 — strict 20,592 REAL4 words
+        id: p7_B
+        if: always() && steps.smoke_original.outcome != 'skipped'
+        continue-on-error: true # still preserve real native 143h output for first-difference audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2"
+          CTEAS_P7_INTEGRATION_C2=1 \
+          CTEAS_P7_PROBE_HOURS=143 \
+          CTEAS_P7_NATIVE_PUFF_CON="$root/internal-source-science/B-original-met-native-p7.con" \
+          CTEAS_P7_MAKEGEO_INP=project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp \
+            "$root/p7-build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            "$root/original/original-met.dat" \
+            "$root/internal-source-science/C2-source-inside-multistation-domain.inp" \
+            "$root/internal-source-science/A-original-calpuff.con" \
+            > "$root/C2-original-MET-P7-B-143h.log" 2>&1 || {
+              tail -n 100 "$root/C2-original-MET-P7-B-143h.log"
+              exit 1
+            }
+          grep -F 'P7_C2_NATIVE_ON_PR63_MET HOURS=143 REAL4_MATCHED=20592/20592' "$root/C2-original-MET-P7-B-143h.log"
+
+      - name: C2 same PR63 native MET true 143h D native P7 — strict 20,592 REAL4 words
+        id: p7_D
+        if: always() && steps.smoke_original.outcome != 'skipped'
+        continue-on-error: true # same identical-MET strict gate retained at final decision
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2"
+          CTEAS_P7_INTEGRATION_C2=1 \
+          CTEAS_P7_PROBE_HOURS=143 \
+          CTEAS_P7_NATIVE_PUFF_CON="$root/internal-source-science/D-native-met-native-p7.con" \
+          CTEAS_P7_MAKEGEO_INP=project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp \
+            "$root/p7-build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            "$root/native-met.dat" \
+            "$root/internal-source-science/C2-source-inside-multistation-domain.inp" \
+            "$root/internal-source-science/C-original-calpuff.con" \
+            > "$root/C2-native-MET-P7-D-143h.log" 2>&1 || {
+              tail -n 100 "$root/C2-native-MET-P7-D-143h.log"
+              exit 1
+            }
+          grep -F 'P7_C2_NATIVE_ON_PR63_MET HOURS=143 REAL4_MATCHED=20592/20592' "$root/C2-native-MET-P7-D-143h.log"
+
+      - name: Independently compare real 2024 H-3 A/B and C/D and B/D field differences
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2/internal-source-science"
+          cmp_py=native_cpp/modules/p7_calpuff/reference/compare_p7_hourly_concentrations.py
+          if test -s "$root/B-original-met-native-p7.con"; then
+            python3 "$cmp_py" \
+              --a "$root/A-original-calpuff.con" --b "$root/B-original-met-native-p7.con" \
+              --nx 12 --ny 12 --hours 143 --report "$root/C2-same-MET-A-vs-B.json"
+          fi
+          if test -s "$root/D-native-met-native-p7.con"; then
+            python3 "$cmp_py" \
+              --a "$root/C-original-calpuff.con" --b "$root/D-native-met-native-p7.con" \
+              --nx 12 --ny 12 --hours 143 --report "$root/C2-same-MET-C-vs-D.json"
+          fi
+          if test -s "$root/B-original-met-native-p7.con" && test -s "$root/D-native-met-native-p7.con"; then
+            python3 "$cmp_py" \
+              --a "$root/B-original-met-native-p7.con" --b "$root/D-native-met-native-p7.con" \
+              --nx 12 --ny 12 --hours 143 --report "$root/C2-different-MET-B-vs-D.json"
+          fi
+
+      - name: Final science gate requires genuine 143h A/B and C/D REAL4 identity
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7-c2/internal-source-science"
+          python3 - "$root" "${{ steps.smoke_original.outcome }}" "${{ steps.p7_B.outcome }}" "${{ steps.p7_D.outcome }}" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          root=Path(sys.argv[1])
+          step_statuses=sys.argv[2:]
+          verdict={"smoke_outcome":step_statuses[0],
+                   "B_outcome":step_statuses[1],
+                   "D_outcome":step_statuses[2]}
+          good=all(s=="success" for s in step_statuses)
+          for name in ("C2-same-MET-A-vs-B.json","C2-same-MET-C-vs-D.json"):
+              path=root/name
+              if not path.is_file():
+                  verdict[name]="MISSING"
+                  good=False
+                  continue
+              v=json.loads(path.read_text())
+              verdict[name]={"matching_real4":v.get("matching_real4"),
+                             "values":v.get("values"),
+                             "bitwise_identical":v.get("bitwise_identical"),
+                             "first_difference":v.get("first_difference")}
+              if not (v.get("hours")==143 and v.get("values")==20592
+                      and v.get("bitwise_identical") is True
+                      and v.get("matching_real4")==20592):
+                  good=False
+          verdict["C2_ACCEPTED"]=good
+          (root/"C2-final-scientific-verdict.json").write_text(
+              json.dumps(verdict,indent=2)+"\n")
+          print("P7_C2_143H_FOUR_ARM_SCIENTIFIC_GATE="+
+                ("PASS" if good else "OPEN_OR_FAIL"))
+          print(json.dumps(verdict,indent=2))
+          if not good:
+              sys.exit(1)
+          PY
+
+      - name: Publish independent C2 science verdicts even on an integration failure
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p1-p7-integration-head-143h-c2-science
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/integration-physical-source-identity.txt
+            ${{ runner.temp }}/p7-c2/dual-met-sha256.txt
+            ${{ runner.temp }}/p7-c2/original-vs-native-45field.json
+            ${{ runner.temp }}/p7-c2/C2-vendor-pair.log
+            ${{ runner.temp }}/p7-c2/internal-source-science/C2-A-vs-C-science.json
+            ${{ runner.temp }}/p7-c2/internal-source-science/C2-vendor-source-provenance.json
+            ${{ runner.temp }}/p7-c2/internal-source-science/C2-source-inside-multistation-domain.inp
+            ${{ runner.temp }}/p7-c2/internal-source-science/C2-same-MET-A-vs-B.json
+            ${{ runner.temp }}/p7-c2/internal-source-science/C2-same-MET-C-vs-D.json
+            ${{ runner.temp }}/p7-c2/internal-source-science/C2-different-MET-B-vs-D.json
+            ${{ runner.temp }}/p7-c2/internal-source-science/C2-final-scientific-verdict.json
+            ${{ runner.temp }}/p7-c2/C2-original-P7-first6h.log
+            ${{ runner.temp }}/p7-c2/C2-original-MET-P7-B-143h.log
+            ${{ runner.temp }}/p7-c2/C2-native-MET-P7-D-143h.log
+            ${{ runner.temp }}/p7-c2/P7-2022-frozen-sixhour-protection.log
+            ${{ runner.temp }}/p7-c2/C2-vendor-H1-readonly-stage.log
+            ${{ runner.temp }}/p7-c2/H1-readonly-stage/C2-vendor-H1-receptor-4-6-stage.txt
+            ${{ runner.temp }}/p7-c2/H1-readonly-stage/C2-vendor-H1-receptor-4-6-stage.json
+            ${{ runner.temp }}/p7-c2/H1-readonly-stage/C2-native-H1-receptor-4-6-stage.txt
+            ${{ runner.temp }}/p7-c2/H1-readonly-stage/C2-vendor-native-H1-first-stage-comparison.json

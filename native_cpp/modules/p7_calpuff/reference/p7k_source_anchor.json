@@ -1,0 +1,150 @@
+{
+  "gate": "P7K_CTSG_KERNEL_SOURCE_LOCATION",
+  "vendor_source": "calpuff.for",
+  "vendor_source_sha256": "da40372cab1c181158d0ee5faac16f678e876fc14415073c38c8e3bdabfbc568",
+  "located_by": "call-site scan over the vendor routine headers (no plain-name patterns)",
+  "units": {
+    "munu": {
+      "first_line": 24865,
+      "last_line": 24967,
+      "lines": 103,
+      "sha256": "348cec20d84b5e67285b4be4e81c0e31fd8cba8eae5329cb012d84e007ffd482",
+      "calls": []
+    },
+    "bi": {
+      "first_line": 22229,
+      "last_line": 22263,
+      "lines": 35,
+      "sha256": "917e2da3b8b2547a71cbdba604deb44494ba441ee4e1d022bcdfb7692c3b2c89",
+      "calls": []
+    },
+    "bji": {
+      "first_line": 22265,
+      "last_line": 22316,
+      "lines": 52,
+      "sha256": "53e3010313a89e133b1e3ffea4a6924fee7ffcdcd189ba5072d70cbda853fd6e",
+      "calls": []
+    },
+    "bjil": {
+      "first_line": 22318,
+      "last_line": 22363,
+      "lines": 46,
+      "sha256": "e34ab5ac71fdd8c45e06b84416fc3a7b7e519f4f5fa2e03e62a5c1549c8216ff",
+      "calls": []
+    },
+    "flopuff": {
+      "first_line": 23178,
+      "last_line": 23656,
+      "lines": 479,
+      "sha256": "5dccb500891d18a6876d93172da6a334dca80314102614acbd7691b5fa89072c",
+      "calls": []
+    },
+    "ctpar": {
+      "first_line": 22505,
+      "last_line": 22839,
+      "lines": 335,
+      "sha256": "00dee71ee0419be6b7aeb0b21f1ed945d6c1f681c810c5a96858a4d4835c97c9",
+      "calls": [
+        "axis",
+        "hilrot",
+        "munu",
+        "path",
+        "rotate"
+      ]
+    },
+    "puffc": {
+      "first_line": 25286,
+      "last_line": 25404,
+      "lines": 119,
+      "sha256": "b739807ef74195ff191c80777fd0d87f3e6bfe90caf248edb8b5df3de7d28005",
+      "calls": []
+    },
+    "ctsg": {
+      "first_line": 22923,
+      "last_line": 23112,
+      "lines": 190,
+      "sha256": "3f1011394e502165cc5a457566356c297d01af416080fd3c04bf1fd3330133f3",
+      "calls": [
+        "ctpar",
+        "ctrec",
+        "lower",
+        "puffc",
+        "upper"
+      ]
+    },
+    "ctrec": {
+      "first_line": 22841,
+      "last_line": 22921,
+      "lines": 81,
+      "sha256": "279397a1d0f7ad5e06b73f5000db734f62a7a3d9a4e34328cebe2a72d6faf0a4",
+      "calls": [
+        "munu",
+        "rotate"
+      ]
+    },
+    "lower": {
+      "first_line": 24657,
+      "last_line": 24863,
+      "lines": 207,
+      "sha256": "688c6978246dfdc620a5d8ed33bcaaf8125c6bf2f82d2c1666c3e911f358334a",
+      "calls": [
+        "bi",
+        "bjil",
+        "munu"
+      ]
+    },
+    "upper": {
+      "first_line": 25815,
+      "last_line": 26001,
+      "lines": 187,
+      "sha256": "9e24496fb8da2b27936dce7e3caa4f0543bd0a91e6dba469f8cf56208753bdc6",
+      "calls": [
+        "bi",
+        "bji",
+        "flopuff",
+        "qatr",
+        "to"
+      ]
+    },
+    "rotate": {
+      "first_line": 25522,
+      "last_line": 25549,
+      "lines": 28,
+      "sha256": "ce0f8fc51d2cbec5ea9cd85c86d321ec2db1c303caf418149437f373b82b6406",
+      "calls": []
+    },
+    "qatr": {
+      "first_line": 25406,
+      "last_line": 25520,
+      "lines": 115,
+      "sha256": "2cded8ebe7dabc68fcd32df34497797fa00794b2d6479876bba519839b9e2514",
+      "calls": []
+    },
+    "tfac": {
+      "first_line": 25765,
+      "last_line": 25813,
+      "lines": 49,
+      "sha256": "fe35527fd872f3ab42fdbaf0beeb083d66c287f764a539c5adc2cb4fd6e2863a",
+      "calls": []
+    }
+  },
+  "ported": {
+    "rotate": true,
+    "qatr": true,
+    "tfac": true
+  },
+  "open": [
+    "munu",
+    "bi",
+    "bji",
+    "bjil",
+    "flopuff",
+    "ctpar",
+    "puffc",
+    "ctsg",
+    "ctrec",
+    "lower",
+    "upper"
+  ],
+  "note": "The located spans, hashes and call closures are the entry point for the CTSG kernel port; none of the open units is ported yet."
+}

@@ -1,0 +1,34 @@
+{
+  "status": "PASS_SCOPED",
+  "reference_terrel_dat_sha256": "d74a5a1045ea4cf25e120099196a3962ab012aaebdf37354ec8264fad0e27678",
+  "reference_terrel_sav_sha256": "5b09c27974eb5e77e3a0fc2126836e0c46f57a3558da5e1083930bcb6267cd74",
+  "grid": {
+    "nx": 50,
+    "ny": 50,
+    "dx_m": 100,
+    "row_order": "C++ south-to-north, original data reversed"
+  },
+  "reference_input_hits": 3456,
+  "cpp_input_hits": 3456,
+  "matched_hit_count_cells": 2500,
+  "hit_count_mismatch_count": 0,
+  "hit_count_mismatches_first_40": [],
+  "missing_mask_mismatch_count": 0,
+  "missing_mask_mismatches": [],
+  "height_fields_compared": 2500,
+  "height_max_error_m": 0.05000000000000071,
+  "height_mae_m": 0.0006933328247999625,
+  "height_rmse_m": 0.005868936065665138,
+  "height_tolerance_m_from_fortran_f8_1": 0.0500001,
+  "height_bad_cells": 0,
+  "height_bad_first_40": [],
+  "original_unrounded_real4_mean_tolerance_m": 1e-05,
+  "unrounded_mean_max_error_m": 1.271333339047942e-06,
+  "unrounded_mean_mae_m": 5.085333356191768e-10,
+  "unrounded_mean_bad_cells": 0,
+  "unrounded_mean_bad_first_40": [],
+  "limitations": [
+    "No multi-CRS, void fill, peak or ocean processing compared",
+    "Raw float32 sums in original save need separate strict bitwise audit"
+  ]
+}

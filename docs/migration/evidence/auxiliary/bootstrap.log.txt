@@ -1,0 +1,39 @@
+[INFO] Using uv to create/update .venv
+Using CPython 3.11.15
+Creating virtual environment with seed packages at: .venv
+ + packaging==26.3
+ + pip==26.2.1
+ + setuptools==84.0.0
+ + wheel==0.48.0
+Activate with: source .venv/bin/activate
+Resolved 18 packages in 8.90s
+Downloading pillow (6.6MiB)
+Downloading fonttools (5.2MiB)
+Downloading kiwisolver (1.4MiB)
+ Downloaded kiwisolver
+ Downloaded fonttools
+ Downloaded pillow
+Prepared 4 packages in 24.15s
+Installed 17 packages in 198ms
+ + contourpy==1.3.3
+ + cycler==0.12.1
+ + fonttools==4.67.0
+ + imageio-ffmpeg==0.6.0
+ + kiwisolver==1.5.1
+ + matplotlib==3.10.9
+ + numpy==2.4.4
+ + pandas==3.0.2
+ + pillow==12.3.0
+ + pyparsing==3.3.3
+ + pyside6==6.11.0
+ + pyside6-addons==6.11.0
+ + pyside6-essentials==6.11.0
+ + python-dateutil==2.9.0.post0
+ + pyyaml==6.0.3
+ + shiboken6==6.11.0
+ + six==1.17.0
+[INFO] Environment ready:
+Python 3.11.15
+pip 26.2.1 from /home/lhy/CTEAS-next/.venv/lib/python3.11/site-packages/pip (python 3.11)
+[INFO] Test imports:
+ok

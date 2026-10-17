@@ -1,0 +1,21 @@
+# command: /usr/bin/python3 -m engine.preprocess.terrel.auto_select_srtm_to_terrel --grid /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn --terrel /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.inp --srtm-dir /home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm
+# cwd: /home/lhy/build/ref/cteas-ref
+
+研究区域 WGS84 边界: 经度[117.115136, 117.168106], 纬度[31.917188, 31.962356]
+已选择 tif 文件数量: 1
+  /home/lhy/build/ref/cteas-ref/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/srtm_60_06_hefei_5km.tif
+已同步投影/网格参数:
+  第351行: PMAP: UTM -> UTM
+  第367行: IUTMZN: 50 -> 50
+  第371行: UTMHEM: N -> N
+  第420行: DATUM: WGS-84 -> WGS-84
+  第437行: XREFKM: 123.456 -> 510.885
+  第438行: YREFKM: 4567.891 -> 3531.269
+  第442行: NX: 100 -> 50
+  第443行: NY: 100 -> 50
+  第444行: DGRIDKM: 1 -> 0.1
+已更新地形文件列表数量: 1
+地形数据文件较大, 正在加载, 请耐心等待1~2分钟!
+
+ 正在处理地形数据文件: 
+地形数据文件创建完成, 输出文件位置: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/geo/terrel

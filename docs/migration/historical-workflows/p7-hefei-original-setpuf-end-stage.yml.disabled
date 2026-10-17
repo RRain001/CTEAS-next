@@ -1,0 +1,109 @@
+name: P7 original-versus-native SETPUF end first REAL4 divergence
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/**'
+      - '.github/workflows/p7-hefei-original-setpuf-end-stage.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-hefei-setpuf-end-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  original-native-end:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - name: Ensure original Fortran 11 exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v gfortran-11 >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gfortran-11
+          fi
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/**
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/**
+            /project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+            /project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp
+            /project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con
+      - name: Generate write-only pinned vendor SETPUF end oracle at row3874
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${RUNNER_TEMP}/p7-setpuf-end-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$root/frozen/run/puff" "$root/frozen/deliverables/met"
+          cp project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp \
+            "$root/frozen/run/puff/puff.inp"
+          ln -s "${GITHUB_WORKSPACE}/project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat" \
+            "$root/frozen/deliverables/met/met.dat"
+          python3 native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/original_setpuf_end_oracle.py \
+            --vendor engine/vendor/src/CALPUFF_v7.2.1_L150618 \
+            --case "$root/frozen" --out "$root/vendor" \
+            --compiler "$(command -v gfortran-11)" | tee "$root/original-end.log"
+          python3 native_cpp/modules/p7_calpuff/reference/extract_original_six_hours.py \
+            --full "$root/vendor/case/run/puff/dgm_puffstep.bin" \
+            --metadata native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep.json \
+            --out "$root/original-6h.bin"
+      - name: Re-run native real sixhour source and compare first endpoint source values
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${RUNNER_TEMP}/p7-setpuf-end-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cmake -S native_cpp/modules/p7_calpuff -B "$root/build" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$root/build" --parallel 2 \
+            --target cteas_p7_hefei_sixhour_native_h3_receptors_tests
+          "$root/build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat \
+            project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp \
+            project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con \
+            "$root/original-6h.bin" | tee "$root/native-end.log"
+          python3 - "$root/original-end.log" "$root/native-end.log" <<'PY'
+          import re,sys
+          from pathlib import Path
+          original=Path(sys.argv[1]).read_text()
+          native=Path(sys.argv[2]).read_text()
+          assert 'P7_ORIGINAL_SETPUF_END_DGM3874=PASS' in original
+          assert 'P7_HEFEI_6H_ORIGINAL_DGM_REAL4_DIAGNOSTIC=PASS' in native
+          assert 'STORED_SIGZ=11458/11458' in native
+          assert 'FIRST_DIFFERENCE_RECORD=0' in native
+          line=next(x for x in native.splitlines()
+                    if x.startswith("P7_HEFEI_6H_NATIVE_SETPUF_END_DGM3874"))
+          assert 'RECORD=3874' in line
+          pairs={'R':'BIT_R','CTADJ2_STRAIN':'BIT_STRAIN',
+                 'SZADJ':'BIT_SZADJ','SZE1_AFTER_SIGTZ':'BIT_SZE1'}
+          first=None
+          for vendor_key,native_key in pairs.items():
+              old=re.search(r'P7_ORIGINAL_SETPUF_END_VALUE '+vendor_key+
+                            r'=\S+ BITS=0x([0-9a-f]+)',original)
+              new=re.search(r'\b'+native_key+r'=0x([0-9a-f]+)',line)
+              assert old and new,(vendor_key,line)
+              ok=int(old.group(1),16)==int(new.group(1),16)
+              print('P7_SETPUF_END_REAL4_VALUE '+vendor_key+
+                    ' VENDOR=0x'+old.group(1)+' NATIVE=0x'+new.group(1)+
+                    ' BITWISE='+('YES' if ok else 'NO'))
+              if not ok and first is None:first=vendor_key
+          assert first is None, 'original CTADJ2 end REAL4 parity regressed: '+str(first)
+          print('P7_ORIGINAL_SETPUF_END_DGM3874_SOURCE_VALUES=PASS'
+                ' R_STRAIN_SZADJ_SZE1=BITWISE'
+                ' SIXHOUR_DGM_XY_SIGY_SIGZ=11458/11458'
+                ' FIRST_THREE_HOURS_H3=7500/7500'
+                ' FULL_6H_H3_CONCENTRATION_PARITY=OPEN')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p7-hefei-setpuf-end-first-difference
+          path: |
+            ${{ runner.temp }}/p7-setpuf-end-${{ github.run_id }}-${{ github.run_attempt }}/original-end.log
+            ${{ runner.temp }}/p7-setpuf-end-${{ github.run_id }}-${{ github.run_attempt }}/native-end.log
+            ${{ runner.temp }}/p7-setpuf-end-${{ github.run_id }}-${{ github.run_attempt }}/vendor/case/run/puff/dgm_setpuf_end_3874.bin
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,205 @@
+name: P6F native GEO DAT met.inp static provenance
+on:
+  push:
+    branches: [codex/p6-hourly-stateful-scheduler-20261013]
+    paths:
+      - .github/workflows/p6f-native-static-provenance.yml
+      - native_cpp/modules/p6_calmet/p6f/CMakeLists.txt
+      - native_cpp/modules/p6_calmet/p6f/src/p6f_geo_static_provenance_main.cpp
+      - native_cpp/modules/p6_calmet/p6f/tests/verify_independent_native_header_original_calpuff.py
+      - native_cpp/modules/p6_calmet/p6f/tests/verify_original_calpuff_native_independent_header.py
+      - native_cpp/modules/p6_calmet/include/cteas/p6/read_geo.hpp
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independent-upstream-static-source:
+    name: "P6F: independently GEO.DAT/deck sourced statics"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            native_cpp/modules/p6_calmet/p6f
+            engine/vendor/src/CALPUFF_v7.2.1_L150618
+            project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp
+            native_cpp/modules/p6_calmet/include/cteas/p6/read_geo.hpp
+            native_cpp/modules/p6_calmet/p6e
+            native_cpp/modules/p7_calpuff/reference/original_decode_calmet_hourly.py
+            project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/geo.dat
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+      - name: Verify pinned frozen binary used only as target
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30 \
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat | sha256sum -c -
+      - name: Build source-statics audit (GCC12 Werror)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet/p6f \
+            -B "$RUNNER_TEMP/p6f-source-build" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6f-source-build" \
+            --target cteas_p6f_geo_static_provenance --parallel 2
+      - name: Check source-derived static values against frozen envelope
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --test-dir "$RUNNER_TEMP/p6f-source-build" --output-on-failure \
+            -R '^p6f_calmet_dat21_independent_geo_statics$' --no-tests=error
+      - name: Rebuild source statics byte-exactly and reject modified met.inp
+        shell: bash
+        run: |
+          set -euo pipefail
+          case_root=project/cases/hefei5km_2022_reference_case_20261011
+          "$RUNNER_TEMP/p6f-source-build/cteas_p6f_geo_static_provenance" \
+            --geo "$case_root/geo/makegeo/geo.dat" \
+            --deck "$case_root/run/met/met.inp" \
+            --candidate "$case_root/run/met/met.dat" \
+            --emit-source-statics "$RUNNER_TEMP/p6f-rebuilt-source-statics-calmet.dat" \
+            | tee "$RUNNER_TEMP/p6f-static-source-report.json"
+          cmp "$RUNNER_TEMP/p6f-rebuilt-source-statics-calmet.dat" "$case_root/run/met/met.dat"
+          sha256sum "$RUNNER_TEMP/p6f-rebuilt-source-statics-calmet.dat"
+          python3 - <<'PY'
+          import os, pathlib
+          source=pathlib.Path('project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp').read_text()
+          original='! ZFACE = 0,20,40,80,160,320,640,1200,2000,3000 !'
+          assert source.count(original)==1
+          modified=source.replace(original,'! ZFACE = 0,21,40,80,160,320,640,1200,2000,3000 !')
+          (pathlib.Path(os.environ['RUNNER_TEMP'])/'p6f-mutated-deck.inp').write_text(modified)
+          PY
+          if "$RUNNER_TEMP/p6f-source-build/cteas_p6f_geo_static_provenance" \
+             --geo "$case_root/geo/makegeo/geo.dat" \
+             --deck "$RUNNER_TEMP/p6f-mutated-deck.inp" \
+             --candidate "$case_root/run/met/met.dat" \
+             > "$RUNNER_TEMP/p6f-negative.out" 2>&1; then
+            echo "FAIL_P6F_MUTATED_SOURCE_DECK_ACCEPTED"
+            exit 1
+          fi
+          grep -q 'P6F_SRC_STATIC_NOT_PASS: ZFACE/met.inp' "$RUNNER_TEMP/p6f-negative.out"
+          echo "PASS_P6F_GEO_SOURCE_STATIC_RECONSTRUCTION_AND_MUTATION_REJECTION"
+      - name: Retrieve source-accepted native C++ 143h meteorology
+        uses: actions/download-artifact@v4
+        with:
+          # Accepted source-only C++ 143h P6D/P6E/P6F direct manifest producer.
+          run-id: 38388062863
+          github-token: ${{ github.token }}
+          name: p6-causal-original-case-143h
+          path: ${{ runner.temp }}/p6f-native-case
+      - name: Rebuild static records into native C++ output; preserve full 45-field science
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=project/cases/hefei5km_2022_reference_case_20261011
+          native="$RUNNER_TEMP/p6f-native-case/native_causal_calmet.dat"
+          test -s "$native"
+          "$RUNNER_TEMP/p6f-source-build/cteas_p6f_geo_static_provenance" \
+            --geo "$root/geo/makegeo/geo.dat" \
+            --deck "$root/run/met/met.inp" \
+            --candidate "$native" \
+            --emit-source-statics "$RUNNER_TEMP/p6f-native-with-source-static.dat" \
+            | tee "$RUNNER_TEMP/p6f-native-static-report.json"
+          cmp "$native" "$RUNNER_TEMP/p6f-native-with-source-static.dat"
+          cmake -S native_cpp/modules/p6_calmet/p6e \
+            -B "$RUNNER_TEMP/p6f-source-e22" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6f-source-e22" \
+            --target p6e_calmet_dat21 --parallel 2
+          "$RUNNER_TEMP/p6f-source-e22/p6e_calmet_dat21" compare \
+            --reference "$root/run/met/met.dat" \
+            --candidate "$RUNNER_TEMP/p6f-native-with-source-static.dat" \
+            --out "$RUNNER_TEMP/p6f-native-full45-verdict.json"
+          echo "PASS_P6F_INDEPENDENT_GEO_DECK_STATIC_IN_NATIVE_143H_45FIELD_CANDIDATE"
+          "$RUNNER_TEMP/p6f-source-build/cteas_p6f_geo_static_provenance" \
+            --geo "$root/geo/makegeo/geo.dat" \
+            --deck "$root/run/met/met.inp" \
+            --candidate "$native" \
+            --emit-native-header "$RUNNER_TEMP/p6f-native-independent-header.dat" \
+            | tee "$RUNNER_TEMP/p6f-independent-header-report.json"
+          # Independently rebuilt met.inp comments must change header bytes.
+          if cmp -s "$native" "$RUNNER_TEMP/p6f-native-independent-header.dat"; then
+            echo "FAIL_P6F_NATIVE_HEADER_NOT_INDEPENDENT"; exit 1
+          fi
+          "$RUNNER_TEMP/p6f-source-e22/p6e_calmet_dat21" compare \
+            --reference "$root/run/met/met.dat" \
+            --candidate "$RUNNER_TEMP/p6f-native-independent-header.dat" \
+            --out "$RUNNER_TEMP/p6f-independent-header-45field-verdict.json"
+          python3 native_cpp/modules/p7_calpuff/reference/original_decode_calmet_hourly.py \
+            "$RUNNER_TEMP/p6f-native-independent-header.dat" \
+            --report "$RUNNER_TEMP/p6f-independent-header-p7-decoder.json"
+          python3 - <<'PY'
+          import os,pathlib,struct
+          file=pathlib.Path(os.environ['RUNNER_TEMP'])/'p6f-native-independent-header.dat'
+          with file.open('rb') as f:
+              length=struct.unpack('<i',f.read(4))[0]
+              f.seek(length+4,1)
+              marker=struct.unpack('<i',f.read(4))[0]
+              assert marker==4
+              ncomments=struct.unpack('<i',f.read(4))[0]
+              assert struct.unpack('<i',f.read(4))[0]==4
+              start=struct.unpack('<i',f.read(4))[0]
+              assert start==132
+              comment=f.read(132)
+              assert comment.startswith(b'CTEAS P6F native OUTHD')
+              assert ncomments>=1000
+          print('PASS_P6F_SOURCE_GENERATED_CONTROL_COMMENTS',ncomments)
+          PY
+          echo "PASS_P6F_NATIVE_INDEPENDENT_HEADER_WITH_NATIVE_HOURLY_45_FIELDS"
+          # End-to-end: the exact file emitted directly from 143 original-free
+          # hourly C++ P6F records must match the stand-alone independent
+          # header reconstruction, with no edits or conversions after export.
+          direct="$RUNNER_TEMP/p6f-native-case/native_causal_independent_header_calmet.dat"
+          test -s "$direct"
+          cmp "$direct" "$RUNNER_TEMP/p6f-native-independent-header.dat"
+          sha256sum "$direct"
+          echo "PASS_P6F_DIRECT_143H_FROM_NATIVE_MANIFEST_EQUALS_SOURCE_REBUILT_HEADER"
+      - name: Unmodified original CALPUFF reads native manifest-built CALMET.DAT for 143h
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v gfortran-11
+          python3 native_cpp/modules/p6_calmet/p6f/tests/verify_independent_native_header_original_calpuff.py \
+            --vendor engine/vendor/src/CALPUFF_v7.2.1_L150618 \
+            --fortran gfortran-11 \
+            --control project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp \
+            --native-met "$RUNNER_TEMP/p6f-native-case/native_causal_independent_header_calmet.dat" \
+            --work "$RUNNER_TEMP/p6f-native-p7-original" \
+            --report "$RUNNER_TEMP/p6f-original-calpuff-native-header-report.json"
+      - name: Original CALPUFF concentrations unchanged after independent OUTHD replacement
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/modules/p6_calmet/p6f/tests/verify_original_calpuff_native_independent_header.py \
+            --native-weather "$RUNNER_TEMP/p6f-native-case/native_causal_calmet.dat" \
+            --independent-header-weather "$RUNNER_TEMP/p6f-native-case/native_causal_independent_header_calmet.dat" \
+            --vendor "$GITHUB_WORKSPACE/engine/vendor/src/CALPUFF_v7.2.1_L150618" \
+            --puff-control "$GITHUB_WORKSPACE/project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp" \
+            --work "$RUNNER_TEMP/p6f-original-calpuff-pair" \
+            --report "$RUNNER_TEMP/p6f-original-calpuff-header-parity.json" \
+            --fortran gfortran-11 --max-seconds 600
+      - name: Archive source static reconstruction evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6f-geo-deck-independent-static-source
+          path: |
+            ${{ runner.temp }}/p6f-static-source-report.json
+            ${{ runner.temp }}/p6f-negative.out
+            ${{ runner.temp }}/p6f-native-static-report.json
+            ${{ runner.temp }}/p6f-native-full45-verdict.json
+            ${{ runner.temp }}/p6f-independent-header-report.json
+            ${{ runner.temp }}/p6f-independent-header-45field-verdict.json
+            ${{ runner.temp }}/p6f-independent-header-p7-decoder.json
+            ${{ runner.temp }}/p6f-original-calpuff-native-header-report.json
+            ${{ runner.temp }}/p6f-original-calpuff-header-parity.json
+          if-no-files-found: warn
+          retention-days: 14

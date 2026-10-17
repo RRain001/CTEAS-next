@@ -1,0 +1,2 @@
+station_id,station_name,lat,lon,xelev_m,tz_hour,anem_m,source_file
+58321,LUOGANG / XINQIAO,31.988,116.977,63,0,10.0,met/surface/isd2smerge_ready/583210-99999.csv

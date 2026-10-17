@@ -1,0 +1,23 @@
+COMMAND: ["ctest", "--test-dir", "/tmp/cteas-next-clean-validation/build-p6e", "--output-on-failure", "--timeout", "180", "--no-tests=error", "-R", "^(p6e_solar_software|p6e_coordlib_pj09z0_software|p6e_pgtstb_software|p6e_heatfx_software|p6e_elustr_stable_software|p6e_wstarr_software|p6e_mixht_stable_software|p6e_elustr_daytime_software)$"]
+Internal ctest changing into directory: /tmp/cteas-next-clean-validation/build-p6e
+Test project /tmp/cteas-next-clean-validation/build-p6e
+    Start  1: p6e_solar_software
+1/8 Test  #1: p6e_solar_software ...............   Passed    0.01 sec
+    Start  2: p6e_coordlib_pj09z0_software
+2/8 Test  #2: p6e_coordlib_pj09z0_software .....   Passed    0.01 sec
+    Start  4: p6e_pgtstb_software
+3/8 Test  #4: p6e_pgtstb_software ..............   Passed    0.01 sec
+    Start  6: p6e_heatfx_software
+4/8 Test  #6: p6e_heatfx_software ..............   Passed    0.01 sec
+    Start  7: p6e_elustr_stable_software
+5/8 Test  #7: p6e_elustr_stable_software .......   Passed    0.01 sec
+    Start  8: p6e_wstarr_software
+6/8 Test  #8: p6e_wstarr_software ..............   Passed    0.01 sec
+    Start  9: p6e_mixht_stable_software
+7/8 Test  #9: p6e_mixht_stable_software ........   Passed    0.00 sec
+    Start 10: p6e_elustr_daytime_software
+8/8 Test #10: p6e_elustr_daytime_software ......   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 8
+
+Total Test time (real) =   0.07 sec

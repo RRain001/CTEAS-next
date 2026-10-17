@@ -1,0 +1,131 @@
+Start testing: Oct 16 16:37 CST
+----------------------------------------------------------
+1/8 Testing: p6f_calmet_dat21_writer_unit
+1/8 Test: p6f_calmet_dat21_writer_unit
+Command: "/tmp/cteas-next-gcc-validation/build-p6f/p6f_calmet_dat21_writer_tests"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_writer_unit" start time: Oct 16 16:37 CST
+Output:
+----------------------------------------------------------
+P6F_WRITER_UNIT_TESTS_PASS
+<end of output>
+Test time =   3.03 sec
+----------------------------------------------------------
+Test Passed.
+"p6f_calmet_dat21_writer_unit" end time: Oct 16 16:37 CST
+"p6f_calmet_dat21_writer_unit" time elapsed: 00:00:03
+----------------------------------------------------------
+
+2/8 Testing: p6f_calmet_dat21_synthetic_cli_roundtrip
+2/8 Test: p6f_calmet_dat21_synthetic_cli_roundtrip
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/tests/verify_synthetic_cli_roundtrip.py" "--tool" "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_calmet_dat21_writer" "--report" "/tmp/cteas-next-gcc-validation/build-p6f/p6f-synthetic-report.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_synthetic_cli_roundtrip" start time: Oct 16 16:37 CST
+Output:
+----------------------------------------------------------
+P6F_SYNTHETIC_CLI_ROUNDTRIP_PASS variants=5 records=225 xmix_values=95 subhourly_start=ok
+<end of output>
+Test time =   0.58 sec
+----------------------------------------------------------
+Test Passed.
+"p6f_calmet_dat21_synthetic_cli_roundtrip" end time: Oct 16 16:37 CST
+"p6f_calmet_dat21_synthetic_cli_roundtrip" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/8 Testing: p6f_calmet_dat21_independent_geo_statics
+3/8 Test: p6f_calmet_dat21_independent_geo_statics
+Command: "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_geo_static_provenance" "--geo" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/geo.dat" "--deck" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp" "--candidate" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_independent_geo_statics" start time: Oct 16 16:37 CST
+Output:
+----------------------------------------------------------
+{"status":"PASS_P6F_INDEPENDENT_SOURCE_STATIC_VALUES","compared_static_values":12514,"grid":[50,50,9],"source":"GEO.DAT+met.inp independent of CALMET.DAT static inputs","static_records_rebuilt":false,"numeric_run_controls_rebuilt":false,"header_comments_independent":false,"all_stations_independent":false,"hourly_field_inputs_independent":false,"full_P6F_acceptance":false}
+<end of output>
+Test time =  19.72 sec
+----------------------------------------------------------
+Test Passed.
+"p6f_calmet_dat21_independent_geo_statics" end time: Oct 16 16:38 CST
+"p6f_calmet_dat21_independent_geo_statics" time elapsed: 00:00:19
+----------------------------------------------------------
+
+4/8 Testing: p6f_calmet_dat21_real_reference_round_trip
+4/8 Test: p6f_calmet_dat21_real_reference_round_trip
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/tests/verify_real_reference_roundtrip.py" "--tool" "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_calmet_dat21_writer" "--p7-decoder" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../p7_calpuff/reference/original_decode_calmet_hourly.py" "--real-reference" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat" "--real-reference-sha256" "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30" "--report" "/tmp/cteas-next-gcc-validation/build-p6f/p6f-real-reference-report.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_real_reference_round_trip" start time: Oct 16 16:38 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time = 180.21 sec
+----------------------------------------------------------
+Test Failed.
+"p6f_calmet_dat21_real_reference_round_trip" end time: Oct 16 16:41 CST
+"p6f_calmet_dat21_real_reference_round_trip" time elapsed: 00:03:00
+----------------------------------------------------------
+
+5/8 Testing: p6f_calmet_dat21_e22_contract_cross_read
+5/8 Test: p6f_calmet_dat21_e22_contract_cross_read
+Command: "/tmp/cteas-next-gcc-validation/build-p6f/p6f_calmet_dat21_e22_cross_read_tests" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_e22_contract_cross_read" start time: Oct 16 16:41 CST
+Output:
+----------------------------------------------------------
+E22_CROSS_READ_PASS p6f_writer_synthetic field_records=34
+P6F_READS_E22_WRITER_PASS field_records=34
+E22_CROSS_READ_PASS frozen_2022_real_case field_records=6435
+P6F_E22_CROSS_READ_TESTS_PASS
+<end of output>
+Test time =  63.71 sec
+----------------------------------------------------------
+Test Passed.
+"p6f_calmet_dat21_e22_contract_cross_read" end time: Oct 16 16:42 CST
+"p6f_calmet_dat21_e22_contract_cross_read" time elapsed: 00:01:03
+----------------------------------------------------------
+
+6/8 Testing: p6f_calmet_dat21_p6d_array_input
+6/8 Test: p6f_calmet_dat21_p6d_array_input
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/tests/verify_p6d_array_input.py" "--tool" "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_calmet_dat21_writer" "--statics-from" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat" "--report" "/tmp/cteas-next-gcc-validation/build-p6f/p6f-p6d-array-input-report.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_p6d_array_input" start time: Oct 16 16:42 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time = 180.18 sec
+----------------------------------------------------------
+Test Failed.
+"p6f_calmet_dat21_p6d_array_input" end time: Oct 16 16:45 CST
+"p6f_calmet_dat21_p6d_array_input" time elapsed: 00:03:00
+----------------------------------------------------------
+
+7/8 Testing: p6f_calmet_dat21_real_scale_xmiss
+7/8 Test: p6f_calmet_dat21_real_scale_xmiss
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/tests/verify_real_scale_xmiss_round_trip.py" "--tool" "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_calmet_dat21_writer" "--p7-decoder" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../p7_calpuff/reference/original_decode_calmet_hourly.py" "--report" "/tmp/cteas-next-gcc-validation/build-p6f/p6f-real-scale-xmiss-report.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_real_scale_xmiss" start time: Oct 16 16:45 CST
+Output:
+----------------------------------------------------------
+P6F_REAL_SCALE_XMISS_PASS bytes=64607156 sentinel_values=167310 per_label=3718 p7=PASS_ORIGINAL_CALMET_EXPLICIT_TIME_AND_FIELD_LAYOUT
+<end of output>
+Test time = 148.51 sec
+----------------------------------------------------------
+Test Passed.
+"p6f_calmet_dat21_real_scale_xmiss" end time: Oct 16 16:47 CST
+"p6f_calmet_dat21_real_scale_xmiss" time elapsed: 00:02:28
+----------------------------------------------------------
+
+8/8 Testing: p6f_calmet_dat21_original_calpuff_reads_written_calmet
+8/8 Test: p6f_calmet_dat21_original_calpuff_reads_written_calmet
+Command: "/home/lhy/CTEAS-next/.venv/bin/python" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/tests/verify_original_calpuff_reads_written_calmet.py" "--tool" "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_calmet_dat21_writer" "--perturb" "/tmp/cteas-next-gcc-validation/build-p6f/cteas_p6f_calmet_dat21_perturb" "--vendor" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../engine/vendor/src/CALPUFF_v7.2.1_L150618" "--fortran" "/usr/bin/gfortran-11" "--control" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp" "--frozen-met" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat" "--frozen-sha256" "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30" "--reference-con" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/deliverables/puff/puff.con" "--reference-lst" "/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6f/../../../../project/cases/hefei5km_2022_reference_case_20261011/deliverables/puff/puff.lst" "--out" "/tmp/cteas-next-gcc-validation/build-p6f/original-calpuff" "--report" "/tmp/cteas-next-gcc-validation/build-p6f/p6f-original-calpuff-report.json"
+Directory: /tmp/cteas-next-gcc-validation/build-p6f
+"p6f_calmet_dat21_original_calpuff_reads_written_calmet" start time: Oct 16 16:47 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time = 180.13 sec
+----------------------------------------------------------
+Test Failed.
+"p6f_calmet_dat21_original_calpuff_reads_written_calmet" end time: Oct 16 16:50 CST
+"p6f_calmet_dat21_original_calpuff_reads_written_calmet" time elapsed: 00:03:00
+----------------------------------------------------------
+
+End testing: Oct 16 16:50 CST

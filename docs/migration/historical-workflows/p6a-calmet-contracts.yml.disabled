@@ -1,0 +1,47 @@
+name: P6A CALMET contract-only C++20 checks
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/calmet_contract.hpp'
+      - 'native_cpp/modules/p6_calmet/tests/p6_contract_tests.cpp'
+      - 'docs/reconstruction_cpp/P6_CALMET_MINIMAL_MASTER_PLAN.md'
+      - '.github/workflows/p6a-calmet-contracts.yml'
+      - 'docs/reconstruction_cpp/CI_FULL_REGRESSION_REQUEST.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cpp-contracts:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision GitHub-hosted GCC12 and Fortran12
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++-12 gfortran-12
+      - name: Select isolated C++20 and Fortran compilers
+        uses: ./.github/actions/cteas-linux-toolchain
+      - name: Reject bundled non-Hefei CALMET control as scientific reference
+        run: |
+          python3 native_cpp/modules/p6_calmet/reference/inspect_calmet_control.py \
+            engine/vendor/src/CALMET_v6.5.0_L150223/calmet.inp --expect-not-ready
+      - name: Configure standalone strict C++20 tests
+        run: |
+          set -euo pipefail
+          # Several self-hosted runner installations share this machine, so a
+          # fixed /tmp path keeps a CMakeCache from another checkout and CMake
+          # then refuses the source directory. Keep the build unique per run.
+          echo "CTEAS_P6A_BUILD=$RUNNER_TEMP/cteas-p6a-contract-build-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/cteas-p6a-contract-build-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" -DCMAKE_BUILD_TYPE=Debug
+      - name: Compile
+        run: cmake --build "$CTEAS_P6A_BUILD" --parallel 2
+      - name: Unit checks only (no meteorology or physics)
+        run: ctest --test-dir "$CTEAS_P6A_BUILD" --output-on-failure

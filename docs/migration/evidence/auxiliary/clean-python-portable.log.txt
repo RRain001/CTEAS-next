@@ -1,0 +1,54 @@
+P4_YEARLY_SELECTION {"year": 2022, "selected": [{"id": "AAA00058424", "site_type": "OBSERVED", "source_lat": 31.94, "source_lon": 117.14, "effective_lat": 31.94, "effective_lon": 117.14, "source_elev_m": 62.0, "valid_original_slots": 700, "coverage": 0.958904109589041}, {"id": "BBB00058238", "site_type": "OBSERVED", "source_lat": 31.95, "source_lon": 117.15, "effective_lat": 31.95, "effective_lon": 117.15, "source_elev_m": 62.0, "valid_original_slots": 700, "coverage": 0.958904109589041}], "checked": 2}
+P4_YEARLY_SELECTION {"year": 2023, "selected": [{"id": "BBB00058238", "site_type": "OBSERVED", "source_lat": 31.95, "source_lon": 117.15, "effective_lat": 31.95, "effective_lon": 117.15, "source_elev_m": 62.0, "valid_original_slots": 700, "coverage": 0.958904109589041}], "checked": 2}
+P4_YEARLY_SELECTION {"year": 2022, "selected": [{"id": "AAA00058424", "site_type": "OBSERVED", "source_lat": 31.94, "source_lon": 117.14, "effective_lat": 31.94, "effective_lon": 117.14, "source_elev_m": 62.0, "valid_original_slots": 730, "coverage": 1.0}, {"id": "BBB00058238", "site_type": "OBSERVED", "source_lat": 31.95, "source_lon": 117.15, "effective_lat": 31.95, "effective_lon": 117.15, "source_elev_m": 62.0, "valid_original_slots": 585, "coverage": 0.8013698630136986}], "checked": 2}
+P4_YEARLY_SELECTION {"year": 2022, "selected": [], "checked": 4}
+P4_NO_STATION_GT80 year=2022; see /tmp/tmpmq05e5xj/2022/p4_station_selection_audit.json
+P4_YEARLY_SELECTION {"year": 2022, "selected": [{"id": "FAR00058333", "site_type": "VIRTUAL_RELOCATED", "source_lat": 31.94, "source_lon": 117.33, "effective_lat": 31.94, "effective_lon": 117.14, "source_elev_m": 62.0, "valid_original_slots": 600, "coverage": 0.821917808219178}], "checked": 4}
+candidate year=2022 sid=58321099999 mode=OBSERVED full_ISD=full_ISD_source_hours=8000/8760; coverage=91.3242% wind_ISD_Lite=original_ISD_Lite_hours=8000/8760; coverage=91.3242% external_gt90_both=True
+candidate year=2022 sid=A12345ABCDE mode=OBSERVED full_ISD=full_ISD_source_hours=8000/8760; coverage=91.3242% wind_ISD_Lite=original_ISD_Lite_hours=8000/8760; coverage=91.3242% external_gt90_both=True
+P5_SELECTED year=2022 mode=OBSERVED station_count=2 stations=58321099999,A12345ABCDE manifest=/tmp/tmpjb99e9ho/raw/station_selection_2022.json
+candidate year=2022 sid=58314099999 mode=OBSERVED full_ISD=full_ISD_source_hours=7900/8760; coverage=90.1826% wind_ISD_Lite=original_ISD_Lite_hours=8000/8760; coverage=91.3242% external_gt90_both=True
+candidate year=2022 sid=58321099999 mode=OBSERVED full_ISD=full_ISD_source_hours=8100/8760; coverage=92.4658% wind_ISD_Lite=original_ISD_Lite_hours=8000/8760; coverage=91.3242% external_gt90_both=True
+P5_SELECTED year=2022 mode=OBSERVED station_count=2 stations=58314099999,58321099999 manifest=/tmp/tmp4pqt7db_/raw/station_selection_2022.json
+candidate year=2021 sid=58321099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=7900/8760; coverage=90.1826% wind_ISD_Lite=original_ISD_Lite_hours=7900/8760; coverage=90.1826% external_gt90_both=True
+P5_SELECTED year=2021 mode=VIRTUAL_RELOCATED station_count=1 stations=58321099999 manifest=/tmp/tmpaup2bbh8/raw/station_selection_2021.json
+candidate year=2022 sid=58321099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=7600/8760; coverage=86.7580% wind_ISD_Lite=not downloaded: full ISD original coverage <=90% strict external gate external_gt90_both=False
+candidate year=2022 sid=58314099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=8200/8760; coverage=93.6073% wind_ISD_Lite=original_ISD_Lite_hours=8200/8760; coverage=93.6073% external_gt90_both=True
+P5_SELECTED year=2022 mode=VIRTUAL_RELOCATED station_count=1 stations=58314099999 manifest=/tmp/tmpaup2bbh8/raw/station_selection_2022.json
+P5_YEARLY_ALIAS_RECONCILIATION=PASS years=[2021, 2022] unique_station_ids=2
+candidate year=2022 sid=58321099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=7884/8760; coverage=90.0000% wind_ISD_Lite=not downloaded: full ISD original coverage <=90% strict external gate external_gt90_both=False
+candidate year=2022 sid=58314099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=8000/8760; coverage=91.3242% wind_ISD_Lite=original_ISD_Lite_hours=8000/8760; coverage=91.3242% external_gt90_both=True
+P5_SELECTED year=2022 mode=VIRTUAL_RELOCATED station_count=1 stations=58314099999 manifest=/tmp/tmp6r__2bcu/raw/station_selection_2022.json
+candidate year=2022 sid=58314099999 mode=OBSERVED full_ISD=full_ISD_source_hours=8200/8760; coverage=93.6073% wind_ISD_Lite=original_ISD_Lite_hours=8200/8760; coverage=93.6073% external_gt90_both=True
+candidate year=2022 sid=58321099999 mode=OBSERVED full_ISD=full_ISD_source_hours=7600/8760; coverage=86.7580% wind_ISD_Lite=original_ISD_Lite_hours=7600/8760; coverage=86.7580% external_gt90_both=False
+candidate year=2022 sid=58345099999 mode=OBSERVED full_ISD=full_ISD_source_hours=600/8760; coverage=6.8493% wind_ISD_Lite=original_ISD_Lite_hours=600/8760; coverage=6.8493% external_gt90_both=False
+P5_SELECTED year=2022 mode=OBSERVED station_count=3 stations=58314099999,58321099999,58345099999 manifest=/tmp/tmp60q9_sfh/raw/station_selection_2022.json
+candidate year=2022 sid=58321099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=7884/8760; coverage=90.0000% wind_ISD_Lite=not downloaded: full ISD original coverage <=90% strict external gate external_gt90_both=False
+candidate year=2022 sid=58314099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=7885/8760; coverage=90.0114% wind_ISD_Lite=original_ISD_Lite_hours=7885/8760; coverage=90.0114% external_gt90_both=True
+P5_SELECTED year=2022 mode=VIRTUAL_RELOCATED station_count=1 stations=58314099999 manifest=/tmp/tmphkvyjcxt/raw/station_selection_2022.json
+candidate year=2022 sid=58321099999 mode=OBSERVED full_ISD=full_ISD_source_hours=15/8760; coverage=0.1712% wind_ISD_Lite=original_ISD_Lite_hours=15/8760; coverage=0.1712% external_gt90_both=False
+P5_SELECTED year=2022 mode=OBSERVED station_count=1 stations=58321099999 manifest=/tmp/tmpzv6no3sd/raw/station_selection_2022.json
+candidate year=2021 sid=58314099999 mode=OBSERVED full_ISD=full_ISD_source_hours=3000/8760; coverage=34.2466% wind_ISD_Lite=original_ISD_Lite_hours=3000/8760; coverage=34.2466% external_gt90_both=False
+candidate year=2021 sid=58321099999 mode=OBSERVED full_ISD=full_ISD_source_hours=8100/8760; coverage=92.4658% wind_ISD_Lite=original_ISD_Lite_hours=8100/8760; coverage=92.4658% external_gt90_both=True
+P5_SELECTED year=2021 mode=OBSERVED station_count=2 stations=58314099999,58321099999 manifest=/tmp/tmp76_z35oj/raw/station_selection_2021.json
+candidate year=2022 sid=58314099999 mode=OBSERVED full_ISD=full_ISD_source_hours=8100/8760; coverage=92.4658% wind_ISD_Lite=original_ISD_Lite_hours=8100/8760; coverage=92.4658% external_gt90_both=True
+candidate year=2022 sid=58321099999 mode=OBSERVED full_ISD=full_ISD_source_hours=3000/8760; coverage=34.2466% wind_ISD_Lite=original_ISD_Lite_hours=3000/8760; coverage=34.2466% external_gt90_both=False
+P5_SELECTED year=2022 mode=OBSERVED station_count=2 stations=58314099999,58321099999 manifest=/tmp/tmp76_z35oj/raw/station_selection_2022.json
+P5_YEARLY_ALIAS_RECONCILIATION=PASS years=[2021, 2022] unique_station_ids=2
+candidate year=2022 sid=58321099999 mode=OBSERVED full_ISD=full_ISD_source_hours=8000/8760; coverage=91.3242% wind_ISD_Lite=original_ISD_Lite_hours=8000/8760; coverage=91.3242% external_gt90_both=True
+P5_SELECTED year=2022 mode=OBSERVED station_count=1 stations=58321099999 manifest=/tmp/tmp0iq0dqf1/raw/station_selection_2022.json
+candidate year=2022 sid=58321099999 mode=VIRTUAL_RELOCATED full_ISD=full_ISD_source_hours=7885/8760; coverage=90.0114% wind_ISD_Lite=original_ISD_Lite_hours=7885/8760; coverage=90.0114% external_gt90_both=True
+P5_SELECTED year=2022 mode=VIRTUAL_RELOCATED station_count=1 stations=58321099999 manifest=/tmp/tmpv3w6lhg0/raw/station_selection_2022.json
+usage: validate_python.py [-h] --case CASE --stations STATIONS
+                          [--margin-km MARGIN_KM]
+                          [--max-horizontal-cells MAX_HORIZONTAL_CELLS]
+                          [--spacing-km SPACING_KM] [--apply]
+validate_python.py: error: Refusing to mutate existing P6 outputs; clone a new G5 case
+P5_SMERGE_EOF_RUNTIME_SENTINEL source=/tmp/tmpan_bku5s/ready/583140-99999.csv runtime_only=/tmp/tmpan_bku5s/run/smerge/original_smerge_sparse_runtime/583140-99999.csv original_last=2022-01-01 20:00:00 sentinel=2022-01-01 23:00:00
+{
+  "tests_run": 73,
+  "failures": 0,
+  "errors": 0,
+  "not_run": 1,
+  "status": "PASS_SOFTWARE"
+}

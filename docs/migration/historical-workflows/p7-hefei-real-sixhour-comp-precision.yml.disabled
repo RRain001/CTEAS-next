@@ -1,0 +1,91 @@
+name: P7 frozen Hefei sixhour COMP-state REAL4 ledger
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p7_calpuff/**'
+      - 'engine/vendor/src/CALPUFF_v7.2.1_L150618/**'
+      - '.github/workflows/p7-hefei-real-sixhour-comp-precision.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p7-hefei-6h-real-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-sixhour-comp-real4:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /native_cpp/modules/p7_calpuff/**
+            /engine/vendor/src/CALPUFF_v7.2.1_L150618/**
+            /project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+            /project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp
+            /project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con
+      - name: Verify 143-hour original input and output oracles are immutable
+        shell: bash
+        run: |
+          set -euo pipefail
+          met=project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+          con=project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con
+          inp=project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp
+          test -s "$inp" && test -s "$met" && test -s "$con"
+          echo 'b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  '${met} | sha256sum -c -
+          echo '0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10  '${con} | sha256sum -c -
+      - name: Generate authentic sixhour original COMP DGM oracle without modifying vendor source
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${RUNNER_TEMP}/p7-h3-6h-dgm-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$root/frozen/run/puff" "$root/frozen/deliverables/met"
+          cp project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp \
+            "$root/frozen/run/puff/puff.inp"
+          ln -s "${GITHUB_WORKSPACE}/project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat" \
+            "$root/frozen/deliverables/met/met.dat"
+          # One write-only original replay produces both the pinned DGM
+          # AND H-3 CALCPF source values for hour2 grid receptor (25,28).
+          # The native solver never reads any of these output records.
+          python3 native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/original_calcpf_receiver_oracle.py \
+            --vendor engine/vendor/src/CALPUFF_v7.2.1_L150618 \
+            --case "$root/frozen" --out "$root/vendor" --compiler /usr/bin/gfortran-11 \
+            --hour 2 --receptor-i 25 --receptor-j 28
+          python3 native_cpp/modules/p7_calpuff/reference/extract_original_six_hours.py \
+            --full "$root/vendor/case/run/puff/dgm_puffstep.bin" \
+            --metadata native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/dgm_puffstep.json \
+            --out "$root/original-sixhour-dgm.bin"
+          echo "P7_6H_ORIGINAL_FORTRAN_DGM=FROZEN_SHA_VERIFIED ROWS=11458"
+      - name: Compile and replay six contiguous real COMP hours
+        shell: bash
+        run: |
+          set -euo pipefail
+          build="${RUNNER_TEMP}/p7-hefei-sixhour-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cmake -S native_cpp/modules/p7_calpuff -B "$build" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$build" --parallel 2 --target cteas_p7_hefei_sixhour_native_h3_receptors_tests
+          root="${RUNNER_TEMP}/p7-h3-6h-dgm-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          "$build/cteas_p7_hefei_sixhour_native_h3_receptors_tests" \
+            project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat \
+            project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp \
+            project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con \
+            "$root/original-sixhour-dgm.bin" \
+            "$root/native-hour2-h3-25-28.tsv"
+          python3 native_cpp/modules/p7_calpuff/reference/dgm_p7_advection_2022/compare_hour2_h3_calcpf.py \
+            --original "$root/vendor/case/run/puff/dgm_calcpf_h3_25_28_hour2.bin" \
+            --native "$root/native-hour2-h3-25-28.tsv" \
+            --out "$root/first-hour2-source-divergence.json"
+          echo 'P7_6H_DIAGNOSTIC_EXECUTED=YES SCIENTIFIC_PARITY=AS_REPORTED_PER_HOUR'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p7-hefei-6hour-first-source-difference
+          path: |
+            ${{ runner.temp }}/p7-h3-6h-dgm-${{ github.run_id }}-${{ github.run_attempt }}/first-hour2-source-divergence.json
+            ${{ runner.temp }}/p7-h3-6h-dgm-${{ github.run_id }}-${{ github.run_attempt }}/native-hour2-h3-25-28.tsv
+            ${{ runner.temp }}/p7-h3-6h-dgm-${{ github.run_id }}-${{ github.run_attempt }}/vendor/original-calcpf-h3-25-28-hour2.json
+          retention-days: 7
+          if-no-files-found: warn

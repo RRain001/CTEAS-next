@@ -1,0 +1,44 @@
+# command: /usr/bin/python3 -m engine.preprocess.read62_upperair_data.run_upperair_pipeline --python /usr/bin/python3 --pstop 500.0
+# cwd: /home/lhy/build/ref/cteas-ref
+
+开始下载: CHM00058424 [完成下载]
+已下载站点清单: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/upperair_station_used_list.txt
+数据保存路径: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/
+已保存PSTOP: 500.0 hPa -> /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/pstop_hpa.txt
+[完成解析] 站点: CHM00058424
+  输出路径: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/CHM00058424_igra_every_moment
+[CHM00058424] 清洗成功
+站点: CHM00058424 转换完成 
+输出路径: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/igra2fsl/
+年份: 2022
+输入路径: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/igra2fsl
+输出路径: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/2022/fsl_data
+站点数量: 1
+站点 58424
+--- 批量执行完成 ---
+成功: 1
+失败: 0
+[58424] 合并 1 年数据 -> /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/final/up_58424.dat
+输出路径: /home/lhy/build/ref/cteas-ref/project/cases/hefei5km_2022_reference_case_20261011/met/upperair/final/
+研究时间范围: 2022-01-01 00:00:00 -> 2022-01-06 23:00:00
+目标年份: [2022]
+PSTOP(hPa): 500.0
+
+######## Year 2022 ########
+
+=== [2022 下载IGRA] 开始 ===
+=== [2022 下载IGRA] 完成 ===
+
+=== [2022 解析IGRA到CSV] 开始 ===
+=== [2022 解析IGRA到CSV] 完成 ===
+
+=== [2022 转换CSV到FSL] 开始 ===
+=== [2022 转换CSV到FSL] 完成 ===
+
+=== [2022 执行READ62] 开始 ===
+=== [2022 执行READ62] 完成 ===
+
+=== [合并最终UP.DAT] 开始 ===
+=== [合并最终UP.DAT] 完成 ===
+
+高空气象数据处理完毕!

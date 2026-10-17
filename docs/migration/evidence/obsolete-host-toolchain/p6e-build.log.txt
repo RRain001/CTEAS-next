@@ -1,0 +1,1425 @@
+COMMAND: ["cmake", "--build", "/tmp/cteas-next-validation/build-p6e", "--parallel", "4"]
+[  1%] Building CXX object CMakeFiles/p6e_solar_tests.dir/tests/solar_tests.cpp.o
+[  2%] Building CXX object CMakeFiles/p6e_coordlib_utm_reference.dir/src/coordlib_utm_reference_main.cpp.o
+[  5%] Building CXX object CMakeFiles/p6e_coordlib_pj09z0_tests.dir/tests/coordlib_pj09z0_tests.cpp.o
+[  5%] Building CXX object CMakeFiles/p6e_solar_reference.dir/src/solar_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[  6%] Linking CXX executable p6e_solar_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[  7%] Linking CXX executable p6e_coordlib_utm_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[  8%] Linking CXX executable p6e_coordlib_pj09z0_tests
+[ 10%] Linking CXX executable p6e_solar_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 10%] Built target p6e_solar_tests
+[ 11%] Building CXX object CMakeFiles/p6e_pgtstb_tests.dir/tests/pgtstb_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 11%] Built target p6e_coordlib_utm_reference
+[ 12%] Building CXX object CMakeFiles/p6e_pgtstb_reference.dir/src/pgtstb_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 12%] Built target p6e_solar_reference
+[ 12%] Built target p6e_coordlib_pj09z0_tests
+[ 15%] Building CXX object CMakeFiles/p6e_surfvar_observed_tests.dir/tests/surfvar_observed_tests.cpp.o
+[ 15%] Building CXX object CMakeFiles/p6e_surfvar_observed_reference.dir/src/surfvar_observed_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 16%] Linking CXX executable p6e_pgtstb_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 17%] Linking CXX executable p6e_pgtstb_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 19%] Linking CXX executable p6e_surfvar_observed_reference
+[ 19%] Built target p6e_pgtstb_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 20%] Building CXX object CMakeFiles/p6e_heatfx_tests.dir/tests/heatfx_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 21%] Linking CXX executable p6e_surfvar_observed_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 21%] Built target p6e_pgtstb_tests
+[ 23%] Building CXX object CMakeFiles/p6e_heatfx_reference.dir/src/heatfx_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 23%] Built target p6e_surfvar_observed_reference
+[ 24%] Building CXX object CMakeFiles/p6e_elustr_stable_tests.dir/tests/elustr_stable_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 25%] Linking CXX executable p6e_heatfx_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 25%] Built target p6e_surfvar_observed_tests
+[ 26%] Building CXX object CMakeFiles/p6e_elustr_stable_reference.dir/src/elustr_stable_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 26%] Built target p6e_heatfx_tests
+[ 28%] Building CXX object CMakeFiles/p6e_wstarr_tests.dir/tests/wstarr_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 29%] Linking CXX executable p6e_elustr_stable_tests
+[ 30%] Linking CXX executable p6e_heatfx_reference
+[ 32%] Linking CXX executable p6e_elustr_stable_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 33%] Linking CXX executable p6e_wstarr_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 33%] Built target p6e_elustr_stable_reference
+[ 33%] Built target p6e_elustr_stable_tests
+[ 34%] Building CXX object CMakeFiles/p6e_wstarr_reference.dir/src/wstarr_reference_main.cpp.o
+[ 35%] Building CXX object CMakeFiles/p6e_mixht_stable_tests.dir/tests/mixht_stable_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 35%] Built target p6e_heatfx_reference
+[ 37%] Building CXX object CMakeFiles/p6e_mixht_stable_reference.dir/src/mixht_stable_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 37%] Built target p6e_wstarr_tests
+[ 38%] Building CXX object CMakeFiles/p6e_elustr_daytime_tests.dir/tests/elustr_daytime_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 39%] Linking CXX executable p6e_wstarr_reference
+[ 41%] Linking CXX executable p6e_mixht_stable_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 42%] Linking CXX executable p6e_elustr_daytime_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 42%] Built target p6e_wstarr_reference
+[ 42%] Built target p6e_mixht_stable_tests
+[ 43%] Building CXX object CMakeFiles/p6e_elustr_daytime_reference.dir/src/elustr_daytime_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 44%] Building CXX object CMakeFiles/p6e_cloud3_tests.dir/tests/cloud3_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 44%] Built target p6e_elustr_daytime_tests
+[ 46%] Building CXX object CMakeFiles/p6e_cloud3_reference.dir/src/cloud3_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 47%] Linking CXX executable p6e_mixht_stable_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 47%] Built target p6e_mixht_stable_reference
+[ 48%] Building CXX object CMakeFiles/p6e_surfvar_multistation_tests.dir/tests/surfvar_multistation_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 50%] Linking CXX executable p6e_cloud3_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 51%] Linking CXX executable p6e_elustr_daytime_reference
+[ 51%] Built target p6e_cloud3_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 52%] Linking CXX executable p6e_cloud3_reference
+[ 53%] Building CXX object CMakeFiles/p6e_surfvar_multistation_reference.dir/src/surfvar_multistation_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 55%] Linking CXX executable p6e_surfvar_multistation_tests
+[ 55%] Built target p6e_elustr_daytime_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 56%] Building CXX object CMakeFiles/p6e_mixhmc_tests.dir/tests/mixhmc_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 56%] Built target p6e_cloud3_reference
+[ 57%] Building CXX object CMakeFiles/p6e_mixhmc_reference.dir/src/mixhmc_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 57%] Built target p6e_surfvar_multistation_tests
+[ 58%] Building CXX object CMakeFiles/p6e_mixdt_tests.dir/tests/mixdt_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 60%] Linking CXX executable p6e_mixhmc_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 61%] Linking CXX executable p6e_surfvar_multistation_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 61%] Built target p6e_mixhmc_tests
+[ 62%] Linking CXX executable p6e_mixhmc_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 64%] Building CXX object CMakeFiles/p6e_mixdt_reference.dir/src/mixdt_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 64%] Built target p6e_surfvar_multistation_reference
+[ 65%] Building CXX object CMakeFiles/p6e_mixht_observed_mc_tests.dir/tests/mixht_observed_mc_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 65%] Built target p6e_mixhmc_reference
+[ 66%] Building CXX object CMakeFiles/p6e_mixht_observed_mc_reference.dir/src/mixht_observed_mc_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 67%] Linking CXX executable p6e_mixdt_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 67%] Built target p6e_mixdt_tests
+[ 69%] Linking CXX executable p6e_mixdt_reference
+[ 70%] Building CXX object CMakeFiles/p6e_temp3d_observed_land_tests.dir/tests/temp3d_observed_land_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 71%] Linking CXX executable p6e_mixht_observed_mc_tests
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 71%] Built target p6e_mixdt_reference
+[ 73%] Building CXX object CMakeFiles/p6e_temp3d_observed_land_reference.dir/src/temp3d_observed_land_reference_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 74%] Linking CXX executable p6e_mixht_observed_mc_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+[ 74%] Built target p6e_mixht_observed_mc_tests
+[ 75%] Linking CXX executable p6e_temp3d_observed_land_tests
+[ 76%] Building CXX object CMakeFiles/p6e_p6c_hourly_bridge_tests.dir/tests/p6c_hourly_bridge_tests.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+[ 76%] Built target p6e_mixht_observed_mc_reference
+[ 78%] Building CXX object CMakeFiles/p6e_p6c_hourly_bridge.dir/src/p6c_hourly_bridge_main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(54): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds up_timestamp(
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: identifier "year_month_day" is undefined
+      const year_month_day date{std::chrono::year{year},
+            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: namespace "std::chrono" has no member "year"
+      const year_month_day date{std::chrono::year{year},
+                                             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: expected a ","
+      const year_month_day date{std::chrono::year{year},
+                                                 ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(58): error: namespace "std::chrono" has no member "month"
+          std::chrono::month{static_cast<unsigned>(month)},
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(58): error: expected a ","
+          std::chrono::month{static_cast<unsigned>(month)},
+                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(59): error: namespace "std::chrono" has no member "day"
+          std::chrono::day{static_cast<unsigned>(day)}};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(59): error: expected a ","
+          std::chrono::day{static_cast<unsigned>(day)}};
+                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(63): error: identifier "sys_days" is undefined
+      return sys_days{date}+hours{hour}+std::chrono::seconds{seconds};
+             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(63): error: expected a ";"
+      return sys_days{date}+hours{hour}+std::chrono::seconds{seconds};
+                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(72): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds start,end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(152): error: identifier "sys_seconds" is undefined
+      sys_seconds previous{};
+      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error: identifier "sys_days" is undefined
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error: expected a ")"
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error #165: too few arguments in function call
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(196): error: expected a ")"
+      up_require(out.soundings.back().end>=sys_days{year{2022}/January/6}+hours{12},
+                                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(196): error #165: too few arguments in function call
+      up_require(out.soundings.back().end>=sys_days{year{2022}/January/6}+hours{12},
+                                                   ^
+
+[ 78%] Built target p6e_temp3d_observed_land_tests
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(18): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(24): error: namespace "std::chrono" has no member "sys_seconds"
+      const Upper2022& profiles,std::chrono::sys_seconds clock,
+                                             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(40): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto span=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(42): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto past=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(44): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto togo=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(78): error: identifier "sys_days" is undefined
+      const auto start=sys_days{year{2022}/January/1};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(78): error: expected a ";"
+      const auto start=sys_days{year{2022}/January/1};
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: identifier "sys_seconds" is undefined
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: expected a ")"
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error #165: too few arguments in function call
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(82): error: no instance of overloaded function "std::vector<_Tp, _Alloc>::push_back [with _Tp=cteas::calmet::p6::UpperHour, _Alloc=std::allocator<cteas::calmet::p6::UpperHour>]" matches the argument list
+            argument types are: (<error-type>, std::vector<std::vector<cteas::calmet::p6::LayerWind, std::allocator<cteas::calmet::p6::LayerWind>>, std::allocator<std::vector<cteas::calmet::p6::LayerWind, std::allocator<cteas::calmet::p6::LayerWind>>>>)
+            object type is: std::vector<cteas::calmet::p6::UpperHour, std::allocator<cteas::calmet::p6::UpperHour>>
+          hours.push_back(calmet_prepdi_hour(
+                ^
+/usr/include/c++/9/bits/stl_vector.h(1200): note: this candidate was rejected because mismatch in count of arguments
+        push_back(value_type&& __x)
+        ^
+/usr/include/c++/9/bits/stl_vector.h(1184): note: this candidate was rejected because mismatch in count of arguments
+        push_back(const value_type& __x)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: expected a ";"
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(52): error: namespace "std::chrono" has no member "sys_seconds"
+      CompBufferedHour hour(std::chrono::sys_seconds hour_end) {
+                                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(98): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds previous_{};
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(115): error: identifier "sys_seconds" is undefined
+      const auto start=sys_seconds{sys_days{year{2022}/January/1}};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(115): error: expected a ";"
+      const auto start=sys_seconds{sys_days{year{2022}/January/1}};
+                                  ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(30): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds start,end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(56): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds surf_time(int year,int jul,int hour,int secs) {
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(58): error: namespace "std::chrono" has no member "year"
+      const std::chrono::year y{year};
+                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(62): error: identifier "sys_days" is undefined
+      return sys_days{y/January/1}+days{jul-1}+hours{hour}+seconds{secs};
+             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(62): error: expected a ";"
+      return sys_days{y/January/1}+days{jul-1}+hours{hour}+seconds{secs};
+                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error: identifier "sys_days" is undefined
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error: expected a ")"
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error #165: too few arguments in function call
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: identifier "sys_seconds" is undefined
+      sys_seconds expected=sys_days{year{2022}/January/1};
+      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: identifier "sys_days" is undefined
+      sys_seconds expected=sys_days{year{2022}/January/1};
+                           ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: expected a ";"
+      sys_seconds expected=sys_days{year{2022}/January/1};
+                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(146): error: expected a ")"
+      surf_require(expected==sys_days{year{2022}/January/6}+hours{23},
+                                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(146): error #165: too few arguments in function call
+      surf_require(expected==sys_days{year{2022}/January/6}+hours{23},
+                                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(25): error: namespace "std::chrono" has no member "sys_seconds"
+      RdsnHourlyState select(std::chrono::sys_seconds start,
+                                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(26): error: namespace "std::chrono" has no member "sys_seconds"
+                             std::chrono::sys_seconds end) {
+                                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(68): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds previous_end_{};
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(34): error: identifier "sys_seconds" is undefined
+          const auto covered=[](const SurfaceInterval& r,sys_seconds t) {
+                                                         ^
+
+[ 79%] Building CXX object CMakeFiles/p6e_p6c_143h_physics_tests.dir/tests/p6c_143h_physics_tests.cpp.o
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(1):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(20): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds end{};
+                   ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(12): error: identifier "sys_days" is undefined
+      const auto start=sys_days{year{2022}/January/1};
+                       ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(12): error: expected a ";"
+      const auto start=sys_days{year{2022}/January/1};
+                               ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(19): error: identifier "sys_seconds" is undefined
+          s.end=sys_seconds{start}+hours{12*n};s.start=s.end;
+                ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(19): error: expected a ";"
+          s.end=sys_seconds{start}+hours{12*n};s.start=s.end;
+                           ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(37): error: identifier "sys_seconds" is undefined
+          s.start=sys_seconds{start}+hours{n};
+                  ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(37): error: expected a ";"
+          s.start=sys_seconds{start}+hours{n};
+                             ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(52): error: identifier "sys_seconds" is undefined
+          auto end=sys_seconds{start}+hours{n};
+                   ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp(52): error: expected a ";"
+          auto end=sys_seconds{start}+hours{n};
+                              ^
+
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wpedantic' not supported
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(54): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds up_timestamp(
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: identifier "year_month_day" is undefined
+      const year_month_day date{std::chrono::year{year},
+            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: namespace "std::chrono" has no member "year"
+      const year_month_day date{std::chrono::year{year},
+                                             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: expected a ","
+      const year_month_day date{std::chrono::year{year},
+                                                 ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(58): error: namespace "std::chrono" has no member "month"
+          std::chrono::month{static_cast<unsigned>(month)},
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(58): error: expected a ","
+          std::chrono::month{static_cast<unsigned>(month)},
+                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(59): error: namespace "std::chrono" has no member "day"
+          std::chrono::day{static_cast<unsigned>(day)}};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(59): error: expected a ","
+          std::chrono::day{static_cast<unsigned>(day)}};
+                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(63): error: identifier "sys_days" is undefined
+      return sys_days{date}+hours{hour}+std::chrono::seconds{seconds};
+             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(63): error: expected a ";"
+      return sys_days{date}+hours{hour}+std::chrono::seconds{seconds};
+                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(72): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds start,end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(152): error: identifier "sys_seconds" is undefined
+      sys_seconds previous{};
+      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error: identifier "sys_days" is undefined
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error: expected a ")"
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error #165: too few arguments in function call
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(196): error: expected a ")"
+      up_require(out.soundings.back().end>=sys_days{year{2022}/January/6}+hours{12},
+                                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(196): error #165: too few arguments in function call
+      up_require(out.soundings.back().end>=sys_days{year{2022}/January/6}+hours{12},
+                                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(18): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(24): error: namespace "std::chrono" has no member "sys_seconds"
+      const Upper2022& profiles,std::chrono::sys_seconds clock,
+                                             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(40): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto span=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(42): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto past=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(44): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto togo=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(78): error: identifier "sys_days" is undefined
+      const auto start=sys_days{year{2022}/January/1};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(78): error: expected a ";"
+      const auto start=sys_days{year{2022}/January/1};
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: identifier "sys_seconds" is undefined
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: expected a ")"
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error #165: too few arguments in function call
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(82): error: no instance of overloaded function "std::vector<_Tp, _Alloc>::push_back [with _Tp=cteas::calmet::p6::UpperHour, _Alloc=std::allocator<cteas::calmet::p6::UpperHour>]" matches the argument list
+            argument types are: (<error-type>, std::vector<std::vector<cteas::calmet::p6::LayerWind, std::allocator<cteas::calmet::p6::LayerWind>>, std::allocator<std::vector<cteas::calmet::p6::LayerWind, std::allocator<cteas::calmet::p6::LayerWind>>>>)
+            object type is: std::vector<cteas::calmet::p6::UpperHour, std::allocator<cteas::calmet::p6::UpperHour>>
+          hours.push_back(calmet_prepdi_hour(
+                ^
+/usr/include/c++/9/bits/stl_vector.h(1200): note: this candidate was rejected because mismatch in count of arguments
+        push_back(value_type&& __x)
+        ^
+/usr/include/c++/9/bits/stl_vector.h(1184): note: this candidate was rejected because mismatch in count of arguments
+        push_back(const value_type& __x)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: expected a ";"
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(52): error: namespace "std::chrono" has no member "sys_seconds"
+      CompBufferedHour hour(std::chrono::sys_seconds hour_end) {
+                                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(98): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds previous_{};
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(115): error: identifier "sys_seconds" is undefined
+      const auto start=sys_seconds{sys_days{year{2022}/January/1}};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(115): error: expected a ";"
+      const auto start=sys_seconds{sys_days{year{2022}/January/1}};
+                                  ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(30): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds start,end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(56): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds surf_time(int year,int jul,int hour,int secs) {
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(58): error: namespace "std::chrono" has no member "year"
+      const std::chrono::year y{year};
+                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(62): error: identifier "sys_days" is undefined
+      return sys_days{y/January/1}+days{jul-1}+hours{hour}+seconds{secs};
+             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(62): error: expected a ";"
+      return sys_days{y/January/1}+days{jul-1}+hours{hour}+seconds{secs};
+                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error: identifier "sys_days" is undefined
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error: expected a ")"
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error #165: too few arguments in function call
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: identifier "sys_seconds" is undefined
+      sys_seconds expected=sys_days{year{2022}/January/1};
+      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: identifier "sys_days" is undefined
+      sys_seconds expected=sys_days{year{2022}/January/1};
+                           ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: expected a ";"
+      sys_seconds expected=sys_days{year{2022}/January/1};
+                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(146): error: expected a ")"
+      surf_require(expected==sys_days{year{2022}/January/6}+hours{23},
+                                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(146): error #165: too few arguments in function call
+      surf_require(expected==sys_days{year{2022}/January/6}+hours{23},
+                                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(25): error: namespace "std::chrono" has no member "sys_seconds"
+      RdsnHourlyState select(std::chrono::sys_seconds start,
+                                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(26): error: namespace "std::chrono" has no member "sys_seconds"
+                             std::chrono::sys_seconds end) {
+                                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(68): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds previous_end_{};
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(34): error: identifier "sys_seconds" is undefined
+          const auto covered=[](const SurfaceInterval& r,sys_seconds t) {
+                                                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(20): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds end{};
+                   ^
+
+compilation aborted for /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_hourly_bridge_tests.cpp (code 2)
+gmake[2]: *** [CMakeFiles/p6e_p6c_hourly_bridge_tests.dir/build.make:76：CMakeFiles/p6e_p6c_hourly_bridge_tests.dir/tests/p6c_hourly_bridge_tests.cpp.o] 错误 2
+gmake[1]: *** [CMakeFiles/Makefile2:939：CMakeFiles/p6e_p6c_hourly_bridge_tests.dir/all] 错误 2
+gmake[1]: *** 正在等待未完成的任务....
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(59): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+              const auto end_epoch=duration_cast<seconds>(
+                                   ^
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp(59): note: this candidate was rejected because at least one template argument could not be deduced
+              const auto end_epoch=duration_cast<seconds>(
+                                   ^
+
+[ 80%] Linking CXX executable p6e_temp3d_observed_land_reference
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+compilation aborted for /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/src/p6c_hourly_bridge_main.cpp (code 2)
+gmake[2]: *** [CMakeFiles/p6e_p6c_hourly_bridge.dir/build.make:76：CMakeFiles/p6e_p6c_hourly_bridge.dir/src/p6c_hourly_bridge_main.cpp.o] 错误 2
+gmake[1]: *** [CMakeFiles/Makefile2:965：CMakeFiles/p6e_p6c_hourly_bridge.dir/all] 错误 2
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(54): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds up_timestamp(
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: identifier "year_month_day" is undefined
+      const year_month_day date{std::chrono::year{year},
+            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: namespace "std::chrono" has no member "year"
+      const year_month_day date{std::chrono::year{year},
+                                             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(57): error: expected a ","
+      const year_month_day date{std::chrono::year{year},
+                                                 ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(58): error: namespace "std::chrono" has no member "month"
+          std::chrono::month{static_cast<unsigned>(month)},
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(58): error: expected a ","
+          std::chrono::month{static_cast<unsigned>(month)},
+                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(59): error: namespace "std::chrono" has no member "day"
+          std::chrono::day{static_cast<unsigned>(day)}};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(59): error: expected a ","
+          std::chrono::day{static_cast<unsigned>(day)}};
+                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(63): error: identifier "sys_days" is undefined
+      return sys_days{date}+hours{hour}+std::chrono::seconds{seconds};
+             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(63): error: expected a ";"
+      return sys_days{date}+hours{hour}+std::chrono::seconds{seconds};
+                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(72): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds start,end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(152): error: identifier "sys_seconds" is undefined
+      sys_seconds previous{};
+      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error: identifier "sys_days" is undefined
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                            ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error: expected a ")"
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(194): error #165: too few arguments in function call
+      up_require(out.soundings.front().end<=sys_days{year{2022}/January/1}+hours{12},
+                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(196): error: expected a ")"
+      up_require(out.soundings.back().end>=sys_days{year{2022}/January/6}+hours{12},
+                                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/temperature_faces.hpp(6),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_upper.hpp(196): error #165: too few arguments in function call
+      up_require(out.soundings.back().end>=sys_days{year{2022}/January/6}+hours{12},
+                                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(18): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(24): error: namespace "std::chrono" has no member "sys_seconds"
+      const Upper2022& profiles,std::chrono::sys_seconds clock,
+                                             ^
+
+[ 80%] Built target p6e_temp3d_observed_land_reference
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(40): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto span=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(42): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto past=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(44): error: no instance of function template "std::chrono::duration_cast" matches the argument list
+            argument types are: (<error-type>)
+      const auto togo=std::chrono::duration_cast<std::chrono::seconds>(
+                      ^
+/usr/include/c++/9/chrono(191): note: this candidate was rejected because at least one template argument could not be deduced
+        duration_cast(const duration<_Rep, _Period>& __d)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(78): error: identifier "sys_days" is undefined
+      const auto start=sys_days{year{2022}/January/1};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(78): error: expected a ";"
+      const auto start=sys_days{year{2022}/January/1};
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: identifier "sys_seconds" is undefined
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: expected a ")"
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error #165: too few arguments in function call
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(82): error: no instance of overloaded function "std::vector<_Tp, _Alloc>::push_back [with _Tp=cteas::calmet::p6::UpperHour, _Alloc=std::allocator<cteas::calmet::p6::UpperHour>]" matches the argument list
+            argument types are: (<error-type>, std::vector<std::vector<cteas::calmet::p6::LayerWind, std::allocator<cteas::calmet::p6::LayerWind>>, std::allocator<std::vector<cteas::calmet::p6::LayerWind, std::allocator<cteas::calmet::p6::LayerWind>>>>)
+            object type is: std::vector<cteas::calmet::p6::UpperHour, std::allocator<cteas::calmet::p6::UpperHour>>
+          hours.push_back(calmet_prepdi_hour(
+                ^
+/usr/include/c++/9/bits/stl_vector.h(1200): note: this candidate was rejected because mismatch in count of arguments
+        push_back(value_type&& __x)
+        ^
+/usr/include/c++/9/bits/stl_vector.h(1184): note: this candidate was rejected because mismatch in count of arguments
+        push_back(const value_type& __x)
+        ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/upper_hourly_wind.hpp(83): error: expected a ";"
+              upper,sys_seconds{start}+std::chrono::hours{n},layers));
+                                                                    ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(52): error: namespace "std::chrono" has no member "sys_seconds"
+      CompBufferedHour hour(std::chrono::sys_seconds hour_end) {
+                                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(98): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds previous_{};
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(115): error: identifier "sys_seconds" is undefined
+      const auto start=sys_seconds{sys_days{year{2022}/January/1}};
+                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(8),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/comp_buffered_timeline.hpp(115): error: expected a ";"
+      const auto start=sys_seconds{sys_days{year{2022}/January/1}};
+                                  ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(30): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds start,end;
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(56): error: namespace "std::chrono" has no member "sys_seconds"
+  inline std::chrono::sys_seconds surf_time(int year,int jul,int hour,int secs) {
+                      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(58): error: namespace "std::chrono" has no member "year"
+      const std::chrono::year y{year};
+                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(62): error: identifier "sys_days" is undefined
+      return sys_days{y/January/1}+days{jul-1}+hours{hour}+seconds{secs};
+             ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(62): error: expected a ";"
+      return sys_days{y/January/1}+days{jul-1}+hours{hour}+seconds{secs};
+                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error: identifier "sys_days" is undefined
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                               ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error: expected a ")"
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(92): error #165: too few arguments in function call
+          surf_require(surf_time(sy,sj,sh,ss)==sys_days{year{2022}/January/1} &&
+                                                       ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: identifier "sys_seconds" is undefined
+      sys_seconds expected=sys_days{year{2022}/January/1};
+      ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: identifier "sys_days" is undefined
+      sys_seconds expected=sys_days{year{2022}/January/1};
+                           ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(104): error: expected a ";"
+      sys_seconds expected=sys_days{year{2022}/January/1};
+                                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(146): error: expected a ")"
+      surf_require(expected==sys_days{year{2022}/January/6}+hours{23},
+                                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(5),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/read_surface.hpp(146): error #165: too few arguments in function call
+      surf_require(expected==sys_days{year{2022}/January/6}+hours{23},
+                                     ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(25): error: namespace "std::chrono" has no member "sys_seconds"
+      RdsnHourlyState select(std::chrono::sys_seconds start,
+                                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(26): error: namespace "std::chrono" has no member "sys_seconds"
+                             std::chrono::sys_seconds end) {
+                                          ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(68): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds previous_end_{};
+                   ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(9),
+                 from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/../include/cteas/p6/surface_hourly_state.hpp(34): error: identifier "sys_seconds" is undefined
+          const auto covered=[](const SurfaceInterval& r,sys_seconds t) {
+                                                         ^
+
+In file included from /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(5):
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/p6c_hourly_bridge.hpp(20): error: namespace "std::chrono" has no member "sys_seconds"
+      std::chrono::sys_seconds end{};
+                   ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(18): error: identifier "sys_days" is undefined
+      const auto start=sys_days{year{2022}/January/1};
+                       ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(18): error: expected a ";"
+      const auto start=sys_days{year{2022}/January/1};
+                               ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(27): error: identifier "sys_seconds" is undefined
+          s.start=sys_seconds{start}+hours{12*n};
+                  ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(27): error: expected a ";"
+          s.start=sys_seconds{start}+hours{12*n};
+                             ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(45): error: identifier "sys_seconds" is undefined
+          s.start=sys_seconds{start}+hours{n};s.end=s.start+hours{1};
+                  ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(45): error: expected a ";"
+          s.start=sys_seconds{start}+hours{n};s.end=s.start+hours{1};
+                             ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(59): error: identifier "sys_seconds" is undefined
+          const auto end=sys_seconds{start}+hours{n};
+                         ^
+
+/home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp(59): error: expected a ";"
+          const auto end=sys_seconds{start}+hours{n};
+                                    ^
+
+compilation aborted for /home/lhy/CTEAS-next/native_cpp/modules/p6_calmet/p6e/tests/p6c_143h_physics_tests.cpp (code 2)
+gmake[2]: *** [CMakeFiles/p6e_p6c_143h_physics_tests.dir/build.make:76：CMakeFiles/p6e_p6c_143h_physics_tests.dir/tests/p6c_143h_physics_tests.cpp.o] 错误 2
+gmake[1]: *** [CMakeFiles/Makefile2:991：CMakeFiles/p6e_p6c_143h_physics_tests.dir/all] 错误 2
+gmake: *** [Makefile:101：all] 错误 2

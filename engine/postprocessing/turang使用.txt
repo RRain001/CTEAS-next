@@ -1,0 +1,18 @@
+土壤
+python turang-allyear.py --x 513.385 --y 3533.769
+
+水库
+python turang-allyear水库.py --x 513.385 --y 3533.769
+
+117.1400250947	31.9039087583 P1
+117.1473675025	31.9057499888 P2
+117.1722114340	31.9085794581 P3
+117.1599208572	31.8957285186 P4
+117.1771423950	31.8933534792 P5
+
+
+python turang-allyear水库.py --x 513.240 --y 3529.793
+python turang-allyear水库.py --x 513.934 --y 3529.998
+python turang-allyear水库.py --x 516.282 --y 3530.315
+python turang-allyear水库.py --x 515.120 --y 3528.889
+python turang-allyear水库.py --x 516.751 --y 3528.629
