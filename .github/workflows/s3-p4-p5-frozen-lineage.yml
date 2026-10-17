@@ -1,0 +1,91 @@
+name: S3 real native P4 P5 2022 frozen producer byte lineage
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s3-p4-p5-frozen-lineage.yml
+      - native_cpp/orchestration/verify_p4_p5_frozen_lineage.py
+      - native_cpp/modules/p4_read62/**
+      - native_cpp/modules/p5_smerge/**
+      - native_cpp/include/cteas/met_input/**
+permissions:
+  contents: read
+jobs:
+  real-p4-p5-writer-scoped:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - name: Source-pinned clean checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile actual native READ62 and SMERGE C++20, no original Fortran
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s3"
+          cmake -S native_cpp/modules/p4_read62 -B "$RUNNER_TEMP/s3/p4-build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/s3/p4-build" --parallel 2 --target cteas_p4_read62 cteas_p4_tests
+          cmake -S native_cpp/modules/p5_smerge -B "$RUNNER_TEMP/s3/p5-build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/s3/p5-build" --parallel 2 --target cteas_p5_smerge cteas_p5_tests
+          ctest --test-dir "$RUNNER_TEMP/s3/p4-build" --output-on-failure
+          ctest --test-dir "$RUNNER_TEMP/s3/p5-build" --output-on-failure
+      - name: Real 2022 FSL and GENERIC inputs to freshly computed outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 native_cpp/orchestration/verify_p4_p5_frozen_lineage.py \
+            --case project/cases/hefei5km_2022_reference_case_20261011 \
+            --p4 "$RUNNER_TEMP/s3/p4-build/cteas_p4_read62" \
+            --p5 "$RUNNER_TEMP/s3/p5-build/cteas_p5_smerge" \
+            --work "$RUNNER_TEMP/s3/scoped-native-producers" \
+            --source-head "$(git rev-parse HEAD)"
+      - name: Enforce negative input integrity and original case immutability
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import importlib.util,json,os,pathlib,subprocess,sys,tempfile
+          from hashlib import sha256
+          root=pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          case=root/"project/cases/hefei5km_2022_reference_case_20261011"
+          work=pathlib.Path(os.environ["RUNNER_TEMP"])/"s3"
+          report=json.loads((work/"scoped-native-producers/audit/lineage.json").read_text())
+          assert report["status"]=="PASS_SCOPED_P4_P5_CPP_WRITER_BYTE_IDENTITY"
+          assert report["p4_final_updat_reproduced_this_run"] is False
+          assert report["raw_igra_to_fsl_reproduced_this_run"] is False
+          assert report["raw_isd_to_generic_reproduced_this_run"] is False
+          assert report["native_p6_rerun_with_new_p4p5"] is False
+          for role,spec in report["input_roles"].items():
+              mapping=importlib.util.spec_from_file_location("s3","native_cpp/orchestration/verify_p4_p5_frozen_lineage.py")
+              module=importlib.util.module_from_spec(mapping)
+              mapping.loader.exec_module(module)
+              p=case/module.SOURCE_ROLE_FILES[role]
+              assert sha256(p.read_bytes()).hexdigest()==spec["sha256"]
+          # Modification of an input copy, with source reference unchanged, cannot
+          # satisfy the byte identity gate; original case never modified.
+          source=work/"scoped-native-producers/met/surface/isd2smerge_ready/583210-99999.csv"
+          source.write_bytes(source.read_bytes().replace(b"0.7",b"9.7",1))
+          deck=work/"scoped-native-producers/run/smerge/smerge.inp"
+          target=work/"scoped-native-producers/run/smerge/surf.dat"
+          target.unlink()
+          p=subprocess.run([str(work/"p5-build/cteas_p5_smerge"),str(deck)],
+              capture_output=True,text=True,timeout=15)
+          if p.returncode==0:
+              assert sha256(target.read_bytes()).hexdigest()!=report["p5_intermediate_six_days"]["frozen"]["sha256"], "tampered input produced frozen SURF"
+          else:
+              assert not target.exists(), "unexpected published SURF with failed P5"
+          print("S3_P5_MODIFIED_GENERIC_CANNOT_PASS_FROZEN_BYTES=PASS")
+          PY
+          test -z "$(git status --porcelain -- project/cases/hefei5km_2022_reference_case_20261011)"
+          echo "S3_FROZEN_CASE_UNMODIFIED=PASS"
+      - name: Publish bounded producer audit only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3-native-p4-p5-2022-writer-audit
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            {{ runner.temp }}/s3/scoped-native-producers/audit/*.json
+            {{ runner.temp }}/s3/scoped-native-producers/audit/*.log
