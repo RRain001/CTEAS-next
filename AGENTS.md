@@ -1,6 +1,42 @@
 # AGENTS.md
 
-## Project overview
+## CTEAS-next authoritative scope and reference (supersedes legacy CTEAS overview below)
+
+- This repository is **CTEAS-next**, a clean-history migration containing
+  **selected, partially reconstructed** CALMET/CALPUFF C++20 physical branches
+  (P6/P7) and P1–P5 preparation—not a complete replacement for every option
+  supported by the original Fortran packages.
+- For any physical change, **read**
+  `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.md` and the machine-readable
+  `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.csv` first. These are a
+  source/option *audit index*, not blanket proof that an option is implemented.
+  Amend the option row, true C++ entrypoint, original control branch and
+  independently measured scientific test status when changing physics.
+- **Original vendor source is NOT tracked here.** It resides in the *old*
+  repository `RRain001/CTEAS` at the pinned source commit
+  `dfad99a78ed84d655e21411c9d25eb0d2583bf13`. CALMET 6.5.0 source:
+  `engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for`; CALPUFF 7.2.1:
+  `engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for`. See
+  `docs/physics/VENDOR_SOURCE_LOCATOR.md` for original controls,
+  provenance/hash checking and authorized temporary restoration.
+- Never add the excluded `engine/vendor/**` sources, restricted CGIAR terrain
+  crop, or fonts to the CTEAS-next Git tree, public artifacts or container
+  layers. A locally recovered file is not evidence of redistribution rights.
+  Respect `docs/migration/THIRD_PARTY_ASSETS.md`.
+- Treat `project/cases/**` tracked during the 2026-10-16 migration as an
+  **explicit frozen-fixture exception** to the legacy guidance below. Preserve
+  the existing pinned test files; new/untracked case workspaces and simulation
+  outputs still stay outside version control.
+- **Scientific acceptance is per option/branch/case**: original CTEAS
+  historical scoped acceptance is not the same as new CTEAS-next scientific
+  reruns. See `docs/migration/SCIENTIFIC_RERUN_PLAN.md` and Issue #6.
+  `NPSTA=0`, `MWET=0` dry reference tests do not validate precipitation
+  adapters or wet deposition; unsupported cases must fail closed.
+- Large software or 143-hour scientific GitHub Actions workflows must be
+  intentionally invoked via their documented manual/validated-request
+  mechanisms, not indiscriminately enabled for normal pushes and PRs.
+
+## Legacy CTEAS project overview (historical guidance below; defer to CTEAS-next rules above)
 
 This project is CTEAS, a tritium environmental assessment software package.
 
