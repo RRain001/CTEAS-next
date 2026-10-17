@@ -8,7 +8,7 @@ export FC=/usr/bin/gfortran-12
 mkdir -p /tmp/cteas-software /tmp/cteas-python
 
 if python scripts/migration/validate_ubuntu.py \
-    --out /tmp/cteas-software --jobs 2 --portable; then
+    --out /tmp/cteas-software --jobs 2 --portable --tests-only; then
   echo 'CONTAINER_CPP_PORTABLE=PASS'
 else
   rc=$?

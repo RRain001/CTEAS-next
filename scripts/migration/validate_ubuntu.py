@@ -55,7 +55,11 @@ def main():
     ap.add_argument('--jobs', type=int, default=2)
     ap.add_argument('--test-timeout', type=int, default=600, help='Per-test execution seconds, independent of numerical tolerances')
     ap.add_argument('--portable', action='store_true', help='Explicit software subset that needs no external vendor/terrain assets')
+    ap.add_argument('--build-only', action='store_true', help='Build all selected standalone CMake targets; intentionally DO NOT run CTest')
+    ap.add_argument('--tests-only', action='store_true', help='Run selected CTests on pre-built CMake trees; no configure or rebuild')
     args = ap.parse_args()
+    if args.build_only and args.tests_only:
+        ap.error('--build-only and --tests-only are mutually exclusive')
     root, out = args.root.resolve(), args.out.resolve()
     if out == root or root in out.parents:
         ap.error('--out must be outside the checkout (keeps compiled artifacts out of source)')
@@ -85,19 +89,34 @@ def main():
             proc = subprocess.run(command, cwd=root, env=env, stdout=log, stderr=subprocess.STDOUT)
         results.append(dict(label=label, command=command, returncode=proc.returncode,
                             seconds=round(time.monotonic() - start, 3), log=label + '.log'))
-        (out / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
+        (out / ('test-results.json' if args.tests_only else 'results.json')).write_text(json.dumps(results, indent=2) + '\n')
         print(label, 'rc=' + str(proc.returncode), flush=True)
         return proc.returncode
 
     for name in args.suite or SUITES:
         build = out / ('build-' + name)
-        rc = run(name + '-configure', ['cmake', '-S', str(root / SUITES[name]), '-B', str(build),
-                 '-DCMAKE_BUILD_TYPE=Debug', '-DCMAKE_CXX_COMPILER=' + env.get('CXX', '/usr/bin/g++-12'),
-                 '-DPython3_EXECUTABLE=' + sys.executable])
-        if rc:
-            continue
-        rc = run(name + '-build', ['cmake', '--build', str(build), '--parallel', str(args.jobs)])
-        if rc:
+        if args.tests_only:
+            # Verification inherits the exact builder filesystem: no rebuild.
+            cache = build / 'CMakeCache.txt'
+            previous_build_log = out / (name + '-build.log')
+            if not cache.is_file() or not previous_build_log.is_file():
+                ap.error('Missing pre-built CMake cache or build evidence for --tests-only: ' + name)
+            if ('CMAKE_HOME_DIRECTORY:INTERNAL=' + str(root / SUITES[name])) not in cache.read_text():
+                ap.error('Pre-built CMake source directory mismatch for --tests-only: ' + name)
+        else:
+            rc = run(name + '-configure', ['cmake', '-S', str(root / SUITES[name]), '-B', str(build),
+                     '-DCMAKE_BUILD_TYPE=Debug', '-DCMAKE_CXX_COMPILER=' + env.get('CXX', '/usr/bin/g++-12'),
+                     '-DPython3_EXECUTABLE=' + sys.executable])
+            if rc:
+                continue
+            rc = run(name + '-build', ['cmake', '--build', str(build), '--parallel', str(args.jobs)])
+            if rc:
+                continue
+        if args.build_only:
+            (out / (name + '-selection.json')).write_text(json.dumps(
+                [dict(name=t, status='NOT_RUN', reason='Build-only deployment stage; verification is a separate CI target')
+                 for t in PORTABLE[name]], indent=2) + '\n')
+            print(name + ': BUILD_ONLY (CTest NOT_RUN)', flush=True)
             continue
         catalog = subprocess.check_output(['ctest', '--test-dir', str(build), '--show-only=json-v1'], env=env)
         (out / (name + '-tests.json')).write_bytes(catalog)
