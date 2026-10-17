@@ -65,7 +65,10 @@ jobs:
           # Modification of an input copy, with source reference unchanged, cannot
           # satisfy the byte identity gate; original case never modified.
           source=work/"scoped-native-producers/met/surface/isd2smerge_ready/583210-99999.csv"
-          source.write_bytes(source.read_bytes().replace(b"0.7",b"9.7",1))
+          needle=b"1,1,2022,100,6.0,"
+          data=source.read_bytes()
+          assert data.count(needle)==1, "tamper must target a real USED 01:00 hour"
+          source.write_bytes(data.replace(needle,b"1,1,2022,100,16.0,",1))
           deck=work/"scoped-native-producers/run/smerge/smerge.inp"
           target=work/"scoped-native-producers/run/smerge/surf.dat"
           target.unlink()
