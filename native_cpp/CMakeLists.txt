@@ -31,3 +31,8 @@ target_link_libraries(cteas_p2_gen_fraction PRIVATE cteas_p2_gen)
 add_executable(cteas_p2_gen_tests tests/p2_gen_fraction_tests.cpp)
 target_link_libraries(cteas_p2_gen_tests PRIVATE cteas_p2_gen)
 add_test(NAME cteas_p2_gen_fraction_contract COMMAND cteas_p2_gen_tests)
+
+# Enforce case-grid precision independently from data availability.
+add_executable(cteas_grid_origin_precision_tests tests/grid_origin_precision_tests.cpp)
+target_include_directories(cteas_grid_origin_precision_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME cteas_grid_origin_three_decimal_km COMMAND cteas_grid_origin_precision_tests)
