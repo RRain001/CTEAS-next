@@ -13,6 +13,8 @@
 #include "cteas/puff/original_met_cell.hpp"
 #include "cteas/puff/original_native_terrain.hpp"
 #include "cteas/puff/receptors.hpp"
+#include "cteas/puff/native_p6_admission.hpp"
+#include "cteas/puff/sha256.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -72,12 +74,12 @@ private:
     bool published_=false;
 };
 struct Args {
-    std::string met,control,makegeo,output;
+    std::string met,control,makegeo,output,p6_admission,p6_manifest,p6_driver;
     std::size_t hours=0;
 };
 Args parse(int argc,char** argv) {
-    require(argc==11,
-        "usage: cteas_p7_native_hefei_2022 --met MET.DAT --control puff.inp --makegeo makegeo.inp --output NEW_puff.con --hours 1|6|143");
+    require(argc==17,
+        "usage: cteas_p7_native_hefei_2022 --met MET.DAT --control puff.inp --makegeo makegeo.inp --output NEW_puff.con --hours 1|6|143 --p6-admission ADMISSION --p6-manifest MANIFEST --p6-driver DRIVER");
     Args a;
     for(int i=1;i<argc;i+=2) {
         const std::string key=argv[i];
@@ -86,6 +88,9 @@ Args parse(int argc,char** argv) {
         else if(key=="--control"&&a.control.empty())a.control=value;
         else if(key=="--makegeo"&&a.makegeo.empty())a.makegeo=value;
         else if(key=="--output"&&a.output.empty())a.output=value;
+        else if(key=="--p6-admission"&&a.p6_admission.empty())a.p6_admission=value;
+        else if(key=="--p6-manifest"&&a.p6_manifest.empty())a.p6_manifest=value;
+        else if(key=="--p6-driver"&&a.p6_driver.empty())a.p6_driver=value;
         else if(key=="--hours"&&a.hours==0U) {
             require(value=="1"||value=="6"||value=="143",
                     "P7_NATIVE_HOUR_OUT_OF_SCOPE");
@@ -93,14 +98,19 @@ Args parse(int argc,char** argv) {
         } else throw std::runtime_error("P7_NATIVE_UNKNOWN_OR_DUPLICATE_OPTION");
     }
     require(!a.met.empty()&&!a.control.empty()&&!a.makegeo.empty()&&
-            !a.output.empty()&&a.hours>0U,"P7_NATIVE_MISSING_ARGUMENT");
+            !a.output.empty()&&!a.p6_admission.empty()&&
+            !a.p6_manifest.empty()&&!a.p6_driver.empty()&&a.hours>0U,
+            "P7_NATIVE_MISSING_ARGUMENT");
     const auto dest=std::filesystem::path(a.output);
     require(!std::filesystem::exists(dest),"P7_NATIVE_OUTPUT_EXISTS_NO_OVERWRITE");
     require(std::filesystem::is_directory(dest.parent_path()),
             "P7_NATIVE_OUTPUT_PARENT_MISSING");
     require(std::filesystem::is_regular_file(a.met)&&
             std::filesystem::is_regular_file(a.control)&&
-            std::filesystem::is_regular_file(a.makegeo),
+            std::filesystem::is_regular_file(a.makegeo)&&
+            std::filesystem::is_regular_file(a.p6_admission)&&
+            std::filesystem::is_regular_file(a.p6_manifest)&&
+            std::filesystem::is_regular_file(a.p6_driver),
             "P7_NATIVE_INPUT_NOT_A_REGULAR_FILE");
     require(std::filesystem::path(a.met)!=dest &&
             std::filesystem::path(a.control)!=dest &&
@@ -113,6 +123,16 @@ Args parse(int argc,char** argv) {
 int main(int argc,char** argv) {
   try {
     const Args a=parse(argc,argv);
+    // Block before writing any staged output: no arbitrary native-looking MET.
+    cteas::puff::verify_native_p6_admission(
+        a.p6_admission,a.p6_manifest,a.p6_driver,a.met,
+        P7_EXPECTED_SOURCE_SHA,static_cast<int>(a.hours));
+    require(cteas::puff::sha256_hex_file(a.control)==
+             "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc",
+            "P7_NATIVE_LOCKED_PUFF_CONTROL_SHA256_MISMATCH");
+    require(cteas::puff::sha256_hex_file(a.makegeo)==
+             "e87b166346abe1c16136a790cda3acffdec6e29d9fb558ab2c9738ef426238b7",
+            "P7_NATIVE_LOCKED_MAKEGEO_SHA256_MISMATCH");
     OutputPublication output(a.output);
     const auto control_text=read_text(a.control);
     const auto deck=ControlFile::read_file(a.control);
