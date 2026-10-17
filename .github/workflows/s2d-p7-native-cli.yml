@@ -1,4 +1,4 @@
-name: S2D native-only P7 CLI executable smoke
+name: S2D P7 source-pinned CLI build and negative-admission smoke
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
@@ -48,100 +48,43 @@ jobs:
             echo "UNEXPECTED_ORIGINAL_ORACLE_IN_INPUT_STAGE";exit 1
           fi
           echo "ORIGINAL_CON_DGM_PHYSICALLY_ABSENT=PASS"
-      - name: Deny bad CLI geometry/hours and nonexistent input
+      - name: Fail closed when admission is absent, invalid or original reference MET is offered
         shell: bash
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/p7-native"
           exe="$RUNNER_TEMP/p7-build/cteas_p7_native_hefei_2022"
-          control="$work/input/puff.inp"
-          geo="$work/input/makegeo.inp"
-          met="$work/input/met.dat"
-          test ! -e "$work/output/bad.con"
-          if "$exe" --met "$met" --control "$control" --makegeo "$geo" --output "$work/output/bad.con" --hours 144 > "$work/audit/reject-144.stdout" 2>&1; then
-            echo "INCORRECTLY_ACCEPTED_144H";exit 1
-          fi
-          test ! -e "$work/output/bad.con"
-          if "$exe" --met "$work/input/not-present.dat" --control "$control" --makegeo "$geo" --output "$work/output/bad.con" --hours 1 > "$work/audit/reject-missing.stdout" 2>&1; then
-            echo "INCORRECTLY_ACCEPTED_MISSING_MET";exit 1
-          fi
-          test ! -e "$work/output/bad.con"
-          echo "P7-PREEXISTING-CON-MUST-NOT-BE-TOUCHED" > "$work/output/preexisting.con"
-          cp "$work/output/preexisting.con" "$work/audit/expected-preexisting.txt"
-          if "$exe" --met "$met" --control "$control" --makegeo "$geo" --output "$work/output/preexisting.con" --hours 1 > "$work/audit/reject-existing.stdout" 2>&1; then
-            echo "INCORRECTLY_OVERWROTE_EXISTING_CON";exit 1
-          fi
-          cmp "$work/output/preexisting.con" "$work/audit/expected-preexisting.txt"
-          echo "P7_NATIVE_OUTPUT_EXISTING_NO_CLOBBER=PASS"
-          echo "partial-in-progress" > "$work/output/pre-existing-stage.con.cteas-partial"
-          if "$exe" --met "$met" --control "$control" --makegeo "$geo" --output "$work/output/pre-existing-stage.con" --hours 1 > "$work/audit/reject-partial.stdout" 2>&1; then
-            echo "INCORRECTLY_ACCEPTED_EXISTING_STAGED_OUTPUT";exit 1
-          fi
-          test ! -e "$work/output/pre-existing-stage.con"
-          grep -q 'P7_NATIVE_OUTPUT_OR_PARTIAL_ALREADY_EXISTS' "$work/audit/reject-partial.stdout"
-          echo "P7_NATIVE_STALE_PARTIAL_FAIL_CLOSED=PASS"
-          echo "P7_NATIVE_INVALID_INPUT_NEGATIVES=PASS"
-      - name: Real no-oracle P7 1h 6h and 143h H3 production executes
-        timeout-minutes: 75
-        shell: bash
-        run: |
-          set -euo pipefail
-          work="$RUNNER_TEMP/p7-native"
-          exe="$RUNNER_TEMP/p7-build/cteas_p7_native_hefei_2022"
-          for hours in 1 6 143; do
-            "$exe" --met "$work/input/met.dat" --control "$work/input/puff.inp" \
-              --makegeo "$work/input/makegeo.inp" \
-              --output "$work/output/native-${hours}h.con" --hours "$hours" \
-              > "$work/audit/native-${hours}h.log" 2> "$work/audit/native-${hours}h.err" || {
-                echo "P7_NATIVE_NO_ORACLE_EXECUTION_FAIL_HOURS=$hours"
-                tail -n 60 "$work/audit/native-${hours}h.log" || true
-                cat "$work/audit/native-${hours}h.err" || true
-                exit 1
-              }
-            grep "P7_NATIVE_NO_ORIGINAL_CON_DGM=PASS HOURS=$hours" "$work/audit/native-${hours}h.log"
-            grep "H3_VALUES=$((hours*2500))" "$work/audit/native-${hours}h.log"
-            test -s "$work/output/native-${hours}h.con"
-            test ! -e "$work/output/native-${hours}h.con.cteas-partial"
-            sha256sum "$work/output/native-${hours}h.con" >> "$work/audit/sha256.txt"
-          done
-          echo "P7_NATIVE_1_6_143H_NO_ORIGINAL_CON_DGM=PASS"
-      - name: Verify true product timestamps and 143h H3 with independent file parser
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json,struct,os
-          from pathlib import Path
-          root=Path(os.environ['RUNNER_TEMP'])/'p7-native'
-          results={}
-          for hours in (1,6,143):
-              filename=root/'output'/f'native-{hours}h.con'
-              raw=filename.read_bytes()
-              i=0
-              frames=[]
-              while i<len(raw):
-                  if i+8>len(raw):raise ValueError("truncated Fortran framing")
-                  n=struct.unpack_from('<I',raw,i)[0]
-                  if i+8+n>len(raw):raise ValueError("payload beyond EOF")
-                  if struct.unpack_from('<I',raw,i+4+n)[0]!=n:
-                      raise ValueError("bad Fortran record end marker")
-                  frames.append(raw[i+4:i+4+n])
-                  i+=n+8
-              # 3218 embedded WROUT1 comment records + 8 framing/control
-              # records precede the 3 hourly records; total 3226+3*h.
-              assert len(frames)==3226+3*hours,(hours,len(frames))
-              fields=[v for v in frames if len(v)==15+4*2500 and v[:3]==b'H-3']
-              assert len(fields)==hours,(hours,len(fields))
-              total_positive=0
-              for field in fields:
-                  vals=struct.unpack_from('<2500f',field,15)
-                  total_positive+=sum(v>0 for v in vals)
-              assert total_positive>0
-              results[str(hours)]={'records':len(frames),'h3_fields':len(fields),
-                                   'positive_values':total_positive,'output_bytes':len(raw)}
-          (root/'audit'/'p7-native-output-physical-fields.json').write_text(json.dumps(results,indent=2)+'\n')
-          print("P7_NATIVE_WROUT1_INDEPENDENT_143H=PASS",results)
+          python3 - "$work" "$exe" <<'PY'
+          import pathlib,subprocess,sys
+          root=pathlib.Path(sys.argv[1]); exe=sys.argv[2]
+          met=root/"input/met.dat"
+          ctl=root/"input/puff.inp"
+          geo=root/"input/makegeo.inp"
+          out=root/"output/should-not-be-created.con"
+          base=["--met",str(met),"--control",str(ctl),"--makegeo",str(geo),
+                "--output",str(out),"--hours","143",
+                "--p6-admission",str(root/"input/missing-admission.txt"),
+                "--p6-manifest",str(root/"input/missing-producer.json"),
+                "--p6-driver",str(root/"input/missing-driver")]
+          for key,value in (("--hours","144"),("--hours","143"),
+                            ("--met",str(root/"input/no-such-met.dat"))):
+              cmd=list(base); cmd[cmd.index(key)+1]=value
+              p=subprocess.run([exe,*cmd],capture_output=True,text=True,timeout=15)
+              assert p.returncode!=0 and not out.exists()
+              print("P7_REFERENCE_OR_INVALID_INPUT_FAIL_CLOSED=PASS",key,value)
+          existing=root/"output/existing.con"
+          existing.write_text("NO_CLOBBER")
+          cmd=list(base);cmd[cmd.index("--output")+1]=str(existing)
+          p=subprocess.run([exe,*cmd],capture_output=True,text=True,timeout=15)
+          assert p.returncode!=0 and existing.read_text()=="NO_CLOBBER"
+          print("P7_EXISTING_OUTPUT_NO_CLOBBER=PASS")
           PY
+          echo "P7_PRODUCER_ADMISSION_IS_REQUIRED=PASS"
+      - name: Declare positive numerical science authority separate from frozen-reference smoke
+        shell: bash
+        run: |
+          echo "FROZEN_REFERENCE_MET_DOES_NOT_AUTHENTICATE_NATIVE_P6=EXPECTED"
+          echo "REAL_1_6_143H_NATIVE_P6_P7=SEE_FULL_INTEGRATED_PR_SCIENCE_WORKFLOW"
       - name: Upload bounded scientific audit records, not binary CON or original model data
         if: always()
         uses: actions/upload-artifact@v4
