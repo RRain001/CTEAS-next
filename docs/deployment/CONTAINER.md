@@ -82,8 +82,9 @@ docker run --rm cteas-next:portable
 ```
 
 The **builder** stage runs nine CMake Debug builds without tests. The
-**verification** stage then invokes the selected portable CTests, scoped
-P4/P5/G5 Python unittest directories, and G5 offscreen/fail-closed smoke test.
+**verification** stage runs selected portable CTests using the explicit
+`--tests-only` mode (no CMake configure or rebuild), scoped P4/P5/G5 Python
+unit tests, and G5 offscreen/fail-closed smoke test.
 The **runtime** path skips verification entirely. Logs are retained in the **verification
 build stage**, not in the runtime image. To retrieve them:
 
