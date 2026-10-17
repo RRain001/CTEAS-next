@@ -61,9 +61,41 @@ Source scope: `docs/reconstruction_cpp/P7_PHASE_STATUS_20261015.md`,
 `P1_P7_INTEGRATION_REHEARSAL_20261016.md` and prior P6 audit records.
 Full migrated C1/C2 143h reruns remain **NOT_RUN** here.
 
+### Agent-controlled Actions execution (no automatic main/PR runs)
+
+These two science workflows also accept a narrowly scoped `push` event
+from a **one-off agent science-request branch**. It is a command channel,
+not a production source branch:
+
+- C1: `automation/science/c1/<request-id>`, changes **only**
+  `.github/science-triggers/c1.request`.
+- C2: `automation/science/c2/<request-id>`, changes **only**
+  `.github/science-triggers/c2.request`.
+- The request file contains exactly `SOURCE_SHA=<full-current-main-SHA>`.
+  The one new branch commit must have `main` at its parent, and the job
+  checks that parent is **still** the current `main` tip.
+- A successful request **checks out the parent main SHA** for all P6/P7
+  execution, not the request commit. Logs retain the request commit and
+  true source SHA separately. Any extra changed file, stale parent/main,
+  unmatched request, unsupported event or source mismatch blocks the run.
+- Pushes and merges to `main` and ordinary PRs remain non-triggering.
+  Existing GitHub UI `workflow_dispatch` manual action remains available
+  on `main` if the user prefers.
+- To start a case, the assistant can use its connected GitHub write actions
+  to create a new branch at current `main`, commit **only** its request
+  file, then inspect the new Actions run by SHA. Branch creation alone
+  does not assert a test has run; only a confirmed Actions run and its
+  numerical artifacts can establish scientific acceptance.
+
+This does **not** grant the assistant a generic GitHub workflow dispatch API:
+the supported trigger mechanism is a validated Git push to the dedicated
+request branch, using a separate request branch for each new run. A user with
+repository write access may also create such a request. Do not silently run
+expensive 143-hour jobs outside an explicit request.
+
 ## GitHub Actions manual 143h scientific rerun entrypoints — NOT_RUN
 
-Two new proposed workflows execute on **Ubuntu 22.04 Linux x86-64 hosted
+Two science workflows execute on **Ubuntu 22.04 Linux x86-64 hosted
 runners**, not the user's MacBook or an assumed Ubuntu workstation:
 
 - `.github/workflows/science-c1-143h.yml` — fresh current-head C1 native P6
@@ -83,7 +115,7 @@ runners**, not the user's MacBook or an assumed Ubuntu workstation:
   concentration sensitivity. Synthetic-but-original-format 2024 case is
   *not* field-observed 2024 Hefei meteorology.
 
-Both workflows are `workflow_dispatch` **only**. Their source of truth is the
+Both workflows support manual `workflow_dispatch` and tightly scoped agent-request branch `push` events **only**. Their source of truth is the
 actual triggering CTEAS-next `main` SHA; P6 and P7 must come from that same
 checkout. A second **ephemeral** checkout at the exact old `RRain001/CTEAS`
 source SHA `dfad99a78ed84d655e21411c9d25eb0d2583bf13` restores the

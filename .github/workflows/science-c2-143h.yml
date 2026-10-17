@@ -1,7 +1,13 @@
-name: CTEAS-next SCIENCE C2 2024 143h original-native four-arm (manual)
-# Manual science acceptance only: never triggered by PR, push, or merge.
+name: CTEAS-next SCIENCE C2 143h (manual or agent-request)
+# Runs only on explicit manual dispatch or validated science-request branch push.
+# No main-branch push, PR or merge triggers.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'automation/science/c2/**'
+    paths:
+      - '.github/science-triggers/c2.request'
 permissions:
   contents: read
 concurrency:
@@ -17,6 +23,35 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 2
+      # A controlled push is exactly ONE request file commit on latest main.
+      # Checkout HEAD^ to ensure the source tree is identical to main and the
+      # request commit never becomes part of the scientific source authority.
+      - name: Authenticate science execution request and pin source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" = "push" ]]; then
+            [[ "$GITHUB_REF" == refs/heads/automation/science/c2/* ]]
+            test "$(git diff --name-only HEAD^ HEAD)" = ".github/science-triggers/c2.request"
+            requested="$(sed -n 's/^SOURCE_SHA=//p' .github/science-triggers/c2.request)"
+            test -n "$requested"
+            test "$requested" = "$(git rev-parse HEAD^)"
+            git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+            test "$requested" = "$(git rev-parse refs/remotes/origin/main)"
+            git checkout --detach "$requested"
+            echo "SCIENCE_AGENT_REQUEST=VALIDATED"
+          elif [[ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]]; then
+            test "$GITHUB_REF" = refs/heads/main
+          else
+            echo "::error::Unsupported science trigger event"
+            exit 1
+          fi
+          science_sha="$(git rev-parse HEAD)"
+          echo "SCIENCE_SOURCE_SHA=$science_sha" >> "$GITHUB_ENV"
+          echo "SCIENCE_EXECUTION_HEAD=$science_sha"
+          echo "SCIENCE_TRIGGER_COMMIT=$GITHUB_SHA"
+          echo "SCIENCE_WORKFLOW_CASE=C2"
       - name: Checkout frozen original CTEAS inputs and vendor for ephemeral local use
         uses: actions/checkout@v4
         with:
@@ -33,7 +68,7 @@ jobs:
           python3 scripts/migration/configure_external_assets.py --check
           test -s engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
           test -s engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$SCIENCE_SOURCE_SHA"
           echo "C2_ORIGINAL_SOURCE_RESTORED_EPHEMERALLY=PASS"
       - name: Prepare original and native compiler tools
         shell: bash
@@ -48,8 +83,8 @@ jobs:
         run: |
           set -euo pipefail
           sha="$(git rev-parse HEAD)"
-          test "$sha" = "$GITHUB_SHA"
-          test "$GITHUB_REF" = refs/heads/main
+          test "$sha" = "$SCIENCE_SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SCIENCE_SOURCE_SHA"
           {
             echo "CTEAS_NEXT_SOURCE_SHA=$sha"
             echo "P6_NATIVE_SOURCE_SHA=$sha"
