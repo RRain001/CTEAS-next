@@ -37,6 +37,40 @@ std::string read_text(const std::string& path) {
     return {std::istreambuf_iterator<char>(in),
             std::istreambuf_iterator<char>()};
 }
+// Do not publish a partially written Fortran WROUT1 file on model failure.
+// Link creation is atomic and refuses clobbering any concurrently created
+// destination. Keep the partial file in the same filesystem/directory.
+class OutputPublication {
+public:
+    explicit OutputPublication(const std::string& target)
+        : final_(target),stage_(target+".cteas-partial") {
+        require(!std::filesystem::exists(final_) &&
+                !std::filesystem::exists(stage_),
+                "P7_NATIVE_OUTPUT_OR_PARTIAL_ALREADY_EXISTS");
+    }
+    ~OutputPublication() {
+        if(!published_) {
+            std::error_code error;
+            std::filesystem::remove(stage_,error);
+        }
+    }
+    const std::string& staged_path() const noexcept { return stage_; }
+    void publish() {
+        require(std::filesystem::is_regular_file(stage_) &&
+                std::filesystem::file_size(stage_)>10000U,
+                "P7_NATIVE_PARTIAL_CON_INVALID");
+        require(!std::filesystem::exists(final_),
+                "P7_NATIVE_OUTPUT_CREATED_DURING_EXECUTION");
+        // std::filesystem::rename can replace an existing POSIX file.
+        // Hard-link publication instead is no-clobber and keeps full bytes.
+        std::filesystem::create_hard_link(stage_,final_);
+        published_=true;
+        std::filesystem::remove(stage_);
+    }
+private:
+    std::string final_,stage_;
+    bool published_=false;
+};
 struct Args {
     std::string met,control,makegeo,output;
     std::size_t hours=0;
@@ -79,6 +113,7 @@ Args parse(int argc,char** argv) {
 int main(int argc,char** argv) {
   try {
     const Args a=parse(argc,argv);
+    OutputPublication output(a.output);
     const auto control_text=read_text(a.control);
     const auto deck=ControlFile::read_file(a.control);
     // Scientific scope intentionally frozen: no rain and no other CALPUFF modes.
@@ -215,7 +250,7 @@ int main(int argc,char** argv) {
             // Header is reconstructed from active control and MET; no
             // original CON bytes/records enter this writer.
             writer=create_original_hefei_2022_wrout1_writer(
-                a.output,control_text,a.met,true,false);
+                output.staged_path(),control_text,a.met,true,false);
             written_hours=std::make_unique<HourlyConcSeriesWriter>(
                 *writer,original_total_source_descriptor(
                     header.origin_x_m,header.origin_y_m),50,50);
@@ -253,6 +288,7 @@ int main(int argc,char** argv) {
             integrated_concentration>0.0,
             "P7_NATIVE_INCOMPLETE_HOURS_OR_ALL_ZERO_H3");
     writer->close();
+    output.publish();
     require(std::filesystem::is_regular_file(a.output) &&
             std::filesystem::file_size(a.output)>10000U,
             "P7_NATIVE_WRITER_PUBLISHED_EMPTY_CON");
