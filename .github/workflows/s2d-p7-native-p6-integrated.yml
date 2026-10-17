@@ -1,0 +1,168 @@
+name: S2D P6 native MET to standalone P7 real original same-MET science
+on:
+  push:
+    branches:
+      - codex/s2-2d-p7-native-executor
+    paths:
+      - .github/workflows/s2d-p7-native-p6-integrated.yml
+permissions:
+  contents: read
+concurrency:
+  group: s2d-p7-native-p6-same-met-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  independently-validated-p6-to-p7:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - name: Checkout exact code HEAD
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Restore untouched original CALPUFF source only for independent science comparator
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Validate selected-case inputs, build toolchains and restore original executable source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/p7integration/audit" "$RUNNER_TEMP/p7integration/results"
+          root="$RUNNER_TEMP/p7integration"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          python3 scripts/migration/configure_external_assets.py --source-repo original-cteas
+          python3 scripts/migration/configure_external_assets.py --check
+          test -s engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for
+          echo "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  $case/run/met/met.dat" | sha256sum -c -
+          echo "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10  $case/run/puff/puff.con" | sha256sum -c -
+          echo "cf5cca70cb75b1aac92f86fdc100500e901a8b904d056c73b2330175793532bc  $case/run/puff/puff.inp" | sha256sum -c -
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends g++-12 gfortran-11 cmake libgdal-dev
+          echo "P6_P7_NATIVE_SOURCE_SHA=$(git rev-parse HEAD)" > "$root/audit/source-sha.txt"
+          echo "ORIGINAL_CALPUFF_REF=dfad99a78ed84d655e21411c9d25eb0d2583bf13" >> "$root/audit/source-sha.txt"
+          echo "CANONICAL_UTM_KM=510.885,3531.269" >> "$root/audit/source-sha.txt"
+          echo "P4_P5=FROZEN_VALIDATED_NOT_NEWLY_REGENERATED" >> "$root/audit/source-sha.txt"
+      - name: Compile actual 143h native P6 CALMET chain and standalone P7
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7integration"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/p6d" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/p6d" --parallel 2 --target cteas_p6_realcase_wind_field cteas_p6_native_cgamma_grid_143h cteas_p6_native_hourly_driver
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$root/p6e" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/p6e" --parallel 2 --target p6e_calmet_dat21 p6e_p6c_hourly_bridge
+          cmake -S native_cpp/modules/p6_calmet/p6f -B "$root/p6f" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12 -DP6F_REPO_ROOT="$GITHUB_WORKSPACE"
+          cmake --build "$root/p6f" --parallel 2 --target cteas_p6f_geo_static_provenance cteas_p6f_p6e_source_metadata
+          cmake -S native_cpp/modules/p7_calpuff -B "$root/p7" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/p7" --parallel 2 --target cteas_p7_native_hefei_2022
+      - name: Execute real 143h native P6 without source original MET
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7integration"
+          case="$GITHUB_WORKSPACE/project/cases/hefei5km_2022_reference_case_20261011"
+          frozen="$case/run/met/met.dat"
+          hidden="$root/original-met-hidden.dat"
+          mv "$frozen" "$hidden"
+          restore() { if test -f "$hidden"; then mv "$hidden" "$frozen"; fi; }
+          trap restore EXIT
+          test ! -e "$frozen"
+          "$root/p6d/cteas_p6_native_hourly_driver" \
+            --case "$case" \
+            --p6d "$root/p6d/cteas_p6_realcase_wind_field" \
+            --p6e "$root/p6e/p6e_calmet_dat21" \
+            --bridge "$root/p6e/p6e_p6c_hourly_bridge" \
+            --cgamma "$root/p6d/cteas_p6_native_cgamma_grid_143h" \
+            --work "$root/native-p6" --hours 143 --emit-source-stage-trace \
+            --p6f-writer "$root/p6f/cteas_p6f_geo_static_provenance" \
+            --p6e-source-builder "$root/p6f/cteas_p6f_p6e_source_metadata" \
+            --p6f-direct-hourly > "$root/audit/native-p6-143h.log" 2>&1 || {
+              tail -n 90 "$root/audit/native-p6-143h.log";exit 1;
+            }
+          test ! -e "$frozen"
+          restore
+          trap - EXIT
+          native="$root/native-p6/native_causal_independent_header_calmet.dat"
+          test -s "$native"
+          grep -q '"original_met_role": "NOT_REQUIRED_NOT_OPENED_BY_NATIVE_EXECUTION"' "$root/native-p6/native_cpp_hourly_manifest.json"
+          "$root/p6e/p6e_calmet_dat21" compare \
+            --reference "$frozen" --candidate "$native" \
+            --out "$root/audit/native-P6-vs-frozen-MET-45fields.json"
+          sha256sum "$native" "$frozen" > "$root/audit/native-original-met-sha256.txt"
+          echo "S2D_FRESH_NATIVE_P6_143H_MET=PASS_SCIENCE" >> "$root/audit/source-sha.txt"
+      - name: Independently rerun unmodified original CALPUFF on EXACT new native P6 MET
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7integration"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          python3 native_cpp/modules/p7_calpuff/reference/run_c1_original_calpuff_pair.py \
+            --vendor engine/vendor/src/CALPUFF_v7.2.1_L150618 \
+            --puff-control "$case/run/puff/puff.inp" \
+            --original-met "$case/run/met/met.dat" \
+            --native-met "$root/native-p6/native_causal_independent_header_calmet.dat" \
+            --original-puff-con "$case/run/puff/puff.con" \
+            --p6-helper native_cpp/modules/p6_calmet/p6f/tests/verify_original_calpuff_reads_written_calmet.py \
+            --compiler /usr/bin/gfortran-11 \
+            --out "$root/results" > "$root/audit/original-calpuff-A-C.log" 2>&1 || {
+              tail -n 100 "$root/audit/original-calpuff-A-C.log";exit 1;
+            }
+          test -s "$root/results/C-original-calpuff.con"
+          echo "S2D_SAME_MET_VENDOR_C=PASS" >> "$root/audit/source-sha.txt"
+      - name: Execute standalone native P7 143h with all original CON/DGM absent in compute case
+        timeout-minutes: 65
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7integration"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          mkdir -p "$root/native-p7-input"
+          cp "$case/run/puff/puff.inp" "$root/native-p7-input/puff.inp"
+          cp "$case/geo/makegeo/makegeo.inp" "$root/native-p7-input/makegeo.inp"
+          rm -f "$case/run/puff/puff.con"
+          find native_cpp/modules/p7_calpuff/reference -type f -name '*.bin' -delete
+          test ! -e "$case/run/puff/puff.con"
+          "$root/p7/cteas_p7_native_hefei_2022" \
+            --met "$root/native-p6/native_causal_independent_header_calmet.dat" \
+            --control "$root/native-p7-input/puff.inp" \
+            --makegeo "$root/native-p7-input/makegeo.inp" \
+            --output "$root/results/D-new-native-met-standalone-native-p7.con" \
+            --hours 143 > "$root/audit/native-P7-on-native-P6-143h.log" 2>"$root/audit/native-P7.stderr" || {
+              tail -n 90 "$root/audit/native-P7-on-native-P6-143h.log";cat "$root/audit/native-P7.stderr";exit 1;
+            }
+          grep -q 'P7_NATIVE_NO_ORIGINAL_CON_DGM=PASS HOURS=143 H3_VALUES=357500' "$root/audit/native-P7-on-native-P6-143h.log"
+          test -s "$root/results/D-new-native-met-standalone-native-p7.con"
+          sha256sum "$root/results/"*.con > "$root/audit/C-D-con-sha256.txt"
+      - name: Independent original C vs standalone native P7 D SAME-native-MET 357500 REAL4 scientific gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/p7integration"
+          python3 native_cpp/modules/p7_calpuff/reference/compare_p7_hourly_concentrations.py \
+            --a "$root/results/C-original-calpuff.con" \
+            --b "$root/results/D-new-native-met-standalone-native-p7.con" \
+            --nx 50 --ny 50 --hours 143 --require-bit-exact \
+            --report "$root/audit/native-C-D-same-MET-143h.json"
+          python3 - "$root/audit/native-C-D-same-MET-143h.json" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1]))
+          assert r["hours"]==143 and r["values"]==357500
+          assert r["matching_real4"]==357500 and r["bitwise_identical"]
+          print("S2D_NATIVE_P6_TO_NO_ORACLE_NATIVE_P7_VS_UNMODIFIED_ORIGINAL=PASS_SCOPED")
+          PY
+      - name: Retain derived evidence without original vendor binaries or raw MET CON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s2d-p6-native-to-p7-standalone-same-met-derived-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/p7integration/audit/*.txt
+            ${{ runner.temp }}/p7integration/audit/*.json
+            ${{ runner.temp }}/p7integration/audit/*.log
+            ${{ runner.temp }}/p7integration/audit/*.stderr
