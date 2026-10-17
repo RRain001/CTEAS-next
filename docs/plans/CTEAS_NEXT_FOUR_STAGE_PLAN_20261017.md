@@ -18,7 +18,7 @@
 | 阶段 | 核心交付物 | 依赖 | 截至制订计划时的事实状态 | 关闭标准 |
 | --- | --- | --- | --- | --- |
 | **S1 / Repo Stabilization** | PR #13 路径/冻结数据回归、Ubuntu/CTest、P4/P5 Python、Docker native-only（G5 延后） | PR #12 已合并 | **DONE_SCOPED; PASS_SOFTWARE** | PR #13 实际测试通过并合并；归档 SHA/日志/输出分母 |
-| **S2 / Native P1–P7 Execution** | 可复用的**选定物理范围** P1→P7 单案例原生执行链、清单/错误/恢复接口 | S1 | **2A_STATIC_AUDIT_DONE; IMPLEMENTATION_PENDING** | 在准入配置上，从 `case.yaml` 至浓度产物可运行/可重跑；无需旧版 Fortran 执行回退，独立物理验证 |
+| **S2 / Native P1–P7 Execution** | 可复用的**选定物理范围** P1→P7 单案例原生执行链、清单/错误/恢复接口 | S1 | **2A_CONTRACT_DONE; P1_P2_P3_PASS_SCOPED; P4_P7_PENDING** | 在准入配置上，从 `case.yaml` 至浓度产物可运行/可重跑；无需旧版 Fortran 执行回退，独立物理验证 |
 | **S3 / Verified Fixture Externalization** | 可验证按需恢复的冻结基准、独立许可/数据存储、精简 checkout | S1 且 S2 核心科学依赖明确 | **NOT_STARTED** | SHA/文件长度/原版路径一致，离线/缺数据 fail-closed，CI 测试通过；不损害可复现性 |
 | **S4 / Physics-option Expansion** | 降水数据契约、湿沉降及其他选择分支逐项验证 | S2 的基准执行链 | **NOT_STARTED** | 每一物理选项有输入模板、原版同输入对照、质量守恒及独立审计；选项矩阵逐行更新 |
 
@@ -98,3 +98,9 @@
 4. **S2 成功后：** 实施 S3 的按需恢复（尤其及时解决 G3 原始文件长期保存）；之后逐一开展 S4 物理功能分支。
 
 更新规则：每次对阶段状态的修改必须附带 **PR/commit、实际执行命令、日志或 Actions 链接、通过/未运行/失败数目和下一 blocker**。此计划不授权自动合并未验收的 PR、不授权公开第三方资产、不授权昂贵 143h 科学工作流在每次普通提交时执行。
+
+### 2026-10-17 已完成的 S2-2B 限定进展
+
+[PR #21](https://github.com/RRain001/CTEAS-next/pull/21) 完成只读案例控制合同；[PR #23](https://github.com/RRain001/CTEAS-next/pull/23) 完成原生 P1/P2 原版输入文件格式写盘接口和 P3 CTest；[原版同源实际重跑 #39025117223](https://github.com/RRain001/CTEAS-next/actions/runs/39025117223) 验证真正原生 P1/P2→P3 对照 **P1 2,500/2,500、P2 95,000/95,000、P3 20,000/20,000**；均在已选合肥 100m/WGS84 UTM50N/无雪原始源数据模式下通过。其他历史冻结地形文件的差异单列审计，不改容差、不更改 C1/C2 143h 结论。详见 [S2 入口及同源验收报告](STAGE2_NATIVE_ENTRYPOINT_AUDIT_20261017.md#7-s2-2b-后续实施与同源科学验收2026-10-17)。
+
+**下一实施目标：** S2-2C 将已验证的 P3 `GEO.DAT`、P4 `UP.DAT`、P5 `SURF.DAT` 连接到受控原生 P6 同案例小时执行；再通过 S2-2D 接入选定 P7 原生浓度计算。G5 继续搁置，整个 P1–P7 仍不是通用可用。
