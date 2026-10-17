@@ -112,7 +112,7 @@ class P12ToP3Contract(unittest.TestCase):
                              ("YREFKM", "3531.268926968"),
                              ("XREFKM", "510.886")):
             modified, count = re.subn(
-                rf"(!\\s*{key}\\s*=\\s*)([^!]*)(!)",
+                rf"(!\s*{key}\s*=\s*)([^!]*)(!)",
                 lambda match: match.group(1) + changed + " " + match.group(3),
                 source, count=1,
             )
