@@ -1,2 +1,0 @@
-COMMAND: ["/tmp/cteas-next-gcc-validation/build-inputs/cteas_p2_gen_fraction", "/home/lhy/CTEAS-next/calpuff_terrain_and_landuse_data_crop/hefei_5km/eurasia_asia_landuse/eausgs2_0la_hefei_5km.generic.txt", "510.8846439571007", "3531.2689269678035", "/tmp/cteas-next-p123-reference/p2_cpp_fractions.csv"]
-P2_GEN_INCLUDED=10011 OUTSIDE=47589

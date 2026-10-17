@@ -174,8 +174,8 @@ add_test(NAME p6f_calmet_dat21_real_scale_xmiss
 find_program(P6F_GFORTRAN NAMES gfortran-11 gfortran-12)
 set(P6F_VENDOR_CALPUFF "${P6F_REPO_ROOT}/engine/vendor/src/CALPUFF_v7.2.1_L150618")
 set(P6F_PUFF_INP "${P6F_REPO_ROOT}/project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp")
-set(P6F_REFERENCE_CON "${P6F_REPO_ROOT}/project/cases/hefei5km_2022_reference_case_20261011/deliverables/puff/puff.con")
-set(P6F_REFERENCE_LST "${P6F_REPO_ROOT}/project/cases/hefei5km_2022_reference_case_20261011/deliverables/puff/puff.lst")
+set(P6F_REFERENCE_CON "${P6F_REPO_ROOT}/project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con")
+set(P6F_REFERENCE_LST "${P6F_REPO_ROOT}/project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.lst")
 if(NOT APPLE AND P6F_GFORTRAN AND EXISTS "${P6F_VENDOR_CALPUFF}/modules.for" AND
    EXISTS "${P6F_PUFF_INP}" AND EXISTS "${P6F_REFERENCE_CON}")
   add_test(NAME p6f_calmet_dat21_original_calpuff_reads_written_calmet

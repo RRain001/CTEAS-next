@@ -1,7 +1,0 @@
-COMMAND: ["cmake", "--build", "/tmp/cteas-next-gcc-validation/build-p5", "--parallel", "4"]
-[ 50%] Building CXX object CMakeFiles/cteas_p5_smerge.dir/p5_surf_main.cpp.o
-[ 50%] Building CXX object CMakeFiles/cteas_p5_tests.dir/home/lhy/CTEAS-next/native_cpp/tests/p5_smerge_tests.cpp.o
-[ 75%] Linking CXX executable cteas_p5_tests
-[ 75%] Built target cteas_p5_tests
-[100%] Linking CXX executable cteas_p5_smerge
-[100%] Built target cteas_p5_smerge

@@ -1,9 +1,0 @@
-COMMAND: ["ctest", "--test-dir", "/tmp/cteas-next-clean-validation/build-p5", "--output-on-failure", "--timeout", "180", "--no-tests=error", "-R", "^(p5_generic_utc_input_contracts)$"]
-Internal ctest changing into directory: /tmp/cteas-next-clean-validation/build-p5
-Test project /tmp/cteas-next-clean-validation/build-p5
-    Start 1: p5_generic_utc_input_contracts
-1/1 Test #1: p5_generic_utc_input_contracts ...   Passed    0.01 sec
-
-100% tests passed, 0 tests failed out of 1
-
-Total Test time (real) =   0.01 sec

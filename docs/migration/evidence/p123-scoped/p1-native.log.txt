@@ -1,2 +1,0 @@
-COMMAND: ["/tmp/cteas-next-gcc-validation/build-p1/cteas_p1_terrain", "/home/lhy/CTEAS-next/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/srtm_60_06_hefei_5km.tif", "510.8846439571007", "3531.2689269678035", "/tmp/cteas-next-p123-reference/p1_cpp_terrain.csv"]
-P1_ACCEPTED=3456 OUTSIDE=3474 NODATA=0

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """CTEAS local gate — authoritative verification without GitHub Actions.
 
-GitHub-hosted workflow runs are no longer used for these tracks (Actions is
-disabled repository-wide).  This script replays the same commands the workflow
-files specify, on lhy-desktop, from a pinned git ref, and writes a
-machine-readable evidence file.  The workflow files stay in the repository as
-the *specification* of each gate; each track records its ``source_workflow``,
-and when a workflow changes the matching step list here must change with it.
+This local forensic gate replays a historically scoped command ledger and
+writes machine-readable evidence without claiming GitHub science acceptance.
+The historical per-track Actions workflows have been retired from the active
+tree; the embedded command list is retained as a legacy verification contract.
+Current C1/C2 science Actions are defined separately in .github/workflows/.
 
 Design rules:
   * fail-closed: a non-zero step makes the gate FAIL.
@@ -117,8 +116,8 @@ TRACKS: dict[str, dict] = {
                           "engine/vendor/src/CALPUFF_v7.2.1_L150618/calpuff.for",
                           "project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.inp",
                           MET_DAT,
-                          "project/cases/hefei5km_2022_reference_case_20261011/deliverables/puff/puff.con",
-                          "project/cases/hefei5km_2022_reference_case_20261011/deliverables/puff/puff.lst",
+                          "project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.con",
+                          "project/cases/hefei5km_2022_reference_case_20261011/run/puff/puff.lst",
                           "/usr/bin/gfortran-11"]},
         ],
     },

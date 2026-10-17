@@ -1,9 +1,0 @@
-COMMAND: ["ctest", "--test-dir", "/tmp/cteas-next-gcc-validation/build-p5", "--output-on-failure", "--timeout", "180", "-E", "cteas_p7_hefei_real_(firsthour_h3_receptor|sixhour_comp_precision)_diagnostic"]
-Internal ctest changing into directory: /tmp/cteas-next-gcc-validation/build-p5
-Test project /tmp/cteas-next-gcc-validation/build-p5
-    Start 1: p5_generic_utc_input_contracts
-1/1 Test #1: p5_generic_utc_input_contracts ...   Passed    0.01 sec
-
-100% tests passed, 0 tests failed out of 1
-
-Total Test time (real) =   0.01 sec

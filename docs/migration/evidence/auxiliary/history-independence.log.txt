@@ -1,8 +1,0 @@
-{
-  "status": "PASS",
-  "root_commit": "75865dbcf95f7a1bcb47554798e6debfedb198a5",
-  "bootstrap_commit": "7f1a7468619129683f2ee7494d8451133b621fb0",
-  "old_commit_object_copied": false,
-  "main_unchanged": true,
-  "excluded_assets_tracked": false
-}

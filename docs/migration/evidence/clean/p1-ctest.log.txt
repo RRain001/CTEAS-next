@@ -1,9 +1,0 @@
-COMMAND: ["ctest", "--test-dir", "/tmp/cteas-next-clean-validation/build-p1", "--output-on-failure", "--timeout", "180", "--no-tests=error", "-R", "^(cteas_p1_cellind_scoped)$"]
-Internal ctest changing into directory: /tmp/cteas-next-clean-validation/build-p1
-Test project /tmp/cteas-next-clean-validation/build-p1
-    Start 1: cteas_p1_cellind_scoped
-1/1 Test #1: cteas_p1_cellind_scoped ..........   Passed    0.17 sec
-
-100% tests passed, 0 tests failed out of 1
-
-Total Test time (real) =   0.18 sec

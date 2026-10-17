@@ -1,7 +1,0 @@
-COMMAND: ["cmake", "--build", "/tmp/cteas-next-clean-validation/build-p4", "--parallel", "8"]
-[ 25%] Building CXX object CMakeFiles/cteas_p4_tests.dir/tmp/cteas-next-clean/native_cpp/tests/p4_read62_tests.cpp.o
-[ 50%] Building CXX object CMakeFiles/cteas_p4_read62.dir/p4_read62_main.cpp.o
-[ 75%] Linking CXX executable cteas_p4_tests
-[100%] Linking CXX executable cteas_p4_read62
-[100%] Built target cteas_p4_tests
-[100%] Built target cteas_p4_read62
