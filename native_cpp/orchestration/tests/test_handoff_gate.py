@@ -48,7 +48,7 @@ class HandoffGateTests(unittest.TestCase):
         self.seed()
         result = preflight(self.root, self.manifest, "p6")
         self.assertEqual(result["status"], "INPUT_INTEGRITY_VERIFIED_ONLY")
-        self.assertEqual(len(result["verified_artifacts"]), 4)
+        self.assertEqual(len(result["verified_artifacts"]), 6)
         self.assertFalse(result["model_executed"])
         self.assertFalse(result["ready_to_execute"])
         self.assertEqual(result["scientific_acceptance"], "NOT_EVALUATED")
@@ -57,6 +57,19 @@ class HandoffGateTests(unittest.TestCase):
         self.seed("p7")
         self.assertEqual(len(preflight(self.root, self.manifest, "p7")["verified_artifacts"]), 2)
         with self.assertRaises(ContractError):
+            preflight(self.root, self.manifest, "p6")
+
+    def test_absent_station_metadata_refused(self) -> None:
+        doc = self.seed()
+        path = self.root / doc["artifacts"]["p5_station_metadata"]["path"]
+        path.unlink()
+        with self.assertRaisesRegex(ContractError, "absent"):
+            preflight(self.root, self.manifest, "p6")
+        self.seed()
+        doc = json.loads(self.manifest.read_text(encoding="utf-8"))
+        path = self.root / doc["artifacts"]["p4_station_metadata"]["path"]
+        path.write_bytes(b"wrong station")
+        with self.assertRaisesRegex(ContractError, "bytes/hash mismatch"):
             preflight(self.root, self.manifest, "p6")
 
     def test_corrupted_scientific_input_refused(self) -> None:
