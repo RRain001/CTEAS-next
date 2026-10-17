@@ -1451,6 +1451,23 @@ if(EXISTS "${P7G_LOCKED_CASE_MET}" AND EXISTS "${P7_HEFEI_POINT_INP}"
       "${P7G_LOCKED_CASE_MET}" "${P7_HEFEI_POINT_INP}" "${P7_HEFEI_REFERENCE_CON}")
 endif()
 
+# S2-2D: genuine standalone Hefei 2022 no-oracle P7 emitter.
+# Reuse the identical production physics libraries linked to the validated
+# frozen-C1 143h test-driver; the executable source does not accept or open
+# original `puff.con`/DGM. Scientific parity remains an INDEPENDENT test.
+add_executable(cteas_p7_native_hefei_2022 src/native_hefei_2022_main.cpp)
+target_link_libraries(cteas_p7_native_hefei_2022 PRIVATE
+  cteas_p7_original_comp_rise_hourly cteas_p7_original_point_prfin
+  cteas_p7_calmet21 cteas_p7_control
+  cteas_p7_original_native_terrain cteas_p7_original_flat_calcpf
+  cteas_p7_receptors cteas_p7_dry_deposition)
+if(MSVC)
+  target_compile_options(cteas_p7_native_hefei_2022 PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p7_native_hefei_2022 PRIVATE
+    -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 # Production native COMP post-rise calm IDOPT=1 opt-in,
 # original TURBSET minima, transaction and unsupported branch rollback.
 add_executable(cteas_p7_original_comp_calm_integrated_tests
