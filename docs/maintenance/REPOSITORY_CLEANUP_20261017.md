@@ -28,3 +28,11 @@ The `docs/migration/SOURCE_MANIFEST.json` was intentionally NOT rewritten: it do
 No current hardware execution was performed by this GitHub API-only cleanup. There is **no CI status to inherit** from C1/C2 runs at older commits, and 143h science would require explicitly re-triggered runs if physics or live test inputs were changed. The cleanup does not alter physics, G5 dispatch, four current workflows or frozen case data. Future manual Ubuntu software regression and Docker checks remain recommended before production deployment.
 
 Large `project/cases/**` (roughly 441 MiB of raw tracked file sizes) and `native_cpp/**/reference/` remain deliberately in place because reproducibility and active current scientific verification depend on them. De-duplication or externalization of these assets should only occur in a separately audited fixture/storage migration.
+
+## Second-pass results and documentation pruning
+
+Second pass baseline: `e06db8ff5f448a1dd2186935ca0fa671a1e4f9e8`. Proposed deletion of **284** more tracked paths (case files 34, documents 248, unused scripts 2), representing **147.60 MiB** of raw tracked working-tree payload. All eight `deliverables/` copy files and old run/log outputs were removed, while the 2022 frozen MET.DAT, puff.con/puff.lst, 2023 MET.DAT and input control decks remain because current P6F/P7 CMake or C1/C2 science compare them. Frozen P6F/local-gate comparison paths now point to those retained single copies under `run/`.
+
+Deleted historical migration evidence, low-level P6/P7 development journals, stale legacy path/installer notes and two nonessential environment diagnostic scripts. The current science report, physics option matrix, vendor hash-check manifest, current Actions and two GUI implementations remain. The deleted documentation and outputs can be recovered from the pinned pre-cleanup commit above.
+
+**No claim of executed tests on this new branch.** Static changed-file and required-path review is not a substitute for portable Ubuntu/Docker or full 143h scientific reruns. The previously accepted C1/C2 verdict remains tied to its original source SHAs; the cleanup itself must be assessed separately.

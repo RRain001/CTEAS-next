@@ -1,4 +1,0 @@
-COMMAND: ["cmake", "--build", "/tmp/cteas-next-gcc-validation/build-p3", "--parallel", "4"]
-[ 50%] Building CXX object CMakeFiles/cteas_p3_makegeo.dir/home/lhy/CTEAS-next/native_cpp/src/p3_makegeo_cli.cpp.o
-[100%] Linking CXX executable cteas_p3_makegeo
-[100%] Built target cteas_p3_makegeo
