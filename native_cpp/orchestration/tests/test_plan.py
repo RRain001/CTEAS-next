@@ -75,6 +75,24 @@ class NativeCasePlanTests(unittest.TestCase):
                 with self.assertRaisesRegex(ContractError, "frozen Hefei"):
                     plan_case(self.put(case))
 
+    def test_reject_unsupported_original_control_switch(self):
+        case = copy.deepcopy(self.frozen)
+        case["met"]["options"]["iwfcod"] = 99
+        with self.assertRaisesRegex(ContractError, "frozen Hefei"):
+            plan_case(self.put(case))
+
+    def test_reject_undeclared_original_control_key(self):
+        case = copy.deepcopy(self.frozen)
+        case["puff"]["options"]["unsupported_deposition"] = 1
+        with self.assertRaisesRegex(ContractError, "changed control set"):
+            plan_case(self.put(case))
+
+    def test_reject_boolean_as_integer_control(self):
+        case = copy.deepcopy(self.frozen)
+        case["puff"]["options"]["iwet"] = False
+        with self.assertRaises(ContractError):
+            plan_case(self.put(case))
+
     def test_reject_time_window_change(self):
         case = copy.deepcopy(self.frozen)
         case["preprocess"]["research_time"]["end"] = "20220107-000000"
