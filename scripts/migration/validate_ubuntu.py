@@ -55,6 +55,7 @@ def main():
     ap.add_argument('--jobs', type=int, default=2)
     ap.add_argument('--test-timeout', type=int, default=600, help='Per-test execution seconds, independent of numerical tolerances')
     ap.add_argument('--portable', action='store_true', help='Explicit software subset that needs no external vendor/terrain assets')
+    ap.add_argument('--build-only', action='store_true', help='Build all selected standalone CMake targets; intentionally DO NOT run CTest')
     args = ap.parse_args()
     root, out = args.root.resolve(), args.out.resolve()
     if out == root or root in out.parents:
@@ -98,6 +99,12 @@ def main():
             continue
         rc = run(name + '-build', ['cmake', '--build', str(build), '--parallel', str(args.jobs)])
         if rc:
+            continue
+        if args.build_only:
+            (out / (name + '-selection.json')).write_text(json.dumps(
+                [dict(name=t, status='NOT_RUN', reason='Build-only deployment stage; verification is a separate CI target')
+                 for t in PORTABLE[name]], indent=2) + '\n')
+            print(name + ': BUILD_ONLY (CTest NOT_RUN)', flush=True)
             continue
         catalog = subprocess.check_output(['ctest', '--test-dir', str(build), '--show-only=json-v1'], env=env)
         (out / (name + '-tests.json')).write_bytes(catalog)

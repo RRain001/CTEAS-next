@@ -8,6 +8,68 @@ runtime architecture and 11 executable entrypoints, verified non-root startup,
 and uploaded software regression evidence. This packaging change does not re-certify the
 original 143-hour scientific workflows and does not add any physical formulas.
 
+## Choose a build path
+
+Both targets share the **same `builder` stage**, which configures and compiles
+all nine CMake projects. Their difference is which subsequent stages execute.
+The runtime image is **not** an uncompiled or magically reused binary: a local
+`docker build` still compiles once on a new host unless the shared Docker build
+cache already contains the relevant builder layer.
+
+**Development / CI verification** (build once, then run selected portable
+CTest, P4/P5/G5 Python tests and headless G5 check):
+
+```sh
+docker build --file docker/cpp/Dockerfile --target verification \\
+  --tag cteas-next:verification .
+```
+
+**Routine local deployment** (build the same C++ projects once, **skip CTest,
+Python unit tests and G5 GUI tests**, then package the same 11 C++ tools):
+
+```sh
+docker build --file docker/cpp/Dockerfile --target runtime \\
+  --tag cteas-next:portable .
+docker run --rm cteas-next:portable
+```
+
+When both targets are built from the same checkout on the same host, Docker
+normally reuses the builder layer; the second build does not recompile unchanged
+C++ sources. On a brand-new server, direct `docker build --target runtime`
+**does compile C++**, although it installs no test-only PySide6 or GUI packages.
+The builder records portable CTest selections as `NOT_RUN` in build-only mode;
+no test outcome is claimed from a deployment-only build.
+
+### Deploy an exact image already verified in GitHub Actions without compiling
+
+If you want **zero C++ compilation on a target server**, use the optional
+GitHub Actions image-export flow (no GHCR required):
+
+1. On GitHub, go to **Actions → Linux multi-architecture C++ portable container
+   → Run workflow**, choose `main`, and set **export_images = true**.
+2. Only after that workflow's AMD64 and ARM64 jobs pass, download the
+   `cteas-next-validated-amd64-<SHA>` or
+   `cteas-next-validated-arm64-<SHA>` artifact matching the server CPU.
+3. Extract GitHub's artifact ZIP, then in the resulting directory verify the
+   archive digest and load the exact tested image:
+
+```sh
+sha256sum -c cteas-next-amd64.tar.gz.sha256
+docker load -i cteas-next-amd64.tar.gz
+docker run --rm cteas-next:portable-amd64
+```
+
+Use `arm64` filenames/tags on ARM64 hosts. The artifact records the original
+Git revision and local image ID in `manifest.txt`. This workflow saves
+`docker save` archives **only in a manually dispatched `main` run**;
+no image archive is uploaded on untrusted PRs or ordinary pushes. GitHub
+artifacts have **seven-day retention** in this workflow, can consume Actions
+storage, and are not a persistent registry. Keep the ZIP in authorized private
+storage if long-term offline redeployment is required. Download and transfer
+the verified archive through your approved channels; merely copying a
+Dockerfile and building elsewhere creates a **new** image, not the exact
+validated image bytes. A changed source revision requires rerunning CI.
+
 ## Build and inspect locally
 
 Prerequisites: Docker with BuildKit and network access to base images and
@@ -19,9 +81,10 @@ docker build --file docker/cpp/Dockerfile --target runtime \
 docker run --rm cteas-next:portable
 ```
 
-The first stage runs the existing nine standalone CMake Debug builds and
-explicit portable CTests, the scoped P4/P5/G5 Python unittest directories,
-and G5 offscreen/fail-closed smoke test. Logs are retained in the **verification
+The **builder** stage runs nine CMake Debug builds without tests. The
+**verification** stage then invokes the selected portable CTests, scoped
+P4/P5/G5 Python unittest directories, and G5 offscreen/fail-closed smoke test.
+The **runtime** path skips verification entirely. Logs are retained in the **verification
 build stage**, not in the runtime image. To retrieve them:
 
 ```sh
@@ -76,13 +139,14 @@ numeric failure was established. The corrected build must pass CI separately.
   Desktop, but this does **not** prove native macOS C++ compilation.
 - `.github/workflows/docker-portable.yml` uses native hosted Linux AMD64 and
   ARM64 runners to build and validate separate architecture images, including
-  explicit non-root smoke tests. It does **not** automatically publish an
-  unvalidated public container registry artifact.
+  explicit non-root smoke tests. Normal builds do **not** publish an image.
+  Only an optional manual dispatch on `main` exports validated archives as
+  ephemeral GitHub Actions artifacts. No GHCR package is published.
 - After both matrix legs are green, a separately reviewed publishing change can
   pin the base image digest, publish a multiarch GHCR manifest from verified
   immutable tags and add version/SBOM metadata. `docker buildx build --platform
   linux/amd64,linux/arm64` is possible but must not bypass these gates.
-- The final image holds tested **Debug** binaries. A production optimized
+- The final image holds **Debug** binaries from the shared builder stage, tested when its verification path passes. A production optimized
   Release variant must get its own compilation and numerical-regression gates.
 
 ## External assets and privacy boundaries

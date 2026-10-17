@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      export_images:
+        description: 'Export already-verified Docker image tarballs as short-lived GitHub artifacts (run on main only)'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -31,6 +37,8 @@ jobs:
           uname -a
           docker version
           docker info --format '{{.Architecture}}'
+      # Both CI targets use the same immutable source revision and common builder
+      # layer. Verification must succeed before a runtime image is exported.
       - name: Build and execute software verification inside Docker
         run: |
           docker build --progress=plain \
@@ -40,6 +48,7 @@ jobs:
         run: |
           docker build --progress=plain \
             --file docker/cpp/Dockerfile --target runtime \
+            --build-arg SOURCE_REVISION="${{ github.sha }}" \
             --tag "cteas-next:portable-${{ matrix.arch }}" .
       - name: Validate image architecture, executable inventory, and unprivileged execution
         env:
@@ -64,6 +73,34 @@ jobs:
             test ! -e /src && test ! -e /engine/vendor
             test -d /cases && test -d /results
           '
+      # No registry needed: an optional manual run on main saves the exact image
+      # validated in the preceding steps. Normal PR/push CI never uploads it.
+      - name: Export verified runtime image (manual main only)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.export_images == true }}
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          dest="${{ runner.temp }}/verified-image"
+          mkdir -p "$dest"
+          image="cteas-next:portable-$EXPECTED_ARCH"
+          docker save "$image" | gzip -1 > "$dest/cteas-next-$EXPECTED_ARCH.tar.gz"
+          (cd "$dest" && sha256sum "cteas-next-$EXPECTED_ARCH.tar.gz" > "cteas-next-$EXPECTED_ARCH.tar.gz.sha256")
+          {
+            echo "source_revision=${{ github.sha }}"
+            echo "architecture=$EXPECTED_ARCH"
+            echo "image=$image"
+            docker image inspect --format 'image_id={{.Id}}' "$image"
+          } > "$dest/manifest.txt"
+      - name: Upload verified runtime image (manual main only)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.export_images == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cteas-next-validated-${{ matrix.arch }}-${{ github.sha }}
+          path: ${{ runner.temp }}/verified-image/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
       - name: Collect portable regression logs from verification image
         if: always()
         run: |
