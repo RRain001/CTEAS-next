@@ -28,7 +28,7 @@ EXCLUDE = 'cteas_p7_hefei_real_(firsthour_h3_receptor|sixhour_comp_precision)_di
 
 PORTABLE = {
     'inputs': ['cteas_p1_input_contracts', 'cteas_p2_input_contracts', 'cteas_p2_gen_fraction_contract'],
-    'p1': ['cteas_p1_cellind_scoped'], 'p3': [],
+    'p1': ['cteas_p1_cellind_scoped'], 'p3': ['cteas_p12_p3_scoped_file_contract'],
     'p4': ['p4_fsl_input_contracts'], 'p5': ['p5_generic_utc_input_contracts'],
     'p6': ['p6a_calmet_scoped_contracts', 'p6c_terrain_envelope_software',
            'p6d_froude_adjust_software', 'p6c_station_geometry_software',
