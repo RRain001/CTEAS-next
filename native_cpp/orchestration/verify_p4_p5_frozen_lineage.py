@@ -101,12 +101,17 @@ def run(case: Path, p4: Path, p5: Path, work: Path, source_head: str) -> dict[st
             "BEGIN:20220101-000000\nEND:20220106-230000"):
         raise ValueError("not frozen six-day research time")
     control = checked_file(case, SURF_CONTROL).read_text(encoding="utf-8")
-    if not all(fragment in control for fragment in (
-        "! NFF = 1 !", "! SURFDAT = surf.dat !",
-        "! JDAT = 8 !", "! IOFORM = 2 !",
-        "!SFCMET = ../../met/surface/isd2smerge_ready/583210-99999.csv !",
-    )):
-        raise ValueError("P5 selected control changed; no implicit option fallback")
+    required_control = {
+        "NFF": "1", "SURFDAT": "surf.dat", "JDAT": "8",
+        "IOFORM": "2", "IOPACK": "0", "LPREV": "F",
+        "SFCMET": "../../met/surface/isd2smerge_ready/583210-99999.csv",
+        "IFSTN": "583210", "ASTZ": "UTC+0000",
+    }
+    for key, wanted in required_control.items():
+        found = re.findall(r"!\\s*" + key + r"\\s*=\\s*([^!]+)!", control,
+                           flags=re.IGNORECASE)
+        if len(found) != 1 or found[0].strip() != wanted:
+            raise ValueError(f"P5 unsupported control {key} ({found}); no option fallback")
     work.mkdir()
     (work / "audit").mkdir()
     # P4 original FSL for full year, not the postprocessed CALMET UP.DAT.
