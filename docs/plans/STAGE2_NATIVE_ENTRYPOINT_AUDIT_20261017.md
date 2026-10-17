@@ -2,7 +2,7 @@
 
 **类型：** 只读源码审计 / 生产接口设计。**并未运行新案例，也未更改任何物理程序。**
 **依据：** `main@1b0abf54960b032691f7c836fb641bb53ffefbd6`，主路线 [四阶段计划](CTEAS_NEXT_FOUR_STAGE_PLAN_20261017.md)，跟踪 [Issue #16](https://github.com/RRain001/CTEAS-next/issues/16)。
-**阶段门槛：** S1 PR #13 的 Ubuntu/Python/G5/Docker 回归尚未通过，2A 只允许设计和只读审计；不得修改/解除 `engine/gui_g5/pipeline.py` 的 fail-closed 限制。
+**阶段门槛（2026-10-17 最新）：** S1 已按所有者授权的缩减范围通过 Ubuntu 9-suite、P4/P5 58/58 与 Docker AMD64 验证（[Actions #39021059327](https://github.com/RRain001/CTEAS-next/actions/runs/39021059327)）；**G5=DEFERRED/NOT_RUN**，且完整物理执行链仍未通过。不能未经真实集成科学验收就修改/解除 `engine/gui_g5/pipeline.py` 的 fail-closed 限制。
 
 ## 1. 已存在的入口与真实产品性质
 
@@ -81,5 +81,5 @@ RunManifest:
 ## 6. 本次结论
 
 `S2_2A_ENTRYPOINT_AUDIT=COMPLETE_STATIC`；`S2_NATIVE_P1_P7_GENERAL_PIPELINE=BLOCKED`；
-`S1_PR13_SOFTWARE_REGRESSION=NOT_RUN`；`C1=C2=PASS_SCOPED`（仅原独立 143h 验收提交）。
+`S1_PR13_SOFTWARE_REGRESSION=PASS_WITH_G5_DEFERRED`；`C1=C2=PASS_SCOPED`（仅原独立 143h 验收提交）。
 没有新的科学计算、生产运行或普适物理选项验收。

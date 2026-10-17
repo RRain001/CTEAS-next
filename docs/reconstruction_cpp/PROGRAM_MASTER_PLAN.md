@@ -16,8 +16,8 @@
 
 | 次序 | 阶段 | 当前重点及关闭门槛 |
 |---|---|---|
-| S1 | 收口整理与软件回归 | PR #13 冻结文件/引用路径，Ubuntu portable CMake/CTest、Python/G5 和 Docker AMD64，同头证据齐备后合并；当前 **REGRESSION_NOT_RUN**。 |
-| S2 | 选定范围 P1–P7 原生链 | 先完成接口审计/manifest/dry-run，再集成 P1–P5、P6、P7；对已验收配置真正端到端通过后再解除相应 G5 fail-closed。 |
+| S1 | 收口整理与软件回归 | PR #13 已合并（`main@8aaae018ddad`）；[Actions #39021059327](https://github.com/RRain001/CTEAS-next/actions/runs/39021059327) 9 组 Ubuntu C++ / P4-P5 58/58 / Docker AMD64 成功；**G5 获准延后未运行**；`PASS_WITH_G5_DEFERRED`。 |
+| S2 | 选定范围 P1–P7 原生链 | [入口审计](../plans/STAGE2_NATIVE_ENTRYPOINT_AUDIT_20261017.md) 已通过静态审查；下一步 schema/manifest/dry-run + P1/P2→P3 写盘，再集成 P4/P5、P6、P7。端到端未验收，G5 仍 fail-closed。 |
 | S3 | 冻结基准按需恢复 | 建立文件级 SHA/来源/许可清单与严格恢复器，并成功证明原始输入和关键科学输出能长期读取；此后才删除余下的大文件。 |
 | S4 | 扩展物理选项 | 降水/湿沉降为先，再地形/抬升/扩散等逐选项完成原版同输入与独立验证；未验证分支始终拒绝。 |
 
