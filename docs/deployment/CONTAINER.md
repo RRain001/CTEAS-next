@@ -20,7 +20,7 @@ cache already contains the relevant builder layer.
 CTest, P4/P5/G5 Python tests and headless G5 check):
 
 ```sh
-docker build --file docker/cpp/Dockerfile --target verification \\
+docker build --file docker/cpp/Dockerfile --target verification \
   --tag cteas-next:verification .
 ```
 
@@ -28,7 +28,7 @@ docker build --file docker/cpp/Dockerfile --target verification \\
 Python unit tests and G5 GUI tests**, then package the same 11 C++ tools):
 
 ```sh
-docker build --file docker/cpp/Dockerfile --target runtime \\
+docker build --file docker/cpp/Dockerfile --target runtime \
   --tag cteas-next:portable .
 docker run --rm cteas-next:portable
 ```
