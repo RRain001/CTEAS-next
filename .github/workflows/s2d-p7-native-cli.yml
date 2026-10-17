@@ -112,7 +112,9 @@ jobs:
                       raise ValueError("bad Fortran record end marker")
                   frames.append(raw[i+4:i+4+n])
                   i+=n+8
-              assert len(frames)==6+3*hours,(hours,len(frames))
+              # 3218 embedded WROUT1 comment records + 8 framing/control
+              # records precede the 3 hourly records; total 3226+3*h.
+              assert len(frames)==3226+3*hours,(hours,len(frames))
               fields=[v for v in frames if len(v)==15+4*2500 and v[:3]==b'H-3']
               assert len(fields)==hours,(hours,len(fields))
               total_positive=0
