@@ -7,6 +7,7 @@ on:
       - '.github/workflows/issue54-original-terrel-manual.yml'
       - 'scripts/s2g/p1_original_actions_replay.py'
       - 'scripts/s2g/tests/test_p1_original_actions_replay.py'
+      - 'scripts/s2g/tests/test_p1_original_legacy_tiff.py'
   workflow_dispatch:
     inputs:
       route:
@@ -35,10 +36,12 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
           lfs: false
-      - name: Check structural integrity only; do not fetch proprietary original
+      - name: Install raster metadata dependencies for synthetic Int16 TIFF only
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+      - name: Check structural integrity and lossless TIFF bytes; no proprietary original
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_p1_original_actions_replay
+          python3 -m unittest -v scripts.s2g.tests.test_p1_original_actions_replay scripts.s2g.tests.test_p1_original_legacy_tiff
           python3 -m py_compile scripts/s2g/p1_original_actions_replay.py
           echo 'ORIGINAL_TERREL_CONTRACT_SOFTWARE=PASS_REAL_ORIGINAL_NOT_RUN'
 
