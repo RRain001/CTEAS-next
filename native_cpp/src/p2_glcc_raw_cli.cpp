@@ -31,7 +31,7 @@ std::string sha256(const fs::path& path){
 }
 }
 int main(int argc,char** argv){
-  if(argc!=10){std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH\n";return 2;}
+  if(argc!=10 && !(argc==11 && std::string(argv[10])=="--qa-submesh")){std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--qa-submesh]\n";return 2;}
   try {
     using namespace cteas::reconstruction::geo;
     const fs::path source=argv[1],dest=argv[2];
@@ -47,7 +47,8 @@ int main(int argc,char** argv){
     const double d=real(argv[6])*1000.;
     const int nx=integer(argv[7]),ny=integer(argv[8]),mesh=integer(argv[9]);
     require(nx>0&&ny>0,"P2_GLCC_GRID_POSITIVE_DIMENSIONS");
-    const auto r=compute_glcc_gen_replay(source.string(),{x,y,d,std::size_t(nx),std::size_t(ny)},epsg,mesh);
+    const bool diag=argc==11;
+    const auto r=compute_glcc_gen_replay(source.string(),{x,y,d,std::size_t(nx),std::size_t(ny)},epsg,mesh,diag);
     fs::create_directory(dest);
     try {
       std::ofstream f(dest/"p2_glcc_usgs92_gen_replay.csv");
@@ -83,12 +84,29 @@ int main(int argc,char** argv){
       hits.close();
       require(bool(hits),"P2_GLCC_HITS_CSV_CLOSE_FAILED");
       const auto hits_sha=sha256(dest/"p2_glcc_usgs92_hits.csv");
+      std::string diag_sha;
+      if(diag) {
+        std::ofstream trace(dest/"p2_glcc_submesh_diagnostic.csv");
+        require(bool(trace),"P2_GLCC_DIAGNOSTIC_OPEN_FAILED");
+        trace<<"source_i,source_j,mesh_i,mesh_j,usgs_category,x_km,y_km,assigned_i,assigned_j\n";
+        trace<<std::setprecision(9);
+        for(const auto& p:r.diagnostic_mesh)
+          trace<<p.source_i<<","<<p.source_j<<","<<p.mesh_i<<","<<p.mesh_j<<","
+               <<p.category<<","<<p.x_km<<","<<p.y_km<<","
+               <<p.assigned_i<<","<<p.assigned_j<<"\n";
+        require(bool(trace),"P2_GLCC_DIAGNOSTIC_WRITE_FAILED");
+        trace.close();
+        require(bool(trace),"P2_GLCC_DIAGNOSTIC_CLOSE_FAILED");
+        diag_sha=sha256(dest/"p2_glcc_submesh_diagnostic.csv");
+      }
+
       std::ofstream meta(dest/"p2_manifest.json");
       require(bool(meta),"P2_GLCC_MANIFEST_OPEN_FAILURE");
       meta<<"{\n  \"producer\": \"cteas_p2_glcc_raw\",\n"
           <<"  \"source_product\": \"USGS_GLCC_EURASIA_1992_1993_ORIGINAL_1KM\",\n"
           <<"  \"source_sha256\": \""<<observed<<"\",\n"
-          <<"  \"fractions_csv_sha256\": \""<<csv_sha<<"\",\n"          <<"  \"hits_csv_sha256\": \""<<hits_sha<<"\",\n"
+          <<"  \"fractions_csv_sha256\": \""<<csv_sha<<"\",\n"          <<"  \"hits_csv_sha256\": \""<<hits_sha<<"\",\n"          <<(diag?"  \"diagnostic_submesh_csv_sha256\": \""+diag_sha+"\",\n":"")
+
           <<"  \"source_size_bytes\": 156000000,\n"
           <<"  \"utm_epsg\": "<<epsg<<", \"nx\": "<<nx<<", \"ny\": "<<ny<<",\n"
           <<"  \"xrefkm\": \""<<argv[4]<<"\", \"yrefkm\": \""<<argv[5]<<"\",\n"
