@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
-import hashlib
 import math
 import shlex
-import shutil
 import subprocess
 
 from scripts.s2g.p1_original_actions_replay import _invoke
@@ -38,6 +36,8 @@ CPP_TRACE_POINT = (
 def diagnostic_cpp_copy(original:Path, dest:Path)->None:
     if dest.exists() or dest.is_symlink():
         raise DirectNativeProbeError("native diagnostic must use a fresh scratch file")
+    if not original.is_file() or original.is_symlink():
+        raise DirectNativeProbeError("native production source absent or symlinked")
     source=original.read_text(encoding="utf-8")
     if source.count(CPP_ANCHOR)!=1 or source.count(CPP_SUM_ANCHOR)!=1:
         raise DirectNativeProbeError("native production projection anchor changed")
@@ -134,7 +134,7 @@ def compare_direct_traces(*, original_trace:Path, native_trace:Path,
         ni,nj,nx,ny,lon,lat,prex,prey=native[key]
         # Cross-check that the captured C++ REAL*4 projection values
         # correspond to recorded pre-staging double UTM coordinates.
-        if nx!=float(nx) or not all(math.isfinite(v) for v in (lon,lat,prex,prey)):
+        if not all(math.isfinite(v) for v in (nx,ny,lon,lat,prex,prey)):
             raise DirectNativeProbeError("invalid C++ forensic coordinate lineage")
         inside_old=1<=oi<=grid["nx"] and 1<=oj<=grid["ny"]
         inside_native=1<=ni<=grid["nx"] and 1<=nj<=grid["ny"]
