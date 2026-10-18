@@ -115,6 +115,7 @@ def main() -> int:
         ap.error("partial year range cannot be published as final")
     if args.execute and not args.cpp_bin.is_file():
         ap.error(f"C++ binary missing: {args.cpp_bin}")
+    binary_initial_sha = sha256_file(args.cpp_bin) if isolated and args.execute else None
     records=[]
     for year in years:
         if not args.skip_inputs:
@@ -151,8 +152,16 @@ def main() -> int:
             if not (source == archive or archive in source.parents):
                 raise ValueError("selected NOAA source escaped explicit offline archive")
             job["raw_igra_sha256"]=sha256_file(source)
+            year=int(Path(job["output_updat"]).parent.parent.name)
+            retained=lineage["source_and_cleaning_evidence"][year][job["station_id"]]
+            if job["raw_igra_sha256"] != retained["source_sha256"]:
+                raise ValueError("original NOAA changed during native READ62 execution")
             job["fsl_sha256"]=sha256_file(Path(job["input_fsl"]))
+            if job["fsl_sha256"] != retained["fsl_sha256"]:
+                raise ValueError("native READ62 FSL input changed after source admission")
             job["annual_raw_up_sha256"]=sha256_file(Path(job["output_updat"]))
+        if sha256_file(args.cpp_bin) != binary_initial_sha:
+            raise ValueError("native READ62 executable mutated during execution")
         for relative, expected in admission.items():
             if relative in ("case_root","upperair_root"):
                 continue
