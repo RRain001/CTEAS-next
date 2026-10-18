@@ -307,6 +307,24 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
     _,fortran_hits=fortran_sav(sav,shape["nx"],shape["ny"])
     cpp_hits,_=read_native_csv(native_csv,shape["nx"],shape["ny"])
     localization=localize_hit_differences(list(fortran_hits),cpp_hits,shape["nx"],shape["ny"])
+    # Only on a real original-vs-native numeric FAIL: compile an ephemeral
+    # forensic-only copy of the original TERREL source with bounded LOADTIFF
+    # coordinate probes. The authoritative original executable, inputs,
+    # DAT/SAV and native C++ kernel remain UNMODIFIED. Never claim scientific
+    # pass from a forensic trace or GDAL/PROJ Python approximation.
+    coordinate_probe={"status":"NOT_RUN_NUMERIC_PASS"}
+    if compared["numeric_parity"]!="NUMERIC_PASS_PROVISIONAL":
+        try:
+            from scripts.s2g.p1_original_coord_probe import execute_original_diagnostic
+            coordinate_probe=execute_original_diagnostic(
+                checkout=checkout,vendor=original_vendor,selected=selected,
+                grid=native["grid"],workspace=workspace)
+        except (OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
+            coordinate_probe={
+                "status":"BLOCKED_FORENSIC_DIAGNOSTIC",
+                "reason_type":type(exc).__name__,
+                "science_acceptance":"NOT_ACCEPTED"
+            }
     # THIS is a numeric comparison; independent review of original
     # execution and physical input source remains a distinct D4 audit.
     return {
@@ -322,6 +340,7 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
       "original_binary_sha256":sha(binary),
       "original_run_stdout_sha256":run["stdout_sha256"],
       "original_run_stderr_sha256":run["stderr_sha256"],
+      "coordinate_diagnostic_only":coordinate_probe,
       "matched_grid_rows":compared["cells"],
       "original_hits_total":compared["original_hits_total"],
       "native_hits_total":compared["native_hits_total"],
