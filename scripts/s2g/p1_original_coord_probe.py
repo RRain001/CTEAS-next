@@ -85,6 +85,7 @@ def diagnose_trace(*,trace:Path,selected_tif:Path,grid:dict,
     proj=Transformer.from_crs("EPSG:4326",f"EPSG:{epsg}",always_xy=True)
     raw_factor=float(np.float32(0.001))
     total=coordinate_disagreements=cell_disagreements=0
+    original_in=proxy_in=both_in=both_out=original_only=proxy_only=0
     all_offsets_x=[];all_offsets_y=[]
     grid_shift=Counter()
     first_disagree=[]
@@ -119,18 +120,30 @@ def diagnose_trace(*,trace:Path,selected_tif:Path,grid:dict,
             max_e=max(max_e,abs(dx));max_n=max(max_n,abs(dy))
             if dx or dy:coordinate_disagreements+=1
             native_i,native_j=_cell_index(native_x,native_y,grid)
-            if (ix,iy)!=(native_i,native_j):
-                cell_disagreements+=1
-                diffx=ix-native_i;diffy=iy-native_j
-                grid_shift[("E_W" if diffx else "NO_E_W",
-                            "N_S" if diffy else "NO_N_S")]+=1
-                if len(first_disagree)<20:
-                    first_disagree.append({
-                      "original_grid_indices":[ix,iy],
-                      "proj_proxy_grid_indices":[native_i,native_j],
-                      "original_minus_proj_east_m":round(dx,6),
-                      "original_minus_proj_north_m":round(dy,6),
-                    })
+            inside_old=(1<=ix<=grid["nx"] and 1<=iy<=grid["ny"])
+            inside_proxy=(native_i>0 and native_j>0)
+            original_in+=int(inside_old)
+            proxy_in+=int(inside_proxy)
+            if inside_old and inside_proxy:
+                both_in+=1
+                if (ix,iy)!=(native_i,native_j):
+                    cell_disagreements+=1
+                    diffx=ix-native_i;diffy=iy-native_j
+                    grid_shift[("E_W" if diffx else "NO_E_W",
+                                "N_S" if diffy else "NO_N_S")]+=1
+                    if len(first_disagree)<20:
+                        first_disagree.append({
+                          "original_grid_indices":[ix,iy],
+                          "proj_proxy_grid_indices":[native_i,native_j],
+                          "original_minus_proj_east_m":round(dx,6),
+                          "original_minus_proj_north_m":round(dy,6),
+                        })
+            elif inside_old:
+                original_only+=1
+            elif inside_proxy:
+                proxy_only+=1
+            else:
+                both_out+=1
             all_offsets_x.append(abs(dx));all_offsets_y.append(abs(dy))
     if total==0:
         raise CoordinateProbeError("empty independent original pixel trace")
@@ -142,13 +155,21 @@ def diagnose_trace(*,trace:Path,selected_tif:Path,grid:dict,
       "status":"DIAGNOSTIC_ONLY_NOT_SCIENCE_ACCEPTED",
       "trace_records":total,
       "coordinate_records_differ_from_proj_proxy":coordinate_disagreements,
-      "original_vs_proj_proxy_cell_mismatches":cell_disagreements,
+      "original_vs_proj_proxy_cell_mismatches_BOTH_INSIDE":cell_disagreements,
+      "original_inside_hits":original_in,
+      "proj_proxy_inside_hits":proxy_in,
+      "both_inside":both_in,
+      "both_outside":both_out,
+      "original_inside_only":original_only,
+      "proj_proxy_inside_only":proxy_only,
+      "inside_outside_classifications_sum_to_trace":(
+          both_in+both_out+original_only+proxy_only==total),
       "max_abs_easting_difference_m":round(max_e,6),
       "max_abs_northing_difference_m":round(max_n,6),
       "p95_abs_easting_difference_m":percentile(all_offsets_x,.95),
       "p95_abs_northing_difference_m":percentile(all_offsets_y,.95),
       "cell_mismatch_axes":{"/".join(k):v for k,v in grid_shift.items()},
-      "first20_differences":first_disagree,
+      "first20_inside_grid_cell_disagreements_only":first_disagree,
       "original_source_used":"CTEAS_PINNED_TERREL_SCRATCH_INSTRUMENTED_COPY",
       "native_comparison_basis":"GDAL_PROJ_PYPROJ_FLOAT32_PROXY_NOT_INSTRUMENTED_CXX",
       "pixel_trace_artifact_uploaded":False,
