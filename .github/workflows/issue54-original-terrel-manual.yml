@@ -8,6 +8,8 @@ on:
       - 'scripts/s2g/p1_original_actions_replay.py'
       - 'scripts/s2g/tests/test_p1_original_actions_replay.py'
       - 'scripts/s2g/tests/test_p1_original_legacy_tiff.py'
+      - 'scripts/s2g/p1_original_coord_probe.py'
+      - 'scripts/s2g/tests/test_p1_original_coord_probe.py'
       - 'scripts/s2g/p1_original_hit_diagnostics.py'
       - 'scripts/s2g/tests/test_p1_original_hit_diagnostics.py'
   workflow_dispatch:
@@ -39,11 +41,11 @@ jobs:
           persist-credentials: false
           lfs: false
       - name: Install raster metadata dependencies for synthetic Int16 TIFF only
-        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'rasterio>=1.3,<2' 'numpy>=1.23,<3' 'pyproj>=3.4,<4' 'pyproj>=3.4,<4'
       - name: Check structural integrity and lossless TIFF bytes; no proprietary original
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_p1_original_actions_replay scripts.s2g.tests.test_p1_original_legacy_tiff scripts.s2g.tests.test_p1_original_hit_diagnostics
+          python3 -m unittest -v scripts.s2g.tests.test_p1_original_actions_replay scripts.s2g.tests.test_p1_original_legacy_tiff scripts.s2g.tests.test_p1_original_hit_diagnostics scripts.s2g.tests.test_p1_original_coord_probe
           python3 -m py_compile scripts/s2g/p1_original_actions_replay.py
           echo 'ORIGINAL_TERREL_CONTRACT_SOFTWARE=PASS_REAL_ORIGINAL_NOT_RUN'
 
