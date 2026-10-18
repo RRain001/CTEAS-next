@@ -414,7 +414,8 @@ def observed_year_coverage(igra_path: Path, station_id: str, year: int, elevatio
                     coverage=count / expected, eligible=count * 5 > expected * 4,
                     soundings_cleaned=stats["soundings_written"],
                     soundings_dropped=stats["soundings_dropped_after_cleaning"]
-                    + stats["soundings_dropped_bottom_wind_missing"])
+                    + stats["soundings_dropped_bottom_wind_missing"],
+                    original_utc_slots=sorted(original))
 
 
 def main():
@@ -422,13 +423,14 @@ def main():
     parser.add_argument('--year', type=int, help='研究年份, 例如 2023')
     parser.add_argument('--pstop', type=float, help='PSTOP(hPa)，例如 500; 不传则读取既有文件或默认500')
     parser.add_argument('--yes', action='store_true', help='兼容参数，保留但不再触发交互')
+    parser.add_argument('--upperair-root', type=Path, help='Explicit isolated P4 output root')
     args = parser.parse_args()
 
     year = args.year
     if year is None:
         raise SystemExit('year is required; pass --year YYYY')
 
-    year_dir = DATA_ROOT / str(year)
+    year_dir = (args.upperair_root if args.upperair_root else DATA_ROOT) / str(year)
     year_dir.mkdir(parents=True, exist_ok=True)
     pstop_file = year_dir / 'pstop_hpa.txt'
     if args.pstop is not None:

@@ -1,0 +1,106 @@
+name: Issue 55 P4 D3 two genuine in-domain NOAA sources same-FSL parity
+# Automatic bounded 6h 2-station comparator only, no full-year P6/P7.
+on:
+  pull_request:
+    paths:
+      - .github/workflows/issue55-p4-d3-multistation-noaa.yml
+      - scripts/s2g/issue55_p4_d3_multistation.py
+      - native_cpp/modules/p4_read62/**
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue55-multistation-d3-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-two-in-domain-stations-original-fortran-native-cpp:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact new-case producer
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Checkout pinned independent original READ62
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Install original compiler and upper-air parsing prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gfortran
+          python3 -m compileall -q scripts/s2g/issue55_p4_d3_multistation.py
+      - name: Build native P4 and P6 source-only original-format parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p4_read62 -B "$RUNNER_TEMP/p4-native" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p4-native" --parallel 2 --target cteas_p4_read62 cteas_p4_tests
+          ctest --test-dir "$RUNNER_TEMP/p4-native" --output-on-failure
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p4-g19" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p4-g19" --parallel 2 --target cteas_p6g_up_source_preflight
+      - name: Build original unchanged Fortran source with temporary aliases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/p4-original/src" "$RUNNER_TEMP/p4-d3-evidence"
+          cp -a original-cteas/engine/vendor/src/READ62_v5.661_L110225/. "$RUNNER_TEMP/p4-original/src/"
+          for file in "$RUNNER_TEMP/p4-original/src"/*; do
+            base="$(basename "$file")"
+            lower="$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]')"
+            if [ "$base" != "$lower" ] && [ ! -e "$RUNNER_TEMP/p4-original/src/$lower" ]; then
+              ln -s "$base" "$RUNNER_TEMP/p4-original/src/$lower"
+            fi
+          done
+          gfortran -O0 -std=legacy -ffixed-line-length-72 -fallow-argument-mismatch -fno-automatic \
+            -I"$RUNNER_TEMP/p4-original/src" \
+            -o "$RUNNER_TEMP/p4-original/read62" "$RUNNER_TEMP/p4-original/src/READ62.FOR"
+          sha256sum "$RUNNER_TEMP/p4-original/src/READ62.FOR" > "$RUNNER_TEMP/p4-d3-evidence/fortran-source.sha256"
+          git rev-parse HEAD > "$RUNNER_TEMP/p4-d3-evidence/head.sha"
+      - name: Both real IGRA station FSL streams into independent original and native READ62
+        shell: bash
+        run: |
+          set -euo pipefail
+          for year in 2023 2022; do
+            python3 -m scripts.s2g.issue55_p4_d3_multistation \
+              --year "$year" \
+              --native-bin "$RUNNER_TEMP/p4-native/cteas_p4_read62" \
+              --original-bin "$RUNNER_TEMP/p4-original/read62" \
+              --original-inp "$RUNNER_TEMP/p4-original/src/read62.inp" \
+              --g19-source-preflight "$RUNNER_TEMP/p4-g19/cteas_p6g_up_source_preflight" \
+              --evidence-out "$RUNNER_TEMP/p4-d3-evidence/p4-two-observed-stations-$year.json"
+          done
+          python3 - "$RUNNER_TEMP/p4-d3-evidence" <<'PY'
+          import json,pathlib,sys
+          p=pathlib.Path(sys.argv[1])
+          years=[]
+          for year in (2022,2023):
+              x=json.loads((p/f"p4-two-observed-stations-{year}.json").read_text())
+              assert x["year"]==year and x["station_count"]==2
+              assert [s["wmo"] for s in x["stations"]]==["58203","58424"]
+              for s in x["stations"]:
+                  assert s["byte_identical"] and s["matched_profiles"]>=2
+                  assert s["matched_fields"]>0 and s["g19_source_only_hours"]==6
+                  assert s["source_site_type"]=="OBSERVED"
+              assert x["joint_geo_surf_up"]=="NOT_RUN" and x["p6_physics"]=="NOT_RUN"
+              years.append(x)
+          assert years[0]["stations"][0]["noaa_sha256"]==years[1]["stations"][0]["noaa_sha256"]
+          assert years[0]["stations"][1]["noaa_sha256"]==years[1]["stations"][1]["noaa_sha256"]
+          print("P4_55_D3_REAL_TWO_STATION_ORIGINAL_NATIVE_PARITY=PASS_SCOPED")
+          print("P4_FULL_YEAR=NOT_RUN G19_JOINT=NOT_RUN P6_P7=NOT_RUN")
+          PY
+      - name: Publish evidence metadata and SHA only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue55-d3-two-station-original-native-noaa
+          path: ${{ runner.temp }}/p4-d3-evidence/
+          retention-days: 7
+          if-no-files-found: warn
