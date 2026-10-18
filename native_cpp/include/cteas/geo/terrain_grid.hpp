@@ -13,7 +13,7 @@ struct TerrainGridSpec {
 // Original TERREL TIFFINFO.GET_IFD first rounds the TIFF tiepoint and
 // pixel scale separately to REAL*4, THEN computes the area-pixel center.
 // This differs from rounding (double_tiepoint + double_spacing / 2).
-// Supported scoped path: north-up WGS84 PixelIsArea; the caller verifies it.
+// Assumes north-up WGS84 PixelIsArea (as in the audited #54 source-admission route).
 [[nodiscard]] inline float geotiff_area_pixel_center_real4(double tiepoint,
                                                              double signed_spacing) {
   const float origin=static_cast<float>(tiepoint);
