@@ -1,13 +1,8 @@
 name: S3 C++ P4 P5 fresh final to native P6 P7 143h scientific lineage
+# Heavy 143h original/native physical science must be manually authorized.
+# Ordinary P4/P5 PRs use bounded offline source/software checks instead.
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s3-p4-p5-to-native-p6-p7-science.yml
-      - native_cpp/orchestration/verify_p4_p5_frozen_lineage.py
-      - native_cpp/modules/p4_read62/**
-      - native_cpp/modules/p5_smerge/**
-      - native_cpp/include/cteas/met_input/**
+  workflow_dispatch:
 permissions:
 
   contents: read
