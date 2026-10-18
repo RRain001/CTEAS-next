@@ -49,7 +49,7 @@ def _lexical_grid(raw: bytes) -> dict[str, str]:
         # The legacy numeric parser also recognizes '*' (inactive template)
         # cards. Reject shadowed *physical* authority rather than letting a
         # star-card silently override a validated active ! key.
-        shadow = re.fullmatch(r"\\s*\\*\\s*([A-Z0-9_]+)\\s*=.*\\*\\s*", line)
+        shadow = re.fullmatch(r"\s*\*\s*([A-Z0-9_]+)\s*=.*\*\s*", line)
         if shadow and shadow.group(1) in (*FIELDS, "ZFACE"):
             raise ContractError("B0 inactive grid record shadows numerical authority")
         match = ACTIVE.fullmatch(line)
