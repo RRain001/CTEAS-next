@@ -4,7 +4,10 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - native_cpp/reference/validate_p2_glazas_original.py
+      - native_cpp/reference/validate_p2_glazas_hits.py
       - native_cpp/reference/tests/test_glazas_original_gate.py
+      - native_cpp/reference/tests/test_glazas_original_integer_hits.py
+      - native_cpp/src/p2_glcc_raw_cli.cpp
       - .github/workflows/s2g1bb-issue53-glazas-original.yml
       - docs/plans/ISSUE53_P2_GLAZAS_ORIGINAL_GATE_20261018.md
   workflow_dispatch:
@@ -30,7 +33,7 @@ jobs:
       - name: Original-only comparator and synthetic format tests
         run: |
           set -euo pipefail
-          python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate
+          python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate native_cpp.reference.tests.test_glazas_original_integer_hits
           echo 'P2_GLAZAS_GATE_SOFTWARE=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
   authentic-source-build-only:
     if: github.event_name == 'pull_request'
@@ -137,21 +140,22 @@ jobs:
           "$build/cteas_p2_glcc_lu_dat" "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
             "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_gen_replay.csv" "${RUNNER_TEMP}/d3-glcc"
           original_sha="$(sha256sum "${RUNNER_TEMP}/original_ctgproc.x" | awk '{print $1}')"
-          python3 native_cpp/reference/validate_p2_glazas_original.py \
+          python3 -m native_cpp.reference.validate_p2_glazas_hits \
             --source-img eausgs2_0la.img \
             --original-ctgproc "${RUNNER_TEMP}/original_ctgproc.x" --original-bin-sha256 "$original_sha" \
             --original-source-file original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
             --control-template project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp \
-            --grid-cmn project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn \
             --native-lu "${RUNNER_TEMP}/d3-glcc/lu.dat" \
-            --native-manifest "${RUNNER_TEMP}/d3-glcc/p2_d3_manifest.json" \
+            --native-d3-manifest "${RUNNER_TEMP}/d3-glcc/p2_d3_manifest.json" \
+            --native-hits-csv "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_hits.csv" \
+            --native-d1-manifest "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
             --out-dir "${RUNNER_TEMP}/glazas-original" --timeout-sec 300
-          echo 'P2_ORIGINAL_GLAZAS_SCIENCE=PASS_SAME_SOURCE_ONLY'
+          echo 'P2_ORIGINAL_GLAZAS_SCIENCE=PASS_FRACTION_AND_INTEGER_HITS_IF_TRUE'
       - name: Save manifest and first differences, never vendor/raw-IMG/Fortran binaries
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: issue53-original-glazas-pinned-cteas-source-science
+          name: issue53-original-glazas-integer-hits-science
           path: |
             ${{ runner.temp }}/glazas-original/result.json
             ${{ runner.temp }}/glazas-original/FAILED.txt
