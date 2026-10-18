@@ -83,7 +83,7 @@ jobs:
         run: |
           set -euo pipefail
           cmake -S native_cpp -B "${RUNNER_TEMP}/issue53-d1-real-build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
-          cmake --build "${RUNNER_TEMP}/issue53-d1-real-build" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_gen_fraction
+          cmake --build "${RUNNER_TEMP}/issue53-d1-real-build" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat cteas_p2_gen_fraction
       - name: SHA-locked original IMG read and independent Python GEN
         shell: bash
         run: |
@@ -120,10 +120,39 @@ jobs:
           assert p["official_GLAZAS_parity"]=="NOT_RUN" and p["lu_dat"]=="NOT_RUN"
           print("REAL_GLCC_LFS_SOURCE_AND_GEN_SCOPED=PASS; ORIGINAL_GLAZAS=NOT_RUN; max_fraction_delta=",maxdiff)
           PY
+          "$build/cteas_p2_glcc_lu_dat" "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
+            "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_gen_replay.csv" \
+            "${RUNNER_TEMP}/d3-glcc-lu"
+          python3 - <<'PY'
+          import csv,hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])
+          old=json.loads((p/"d1-native/p2_manifest.json").read_text())
+          new=json.loads((p/"d3-glcc-lu/p2_d3_manifest.json").read_text())
+          lu=p/"d3-glcc-lu/lu.dat"
+          raw=lu.read_bytes()
+          lines=raw.decode("utf-8").splitlines()
+          assert len(lines)==2511
+          assert lines[0].split()[:2]==["LU.DAT","2.1"]
+          assert lines[4].strip()=="FRACTION"
+          assert lines[5].strip()=="UTM"
+          assert lines[6].strip()=="50N"
+          assert len(lines[10].split())==38
+          assert len(lines[11:])==2500
+          assert new["input_d1_csv_sha256"]==old["fractions_csv_sha256"]
+          assert new["total_samples"]==old["included"]==10011
+          assert hashlib.sha256(raw).hexdigest()==new["lu_dat_sha256"]
+          assert new["original_GLAZAS_parity"]=="NOT_RUN"
+          assert new["p3_geo_dat"]=="NOT_RUN"
+          print("REAL_GLCC_D1_TO_D3_PROVISIONAL_LU=PASS_SOFTWARE_SCOPED; ORIGINAL_GLAZAS=NOT_RUN; P3=NOT_RUN")
+          PY
           cp "${RUNNER_TEMP}/d1-native/p2_manifest.json" "${RUNNER_TEMP}/glcc-real-source-evidence.json"
+          cp "${RUNNER_TEMP}/d3-glcc-lu/p2_d3_manifest.json" "${RUNNER_TEMP}/glcc-d3-lu-evidence.json"
       - name: Preserve only provenance and source hash, not original 156MB data
         uses: actions/upload-artifact@v4
         with:
           name: issue53-d1-actual-glcc-source-and-gen-evidence
-          path: ${{ runner.temp }}/glcc-real-source-evidence.json
+          path: |
+            ${{ runner.temp }}/glcc-real-source-evidence.json
+            ${{ runner.temp }}/glcc-d3-lu-evidence.json
           if-no-files-found: error

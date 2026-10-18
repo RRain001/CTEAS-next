@@ -71,3 +71,13 @@ add_executable(cteas_p2_glcc_raw src/p2_glcc_raw_cli.cpp)
 target_link_libraries(cteas_p2_glcc_raw PRIVATE cteas_p2_glcc_source OpenSSL::Crypto)
 add_executable(cteas_p2_glcc_gen_test_driver tests/p2_glcc_gen_test_driver.cpp)
 target_link_libraries(cteas_p2_glcc_gen_test_driver PRIVATE cteas_p2_glcc_source)
+
+# Issue #53 D3: SHA-bound historical GLCC 24->38 LU.DAT serializer only.
+# The GLC_FCS30D 35->38 crosswalk remains scientifically unapproved.
+add_executable(cteas_p2_glcc_lu_dat src/p2_glcc_lu_dat_cli.cpp)
+target_link_libraries(cteas_p2_glcc_lu_dat PRIVATE cteas_p2_glcc_source GDAL::GDAL OpenSSL::Crypto)
+if(MSVC)
+  target_compile_options(cteas_p2_glcc_lu_dat PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_glcc_lu_dat PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
