@@ -133,8 +133,11 @@ def replay(repo: Path, case: Path, work: Path, head: str) -> dict:
         station_id=FSL_STATION,
         latitude="31.94N", longitude="117.14E",
         elevation="62", target_year=str(YEAR),
-        min_pressure_hpa=PSTOP, exact_lat=31.9398,
-        exact_lon=117.1416, coord_digits=6)
+        # Archive predates P4EXACT_LAT/P4EXACT_LON header additions.
+        # Only this independent archive-parity comparator emits the legacy
+        # FSL records. Preserve modern exact-coordinate production support.
+        min_pressure_hpa=PSTOP, exact_lat=None,
+        exact_lon=None, coord_digits=6)
     new_sha = sha256(newly_generated_fsl)
     reference = case / FSL_RELATIVE
     frozen_sha = report["files"]["frozen_fsl"]["sha256"]
@@ -156,6 +159,8 @@ def replay(repo: Path, case: Path, work: Path, head: str) -> dict:
         "reference_fsl": {"sha256": frozen_sha,
             "bytes": reference.stat().st_size},
         "byte_exact": equal,
+        "legacy_fsl_header_encoding_for_original_parity": True,
+        "fsl_p4exact_header_extensions_written": False,
         "raw_igra_station_discovery_recomputed": False,
         "raw_isd_to_generic_recomputed": False,
         "native_p4_to_p7_recomputed": False,
