@@ -40,7 +40,7 @@ inline G18B3UpperChoice g18b3_source_deck_upper_choice(
                                                station_set.upper.size());
     if(grid.nx<2||grid.ny<2||grid.nx>400||grid.ny>400||
        !std::isfinite(grid.grid_km)||grid.grid_km<=0.f||
-       station_set.upper.empty()||station_set.upper.size()>1000)
+       station_set.upper.empty())
         throw std::invalid_argument("G18B3 grid/UP count outside selected scope");
     const float dgrid=grid.grid_km*1000.f;
     const auto nx=static_cast<std::size_t>(grid.nx);
