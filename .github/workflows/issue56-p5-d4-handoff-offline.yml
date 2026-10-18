@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/issue56-p5-d4-handoff-offline.yml'
       - 'native_cpp/modules/p5_smerge/data_prep/p5_handoff.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/surf_hourly_quality.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_surf_hourly_quality.py'
       - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_handoff.py'
       - 'scripts/s2g/issue56_real_noaa_p5_case.py'
   workflow_dispatch:
@@ -26,6 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_p5_handoff
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_surf_hourly_quality
           python3 -m unittest -v scripts.s2g.tests.test_issue56_real_noaa_p5_case
           echo 'ISSUE56_P5_D4_SOURCE_HANDOFF=PASS_SOFTWARE_SCOPED'
           echo 'P5_G19_JOINT=NOT_RUN P6_NUMERICAL=NOT_RUN'

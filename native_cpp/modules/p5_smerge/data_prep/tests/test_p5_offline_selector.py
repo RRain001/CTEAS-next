@@ -48,9 +48,11 @@ class P5OfflineSelectionTests(unittest.TestCase):
                 "--out-dir", str(self.raw),
                 "--stack-lat", "31.939774444", "--stack-lon", "117.141610855"]
         def full(path, year, sid):
-            return coverage.get((sid, year, "full"), 8000), 8760
+            hours = p5.expected_hours_in_year(year)
+            return coverage.get((sid, year, "full"), 8000), hours
         def wind(path, year, sid):
-            return coverage.get((sid, year, "lite"), 8100), 8760
+            hours = p5.expected_hours_in_year(year)
+            return coverage.get((sid, year, "lite"), 8100), hours
         with (patch.object(p5, "parse_history_txt", return_value=stations),
               patch.object(p5, "original_coverage", side_effect=full),
               patch.object(lite, "lite_time_coverage", side_effect=wind),
@@ -58,6 +60,71 @@ class P5OfflineSelectionTests(unittest.TestCase):
               patch.object(lite, "download_lite_one", side_effect=AssertionError("NETWORK-LITE")),
               patch.object(sys, "argv", argv)):
             return p5.main()
+
+    def test_leap_year_crossyear_primary_switch_stable_ifstn(self):
+        # 2024 is leap-year: 8784 original UTC hours. Both real-format
+        # source products remain associated with their original station IDs.
+        time = self.root / "grid/research_time"
+        time.write_text("BEGIN:20231231-230000\nEND:20240301-010000\n")
+        for yr in (2023, 2024):
+            for station in (self.in1, self.in2):
+                self.archive(station, yr)
+        self.assertEqual(self.select([self.in1, self.in2], coverage={
+            (self.in1.sid, 2023, "full"): 8580,
+            (self.in1.sid, 2023, "lite"): 8600,
+            (self.in2.sid, 2023, "full"): 8300,
+            (self.in2.sid, 2023, "lite"): 8300,
+            (self.in1.sid, 2024, "full"): 8350,
+            (self.in1.sid, 2024, "lite"): 8400,
+            (self.in2.sid, 2024, "full"): 8700,
+            (self.in2.sid, 2024, "lite"): 8750,
+        }), 0)
+        selection = [json.loads((self.raw / f"station_selection_{yr}.json").read_text())
+                     for yr in (2023, 2024)]
+        self.assertEqual([p["primary_sid"] for p in selection],
+                         [self.in1.sid, self.in2.sid])
+        self.assertEqual({r["ifstn"] for r in selection[0]["stations"]},
+                         {r["ifstn"] for r in selection[1]["stations"]})
+        self.assertTrue(all(r["expected_hours"] == 8784
+                            for r in selection[1]["stations"]))
+        self.assertEqual(
+            [[r["sid"] for r in p["stations"]
+              if r["wind_treatment"] == "COMPLETE_FILL_AND_CALM_REPLACE"]
+             for p in selection],
+            [[self.in1.sid], [self.in2.sid]]
+        )
+
+    def test_leap_year_virtual_90_percent_exact_gate(self):
+        # Strict 90% of 8784 requires at least 7906 unique original hours.
+        (self.root / "grid/research_time").write_text(
+            "BEGIN:20240228-000000\nEND:20240301-000000\n")
+        self.archive(self.out1, 2024)
+        with self.assertRaisesRegex(SystemExit, "source selection failed"):
+            self.select([self.out1], coverage={
+                (self.out1.sid, 2024, "full"): 7905,
+                (self.out1.sid, 2024, "lite"): 8500,
+            })
+        self.assertEqual(self.select([self.out1], coverage={
+            (self.out1.sid, 2024, "full"): 7906,
+            (self.out1.sid, 2024, "lite"): 8500,
+        }), 0)
+        mf = json.loads((self.raw / "station_selection_2024.json").read_text())
+        self.assertEqual(mf["mode"], "VIRTUAL_RELOCATED")
+        self.assertEqual(mf["stations"][0]["expected_hours"], 8784)
+
+    def test_one_and_three_in_domain_stations_without_fixed_cap(self):
+        self.archive(self.in1)
+        self.assertEqual(self.select([self.in1]), 0)
+        one = json.loads((self.raw / "station_selection_2022.json").read_text())
+        self.assertEqual(len(one["stations"]), 1)
+        third = p5.Station("58322099999", 31.939774444, 117.143610855,
+                           26., "in3", "CH", "20200101", "20251231")
+        self.archive(self.in2)
+        self.archive(third)
+        self.assertEqual(self.select([self.in1, self.in2, third]), 0)
+        many = json.loads((self.raw / "station_selection_2022.json").read_text())
+        self.assertEqual(len(many["stations"]), 3)
+        self.assertEqual(len({r["ifstn"] for r in many["stations"]}), 3)
 
     def test_generic_reselection_rejects_case_without_stack_or_prior_metadata(self):
         # The full #42 case must authorize the actual stack; center_location

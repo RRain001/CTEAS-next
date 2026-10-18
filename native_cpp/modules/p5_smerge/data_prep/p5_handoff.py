@@ -14,6 +14,7 @@ import re
 
 from native_cpp.orchestration.case_admission import admit_case, verify_immutable
 from native_cpp.orchestration.plan import ContractError
+from .surf_hourly_quality import inspect_pair
 
 
 def sha256(path: Path) -> str:
@@ -188,9 +189,16 @@ def build_p5_handoff(case: Path, producer: dict, reader: dict) -> dict:
         })
     # The two published source forms are deliberately distinct: the legacy
     # cloud-cover fallback is not part of the original Fortran byte parity.
+    # Export per-hour, per-station QUALITY FLAGS from both source forms,
+    # independently confirming aggregate totals from P6's source-only reader.
+    quality = inspect_pair(
+        native, published, expected_ids=ids,
+        expected_begin=admission.research_begin,
+        expected_end=admission.research_end,
+        reader=source_stats)
     verify_immutable(admission)
     return {
-        "contract": "CTEAS_NEXT_P5_TO_ISSUE42_D4_SOURCE_HANDOFF_V1",
+        "contract": "CTEAS_NEXT_P5_TO_ISSUE42_D4_SOURCE_HANDOFF_V2",
         "status": "PASS_SCOPED_SOURCE_ONLY_HANDOFF_NOT_G19",
         "producer_issue": 56,
         "consumer_issue": 42,
@@ -203,7 +211,7 @@ def build_p5_handoff(case: Path, producer: dict, reader: dict) -> dict:
         "hour_semantics": "(BEGIN,END] SMERGE hour-ending",
         "hour_ending_records": hours,
         "hourly_record_count_proven_by_independent_source_reader": True,
-        "per_hour_field_quality": "NOT_EXPORTED_ISSUE42_G19_MUST_AUDIT",
+        "per_hour_field_quality": quality,
         "utm_grid": producer["grid"],
         "ordered_ifstn": ids,
         "station_index": [{
