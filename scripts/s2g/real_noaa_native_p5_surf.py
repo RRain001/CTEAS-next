@@ -33,8 +33,8 @@ from scripts.s3f.verify_real_noaa_2022_2023_station_selection import (
 )
 
 MODEL_START = (6, 1, 0)
-MODEL_END = (6, 1, 7)
-EXPECTED_HOURS = 7
+MODEL_END = (6, 2, 0)
+EXPECTED_HOURS = 24
 
 
 def _bin(path: Path) -> Path:
