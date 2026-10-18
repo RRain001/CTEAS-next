@@ -1,0 +1,332 @@
+{
+  "schema": "cteas.p2.glc_crosswalk_review.v1",
+  "scientific_approval": "P2_MAPPING_REVIEW_REQUIRED",
+  "is_approved": false,
+  "source_product": "GLC_FCS30D_2022",
+  "source_data_sha256": "340d224d961c88637363be9616302bdf6b955b4921144edc814b875ef9798473",
+  "source_legend": [
+    "https://essd.copernicus.org/articles/16/1353/2024/",
+    "https://gee-community-catalog.org/projects/glc_fcs/"
+  ],
+  "target_legend": "https://pubs.usgs.gov/publication/pp964",
+  "legend_note": "Original D0 reversed open/closed: 51/61/71/81/91 are CLOSED forest; 52/62/72/82/92 are OPEN forest. These names fixed here.",
+  "scope": "source category candidate review; no operative C++/P3 mapping enabled",
+  "pixel_histogram_scope": "entire 172x172 buffered source TIFF, not model grid area weights",
+  "classes": [
+    {
+      "code": 10,
+      "source_label": "Rainfed cropland",
+      "candidate_target_usgs92": 21,
+      "evidence_tier": "candidate",
+      "reason": "Agricultural land; rainfed management lost",
+      "observed_buffered_pixels": 3413,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 11,
+      "source_label": "Herbaceous cropland",
+      "candidate_target_usgs92": 21,
+      "evidence_tier": "candidate",
+      "reason": "Cultivated herbaceous crop, not natural grassland",
+      "observed_buffered_pixels": 376,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 12,
+      "source_label": "Tree/shrub cropland",
+      "candidate_target_usgs92": 22,
+      "evidence_tier": "candidate",
+      "reason": "Orchards/groves assumed; verify agricultural plantation scope",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 20,
+      "source_label": "Irrigated cropland",
+      "candidate_target_usgs92": 21,
+      "evidence_tier": "candidate",
+      "reason": "Agricultural land; irrigation status lost",
+      "observed_buffered_pixels": 21814,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 51,
+      "source_label": "Closed evergreen broadleaved forest",
+      "candidate_target_usgs92": 42,
+      "evidence_tier": "candidate",
+      "reason": "Evergreen forest; canopy density lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 52,
+      "source_label": "Open evergreen broadleaved forest",
+      "candidate_target_usgs92": 42,
+      "evidence_tier": "candidate",
+      "reason": "Evergreen forest; canopy density lost",
+      "observed_buffered_pixels": 298,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 61,
+      "source_label": "Closed deciduous broadleaved forest",
+      "candidate_target_usgs92": 41,
+      "evidence_tier": "candidate",
+      "reason": "Deciduous forest; canopy density lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 62,
+      "source_label": "Open deciduous broadleaved forest",
+      "candidate_target_usgs92": 41,
+      "evidence_tier": "candidate",
+      "reason": "Deciduous forest; canopy density lost",
+      "observed_buffered_pixels": 74,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 71,
+      "source_label": "Closed evergreen needle-leaved forest",
+      "candidate_target_usgs92": 42,
+      "evidence_tier": "candidate",
+      "reason": "Evergreen forest; canopy density lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 72,
+      "source_label": "Open evergreen needle-leaved forest",
+      "candidate_target_usgs92": 42,
+      "evidence_tier": "candidate",
+      "reason": "Evergreen forest; canopy density lost",
+      "observed_buffered_pixels": 1,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 81,
+      "source_label": "Closed deciduous needle-leaved forest",
+      "candidate_target_usgs92": 41,
+      "evidence_tier": "candidate",
+      "reason": "Deciduous forest; canopy density lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 82,
+      "source_label": "Open deciduous needle-leaved forest",
+      "candidate_target_usgs92": 41,
+      "evidence_tier": "candidate",
+      "reason": "Deciduous forest; canopy density lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 91,
+      "source_label": "Closed mixed-leaf forest",
+      "candidate_target_usgs92": 43,
+      "evidence_tier": "candidate",
+      "reason": "Mixed forest; canopy density lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 92,
+      "source_label": "Open mixed-leaf forest",
+      "candidate_target_usgs92": 43,
+      "evidence_tier": "candidate",
+      "reason": "Mixed forest; canopy density lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 120,
+      "source_label": "Shrubland",
+      "candidate_target_usgs92": 32,
+      "evidence_tier": "candidate",
+      "reason": "Generic shrub-brush land; height lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 121,
+      "source_label": "Evergreen shrubland",
+      "candidate_target_usgs92": 32,
+      "evidence_tier": "candidate",
+      "reason": "Shrub-brush land; phenology lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 122,
+      "source_label": "Deciduous shrubland",
+      "candidate_target_usgs92": 32,
+      "evidence_tier": "candidate",
+      "reason": "Shrub-brush land; phenology lost",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 130,
+      "source_label": "Grassland",
+      "candidate_target_usgs92": 31,
+      "evidence_tier": "candidate",
+      "reason": "Herbaceous rangeland assumption, distinct from cropland",
+      "observed_buffered_pixels": 142,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 140,
+      "source_label": "Lichens and mosses",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "Species cover cannot establish tundra biome",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 150,
+      "source_label": "Sparse vegetation",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "No vegetation/bare fraction is inferable",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 152,
+      "source_label": "Sparse shrubland",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "No physical shrub/bare split is inferable",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 153,
+      "source_label": "Sparse herbaceous cover",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "No physical grass/bare split is inferable",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 181,
+      "source_label": "Swamp",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "Forested versus nonforested wetland not resolved",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 182,
+      "source_label": "Marsh",
+      "candidate_target_usgs92": 62,
+      "evidence_tier": "site_evidence",
+      "reason": "Nonforested wetland plausible; seasonal water and parameter sensitivity require site audit",
+      "observed_buffered_pixels": 238,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 183,
+      "source_label": "Flooded flat",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "Inundation does not distinguish wetland, exposed mudflat, and open water",
+      "observed_buffered_pixels": 17,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 184,
+      "source_label": "Saline",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "Salt land can be barren or vegetated; requires morphology",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 185,
+      "source_label": "Mangrove",
+      "candidate_target_usgs92": 61,
+      "evidence_tier": "site_evidence",
+      "reason": "Forested wetland candidate; coast and tidal physics not captured",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 186,
+      "source_label": "Salt marsh",
+      "candidate_target_usgs92": 62,
+      "evidence_tier": "site_evidence",
+      "reason": "Nonforested wetland candidate; salinity/tidal assumptions",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 187,
+      "source_label": "Tidal flat",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "Water, beach, mud and nonforested wetland state ambiguous",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 190,
+      "source_label": "Impervious surfaces",
+      "candidate_target_usgs92": 16,
+      "evidence_tier": "site_evidence",
+      "reason": "Mixed urban built-up candidate, no information on residential/roads/industrial",
+      "observed_buffered_pixels": 2809,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 200,
+      "source_label": "Bare areas",
+      "candidate_target_usgs92": 77,
+      "evidence_tier": "site_evidence",
+      "reason": "USGS mixed barren proxy; rock, sand, salt subtype unknown",
+      "observed_buffered_pixels": 9,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 201,
+      "source_label": "Consolidated bare areas",
+      "candidate_target_usgs92": 74,
+      "evidence_tier": "site_evidence",
+      "reason": "Possible exposed rock; not universally rock",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 202,
+      "source_label": "Unconsolidated bare areas",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "Unconsolidated need not equal sand; geology not known",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 210,
+      "source_label": "Water body",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "USGS distinguishes 51 streams, 52 lakes, 53 reservoirs, 54 bays; GLC class lacks subtype",
+      "observed_buffered_pixels": 393,
+      "approval": "NOT_APPROVED"
+    },
+    {
+      "code": 220,
+      "source_label": "Permanent snow and ice",
+      "candidate_target_usgs92": null,
+      "evidence_tier": "blocked",
+      "reason": "USGS separates 91 permanent snowfields and 92 glaciers",
+      "observed_buffered_pixels": 0,
+      "approval": "NOT_APPROVED"
+    }
+  ]
+}
