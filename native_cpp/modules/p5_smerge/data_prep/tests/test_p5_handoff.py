@@ -98,10 +98,16 @@ class P5HandoffTests(unittest.TestCase):
             build_p5_handoff(self.case, self.producer, self.reader)
 
     def test_source_reader_mismatch_or_annual_primary_drift_rejected(self):
-        self.reader["stdout_tail"] = self.reader["stdout_tail"].replace("HOURS=3", "HOURS=4")
+        self.reader["stdout_tail"] = (
+            self.reader["stdout_tail"].replace("HOURS=3", "HOURS=4")
+            .replace("MISSING_STATION_HOURS=1", "MISSING_STATION_HOURS=2")
+        )
         with self.assertRaisesRegex(ContractError, "station/time mismatch"):
             build_p5_handoff(self.case, self.producer, self.reader)
-        self.reader["stdout_tail"] = self.reader["stdout_tail"].replace("HOURS=4", "HOURS=3")
+        self.reader["stdout_tail"] = (
+            self.reader["stdout_tail"].replace("HOURS=4", "HOURS=3")
+            .replace("MISSING_STATION_HOURS=2", "MISSING_STATION_HOURS=1")
+        )
         self.producer["years"][0]["primary_sid"] = "nonexistent"
         with self.assertRaisesRegex(ContractError, "annual primary source"):
             build_p5_handoff(self.case, self.producer, self.reader)
