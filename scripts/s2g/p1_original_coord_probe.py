@@ -204,4 +204,23 @@ def execute_original_diagnostic(*,checkout:Path,vendor:Path,selected:Path,
     trace=original_dir/"p1_original_coords.txt"
     if out["returncode"]!=0 or not trace.is_file():
         raise CoordinateProbeError("forensic-only original execution failed")
-    return diagnose_trace(trace=trace,selected_tif=selected,grid=grid)
+    result=diagnose_trace(trace=trace,selected_tif=selected,grid=grid)
+    # This additional path compiles a scratch instrumented copy of the
+    # ACTUAL native C++ source rather than relying on pyproj as a proxy.
+    # Forensic problems never change the independent original/native
+    # scientific comparison, and do not erase the older proxy evidence.
+    try:
+        from scripts.s2g.p1_original_native_coord_probe import (
+            execute_native_diagnostic, compare_direct_traces
+        )
+        native_trace=execute_native_diagnostic(
+            selected=selected,grid=grid,workspace=workspace)
+        result["direct_cpp"]=compare_direct_traces(
+            original_trace=trace,native_trace=native_trace,grid=grid)
+    except (OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
+        result["direct_cpp"]={
+            "status":"BLOCKED_DIRECT_CPP_FORENSIC_DIAGNOSTIC",
+            "reason_type":type(exc).__name__,
+            "science_acceptance":"NOT_ACCEPTED",
+        }
+    return result
