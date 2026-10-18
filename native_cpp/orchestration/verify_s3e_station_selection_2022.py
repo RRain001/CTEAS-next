@@ -41,7 +41,7 @@ def run() -> dict:
     grid_file = CASE / "grid/grid.cmn"
     grid_text = grid_file.read_text()
     for field, value in (("XREFKM", "510.885"), ("YREFKM", "3531.269")):
-        m = re.search(r"!\\s*" + field + r"\\s*=\\s*([0-9]+\\.[0-9]+)\\s*!", grid_text)
+        m = re.search(r"!\s*" + field + r"\s*=\s*([0-9]+\.[0-9]+)\s*!", grid_text)
         assert m is not None and m.group(1) == value, (field, m.group(1) if m else None)
     grid = load_strict_utm_grid(grid_file, context="S3-E")
     assert grid.iutmzn == 50 and grid.lsohem == "N"
@@ -67,9 +67,9 @@ def run() -> dict:
             assert sid == P4_ID, sid
             return source4, True, None
 
-        with patch.object(p4, "DATA_ROOT", p4out), \\
-             patch.object(p4, "load_station_list", return_value=[p4st]), \\
-             patch.object(p4, "download_igra_data", side_effect=archived_p4_download), \\
+        with patch.object(p4, "DATA_ROOT", p4out), \
+             patch.object(p4, "load_station_list", return_value=[p4st]), \
+             patch.object(p4, "download_igra_data", side_effect=archived_p4_download), \
              patch.object(sys, "argv", ["download_igra", "--year", "2022", "--pstop", "500"]):
             assert p4.main() == 0
 
@@ -104,9 +104,9 @@ def run() -> dict:
             "--stack-lat", str(center_lat), "--stack-lon", str(center_lon),
             "--retries", "1"
         ]
-        with patch.object(p5, "parse_history_txt", return_value=[p5st]), \\
-             patch.object(p5, "download_one", side_effect=archived_full), \\
-             patch.object(lite, "download_lite_one", side_effect=archived_lite), \\
+        with patch.object(p5, "parse_history_txt", return_value=[p5st]), \
+             patch.object(p5, "download_one", side_effect=archived_full), \
+             patch.object(lite, "download_lite_one", side_effect=archived_lite), \
              patch.object(sys, "argv", args):
             assert p5.main() == 0
         report5 = json.loads((p5out / "download_report_2022.json").read_text())
@@ -146,5 +146,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         output = Path(sys.argv[1])
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(data, indent=2) + "\\n", encoding="utf-8")
+        output.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(data, indent=2))
