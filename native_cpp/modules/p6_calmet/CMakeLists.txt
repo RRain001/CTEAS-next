@@ -988,3 +988,14 @@ else()
   target_compile_options(cteas_p6g_up_source_preflight PRIVATE
     -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S2-G1B-B2: real original NOAA-produced native P5 SURF independent input
+# validation, not CALMET diagnostic winds or CALPUFF concentrations.
+add_executable(cteas_p6g_surf_source_preflight src/p6g_surf_source_preflight_main.cpp)
+target_link_libraries(cteas_p6g_surf_source_preflight PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_surf_source_preflight PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_surf_source_preflight PRIVATE
+    -Wall -Wextra -Wpedantic -Werror)
+endif()
