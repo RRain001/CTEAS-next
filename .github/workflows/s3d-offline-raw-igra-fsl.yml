@@ -1,0 +1,83 @@
+name: S3D offline source-pinned 2022 raw IGRA to FSL replay
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s3d-offline-raw-igra-fsl.yml
+      - native_cpp/orchestration/verify_raw_igra_to_fsl_2022.py
+      - native_cpp/modules/p4_read62/data_prep/parse_igra_to_csv.py
+      - native_cpp/modules/p4_read62/data_prep/read.py
+permissions:
+  contents: read
+jobs:
+  s3d-raw-igra-no-download:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Exact PR checkout with frozen 2022 case
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install scoped Python import dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+      - name: Pin immutable raw NOAA source and verify case lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="$GITHUB_WORKSPACE/project/cases/hefei5km_2022_reference_case_20261011"
+          python3 native_cpp/orchestration/verify_raw_igra_to_fsl_2022.py \
+            --repo "$GITHUB_WORKSPACE" --case "$case" \
+            --source-head "$(git rev-parse HEAD)" \
+            --work "$RUNNER_TEMP/s3d-raw-igra-work" --preflight-only
+      - name: Real original raw 75MB IGRA 2022 to cleaned 00 and 12 and FSL
+        shell: bash
+        timeout-minutes: 48
+        run: |
+          set -euo pipefail
+          case="$GITHUB_WORKSPACE/project/cases/hefei5km_2022_reference_case_20261011"
+          python3 native_cpp/orchestration/verify_raw_igra_to_fsl_2022.py \
+            --repo "$GITHUB_WORKSPACE" --case "$case" \
+            --source-head "$(git rev-parse HEAD)" \
+            --work "$RUNNER_TEMP/s3d-raw-igra-work" \
+            > "$RUNNER_TEMP/s3d-raw-igra-run.log" 2>&1 || {
+              tail -n 120 "$RUNNER_TEMP/s3d-raw-igra-run.log";exit 1;
+            }
+          tail -n 10 "$RUNNER_TEMP/s3d-raw-igra-run.log"
+          grep -q 'S3D_2022_IGRA_RAW_TO_FSL_BYTES=PASS' "$RUNNER_TEMP/s3d-raw-igra-run.log"
+      - name: Invalid provenance and case inputs reject without golden writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="$GITHUB_WORKSPACE/project/cases/hefei5km_2022_reference_case_20261011"
+          if python3 native_cpp/orchestration/verify_raw_igra_to_fsl_2022.py \
+              --repo "$GITHUB_WORKSPACE" --case "$case" \
+              --source-head 0000000000000000000000000000000000000000 \
+              --work "$RUNNER_TEMP/rejected" --preflight-only \
+              > "$RUNNER_TEMP/s3d-reject-source.log" 2>&1; then
+            echo "S3D_INVALID_HEAD_ACCEPTED";exit 1
+          fi
+          if python3 native_cpp/orchestration/verify_raw_igra_to_fsl_2022.py \
+              --repo "$GITHUB_WORKSPACE" --case "$RUNNER_TEMP" \
+              --source-head "$(git rev-parse HEAD)" \
+              --work "$RUNNER_TEMP/rejected" --preflight-only \
+              > "$RUNNER_TEMP/s3d-reject-case.log" 2>&1; then
+            echo "S3D_WRONG_CASE_ACCEPTED";exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/rejected"
+          test -z "$(git status --porcelain -- project/cases/hefei5km_2022_reference_case_20261011)"
+          echo "S3D_BAD_HEAD_CASE_AND_GOLDEN_IMMUTABILITY=PASS"
+      - name: Upload strictly bounded derived-only report and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3d-offline-raw-igra-fsl-audit-no-original-data
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/s3d-raw-igra-work/raw_igra_fsl_science.json
+            ${{ runner.temp }}/s3d-raw-igra-run.log
+            ${{ runner.temp }}/s3d-reject-source.log
+            ${{ runner.temp }}/s3d-reject-case.log
