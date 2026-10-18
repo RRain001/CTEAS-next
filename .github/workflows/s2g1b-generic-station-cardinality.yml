@@ -1,0 +1,74 @@
+name: S2-G1B generic cardinality SS1..SSn US1..USm source-only C++ admission
+
+on:
+  push:
+    branches: [codex/s2g1b-g19-1-to-n-source-stations]
+    paths:
+      - .github/workflows/s2g1b-generic-station-cardinality.yml
+      - native_cpp/modules/p6_calmet/include/cteas/p6/**
+      - native_cpp/modules/p6_calmet/tests/p6g_g19_file_backed_case_tests.cpp
+      - native_cpp/modules/p6_calmet/src/p6g_g19_source_case_preflight_main.cpp
+      - native_cpp/orchestration/p6_g19_handoff.py
+      - native_cpp/orchestration/tests/test_p6_g19_handoff.py
+      - native_cpp/orchestration/README.md
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2g1b-generic-station-cardinality.yml
+      - native_cpp/modules/p6_calmet/include/cteas/p6/**
+      - native_cpp/modules/p6_calmet/tests/p6g_g19_file_backed_case_tests.cpp
+      - native_cpp/modules/p6_calmet/src/p6g_g19_source_case_preflight_main.cpp
+      - native_cpp/orchestration/p6_g19_handoff.py
+      - native_cpp/orchestration/tests/test_p6_g19_handoff.py
+      - native_cpp/orchestration/README.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s2g1b-generic-source-stations-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  all-positive-source-station-cardinalities:
+    name: Original format 1/1, 1/7, 7/1, 7/7 source input only
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install minimal contract requirements
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+      - name: Python new-site site and P6 G19 source contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.orchestration.tests.test_p6_g19_handoff
+          echo 'P6_NUMERICAL_PHYSICS=NOT_RUN'
+      - name: Configure and compile original-format G19 source-only test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/g19-cardinality" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/g19-cardinality" --parallel 2 \
+            --target cteas_p6g_g19_file_backed_case_tests cteas_p6g_g19_source_case_preflight
+      - name: G19 dynamic original-format positive counts and negative allocation budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --test-dir "$RUNNER_TEMP/g19-cardinality" -V --output-on-failure \
+            -R '^p6g_g19_source_file_backed_2ss_2us_g14_input_contract$' \
+            2>&1 | tee "$RUNNER_TEMP/g19-cardinality-test.log"
+          for shape in 1SS_1US 1SS_7US 7SS_1US 7SS_7US; do
+            grep -q "PASS_P6G_G19_FILE_BACKED_CARDINALITY_${shape}" \
+              "$RUNNER_TEMP/g19-cardinality-test.log"
+          done
+          grep -q 'PASS_P6G_G19_FILE_BACKED_2SS_1US_CROSS_YEAR_SOURCE_INPUT' \
+            "$RUNNER_TEMP/g19-cardinality-test.log"
+          grep -q 'PASS_P6G_G19_FILE_BACKED_2SS_2US_CROSS_YEAR_SOURCE_INPUT' \
+            "$RUNNER_TEMP/g19-cardinality-test.log"
+          echo 'G19_INPUT_SOURCE_ONLY=PASS P6D/E/F=NOT_RUN P7=NOT_RUN'

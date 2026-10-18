@@ -12,6 +12,8 @@
 #include "cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
 #include "cteas/p6/p6g_g18c5_selected_p6f_fields.hpp"
 #include <algorithm>
+#include <sstream>
+#include <limits>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
@@ -272,6 +274,146 @@ static void check_one_us_two_ss_source_case(const std::string& original) {
     }
 }
 
+// G1B cardinality-generic original-format INPUT CONTRACT. Source observations
+// here are synthetic original-compatible test records; no native P6 physics.
+static void source_cardinality_surface_file(
+    const std::string& path,sys_seconds begin,int hours_count,int nss) {
+    std::ofstream out(path);
+    check(bool(out),"G1B cardinality SURF source file");
+    out<<"SURF.DAT        2.1             Hour Start and End Times with Seconds\n";
+    out<<"1\nG1B cardinality original-format synthetic SURF\nNONE\nUTC+0000\n";
+    stamp(out,begin);out<<" ";stamp(out,begin+hours{hours_count},true);
+    out<<" "<<nss<<"\n";
+    for(int i=0;i<nss;++i)out<<583210+10*i<<"\n";
+    for(int k=0;k<hours_count;++k) {
+        stamp(out,begin+hours{k});out<<" ";
+        stamp(out,begin+hours{k+1},true);out<<"\n";
+        for(int i=0;i<nss;++i)
+            out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
+    }
+}
+
+static std::string source_cardinality_deck(
+    const std::string& original,int nss,int nus) {
+    std::string result=original;
+    for(const auto& [key,value]:std::vector<std::pair<std::string,std::string>>{
+            {"NSSTA",std::to_string(nss)},{"NUSTA",std::to_string(nus)},
+            {"NX","12"},{"NY","12"},{"DGRIDKM","10"}})
+        result=replace_one(std::move(result),key,value);
+    std::ostringstream out;
+    out<<std::fixed<<std::setprecision(3);
+    for(int i=1;i<nss;++i)
+        out<<"! SS"<<i+1<<" = 'SS"<<i+1<<"' "<<583210+10*i
+           <<" "<<513.385+10*i<<" "<<3533.769+10*i
+           <<" 0 10.0 !\n";
+    for(int i=1;i<nus;++i)
+        out<<"! US"<<i+1<<" = 'US"<<i+1<<"' "<<58424+i
+           <<" "<<513.384+10*i<<" "<<3533.772+10*i<<" 0 !\n";
+    return result+out.str();
+}
+
+static void check_unbounded_original_source_cardinality(
+    const std::string& original,int nss,int nus) {
+    namespace fs=std::filesystem;
+    check(nss>=1&&nus>=1,"G1B requires at least one SS and US");
+    const auto root=fs::path("g19_cardinality_"+std::to_string(nss)+
+                             "ss_"+std::to_string(nus)+"us");
+    if(fs::exists(root))
+        throw std::runtime_error("G1B refuses overwrite of source-input fixture");
+    fs::create_directories(root);
+    p6g::G19SourceFilePaths paths{
+        (root/"met.inp").string(),(root/"GEO.DAT").string(),
+        (root/"SURF.DAT").string(),{}};
+    try {
+        const auto deck=source_cardinality_deck(original,nss,nus);
+        save(paths.met_inp,deck);
+        geo_file(paths.geo_dat);
+        const auto begin=sys_days{year{2023}/December/31}+hours{22};
+        source_cardinality_surface_file(paths.surf_dat,begin,6,nss);
+        for(int i=0;i<nus;++i) {
+            const auto up=(root/("UP"+std::to_string(i+1)+".DAT")).string();
+            paths.ordered_up_dat.push_back(up);
+            upper_file(up,58424+i,sys_days{year{2023}/December/31});
+        }
+        const auto source=p6g::g19_load_original_source_case(paths);
+        auto scheduler=source.make_scheduler();
+        check(static_cast<int>(source.stations.surface.size())==nss&&
+              static_cast<int>(source.stations.upper.size())==nus&&
+              static_cast<int>(source.upper.size())==nus&&
+              scheduler.planned_hours()==6&&
+              scheduler.completed_hours()==0&&
+              scheduler.preview_next_hour().input.upper.size()==
+                  static_cast<std::size_t>(nus)&&
+              scheduler.preview_next_hour().input.end==begin+hours{1}&&
+              source.stheor_upper_ordinal_for_surface.size()==
+                  static_cast<std::size_t>(nss),
+              "G19 dynamic cardinality station count and UTC clocks mismatch");
+        for(int i=0;i<nss;++i)
+            check(source.stations.surface[static_cast<std::size_t>(i)].id
+                       ==583210+10*i,
+                  "G19 original SS ordinal or source ID changed");
+        for(int i=0;i<nus;++i)
+            check(source.stations.upper[static_cast<std::size_t>(i)].id
+                       ==58424+i,
+                  "G19 original US ordinal or source ID changed");
+        const auto upper_choice=p6g::g18b3_source_deck_upper_choice(
+            source.grid,source.stations,source.original_metinp);
+        check(upper_choice.nearu.size()==144&&upper_choice.iupt==-1,
+              "G19 original dynamic NEARU grid or IUPT changed");
+        for(const auto ordinal:source.stheor_upper_ordinal_for_surface)
+            check(ordinal<static_cast<std::size_t>(nus),
+                  "G19 unbounded nearest upper ordinal outside source US set");
+        if(nus==1)
+            for(const auto ordinal:source.stheor_upper_ordinal_for_surface)
+                check(ordinal==0,
+                      "G19 one genuine US must supply every real SS cell");
+        const p6g::CaseInputPaths g14{
+            paths.geo_dat,paths.surf_dat,paths.ordered_up_dat,paths.met_inp,
+            p6g::g19_source_grid_spec(deck),nss,nus};
+        auto other=p6g::load_unified_multistation_case(g14);
+        const auto first=scheduler.preview_next_hour(),second=other.preview_next_hour();
+        check(other.planned_hours()==scheduler.planned_hours()&&
+              first.input.end==second.input.end&&
+              first.input.upper.size()==second.input.upper.size()&&
+              first.surface.by_station.size()==second.surface.by_station.size(),
+              "G19/G14B independently loaded dynamic source clock mismatch");
+        // Independent allocation-safety denial: no station-count-specific
+        // cap, but total station-hour slots must fit the source budget.
+        rejects([&]{
+            (void)p6g::read_surface_dynamic(
+                paths.surf_dat,{},200000,
+                static_cast<std::size_t>(std::numeric_limits<int>::max()),
+                static_cast<std::size_t>(nss*6-1));
+        },"G19 refused to fail closed on SURF station-hours budget");
+        // An incomplete G14 stage MUST NOT commit any source-derived hour.
+        struct AbsentPhysics final:p6g::MultiHourPhysics {
+            cteas::calmet::p6::NativeHourStageResult run(
+                cteas::calmet::p6::NativeHourStage,
+                p6g::MultiHourFrame&) override {
+                return {cteas::calmet::p6::NativeHourSource::Unknown,false};
+            }
+        } none;
+        rejects([&]{scheduler.advance(none);},
+                "G19 arbitrary source count bypassed 17-stage physics gate");
+        check(scheduler.completed_hours()==0,
+              "G19 failed physical stage denial committed source hour");
+        // Missing ordered UP must not be silently reconstructed from
+        // another station's observations or frozen MET.DAT.
+        auto wrong=paths;
+        wrong.ordered_up_dat.pop_back();
+        rejects([&]{(void)p6g::g19_load_original_source_case(wrong);},
+                "G19 missing ordered US source was accepted");
+        fs::remove_all(root);
+        std::cout<<"PASS_P6G_G19_FILE_BACKED_CARDINALITY_"
+                 <<nss<<"SS_"<<nus<<"US_ORIGINAL_FORMAT_INPUT "
+                   "UTC_CLOCK_NEARU_SOURCE_BUDGET "
+                   "PRODUCTION_PHYSICS_NOT_ACCEPTED\n";
+    } catch(...) {
+        fs::remove_all(root);
+        throw;
+    }
+}
+
 int main(int argc,char** argv){
     if(argc>=4&&argc<=8&&std::string(argv[1])=="--export-case") {
         try {
@@ -336,6 +478,11 @@ int main(int argc,char** argv){
         check(argc==2,"G19 requires pinned original CALMET met.inp path");
         const auto original=read(argv[1]);
         check_one_us_two_ss_source_case(original);
+        // Independent cardinalities: 1/1, 1/7, 7/1, 7/7. Existing
+        // 2/1 and 2/2 coverage remains unmodified.
+        for(const auto& [nss,nus]:
+            std::vector<std::pair<int,int>>{{1,1},{1,7},{7,1},{7,7}})
+            check_unbounded_original_source_cardinality(original,nss,nus);
         // The real single-station Hefei deck must not be promoted to a
         // two-surface/two-upper station scientific run.
         const auto source=p6g::g19_source_grid_spec(original);

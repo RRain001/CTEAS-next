@@ -163,6 +163,89 @@ class SourceFileHandoffTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "missing or empty"):
             self.plan()
 
+    def test_one_surface_one_upper_original_station_handoff(self):
+        # One REAL station ID in each group. Placeholder file bodies here;
+        # C++ G19 CTest separately covers genuine original-format parsing.
+        for year in (2022, 2023):
+            p4path = self.c.p4 / str(year) / "p4_station_selection_audit.json"
+            a = json.loads(p4path.read_text())
+            a["selected"] = a["selected"][:1]
+            p4path.write_text(json.dumps(a))
+            p5path = self.c.p5 / f"station_selection_{year}.json"
+            b = json.loads(p5path.read_text())
+            b["stations"] = b["stations"][:1]
+            b["stations"][0]["wind_treatment"] = "COMPLETE_FILL_AND_CALM_REPLACE"
+            b["primary_sid"] = b["stations"][0]["sid"]
+            b["station_selection_case"] = "IN_DOMAIN_SINGLE"
+            p5path.write_text(json.dumps(b))
+        def one_one(lines):
+            lines[:] = [line for line in lines
+                        if not line.startswith(("! SS2 ", "! US2 "))]
+            lines[:] = [line.replace("NSSTA = 2", "NSSTA = 1").replace(
+                "NUSTA = 2", "NUSTA = 1") for line in lines]
+        self.write_deck(one_one)
+        p = self.plan()
+        self.assertEqual(p["ordered_upper_station_ids"], ["USM00012345"])
+        self.assertEqual(p["ordered_surface_station_ids"], ["72469099999"])
+        self.assertEqual(p["ordered_surface_ifstn_ids"], [7246901])
+        self.assertEqual(set(p["roles"]), {
+            "met_deck", "p3_geo", "p4_upper_us1", "p5_surface"})
+        self.assertFalse(p["model_executed"])
+        self.assertFalse(p["ready"])
+
+    def test_seven_surface_seven_upper_station_handoff_no_six_cap(self):
+        for year in (2022, 2023):
+            p4path = self.c.p4 / str(year) / "p4_station_selection_audit.json"
+            a = json.loads(p4path.read_text())
+            p5path = self.c.p5 / f"station_selection_{year}.json"
+            b = json.loads(p5path.read_text())
+            for k in range(5):
+                lat, lon = 40.02 + 0.01*k, -104.97 + 0.01*k
+                wmo = 30001 + k
+                sid = f"USM000{wmo:05d}"
+                a["selected"].append({
+                    "id": sid, "site_type": "OBSERVED",
+                    "source_lat": lat, "source_lon": lon,
+                    "effective_lat": lat, "effective_lon": lon,
+                    "valid_original_slots": 729, "coverage": 729 / 730,
+                })
+                base = 724710 + k*10
+                b["stations"].append({
+                    "sid": f"{base:06d}99999", "lat": lat, "lon": lon,
+                    "source_lat": lat, "source_lon": lon,
+                    "elev": 10.0, "source_elev": 10.0,
+                    "relocated": False, "ifstn": f"{base:06d}1",
+                    "expected_hours": 8760,
+                    "full_isd_raw_hours": 100, "isd_lite_raw_hours": 95,
+                    "full_isd_coverage": 100 / 8760,
+                    "isd_lite_coverage": 95 / 8760,
+                    "wind_treatment": "RAW_SPARSE_STANDARDIZE_ONLY",
+                })
+                (self.up / f"up_{wmo}.dat").write_bytes(
+                    b"ORIGINAL_FORMAT_RECORDS_REQUIRE_G19_CPP_PARSE\\n")
+            a["in_domain_candidates"] = 7
+            p4path.write_text(json.dumps(a))
+            b["station_selection_case"] = "IN_DOMAIN_MULTIPLE"
+            p5path.write_text(json.dumps(b))
+        def seven_seven(lines):
+            lines[:] = [line.replace("NSSTA = 2", "NSSTA = 7").replace(
+                "NUSTA = 2", "NUSTA = 7") for line in lines]
+            for k in range(5):
+                lat, lon = 40.02 + 0.01*k, -104.97 + 0.01*k
+                x, y = lon_lat_to_utm_km(lon, lat, 13, True)
+                base = 724710 + k*10
+                lines.append(
+                    f"! SS{k+3} = 'SURF{k+3}' {base:06d}1 {x:.3f} {y:.3f} 0 10.0 !")
+                lines.append(
+                    f"! US{k+3} = 'UP{k+3}' {30001+k} {x:.3f} {y:.3f} 0 !")
+        self.write_deck(seven_seven)
+        p = self.plan()
+        self.assertEqual(len(p["ordered_upper_station_ids"]), 7)
+        self.assertEqual(len(p["ordered_surface_station_ids"]), 7)
+        self.assertEqual(len(p["roles"]), 10)
+        self.assertFalse(p["model_executed"])
+        self.assertFalse(p["ready"])
+
     def test_input_preflight_failure_never_marked_as_science_pass(self):
         exe = self.c.root.parent / "mock_native_g19"
         exe.write_text("#!/bin/sh\necho 'REJECT: malformed GEO/SURF/UP'; exit 1\n")

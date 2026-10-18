@@ -156,8 +156,10 @@ inline std::vector<UpperSeries> read_upper_station_set(
     const std::vector<std::string>& files,
     const std::vector<int>& deck_station_ids,
     std::size_t max_soundings_per_station=100000) {
-    require_upper(!files.empty()&&files.size()==deck_station_ids.size()&&
-                  files.size()<=1000,"UP.DAT station set size/identity mismatch");
+    // No arbitrary station-number ceiling: one original-format UP file per
+    // source US; hour and sounding allocation are independently bounded.
+    require_upper(!files.empty()&&files.size()==deck_station_ids.size(),
+                  "UP.DAT station set size/identity mismatch");
     std::set<int> seen;
     std::vector<UpperSeries> result;
     result.reserve(files.size());

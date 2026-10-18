@@ -20,7 +20,7 @@ struct G18B3UpperChoice {
 };
 inline int g18b3_parse_original_iupt(const std::string& metinp,
                                      std::size_t upper_count) {
-    if(upper_count==0||upper_count>1000)
+    if(upper_count==0)
         throw std::invalid_argument("G18B3 upper station count invalid");
     const auto value=source_wind_normalize(source_wind_value(metinp,"IUPT"));
     std::size_t used=0;int requested=0;
@@ -40,7 +40,7 @@ inline G18B3UpperChoice g18b3_source_deck_upper_choice(
                                                station_set.upper.size());
     if(grid.nx<2||grid.ny<2||grid.nx>400||grid.ny>400||
        !std::isfinite(grid.grid_km)||grid.grid_km<=0.f||
-       station_set.upper.empty()||station_set.upper.size()>1000)
+       station_set.upper.empty())
         throw std::invalid_argument("G18B3 grid/UP count outside selected scope");
     const float dgrid=grid.grid_km*1000.f;
     const auto nx=static_cast<std::size_t>(grid.nx);
