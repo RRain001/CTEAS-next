@@ -95,3 +95,19 @@ Original HITS is an independent source-specific reference. This change does not 
 
 The target after localization is C++ native GLCC's selected physical spatial-transform path itself, not remapping classes, altering 1992–1993 source, forcing HITS equal by cell redistribution, or changing the declared original-science threshold.
 
+
+## 2026-10-19 focused projection-science candidate (unapproved)
+
+Run [#39174897800](https://github.com/RRain001/CTEAS-next/actions/runs/39174897800) independently reproduced the original **33/95,000** genuine integer HITS discrepancies (Fortran 10013; native 10011), with **all 95,000 rounded displayed fractions equal**. Original `LQACELL=T` mesh output was recorded and paired to 10,255 native points; the observed maximum matched offset was about 0.496 m, with several 100 m gridline assignment disagreements; one original point did not match native. This evidence supports a difference in the coordinate / rounding chain, **not a proven exact reproduction** of either coordinate transformation.
+
+**Original source path** in frozen CTGPROC GLOBAL branch: spherical ESR-S Lambert azimuthal equal-area `(xc,yc)` source pixels, split to `MESHGLAZ=20` `REAL*4` submesh `(xmesh,ymesh)`, `GLOBE / COORDS` direct LAEA→UTM WGS84, output `REAL*4` `(xgrid,ygrid)`, Fortran `LUGRID` floating-point index truncation.
+
+**Existing C++ replay path** generates 7-decimal longitude/latitude via spherical LAEA inverse, casts `REAL*4`, and uses GDAL's EPSG UTM conversion; this may introduce additional shift. The original COORDLIB numeric methods and datum path may also differ from GDAL even for direct LAEA→UTM; therefore **direct GDAL is only a candidate**, not claimed to match original.
+
+This scoped PR adds `glcc_direct_laea_probe.hpp` and an optional **`--qa-submesh --probe-direct`** option on the historical source native executable. It iterates *the identical native source pixels/submesh indices*, reconstructs the Fortran grouped `REAL*4` source LAEA sample and uses a separate spherical-LAEA (R=6370997)→EPSG:32650 GDAL transformation, then Fortran-style REAL*4 truncation for per-cell integer hits. The new file `p2_glcc_direct_laea_candidate_hits.csv` is pinned in the D1 manifest by SHA256. It does **not** overwrite existing D1 counts, old source replay fractions, D3 LU, P3, or P6/P7.
+
+The manual-only authentic CTGPROC `LFINAL=T/F` workflow now independently compares candidate **all 95,000 integer hits** and reports the independent candidate mismatch/max delta/total in the result JSON as `direct_laea_candidate.status=DIAGNOSTIC_ONLY_NOT_PRODUCTION_AND_NOT_ACCEPTANCE`. **Only the existing production D1 integer gate can grant genuine original science PASS.** The candidate may show a strong improvement or regression; either outcome needs scientific interpretation, and a real 156MB manual workflow dispatch *after merging the diagnostic* is required to evaluate it. Original vendor Fortran remains unmodified. No automatic PR science.
+
+**Acceptance invariant**: zero exact integer HITS mismatches for the selected *production* algorithm plus original rounded fraction checks; do not force sample reassignment, infer integer equality from the 3 decimal displays, relax tolerances, or silently switch to candidate.
+
+GLC_FCS30D 35-class→USGS92 environmental crosswalk (incl. 183/210 blocked, 182/190 site-evidence) is independently `P2_MAPPING_REVIEW_REQUIRED`; no modern GLC `LU.DAT` output is approved.
