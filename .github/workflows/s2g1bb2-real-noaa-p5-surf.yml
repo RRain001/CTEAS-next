@@ -48,7 +48,49 @@ jobs:
           cmake --build "$RUNNER_TEMP/p5-source-cpp" --parallel 2 \
             --target cteas_p5_smerge cteas_p5_tests
           ctest --test-dir "$RUNNER_TEMP/p5-source-cpp" --output-on-failure \
-            -R '^p5_smerge' 
+            -R '^p5_generic_utc_input_contracts
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-surf-source" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/p6-surf-source" --parallel 2 \
+            --target cteas_p6g_surf_source_preflight
+      - name: Original NOAA 2022/2023 2-site native P5 and G7 source-only checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s2g1bb2-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/s2g1bb2-evidence/exact-head.txt"
+          python3 -u -m scripts.s2g.real_noaa_native_p5_surf \
+            --native-p5-bin "$RUNNER_TEMP/p5-source-cpp/cteas_p5_smerge" \
+            --native-surf-preflight-bin "$RUNNER_TEMP/p6-surf-source/cteas_p6g_surf_source_preflight" \
+            --evidence-out "$RUNNER_TEMP/s2g1bb2-evidence/authentic-noaa-two-year-native-surf.json" \
+            2>&1 | tee "$RUNNER_TEMP/s2g1bb2-evidence/noaa-p5-source.log"
+          grep -q 'G1BB2_REAL_NOAA_P5_NATIVE_SURF_INPUT_PASS_SCOPED' \
+            "$RUNNER_TEMP/s2g1bb2-evidence/noaa-p5-source.log"
+          python3 - "$RUNNER_TEMP/s2g1bb2-evidence/authentic-noaa-two-year-native-surf.json" <<'PY'
+          import json,sys
+          v=json.load(open(sys.argv[1]))
+          assert v["status"]=="G1BB2_REAL_NOAA_P5_NATIVE_SURF_INPUT_PASS_SCOPED"
+          assert {r["year"] for r in v["years"]}=={2022,2023}
+          for r in v["years"]:
+              assert len(r["ordered_station_ifstn_ids"])==2
+              assert len(r["original_noaa_sha256"])==4
+              assert "PASS_P6G_REAL_NOAA_NATIVE_SURF_SOURCE_HOURLY" in r["independent_cpp_surf_reader"]
+              assert r["negative_reversed_station_order"]=="BLOCKED_AS_EXPECTED"
+              assert r["negative_truncated_original_hour"]=="BLOCKED_AS_EXPECTED"
+              assert sorted(r["wind_stages"].values())==["final","secondary_raw_sparse"]
+          assert v["P3_GEO"]=="NOT_PRODUCED"
+          assert v["G19_FULL_SOURCE"]=="BLOCKED_NO_INDEPENDENT_GEO"
+          assert not v["science_45_field_accepted"]
+          print("G1B_B2_REAL_NOAA_NATIVE_SURF=PASS_SCOPED P6/P7=NOT_RUN")
+          PY
+      - name: Upload hashes, status and logs only (not original NOAA bytes)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s2g1bb2-source-sha-log-only
+          path: ${{ runner.temp }}/s2g1bb2-evidence/
+          if-no-files-found: warn
+ 
           cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-surf-source" \
             -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
           cmake --build "$RUNNER_TEMP/p6-surf-source" --parallel 2 \
