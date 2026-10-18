@@ -181,7 +181,7 @@ static void check_one_us_two_ss_source_case(const std::string& original) {
     try {
         std::string one=replace_one(make_two_station_crossyear_deck(original),
                                     "NUSTA","1");
-        const std::string extra="! US2 = 'U002' 58425 553.384 3573.772 0 !\\n";
+        const std::string extra="! US2 = 'U002' 58425 553.384 3573.772 0 !\n";
         const auto where=one.find(extra);
         check(where!=std::string::npos,"G1B cannot identify synthetic US2");
         one.erase(where,extra.size());
@@ -253,7 +253,7 @@ static void check_one_us_two_ss_source_case(const std::string& original) {
                    sys_days{year{2023}/December/31});
         // Unsupported/wrong original source chronology must fail closed.
         save(paths.ordered_up_dat[0],
-             "UP.DAT 2.1\\nINCOMPLETE ORIGINAL 00/12 UTC BRACKET\\n");
+             "UP.DAT 2.1\nINCOMPLETE ORIGINAL 00/12 UTC BRACKET\n");
         rejects([&]{(void)p6g::g19_load_original_source_case(paths);},
                 "G1B missing real 00/12 upper bracket accepted");
         // Preserve explicit two-ground station lower bound.
@@ -264,7 +264,7 @@ static void check_one_us_two_ss_source_case(const std::string& original) {
         fs::remove_all(root);
         std::cout<<"PASS_P6G_G19_FILE_BACKED_2SS_1US_CROSS_YEAR_SOURCE_INPUT "
                     "NEARU_ORDINAL_ONE ORIGINAL_G14B_CLOCK_MATCH "
-                    "PRODUCTION_PHYSICS_NOT_ACCEPTED\\n";
+                    "PRODUCTION_PHYSICS_NOT_ACCEPTED\n";
     } catch(...) {
         fs::remove_all(root);
         throw;
