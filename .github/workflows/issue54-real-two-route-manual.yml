@@ -8,6 +8,8 @@ on:
       - 'scripts/s2g/tests/test_p1_real_actions_case.py'
       - 'scripts/s2g/p1_terrain_source.py'
       - 'scripts/s2g/tests/test_p1_terrain_http_diagnostics.py'
+      - 'scripts/s2g/p1_opentopo_bulk.py'
+      - 'scripts/s2g/tests/test_p1_opentopo_bulk.py'
   workflow_dispatch:
     inputs:
       route:
@@ -38,7 +40,7 @@ jobs:
       - name: Check strict independent case geometry (NO DEM)
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_p1_real_actions_case scripts.s2g.tests.test_p1_terrain_http_diagnostics
+          python3 -m unittest -v scripts.s2g.tests.test_p1_real_actions_case scripts.s2g.tests.test_p1_terrain_http_diagnostics scripts.s2g.tests.test_p1_opentopo_bulk
           echo 'P1_REAL_SITE_GRID_CASE=PASS_SOFTWARE_ONLY'
           echo 'P1_REAL_SRTM_SOURCE=NOT_RUN P1_ORIGINAL_PARITY=NOT_RUN'
   manually-authorized-real-source-native:
