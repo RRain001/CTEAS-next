@@ -56,8 +56,8 @@ class Issue56RealRunnerStagingTests(unittest.TestCase):
     def test_cross_year_inclusive_window_and_two_calendar_source_sets(self):
         root, info = stage_case(self.verified, self.staged, "crossyear")
         admitted = admit_case(root / "case.yaml")
-        self.assertEqual(admitted.research_begin, "20221231-230000")
-        self.assertEqual(admitted.research_end, "20230101-030000")
+        self.assertEqual(admitted.research_begin, "20221231-000000")
+        self.assertEqual(admitted.research_end, "20230102-000000")
         self.assertEqual(info["year_scope"], [2022, 2023])
         self.assertEqual(len(info["raw_noaa_sha256"]), 4 * len(P5_STATIONS))
         self.assertEqual(admitted.grid_sha256, info["grid_cmn_sha256"])
