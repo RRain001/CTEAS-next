@@ -1,0 +1,87 @@
+name: S2-G1B-B1 genuine archived NOAA to native P4 UP input-only
+
+on:
+  push:
+    branches: [codex/s2g1bb-real-noaa-p4-upperair-production]
+    paths:
+      - .github/workflows/s2g1bb-real-noaa-native-p4-up.yml
+      - scripts/s2g/real_noaa_native_p4_up.py
+      - native_cpp/modules/p6_calmet/src/p6g_up_source_preflight_main.cpp
+      - native_cpp/modules/p6_calmet/CMakeLists.txt
+      - native_cpp/modules/p4_read62/**
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2g1bb-real-noaa-native-p4-up.yml
+      - scripts/s2g/real_noaa_native_p4_up.py
+      - native_cpp/modules/p6_calmet/src/p6g_up_source_preflight_main.cpp
+      - native_cpp/modules/p6_calmet/CMakeLists.txt
+      - native_cpp/modules/p4_read62/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s2g1bb-noaa-p4-only-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  genuine-noaa-short-p4-native-source:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Prepare Python observational parsers (not numerical models)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          python3 -m compileall -q scripts/s2g/real_noaa_native_p4_up.py
+      - name: Compile the P4 READ62 producer and independent P6 UP-only original-format parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p4_read62 -B "$RUNNER_TEMP/real-p4-cpp" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/real-p4-cpp" --parallel 2 --target cteas_p4_read62 cteas_p4_tests
+          ctest --test-dir "$RUNNER_TEMP/real-p4-cpp" -R '^p4_fsl_input_contracts$' --output-on-failure
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/source-up-only" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/source-up-only" --parallel 2 \
+            --target cteas_p6g_up_source_preflight
+      - name: Run real NOAA archived 2023 IGRA selection and native UP with 6h physical sounding brackets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s2g1bb-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/s2g1bb-evidence/exact-head.txt"
+          python3 -m scripts.s2g.real_noaa_native_p4_up \
+            --native-p4-bin "$RUNNER_TEMP/real-p4-cpp/cteas_p4_read62" \
+            --native-up-preflight-bin "$RUNNER_TEMP/source-up-only/cteas_p6g_up_source_preflight" \
+            --evidence-out "$RUNNER_TEMP/s2g1bb-evidence/real-noaa-up-source.json" \
+            2>&1 | tee "$RUNNER_TEMP/s2g1bb-evidence/source-only.log"
+          grep -q 'G1BB1_REAL_NOAA_ANQING_NATIVE_P4_UP_SOURCE_PASS_SCOPED' \
+            "$RUNNER_TEMP/s2g1bb-evidence/source-only.log"
+          python3 - "$RUNNER_TEMP/s2g1bb-evidence/real-noaa-up-source.json" <<'PY'
+          import json,sys
+          a=json.load(open(sys.argv[1]))
+          assert a["source_station"]=="CHM00058424"
+          assert a["calendar_year"]==2023 and a["original_valid_slots"]==730
+          assert a["model_hours_checked"]==6
+          assert "PASS_P6G_REAL_NOAA_UP_SOURCE_TIME_BRACKETS" in a["independent_P6_up_source_parser"]
+          assert a["P3_GEO"]=="NOT_PRODUCED" and a["P5_SURF"]=="NOT_PRODUCED"
+          assert a["G19_FULL_SOURCE"]=="BLOCKED_NO_NEW_SITE_GEO_SURF"
+          assert not a["full_site_science_accepted"]
+          print("SCOPED_REAL_NOAA_NATIVE_UP=PASS G19_FULL_SOURCE=BLOCKED P6_P7=NOT_RUN")
+          PY
+      - name: Publish evidence metadata only (no original NOAA files, no case binaries)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s2g1bb-genuine-noaa-source-only-sha-and-log
+          path: ${{ runner.temp }}/s2g1bb-evidence/
+          if-no-files-found: warn
