@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """#53 scientific gate: ORIGINAL CTGPROC GLAZAS vs authentic native GLCC D1/D3.
 
-Requires the authentic original binary built from a Git-SHA-locked CTEAS
-vendor source checkout in isolated Actions scratch, pinned by binary SHA256. Never substitutes GEN, captured historical LU, or a
+Legacy FRACTION-ONLY diagnostic retained for parser reuse and traceability.
+For full authentic original science use validate_p2_glazas_hits.py, which
+requires original Fortran LFINAL=T and LFINAL=F independent integer HITS.
+Authentic original binary is pinned by source commit and binary SHA256. Never substitutes GEN, captured historical LU, or a
 synthetic fixture as the original GLAZAS oracle. Invoked ONLY manually.
 """
 from __future__ import annotations
@@ -160,13 +162,12 @@ def compare(original: Path,native: Path,lst: Path,native_manifest: Path) -> dict
         "mean_absolute_fraction_difference":total/(2500*38),
         "exceedances":different,
         "first_20_exceedances":first,
-        "original_glazas_logged_points":used,
-        "native_d1_d3_points":native_used,
-        "point_difference":native_used-used,
+        "original_glcc_source_pixels_used":used,
+        "native_d1_d3_submesh_hits":native_used,
+        "point_count_comparison":"NOT_COMPARABLE_DIFFERENT_UNITS",
         "numeric_gate":"PASS" if different==0 else "FAIL",
-        "point_count_gate":"PASS" if used==native_used else "FAIL",
     }
-    report["overall"]="PASS_ORIGINAL_GLAZAS_SAME_SOURCE" if (different==0 and used==native_used) else "FAIL_ORIGINAL_GLAZAS_PARITY"
+    report["overall"]="PASS_FRACTION_ONLY_PENDING_INTEGER_HITS" if different==0 else "FAIL_ORIGINAL_GLAZAS_FRACTIONS"
     return report
 
 def run(argv=None) -> int:
@@ -243,8 +244,7 @@ def run(argv=None) -> int:
         })
         result.write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
         print(json.dumps(report,indent=2,ensure_ascii=False))
-        require(report["overall"]=="PASS_ORIGINAL_GLAZAS_SAME_SOURCE",
-                "ORIGINAL_GLAZAS_PARITY_FAILED_SEE_RESULT_JSON")
+        require(False,"FRACTION_ONLY_IS_NOT_SCIENCE_PASS_USE_validate_p2_glazas_hits")
         return 0
     except (Exception,BaseException) as e:
         (a.out_dir/"FAILED.txt").write_text(str(e)+"\n")
