@@ -42,7 +42,7 @@ jobs:
           echo 'REAL_90M=NOT_RUN REAL_30M=NOT_RUN ORIGINAL_PARITY=NOT_RUN'
 
   manual-real-parity:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, Linux, X64, cteas-managed]
     timeout-minutes: 60
     env:
