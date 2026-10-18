@@ -171,7 +171,77 @@ def _native_surf_preflight(reader: Path, case: Path, result: dict) -> dict:
             "ordered_ifstn": order, "stdout_tail": proc.stdout[-700:]}
 
 
-def run(native: Path, reader: Path, scenario: str) -> dict:
+def compare_original_smerge(original_binary: Path, case: Path,
+                            producer: dict, scratch: Path) -> dict:
+    """Independently run the unchanged vendor SMERGE with the exact native deck.
+
+    Only a minimal source-layout copy is made: original and native consume
+    identical GENERIC and smerge.inp bytes. The Fortran-only sparse EOF
+    adapter, if present in the native deck, is copied byte-for-byte.
+    Compare RAW SURF.DAT, not the separately cloud-adjusted published SURF.
+    """
+    if not original_binary.is_absolute() or original_binary.is_symlink() or not original_binary.is_file():
+        raise ValueError("original SMERGE binary must be independently compiled and absolute")
+    copied = scratch / ("original_" + case.name)
+    if copied.exists() or copied.is_symlink():
+        raise ValueError("original comparison workspace is not fresh")
+    cmp_run = copied / "run/smerge"
+    cmp_run.mkdir(parents=True)
+    cmp_ready = copied / "met/surface/isd2smerge_ready"
+    shutil.copytree(case / "met/surface/isd2smerge_ready", cmp_ready)
+    control_native = case / "run/smerge/smerge.inp"
+    control_fortran = cmp_run / "smerge.inp"
+    shutil.copyfile(control_native, control_fortran)
+    sentinel = case / "run/smerge/original_smerge_sparse_runtime"
+    if sentinel.exists():
+        if sentinel.is_symlink() or not sentinel.is_dir():
+            raise ValueError("unsafe original-only sparse EOF adapter")
+        shutil.copytree(sentinel, cmp_run / sentinel.name)
+    if digest(control_fortran) != digest(control_native):
+        raise ValueError("original and native SMERGE controls differ")
+    for native_generic in sorted((case / "met/surface/isd2smerge_ready").glob("*.csv")):
+        if digest(native_generic) != digest(cmp_ready / native_generic.name):
+            raise ValueError("original/native GENERIC source bytes differ")
+    proc = subprocess.run(
+        [str(original_binary), "smerge.inp"], cwd=cmp_run,
+        capture_output=True, text=True, check=False, timeout=120
+    )
+    original_surf = cmp_run / "surf.dat"
+    if proc.returncode or not original_surf.is_file():
+        raise RuntimeError("independent original Fortran SMERGE failed: " +
+                           proc.stdout[-800:] + proc.stderr[-800:])
+    native_surf = case / "run/smerge/surf.dat"
+    a, b = original_surf.read_bytes(), native_surf.read_bytes()
+    al, bl = a.splitlines(), b.splitlines()
+    first_difference = None
+    if a != b:
+        for i in range(max(len(al), len(bl))):
+            aa = al[i] if i < len(al) else b""
+            bb = bl[i] if i < len(bl) else b""
+            if aa != bb:
+                first_difference = {"line": i + 1,
+                                    "original": aa.decode(errors="replace")[:180],
+                                    "native": bb.decode(errors="replace")[:180]}
+                break
+        raise RuntimeError("real new-site original-vs-native SMERGE raw SURF BYTE PARITY FAIL: " +
+                           json.dumps(first_difference, ensure_ascii=False))
+    if digest(native_surf) != producer["raw_native_surf_sha256"]:
+        raise RuntimeError("P5 native SURF changed after publication")
+    return {
+        "P5_ORIGINAL_PARITY": "SCIENCE_ACCEPTED_SCOPED_RAW_SURF_BYTE_IDENTICAL",
+        "controls_exact_sha256": digest(control_fortran),
+        "original_smerge_executable_sha256": digest(original_binary),
+        "original_raw_surf_sha256": digest(original_surf),
+        "native_raw_surf_sha256": digest(native_surf),
+        "original_bytes": len(a), "native_bytes": len(b),
+        "original_lines": len(al), "native_lines": len(bl),
+        "first_difference": None, "byte_identical": True,
+        "original_stdout_tail": proc.stdout[-300:],
+        "scientific_scope": "only JDAT8 IOFORM2 IOPACK0 LPREV-F LPCALC-F UTC",
+    }
+
+
+def run(native: Path, reader: Path, scenario: str, original: Path | None = None) -> dict:
     for binary in (native, reader):
         if not binary.is_absolute() or binary.is_symlink() or not binary.is_file():
             raise FileNotFoundError("explicit native executable must be an absolute regular file")
@@ -200,11 +270,14 @@ def run(native: Path, reader: Path, scenario: str) -> dict:
                 if year["mode"] != "OBSERVED":
                     raise RuntimeError("genuine in-domain station suddenly became virtual")
             read_result = _native_surf_preflight(reader, case, producer)
+            parity = (compare_original_smerge(original, case, producer, independent)
+                      if original is not None else {"P5_ORIGINAL_PARITY": "NOT_RUN"})
             results.append({
                 **staging,
                 "P5_GENERIC_CASE_EXECUTION": producer["P5_GENERIC_CASE_EXECUTION"],
                 "P5_NATIVE_SURF": producer["P5_NATIVE_SURF"],
-                "P5_ORIGINAL_PARITY": "NOT_RUN",
+                "P5_ORIGINAL_PARITY": parity["P5_ORIGINAL_PARITY"],
+                "original_vs_native": parity,
                 "P5_TO_G19": "NOT_RUN",
                 "raw_native_surf_sha256": producer["raw_native_surf_sha256"],
                 "published_surf_sha256": producer["published_surf_sha256"],
@@ -224,7 +297,8 @@ def run(native: Path, reader: Path, scenario: str) -> dict:
         "input_provenance": provenance,
         "scenarios": results,
         "P6_NUMERICAL": "NOT_RUN", "P7": "NOT_RUN",
-        "ORIGINAL_SMERGE_PARITY": "NOT_RUN", "G19_JOINT": "NOT_RUN",
+        "ORIGINAL_SMERGE_PARITY": ("SCIENCE_ACCEPTED_SCOPED" if original is not None
+                                    else "NOT_RUN"), "G19_JOINT": "NOT_RUN",
     }
 
 
@@ -232,11 +306,14 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Manual authentic NOAA P5 new-case native SURF replay")
     ap.add_argument("--native-p5-bin", required=True, type=Path)
     ap.add_argument("--native-surf-preflight-bin", required=True, type=Path)
+    ap.add_argument("--original-smerge-bin", type=Path, default=None,
+                    help="Independently compiled original Fortran SMERGE for exact raw byte parity")
     ap.add_argument("--scenario", choices=[*SCENARIOS, "all"], default="all")
     ap.add_argument("--evidence-out", required=True, type=Path)
     args = ap.parse_args(argv)
     try:
-        result = run(args.native_p5_bin, args.native_surf_preflight_bin, args.scenario)
+        result = run(args.native_p5_bin, args.native_surf_preflight_bin,
+                     args.scenario, original=args.original_smerge_bin)
         target = args.evidence_out
         if target.is_symlink() or target.exists():
             raise ValueError("do not overwrite existing authentic-source evidence")
