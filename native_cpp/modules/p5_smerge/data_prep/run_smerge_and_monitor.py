@@ -20,7 +20,7 @@ from pathlib import Path
 
 from engine.core.paths import BIN_ROOT, VENDOR_BIN_DIR, case_path, current_case_name, current_project_path, resolve_executable
 from engine.core.runner import run_binary
-from .p5_case_paths import case_root, ROOT_ENV
+from native_cpp.modules.p5_smerge.data_prep.p5_case_paths import case_root, ROOT_ENV
 
 
 CASE_ROOT = case_root().resolve()
