@@ -36,8 +36,10 @@ def required_names(box:dict)->list[str]:
     if any(type(v) not in (int,float) or not math.isfinite(v) for v in vals):
         raise D2AssetError("invalid geographic footprint")
     west,east,south,north=vals
-    if (west>=east or south>=north or west<MAX_LON[0]-EPS or
-        east>MAX_LON[1]+EPS or south<MAX_LAT[0]-EPS or north>MAX_LAT[1]+EPS):
+    if west>=east or south>=north:
+        raise D2AssetError("invalid geographic footprint")
+    if (west<MAX_LON[0]-EPS or east>MAX_LON[1]+EPS or
+        south<MAX_LAT[0]-EPS or north>MAX_LAT[1]+EPS):
         raise D2AssetError("buffered case exceeds verified six-tile coverage")
     needed=[]
     for name,(_,left,right,bottom,top) in APPROVED.items():
