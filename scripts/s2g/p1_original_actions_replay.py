@@ -327,6 +327,14 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
                 coordinate_probe["original_inside_hits"]==compared["original_hits_total"])
             coordinate_probe["proj_proxy_hits_match_native_CXX"]=(
                 coordinate_probe["proj_proxy_inside_hits"]==compared["native_hits_total"])
+            if coordinate_probe.get("direct_cpp",{}).get("status") == "DIAGNOSTIC_ONLY_NOT_SCIENCE_ACCEPTED":
+                direct=coordinate_probe["direct_cpp"]
+                direct["original_trace_hits_match_original_SAV"]=(
+                    direct["original_inside_hits"]==compared["original_hits_total"])
+                direct["direct_cpp_hits_match_unchanged_native_CSV"]=(
+                    direct["direct_native_inside_hits"]==compared["native_hits_total"])
+                direct["direct_cpp_hits_match_pyproj_proxy"]=(
+                    direct["direct_native_inside_hits"]==coordinate_probe["proj_proxy_inside_hits"])
         except (ImportError,OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
             coordinate_probe={
                 "status":"BLOCKED_FORENSIC_DIAGNOSTIC",
