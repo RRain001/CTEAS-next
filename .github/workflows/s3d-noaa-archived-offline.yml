@@ -1,0 +1,76 @@
+name: S3D archived NOAA 2022 offline raw to FSL GENERIC science input
+on:
+  push:
+    branches:
+      - codex/s3d-noaa-archived-offline-replay
+    paths:
+      - .github/workflows/s3d-noaa-archived-offline.yml
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s3d-noaa-archived-offline.yml
+      - native_cpp/orchestration/replay_archived_noaa_2022.py
+      - native_cpp/modules/p4_read62/data_prep/**
+      - native_cpp/modules/p5_smerge/data_prep/**
+permissions:
+  contents: read
+jobs:
+  original-noaa-offline-2022:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 85
+    steps:
+      - name: Check out trusted exact source with large raw archived data
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install deterministic local Python pipeline dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          python3 -m compileall -q native_cpp/orchestration/replay_archived_noaa_2022.py
+      - name: Reject invalid caller identity without touching golden archived data
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/s3d-negative"
+          if python3 native_cpp/orchestration/replay_archived_noaa_2022.py \
+             --case project/cases/hefei5km_2022_reference_case_20261011 \
+             --work "$work" \
+             --source-head 0000000000000000000000000000000000000000; then
+            echo "INVALID_SOURCE_HEAD_WAS_ACCEPTED";exit 1
+          fi
+          test ! -e "$work"
+          echo "S3D_WRONG_HEAD_REJECTED_BEFORE_RAW_OUTPUT=PASS"
+      - name: Re-run true 75MB raw IGRA and original full ISD/Lite in isolated workspace
+        shell: bash
+        timeout-minutes: 75
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/s3d-raw-noaa-replay"
+          export PYTHONPATH="$GITHUB_WORKSPACE${PYTHONPATH:+:$PYTHONPATH}"
+          case=project/cases/hefei5km_2022_reference_case_20261011
+          python3 native_cpp/orchestration/replay_archived_noaa_2022.py \
+            --case "$case" --work "$work" \
+            --source-head "$(git rev-parse HEAD)" \
+            > "$RUNNER_TEMP/s3d-raw-noaa.log" 2>&1 || {
+              echo "S3D_ARCHIVED_NOAA_REPLAY_FAILED"
+              tail -n 100 "$RUNNER_TEMP/s3d-raw-noaa.log"
+              exit 1
+            }
+          grep 'S3D_P4_FSL_ARCHIVED_RAW_TO_PREPARED_BYTE_IDENTITY=PASS' "$RUNNER_TEMP/s3d-raw-noaa.log"
+          grep 'S3D_P5_GENERIC_ARCHIVED_RAW_TO_PREPARED_BYTE_IDENTITY=PASS' "$RUNNER_TEMP/s3d-raw-noaa.log"
+          grep 'S3D_P4_P5_ARCHIVED_RAW_PREPARED_BOTH_BYTE_IDENTITY=PASS' "$RUNNER_TEMP/s3d-raw-noaa.log"
+          test -z "$(git status --porcelain -- "$case")"
+          echo "S3D_ARCHIVED_NOAA_TO_PREPARED_CASE_NOT_MODIFIED=PASS"
+      - name: Upload limited hash manifest without NOAA raw data or large intermediates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3d-archived-noaa-replay-hashes-only
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            ${{ runner.temp }}/s3d-raw-noaa-replay/audit/s3d-archived-noaa-replay.json
+            ${{ runner.temp }}/s3d-raw-noaa.log
