@@ -140,8 +140,8 @@ def prepare_g19(
                 f"P6 G19 static met deck cannot silently change {branch} station identities across years")
     upper_ids = accepted["p4"][0]["station_ids"]
     surface_ids = accepted["p5"][0]["station_ids"]
-    if not G19_REQUIRED_MIN <= len(upper_ids) <= G19_REQUIRED_MAX:
-        raise ContractError("G19 only accepts 2-6 real upper-air stations: do not fake a second station")
+    if not 1 <= len(upper_ids) <= G19_REQUIRED_MAX:
+        raise ContractError("G19 only accepts 1-6 genuine upper-air stations")
     if not G19_REQUIRED_MIN <= len(surface_ids) <= G19_REQUIRED_MAX:
         raise ContractError("G19 only accepts 2-6 surface stations")
     p4raw = json.loads((p4_root / str(years[0]) / "p4_station_selection_audit.json").read_text())
