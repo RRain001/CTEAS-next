@@ -224,6 +224,7 @@ def prepare_g19(
         "status": "P6_G19_DYNAMIC_SOURCE_ROLES_HASH_VERIFIED_NATIVE_SOURCE_NOT_RUN",
         "contract_version": "S2-G1A-G19-INPUT-ONLY-1",
         "case_name": contract["case_name"],
+        "source_root": str(root),
         "research_years": years,
         "source_selection_sha256": {
             "p4": [x["audit_sha256"] for x in accepted["p4"]],
@@ -254,6 +255,16 @@ def execute_source_preflight(plan: dict[str, Any]) -> dict[str, Any]:
     command = plan["native_g19_command"]
     if not command:
         raise ContractError("no explicit C++ source-only G19 preflight executable was provided")
+    evidence = plan["native_g19_executable"]
+    exe = Path(command[0])
+    if (not isinstance(evidence, dict) or exe.is_symlink()
+            or not exe.is_file() or _digest(exe) != evidence.get("sha256")):
+        raise ContractError("G19 preflight executable changed after source-plan SHA capture")
+    case_root = Path(plan["source_root"])
+    for record in plan["roles"].values():
+        p = _safe_file(case_root / record["path"], case_root)
+        if p.stat().st_size != record["size_bytes"] or _digest(p) != record["sha256"]:
+            raise ContractError("G19 physical source bytes changed after source-plan SHA capture")
     run = subprocess.run(command, capture_output=True, text=True, check=False, timeout=180)
     if run.returncode != 0 or "PASS_P6G_G19_FILE_SOURCE_CONTRACT" not in run.stdout:
         raise ContractError(
