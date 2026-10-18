@@ -140,6 +140,7 @@ jobs:
           python3 native_cpp/reference/validate_p2_glazas_original.py \
             --source-img eausgs2_0la.img \
             --original-ctgproc "${RUNNER_TEMP}/original_ctgproc.x" --original-bin-sha256 "$original_sha" \
+            --original-source-file original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
             --control-template project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp \
             --grid-cmn project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn \
             --native-lu "${RUNNER_TEMP}/d3-glcc/lu.dat" \
