@@ -51,3 +51,13 @@ repository. They must remain excluded from future commits unless a separate,
 evidence-backed rights review authorizes submission. Remaining rights questions
 concern third-party submission/future distribution, not permission to migrate
 the owner's C++20 code or to run authorized local comparisons.
+
+## Owner-requested six-tile tracking exception (2026-10-18)
+
+The owner explicitly requested copying, committing and pushing the six full TIFFs
+`srtm_{59,60,61}_{06,07}.tif` under
+`calpuff_terrain_and_landuse_data/china_srtm/`. These exact files are now tracked
+via Git LFS; see that directory's README for provenance, hashes and verification
+limits. This supersedes the earlier statement that no full raw terrain is included
+for these six paths only. It does not assert documentary third-party redistribution
+rights or change the exclusions for cropped terrain, vendor sources or other assets.

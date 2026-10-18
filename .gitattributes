@@ -32,3 +32,11 @@ docs/migration/historical-workflows/** -text
 
 # Full GLCC landuse raster is stored in Git LFS.
 /eausgs2_0la.img filter=lfs diff=lfs merge=lfs -text
+
+# Owner-requested SRTM tiles, exact paths only.
+/calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.tif filter=lfs diff=lfs merge=lfs -text
+/calpuff_terrain_and_landuse_data/china_srtm/srtm_59_07.tif filter=lfs diff=lfs merge=lfs -text
+/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif filter=lfs diff=lfs merge=lfs -text
+/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_07.tif filter=lfs diff=lfs merge=lfs -text
+/calpuff_terrain_and_landuse_data/china_srtm/srtm_61_06.tif filter=lfs diff=lfs merge=lfs -text
+/calpuff_terrain_and_landuse_data/china_srtm/srtm_61_07.tif filter=lfs diff=lfs merge=lfs -text

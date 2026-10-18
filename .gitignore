@@ -76,7 +76,7 @@ project/
 docs/refactor_logs/removed_native_binaries_backup/
 
 # Large terrain / landuse datasets
-calpuff_terrain_and_landuse_data/
+calpuff_terrain_and_landuse_data/*
 
 # CTEAS-next compiled artifacts and local external scientific dependencies
 *.o
@@ -88,3 +88,14 @@ calpuff_terrain_and_landuse_data/
 cmake-build*/
 /engine/vendor/
 /calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/
+
+# Owner-requested six-tile SRTM dataset; other full datasets remain ignored.
+!/calpuff_terrain_and_landuse_data/china_srtm/
+/calpuff_terrain_and_landuse_data/china_srtm/*
+!/calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.tif
+!/calpuff_terrain_and_landuse_data/china_srtm/srtm_59_07.tif
+!/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif
+!/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_07.tif
+!/calpuff_terrain_and_landuse_data/china_srtm/srtm_61_06.tif
+!/calpuff_terrain_and_landuse_data/china_srtm/srtm_61_07.tif
+!/calpuff_terrain_and_landuse_data/china_srtm/README.md
