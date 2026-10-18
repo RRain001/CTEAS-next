@@ -114,6 +114,7 @@ jobs:
           python3 -m scripts.s2g.p1_original_actions_replay \
             --case-root "$RUNNER_TEMP/p1-issue54-original-replay/issue54_p1_seam_2022" \
             --cteas-checkout "$GITHUB_WORKSPACE/cteas-original-vendor" \
+            --native-binary "$RUNNER_TEMP/p1-issue54-original-native-build/cteas_p1_terrain_case" \
             --route "$ROUTE" \
             --report "$RUNNER_TEMP/p1-issue54-original-parity-evidence.json"
           echo 'NUMERIC_PASS_PROVISIONAL_ONLY_INDEPENDENT_AUDIT_STILL_REQUIRED'
