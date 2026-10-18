@@ -37,9 +37,12 @@ cell_index_terrel(float east_m,float north_m,const TerrainGridSpec& spec) {
   return std::pair<std::size_t,std::size_t>{static_cast<std::size_t>(ix-1),
                                             static_cast<std::size_t>(iy-1)};
 }
-TerrainGridResult grid_geotiff_terrain_utm50n(
-    const TerrainRaster& source,const TerrainGridSpec& spec) {
+TerrainGridResult grid_geotiff_terrain_utm(
+    const TerrainRaster& source,const TerrainGridSpec& spec,
+    const UtmProjection& projection) {
   check_spec(spec);
+  if(projection.zone<1 || projection.zone>60)
+    throw std::invalid_argument("P1 UTM zone must be an integer 1..60");
   if(source.crs_wkt.empty())
     throw std::invalid_argument("P1 GeoTIFF missing CRS identity");
   const auto nx=source.raw_elevation_m.nx(), ny=source.raw_elevation_m.ny();
@@ -64,10 +67,10 @@ TerrainGridResult grid_geotiff_terrain_utm50n(
   OGRSpatialReference srs,utm;
   OGRSpatialReference wgs84;
   if(srs.importFromWkt(source.crs_wkt.c_str())!=OGRERR_NONE||
-     utm.importFromEPSG(32650)!=OGRERR_NONE ||
+     utm.importFromEPSG((projection.southern_hemisphere ? 32700 : 32600)+projection.zone)!=OGRERR_NONE ||
      wgs84.SetWellKnownGeogCS("WGS84")!=OGRERR_NONE ||
      !srs.IsGeographic() || !srs.IsSameGeogCS(&wgs84))
-    throw std::runtime_error("P1 subset requires WGS84 geographic GeoTIFF to UTM50N");
+    throw std::runtime_error("P1 requires WGS84 geographic GeoTIFF for the requested UTM zone/hemisphere");
   srs.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
   utm.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
   const auto cleanup=[](OGRCoordinateTransformation* p){if(p)OCTDestroyCoordinateTransformation(p);};
@@ -107,5 +110,10 @@ TerrainGridResult grid_geotiff_terrain_utm50n(
       out.elevation_m[cell]=sum[cell]/static_cast<float>(out.point_count[cell]);
   }
   return out;
+}
+// Strict legacy entry point keeps exactly the previous 50N projection.
+TerrainGridResult grid_geotiff_terrain_utm50n(
+    const TerrainRaster& source,const TerrainGridSpec& spec) {
+  return grid_geotiff_terrain_utm(source,spec,UtmProjection{50,false});
 }
 } // namespace cteas::reconstruction::geo

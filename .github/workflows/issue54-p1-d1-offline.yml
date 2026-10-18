@@ -1,0 +1,46 @@
+name: Issue 54 P1 D1 dynamic UTM C++ offline gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue54-p1-d1-offline.yml'
+      - 'native_cpp/include/cteas/geo/terrain_grid.hpp'
+      - 'native_cpp/src/geo/terrain_grid.cpp'
+      - 'native_cpp/src/geo/terrain.cpp'
+      - 'native_cpp/src/p1_terrain_cli.cpp'
+      - 'native_cpp/tests/p1_*.cpp'
+      - 'native_cpp/tests/grid_origin_precision_tests.cpp'
+      - 'native_cpp/p1/CMakeLists.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue54-p1-d1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-dynamic-utm:
+    name: C++ GDAL synthetic-only tests (no real DEM)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install C++ GDAL headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgdal-dev
+      - name: Build P1 without vendor or external data
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/p1 -B "$RUNNER_TEMP/issue54-p1-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/issue54-p1-build" --parallel 2
+          ctest --test-dir "$RUNNER_TEMP/issue54-p1-build" --output-on-failure
+          echo 'P1_D1_DYNAMIC_UTM_SOFTWARE=PASS'
+          echo 'P1_A_90M_REAL=NOT_RUN P1_B_30M_REAL=NOT_RUN ORIGINAL_TERREL_PARITY=NOT_RUN'

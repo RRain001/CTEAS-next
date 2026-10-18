@@ -10,6 +10,11 @@ struct TerrainGridSpec {
   double southwest_x_m{}, southwest_y_m{}, cell_size_m{};
   std::size_t nx{},ny{};
 };
+// WGS84 UTM CRS for a case-provided numeric grid (not a per-pixel auto-zone).
+struct UtmProjection {
+  int zone{};                    // 1..60
+  bool southern_hemisphere{};    // false => EPSG:326xx, true => EPSG:327xx
+};
 struct TerrainGridResult {
   TerrainGridSpec specification;
   std::vector<std::uint32_t> point_count; // i fastest, j southernmost first
@@ -18,6 +23,10 @@ struct TerrainGridResult {
 };
 [[nodiscard]] std::optional<std::pair<std::size_t,std::size_t>>
 cell_index_terrel(float east_m,float north_m,const TerrainGridSpec& spec);
+// Generic projection, SAME frozen LOADTIFF/CELLIND/REAL*4 averaging path.
+[[nodiscard]] TerrainGridResult grid_geotiff_terrain_utm(
+  const TerrainRaster& source,const TerrainGridSpec& spec,
+  const UtmProjection& projection);
 // P1 scoped: original LOADTIFF + SAVEELEV/CELLIND/CELLDAT/HEIGHTS mean,
 // UTM zone 50N. No legacy void filling, peak processing, snow/coast options.
 [[nodiscard]] TerrainGridResult grid_geotiff_terrain_utm50n(
