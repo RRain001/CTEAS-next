@@ -213,10 +213,12 @@ def prepare_g19(
         for label, path in roles.items()
     }
     command: list[str] = []
+    native_executable_evidence = None
     if native_preflight_bin is not None:
         b = native_preflight_bin.absolute()
         if b.is_symlink() or not b.is_file() or not os.access(b, os.X_OK):
             raise ContractError("native G19 source-only preflight executable absent")
+        native_executable_evidence = {"path": str(b), "sha256": _digest(b)}
         command = [str(b), str(m), str(geo), str(surf), *[str(p) for p in ordered_up]]
     return {
         "status": "P6_G19_DYNAMIC_SOURCE_ROLES_HASH_VERIFIED_NATIVE_SOURCE_NOT_RUN",
@@ -234,6 +236,10 @@ def prepare_g19(
              for i in range(1, len(surface_ids) + 1)))],
         "grid": g, "roles": checked,
         "native_g19_command": command,
+        "native_g19_executable": native_executable_evidence,
+        "ordered_upper_wmo_ids": [_station_wmo(sid) for sid in ordered_upper_ids],
+        "ordered_surface_ifstn_ids": [_deck_site(deck, "SS", i)[0]
+                                      for i in range(1, len(surface_ids) + 1)],
         "native_input_parsed": False,
         "model_executed": False, "P6D_P6E_P6F": "NOT_RUN",
         "P7": "NOT_RUN",
@@ -253,6 +259,25 @@ def execute_source_preflight(plan: dict[str, Any]) -> dict[str, Any]:
         raise ContractError(
             "native G19 source preflight rejected file-backed meteorology "
             + f"(exit={run.returncode}): " + run.stderr[-1000:])
+    # Validate the actual C++ source-file parser's reported identities and
+    # geometry, not just its PASS sentinel or an untrusted exit code.
+    expected_site_lines = {
+        "SS_IDS": ",".join(str(x) for x in plan["ordered_surface_ifstn_ids"]),
+        "US_IDS": ",".join(str(x) for x in plan["ordered_upper_wmo_ids"]),
+    }
+    for name, ids in expected_site_lines.items():
+        observed = re.search(r"(?m)^" + name + r"=([0-9,]+)\\s*$", run.stdout)
+        if observed is None or observed.group(1) != ids:
+            raise ContractError(f"native G19 parser {name} differs from authenticated deck order")
+    counts = re.search(r"\\bNSSTA=(\\d+)\\s+NUSTA=(\\d+)\\b", run.stdout)
+    if counts is None or (int(counts.group(1)), int(counts.group(2))) != (
+            len(plan["ordered_surface_station_ids"]), len(plan["ordered_upper_station_ids"])):
+        raise ContractError("native G19 parser station counts differ from authenticated deck")
+    geo = plan["grid"]
+    for name, value in (("NX", geo["nx"]), ("NY", geo["ny"])):
+        field = re.search(r"\\b" + name + r"=(\\d+)\\b", run.stdout)
+        if field is None or int(field.group(1)) != value:
+            raise ContractError(f"native G19 {name} differs from case grid")
     result = dict(plan)
     result["status"] = "P6_G19_DYNAMIC_FILE_INPUT_PARSED_NO_PHYSICS_EXECUTED"
     result["native_input_parsed"] = True
