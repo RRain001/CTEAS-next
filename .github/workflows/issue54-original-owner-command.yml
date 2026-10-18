@@ -12,7 +12,8 @@ jobs:
       github.event.issue.number == 54 &&
       github.event.comment.user.login == 'RRain001' &&
       (github.event.comment.body == '/cteas-p1-original-90m' ||
-       github.event.comment.body == '/cteas-p1-original-30m')
+       github.event.comment.body == '/cteas-p1-original-30m' ||
+       github.event.comment.body == '/cteas-p1-hefei-reference')
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
@@ -27,6 +28,10 @@ jobs:
           case "$BODY" in
             /cteas-p1-original-90m) route=P1_A_90M_LOCAL;;
             /cteas-p1-original-30m) route=P1_B_30M_DOWNLOAD;;
+            /cteas-p1-hefei-reference)
+              gh workflow run issue54-hefei-frozen-manual.yml --ref main
+              echo 'HISTORIC_TERREL_EXPLICIT_MANUAL_DISPATCH_ACCEPTED'
+              exit 0;;
             *) exit 2;;
           esac
           gh workflow run issue54-original-terrel-manual.yml --ref main --field "route=$route"
