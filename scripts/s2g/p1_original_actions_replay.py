@@ -247,8 +247,34 @@ def main(argv=None)->int:
         data=audit(case_root=args.case_root,checkout=args.cteas_checkout,
                    route=args.route,report=args.report)
     except (OriginalReplayError,OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
+        # All diagnostics are immutable fixed enums from this repository.
+        # No raw Fortran logs, provider response, credentials, full local
+        # absolute paths or exception tracebacks are written to artifacts.
+        allowed_errors={
+            "missing/empty/symlinked evidence file":"FILE_EVIDENCE_MISSING_EMPTY_OR_SYMLINKED",
+            "original attestation does not match actual bytes":"PROVENANCE_HASH_MISMATCH",
+            "invalid evidence JSON":"EVIDENCE_JSON_REJECTED",
+            "unsupported SAV record schema/shape":"UNSUPPORTED_ORIGINAL_SAV_SCHEMA",
+            "TERREL.DAT version/header mismatch":"UNSUPPORTED_ORIGINAL_DAT_SCHEMA",
+            "original TERREL control absent/duplicated":"CONTROL_REJECTED",
+        }
+        message=str(exc) if type(exc).__name__=="ComparisonError" else ""
+        reason_code=allowed_errors.get(message,"OTHER_ORIGINAL_REPLAY_BLOCKER")
+        # Bounded Python function/line provenance narrows technical failure,
+        # while never exporting file contents, body text or execution inputs.
+        tb=exc.__traceback__
+        last=""
+        while tb is not None:
+            last=tb.tb_frame.f_code.co_name
+            tb=tb.tb_next
         data={"status":"BLOCKED_ORIGINAL_TERREL_INPUT_OR_COMPILATION",
               "reason_type":type(exc).__name__,
+              "reason_code":reason_code,
+              "failed_function":last if last in {
+                  "audit","sha","compile_original","prepare_control",
+                  "validate_original_checkout","compare","fortran_dat",
+                  "fortran_sav","validate_original_terrel_control",
+                  "native_csv","hash_file","_invoke","main"} else "OTHER",
               "route":args.route,"vendor_git_sha":ORIGINAL_REV,
               "science_acceptance":"NOT_ACCEPTED"}
     args.report.parent.mkdir(parents=True,exist_ok=True)
