@@ -8,6 +8,8 @@ on:
       - native_cpp/src/p2_glc_area_cli.cpp
       - native_cpp/tests/p2_glc_area_tests.cpp
       - native_cpp/CMakeLists.txt
+      - docker/cpp/Dockerfile
+      - scripts/migration/validate_ubuntu.py
       - .github/workflows/s2g1bb-issue53-p2-glc-offline.yml
   workflow_dispatch:
 permissions:
