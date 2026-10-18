@@ -220,7 +220,34 @@ def _download_api(bbox: dict, dest: Path, key: str, *, max_bytes: int,
     except P1SourceError:
         raise
     except urllib.error.HTTPError as exc:
-        raise P1SourceError(f"OpenTopography HTTP {exc.code}; key and URL withheld") from None
+        # Classify only a *small, fixed vocabulary* in the provider's error
+        # body. Never persist, echo or rethrow the raw response: servers may
+        # include request URLs or API keys in error pages.
+        try:
+            response=(exc.read(8192) or b"").decode("utf-8",errors="replace").lower()
+        except (OSError,ValueError):
+            response=""
+        if any(s in response for s in (
+            "invalid api key", "invalid key", "api key is invalid",
+            "apikey is not valid", "api key not valid", "unauthorized key")):
+            category="API_KEY_REJECTED"
+        elif any(s in response for s in (
+            "rate limit", "daily limit", "quota exceeded",
+            "too many requests", "request limit")):
+            category="QUOTA_OR_RATE_LIMIT"
+        elif any(s in response for s in (
+            "invalid bounding", "invalid bbox", "bounding box",
+            "request area", "area is too", "requested area")):
+            category="REQUEST_BBOX_REJECTED"
+        elif any(s in response for s in (
+            "not available", "dataset not found", "invalid demtype",
+            "unsupported dataset")):
+            category="DATASET_UNAVAILABLE"
+        else:
+            category="UNCLASSIFIED_PROVIDER_REJECTION"
+        raise P1SourceError(
+            f"OpenTopography HTTP {exc.code} [{category}]; key, URL and provider body withheld"
+        ) from None
     except (urllib.error.URLError, TimeoutError, OSError):
         raise P1SourceError("OpenTopography network/IO error (request URL withheld)") from None
     if dest.stat().st_size < 512:
