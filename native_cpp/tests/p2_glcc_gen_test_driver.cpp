@@ -2,6 +2,7 @@
 // issue source acceptance; the production CLI requires a fixed official SHA.
 #include "cteas/geo/glcc_raw_fractions.hpp"
 #include "cteas/geo/glcc_direct_laea_probe.hpp"
+#include "cteas/geo/glcc_cli_modes.hpp"
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -11,6 +12,25 @@ int main(int argc,char** argv){
   if(argc!=10)return 2;
   try{
     using namespace cteas::reconstruction::geo;
+    // Regression for real manual run #39178123151: two optional flags used
+    // to satisfy argc==12 and silently disabled QA, producing zero candidate
+    // counts and NATIVE_QA_MISSING_OR_SYMLINK. Test the common parser.
+    const char* names[12]={"cli","img","out","32650","510.885",
+                            "3531.269","0.100","50","50","20",
+                            "--qa-submesh","--probe-direct"};
+    const auto base=glcc_cli_modes(10,names);
+    const auto qa=glcc_cli_modes(11,names);
+    const auto full=glcc_cli_modes(12,names);
+    if(!base.valid||base.qa_submesh||base.direct_probe||
+       !qa.valid||!qa.qa_submesh||qa.direct_probe||
+       !full.valid||!full.qa_submesh||!full.direct_probe)
+      throw std::runtime_error("GLCC_TWO_OPTION_MODES_REGRESSION");
+    names[11]="--unrecognized";
+    if(glcc_cli_modes(12,names).valid)
+      throw std::runtime_error("GLCC_UNKNOWN_OPTION_ACCEPTED");
+    names[11]="--probe-direct";names[10]="--probe-direct";
+    if(glcc_cli_modes(11,names).valid||glcc_cli_modes(12,names).valid)
+      throw std::runtime_error("GLCC_DIRECT_PROBE_WITHOUT_QA_ACCEPTED");
     const int epsg=std::stoi(argv[2]);
     const double x=std::stod(argv[3]),y=std::stod(argv[4]),dx=std::stod(argv[5]);
     const auto nx=std::size_t(std::stoul(argv[6])),ny=std::size_t(std::stoul(argv[7]));
