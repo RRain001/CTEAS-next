@@ -1,0 +1,106 @@
+name: Issue53 genuine original CTGPROC GLAZAS parity (manual vendor runner only)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/reference/validate_p2_glazas_original.py
+      - native_cpp/reference/tests/test_glazas_original_gate.py
+      - .github/workflows/s2g1bb-issue53-glazas-original.yml
+      - docs/plans/ISSUE53_P2_GLAZAS_ORIGINAL_GATE_20261018.md
+  workflow_dispatch:
+    inputs:
+      original_binary_absolute_path:
+        description: "Original CTGPROC executable already installed on selected self-hosted runner (not repository path)"
+        required: true
+        type: string
+      original_binary_sha256:
+        description: "Independent SHA256 of the authentic original executable (64 lowercase hex chars)"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: issue53-original-glazas-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  comparator-contract-only:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
+      - name: Verify original-only gate and synthetic original-format fixtures
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate
+          echo 'P2_GLAZAS_GATE_SOFTWARE=PASS'
+          echo 'ORIGINAL_GLAZAS_FORTRAN=NOT_RUN'
+          echo 'GLCC_LFS=NOT_READ'
+  genuine-original-glazas:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, Linux, X64, cteas-managed]
+    timeout-minutes: 45
+    steps:
+      - name: Checkout code and authentic GLCC Git LFS (no original vendor redistribution)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          lfs: true
+          persist-credentials: false
+      - name: Reject unchecked workflow ref, vendor binary and source
+        shell: bash
+        env:
+          ORIGINAL_PATH: ${{ inputs.original_binary_absolute_path }}
+          ORIGINAL_HASH: ${{ inputs.original_binary_sha256 }}
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = refs/heads/main
+          [[ "${ORIGINAL_PATH}" = /* ]]
+          [[ "${ORIGINAL_HASH}" =~ ^[0-9a-f]{64}$ ]]
+          test -f "${ORIGINAL_PATH}"
+          test -x "${ORIGINAL_PATH}"
+          test ! -L "${ORIGINAL_PATH}"
+          echo "${ORIGINAL_HASH}  ${ORIGINAL_PATH}" | sha256sum -c -
+          test "$(wc -c < eausgs2_0la.img)" -eq 156000000
+          echo '4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img' | sha256sum -c -
+      - name: Build GLCC native D1 producer and D3 historical LU writer, no GLC crosswalk
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/issue53-glazas-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/issue53-glazas-build" --parallel 4 --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
+      - name: Actual GLCC D1 -> D3 and original GLAZAS same-source scientific comparison
+        shell: bash
+        env:
+          ORIGINAL_PATH: ${{ inputs.original_binary_absolute_path }}
+          ORIGINAL_HASH: ${{ inputs.original_binary_sha256 }}
+        run: |
+          set -euo pipefail
+          build="${RUNNER_TEMP}/issue53-glazas-build"
+          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20
+          "$build/cteas_p2_glcc_lu_dat" "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
+            "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_gen_replay.csv" "${RUNNER_TEMP}/d3-glcc"
+          python3 native_cpp/reference/validate_p2_glazas_original.py \
+            --source-img eausgs2_0la.img \
+            --original-ctgproc "${ORIGINAL_PATH}" --original-bin-sha256 "${ORIGINAL_HASH}" \
+            --control-template project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp \
+            --grid-cmn project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn \
+            --native-lu "${RUNNER_TEMP}/d3-glcc/lu.dat" \
+            --native-manifest "${RUNNER_TEMP}/d3-glcc/p2_d3_manifest.json" \
+            --out-dir "${RUNNER_TEMP}/glazas-original" \
+            --timeout-sec 300
+          echo 'P2_A_GLCC_ORIGINAL_GLAZAS_PARITY=PASS_IF_SAME_SOURCE_CONTROLS_POINTS_AND_ALL_95000_FIELDS'
+      - name: Preserve provenance and first-difference report only (never vendor or raw IMG)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue53-original-glazas-external-vendor-science-report
+          path: |
+            ${{ runner.temp }}/glazas-original/result.json
+            ${{ runner.temp }}/glazas-original/FAILED.txt
+            ${{ runner.temp }}/d1-native/p2_manifest.json
+            ${{ runner.temp }}/d3-glcc/p2_d3_manifest.json
+          if-no-files-found: warn
