@@ -319,7 +319,7 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
             coordinate_probe=execute_original_diagnostic(
                 checkout=checkout,vendor=original_vendor,selected=selected,
                 grid=native["grid"],workspace=workspace)
-        except (OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
+        except (ImportError,OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
             coordinate_probe={
                 "status":"BLOCKED_FORENSIC_DIAGNOSTIC",
                 "reason_type":type(exc).__name__,
