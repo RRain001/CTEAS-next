@@ -20,6 +20,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import yaml
 import re
 import shutil
 import subprocess
@@ -127,6 +128,80 @@ def count_raw_source_hours(evidence: dict) -> dict:
     return checked
 
 
+def replay_annual_selection_offline(case_yaml: Path, history: Path) -> dict:
+    """Re-run original annual UTM selector on already-staged NOAA files.
+
+    With the --offline selector switch no download is possible, and any
+    unresolved nearer original station blocks the result rather than being
+    silently skipped.
+    """
+    from engine.run_met.station_grid import load_strict_utm_grid, lon_lat_in_utm_grid
+    admission = admit_case(case_yaml)
+    root = admission.case_path.parent
+    raw = root / "met/surface/isd_raw"
+    for rel in ("met", "met/surface", "met/surface/isd_raw",
+                "met/surface/isd_raw/isd_lite"):
+        directory = root / rel
+        if not directory.is_dir() or directory.is_symlink():
+            raise ContractError("P5 D2-A staged archive directory missing/symlinked: " + rel)
+    if not history.is_absolute() or history.is_symlink() or not history.is_file():
+        raise ContractError("P5 D2-A requires an explicit regular ISD history source")
+    history_before = digest(history)
+    if (list(raw.glob("station_selection_*.json")) or
+            list(raw.glob("download_report_*.json")) or
+            list(raw.glob("surf_station_list_*.txt"))):
+        raise ContractError("P5 D2-A requires fresh selector metadata, no reused station lists")
+    center_file = root / "grid/center_location"
+    if center_file.is_symlink() or not center_file.is_file():
+        raise ContractError("P5 D2-A independent center_location metadata missing")
+    try:
+        cfg = yaml.safe_load(admission.case_path.read_text(encoding="utf-8"))
+        points = cfg["puff"]["point_sources"]
+        if not isinstance(points, list) or len(points) != 1:
+            raise ValueError("single supported source required")
+        slat = float(points[0]["latitude"])
+        slon = float(points[0]["longitude"])
+    except (ValueError, TypeError, KeyError, IndexError, AttributeError) as exc:
+        raise ContractError("P5 D2-A requires original single-stack latitude/longitude in case.yaml") from exc
+    grid = load_strict_utm_grid(admission.grid_path, context="P5 D2-A")
+    if not lon_lat_in_utm_grid(slon, slat, grid):
+        raise ContractError("P5 D2-A stack outside authoritative UTM footprint")
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(REPO) + os.pathsep + env.get("PYTHONPATH", "")
+    cmd = [sys.executable, "-m", MODULE + ".download_isd_by_grid",
+           "--offline", "--center-file", str(center_file),
+           "--grid-file", str(admission.grid_path),
+           "--research-time-file", str(admission.time_path),
+           "--history-file", str(history), "--out-dir", str(raw),
+           "--stack-lat", str(slat), "--stack-lon", str(slon)]
+    completed = subprocess.run(cmd, cwd=REPO, env=env,
+                               capture_output=True, text=True,
+                               timeout=7200, check=False)
+    if completed.returncode:
+        raise ContractError("P5 original annual offline selector rejected staged source: " +
+                            completed.stderr[-1200:] + completed.stdout[-1200:])
+    verify_immutable(admission)
+    if digest(history) != history_before:
+        raise ContractError("P5 D2-A station history changed during source selection")
+    # The selector's candidate audit is mandatory evidence of why each NOAA
+    # candidate was accepted or rejected, not just a final station list.
+    begin = datetime.strptime(admission.research_begin, "%Y%m%d-%H%M%S")
+    end = datetime.strptime(admission.research_end, "%Y%m%d-%H%M%S")
+    selector_files = []
+    for year in range(begin.year, end.year + 1):
+        selector_files.extend((
+            raw / f"station_selection_{year}.json",
+            raw / f"download_report_{year}.json",
+            raw / f"surf_station_list_{year}.txt",
+        ))
+    selector_sha = _hash_outputs(root, selector_files)
+    return {"step": "original_annual_selector_offline",
+            "command": cmd, "exit_code": completed.returncode,
+            "stdout_tail": completed.stdout[-1600:], "offline_no_download": True,
+            "candidate_and_selection_sha256": selector_sha,
+            "isd_history_sha256": history_before}
+
+
 def preflight(case_yaml: Path, history: Path, native: Path, template: Path) -> tuple:
     admission = admit_case(case_yaml)
     root = admission.case_path.parent
@@ -147,8 +222,11 @@ def _hash_outputs(root: Path, paths: list[Path]) -> dict[str, str]:
 
 
 def produce(case_yaml: Path, history: Path, native: Path, template: Path,
-            *, admit_only: bool = False) -> dict:
+            *, admit_only: bool = False, offline_reselect: bool = False) -> dict:
+    selection = replay_annual_selection_offline(case_yaml, history) if offline_reselect else None
     admission, evidence = preflight(case_yaml, history, native, template)
+    if selection:
+        evidence["offline_reselection"] = selection
     root = admission.case_path.parent
     if admit_only:
         evidence["P5_SOURCE_SELECTION"] = "PRESELECTED_MANIFEST_RAW_HOURS_RECOUNTED"
@@ -238,11 +316,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--native-cpp-bin", type=Path, required=True)
     ap.add_argument("--smerge-template", type=Path, default=REPO / "engine/templates/smerge.inp")
     ap.add_argument("--admit-only", action="store_true",
-                    help="Verify raw original hours and source control without creating any files")
+                    help="Preflight only; with --offline-reselect writes selector metadata, no SURF")
+    ap.add_argument("--offline-reselect", action="store_true",
+                    help="D2-A: run original annual selector from local NOAA candidate archives; no network")
     args = ap.parse_args(argv)
     try:
         result = produce(args.case_yaml, args.history_file, args.native_cpp_bin,
-                         args.smerge_template, admit_only=args.admit_only)
+                         args.smerge_template, admit_only=args.admit_only,
+                         offline_reselect=args.offline_reselect)
     except (ContractError, OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
         print(f"P5_D1B_PRESELECTED=BLOCKED reason={exc}", file=sys.stderr)
         return 2
