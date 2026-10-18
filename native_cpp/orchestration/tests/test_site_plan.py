@@ -235,6 +235,23 @@ class DynamicNonHefeiContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "virtual fallback"):
             self.plan()
 
+    def test_refuse_p4_virtual_relocation_away_from_stack(self):
+        def change(j):
+            j["selected"][0].update(
+                site_type="VIRTUAL_RELOCATED",
+                source_lon=-106.0,
+                effective_lat=self.b[0],
+                effective_lon=self.b[1],
+            )
+        self.change_p4(change)
+        with self.assertRaisesRegex(ContractError, "not at physical stack"):
+            self.plan()
+
+    def test_refuse_p5_mode_count_inconsistency(self):
+        self.change_p5(lambda j: j.update(mode="VIRTUAL_RELOCATED"))
+        with self.assertRaisesRegex(ContractError, "virtual-mode"):
+            self.plan()
+
     def test_cli_json_fail_closed_and_no_execution(self):
         a = [sys.executable, "-m", "native_cpp.orchestration.site_plan",
              "--case-yaml", str(self.yaml_path),
