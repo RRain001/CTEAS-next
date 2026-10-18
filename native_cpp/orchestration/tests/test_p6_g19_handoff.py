@@ -149,7 +149,11 @@ class SourceFileHandoffTests(unittest.TestCase):
         # This checks ONLY stdout/exit gating. Native parser science remains
         # subject to separately compiled real C++ G19 source CTest.
         exe = self.c.root.parent / "mock_native_g19"
-        exe.write_text("#!/bin/sh\necho PASS_P6G_G19_FILE_SOURCE_CONTRACT\nexit 0\n")
+        exe.write_text("#!/bin/sh\\necho PASS_P6G_G19_FILE_SOURCE_CONTRACT\\n"
+                       "echo 'NX=20 NY=20 DGRID_KM=2.0 UTM_ZONE=13 UTM_HEM=N'\\n"
+                       "echo 'NSSTA=2 NUSTA=2 HOURS=1'\\n"
+                       "echo 'SS_IDS=7246901,7247001'\\n"
+                       "echo 'US_IDS=12345,23456'\\nexit 0\\n")
         exe.chmod(0o700)
         req = self.plan(exe)
         res = execute_source_preflight(req)
