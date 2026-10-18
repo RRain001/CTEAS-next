@@ -17,7 +17,9 @@ MAX_TILES = 9
 MAX_TOTAL_BYTES = 300_000_000
 ARCSEC = 1.0 / 3600.0
 
-class OpenTopoBulkError(ValueError):
+from scripts.s2g.p1_terrain_source import P1SourceError
+
+class OpenTopoBulkError(P1SourceError):
     pass
 
 
