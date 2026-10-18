@@ -1,0 +1,37 @@
+name: Issue 56 P5 D1-B offline preselected SURF contract
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue56-p5-d1b-offline.yml'
+      - 'native_cpp/modules/p5_smerge/data_prep/p5_case_paths.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/p5_case_producer.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/case_archive_gate.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_case_producer.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/isd_to_smerge_and_fill.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/clean_merge_filled_by_research_time.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/convert_cleaned_to_smerge_ready.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/generate_smerge_input_sections.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/run_smerge_and_monitor.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  software-contract-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install bounded offline test dependencies
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+      - name: Run P5 isolated-case contract tests only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_p5_case_producer
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_case_archive_gate
+          echo 'P5_D1B_SOFTWARE=PASS_SCOPED P5_NATIVE_SURF_REAL=NOT_RUN'
+          echo 'P5_ORIGINAL_PARITY=NOT_RUN_NEW_GENERIC P5_TO_G19=NOT_RUN'
