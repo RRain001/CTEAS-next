@@ -13,6 +13,8 @@ jobs:
   s3d-raw-igra-no-download:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    env:
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - name: Exact PR checkout with frozen 2022 case
         uses: actions/checkout@v4
