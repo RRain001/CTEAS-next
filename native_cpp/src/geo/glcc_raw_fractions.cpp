@@ -99,7 +99,7 @@ double GlccRawResult::fraction(std::size_t i,std::size_t j,std::size_t k) const 
   if(!cell_samples.at(cell))throw std::domain_error("P2_GLCC_EMPTY_CELL");
   return double(counts.at(cell*kGlccUsgs92Classes.size()+k))/double(cell_samples.at(cell));
 }
-GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int epsg,int mesh) {
+GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int epsg,int mesh,bool diagnostic_mesh) {
   validate_grid(grid,epsg,mesh);
   const std::filesystem::path source(path);
   require(!std::filesystem::is_symlink(std::filesystem::symlink_status(source))&&
@@ -119,7 +119,7 @@ GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int ep
   const std::size_t ncell=grid.nx*grid.ny;
   GlccRawResult out{grid,epsg,mesh,win,
      std::vector<std::uint32_t>(ncell*kGlccUsgs92Classes.size(),0),
-     std::vector<std::uint32_t>(ncell,0),{},0,0};
+     std::vector<std::uint32_t>(ncell,0),{},0,0,{}};
   std::vector<unsigned char> row(std::size_t(win.i1-win.i0+1));
   const float x0=static_cast<float>(grid.x0_m/1000.);
   const float y0=static_cast<float>(grid.y0_m/1000.);
@@ -156,6 +156,13 @@ GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int ep
         // Match prior P2 compute_generic_utm50n REAL*4 division ordering.
         const int ix=static_cast<int>(dx/step)+(dx>=0?1:0);
         const int jy=static_cast<int>(dy/step)+(dy>=0?1:0);
+        if(diagnostic_mesh) {
+          require(out.diagnostic_mesh.size()<3000000,"P2_GLCC_DIAGNOSTIC_BUDGET");
+          // GLOBE's corresponding xgrid/ygrid arguments are Fortran REAL*4 km.
+          // No altered coordinate path: record the existing production calculation.
+          out.diagnostic_mesh.push_back({i,j,im+1,jm+1,mapped,
+             static_cast<float>(lon*xm),static_cast<float>(lat*xm),ix,jy});
+        }
         if(ix<1||jy<1||std::size_t(ix)>grid.nx||std::size_t(jy)>grid.ny){++out.outside;continue;}
         const auto cell=(std::size_t(jy)-1)*grid.nx+(std::size_t(ix)-1);
         require(out.cell_samples[cell]<std::numeric_limits<std::uint32_t>::max(),"P2_GLCC_COUNT_OVERFLOW");
