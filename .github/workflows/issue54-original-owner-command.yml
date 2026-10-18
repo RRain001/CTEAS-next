@@ -1,0 +1,33 @@
+name: Issue54 original TERREL owner-only manual workflow bridge
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  contents: read
+  actions: write
+jobs:
+  issue54-original-vendor-dispatch:
+    if: >-
+      github.repository == 'RRain001/CTEAS-next' &&
+      github.event.issue.number == 54 &&
+      github.event.comment.user.login == 'RRain001' &&
+      (github.event.comment.body == '/cteas-p1-original-90m' ||
+       github.event.comment.body == '/cteas-p1-original-30m')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch reviewed exact-main original/native TERREL workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ github.event.comment.body }}
+          GH_REPO: RRain001/CTEAS-next
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$BODY" in
+            /cteas-p1-original-90m) route=P1_A_90M_LOCAL;;
+            /cteas-p1-original-30m) route=P1_B_30M_DOWNLOAD;;
+            *) exit 2;;
+          esac
+          gh workflow run issue54-original-terrel-manual.yml --ref main --field "route=$route"
+          echo "ORIGINAL_TERREL_EXPLICIT_MANUAL_DISPATCH_ACCEPTED route=$route"
