@@ -111,3 +111,11 @@ The manual-only authentic CTGPROC `LFINAL=T/F` workflow now independently compar
 **Acceptance invariant**: zero exact integer HITS mismatches for the selected *production* algorithm plus original rounded fraction checks; do not force sample reassignment, infer integer equality from the 3 decimal displays, relax tolerances, or silently switch to candidate.
 
 GLC_FCS30D 35-class→USGS92 environmental crosswalk (incl. 183/210 blocked, 182/190 site-evidence) is independently `P2_MAPPING_REVIEW_REQUIRED`; no modern GLC `LU.DAT` output is approved.
+
+## 2026-10-19 manual direct LAEA candidate first execution: software bug, no scientific finding
+
+[Manual Run #39178123151](https://github.com/RRain001/CTEAS-next/actions/runs/39178123151) selected the post-PR98 workflow but failed **before executing the new original comparison**. Root cause: `cteas_p2_glcc_raw` accepted both `--qa-submesh --probe-direct` with `argc==12`, but still enabled `diagnostic_mesh` only with `const bool diag=(argc==11)`. Therefore the 40,000 valid source mesh point records were never stored; the direct candidate loop iterated zero points and printed `INCLUDED=0 OUTSIDE=0`, no C++ QA CSV was created, and the independent comparator correctly failed closed with `NATIVE_QA_MISSING_OR_SYMLINK`.
+
+This failure is a CLI **mode-propagation bug**, not evidence that the direct LAEA candidate failed numeric parity with original CTGPROC. Earlier genuine original run #39174897800 is still the most recent valid full integer HITS result (33/95,000 differences in production path).
+
+This PR centralizes strict CLI parsing (`GlccCliModes`) and enables both `qa_submesh` and `direct_probe` when argc=12. It rejects unknown/misordered options, requires the candidate trace count equals the native included+outside counts and is nonempty, and ensures the direct candidate includes >0 real grid hits. Synthetic C++ driver explicitly tests all three valid CLI forms and rejected forms. The manual workflow now preflights QA/candidate output files, SHA256s, 2,500 candidate rows and nonzero candidate total **before original scientific execution**. Candidate remains diagnostic only and cannot override scientific pass/fail. Do not repeat any full manual science until these checks have passed in PR CI and the fix is merged.
