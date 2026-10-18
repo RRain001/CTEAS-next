@@ -149,14 +149,20 @@ def main():
     parser.add_argument("--auto-select-all", action="store_true",
                         help="Legacy argument; in-domain qualifying stations are always all selected")
     parser.add_argument("--yes", action="store_true")
+    parser.add_argument("--case-root", type=Path, help="Explicit staged case, not project/current")
+    parser.add_argument("--upperair-root", type=Path, help="Isolated P4 output root")
+    parser.add_argument("--offline-archive-root", type=Path, help="Read-only extracted IGRA data-por archive; never network")
     args = parser.parse_args()
     if not 1900 <= args.year <= 2100 or not 0 < args.pstop <= 1500:
         parser.error("invalid year or pstop")
 
+    if any((args.case_root, args.upperair_root, args.offline_archive_root)) and not all((args.case_root, args.upperair_root, args.offline_archive_root)):
+        parser.error("isolated P4 requires --case-root, --upperair-root and --offline-archive-root together")
     from native_cpp.modules.p4_read62.data_prep.parse_igra_to_csv import observed_year_coverage
 
-    center_lat, center_lon = parse_center(current_project_path("grid", "center_location"))
-    grid = load_strict_utm_grid(current_project_path("grid", "grid.cmn"), context="P4")
+    case = args.case_root if args.case_root else current_project_path()
+    center_lat, center_lon = parse_center(case / "grid" / "center_location")
+    grid = load_strict_utm_grid(case / "grid" / "grid.cmn", context="P4")
     all_stations = load_station_list(engine_path("resources", "igra", "igra2-station-list.txt"))
     in_domain, out_domain = candidate_groups(all_stations, center_lat, center_lon,
                                               grid, args.year)
@@ -172,7 +178,7 @@ def main():
         else:
             in_domain, out_domain = [], [row]
 
-    year_dir = DATA_ROOT / str(args.year)
+    year_dir = (args.upperair_root if args.upperair_root else DATA_ROOT) / str(args.year)
     year_dir.mkdir(parents=True, exist_ok=True)
     selected_file = year_dir / "upperair_station_used_list.txt"
     audit_file = year_dir / "p4_station_selection_audit.json"
@@ -193,7 +199,11 @@ def main():
     selected = []
 
     def assess(station, category):
-        raw, reused, error = download_igra_data(station["id"], year_dir)
+        if args.offline_archive_root:
+            from native_cpp.modules.p4_read62.data_prep.p4_case_d1 import offline_igra
+            raw, reused, error = offline_igra(args.offline_archive_root, station["id"], args.year)
+        else:
+            raw, reused, error = download_igra_data(station["id"], year_dir)
         record = {
             "station_id": station["id"], "category": category,
             "distance_km": station["dist_km"],
