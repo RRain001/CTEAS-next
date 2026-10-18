@@ -2,6 +2,7 @@
 #include <gdal_priv.h>
 #include <ogr_spatialref.h>
 #include <cmath>
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <sstream>
@@ -62,6 +63,10 @@ TerrainRaster read_srtm_geotiff(const std::filesystem::path& path) {
       !srs->IsSameGeogCS(&expected_wgs84))
     throw std::runtime_error("P1: source GeoTIFF CRS must be WGS84 geographic");
   const int nx = ds->GetRasterXSize(), ny = ds->GetRasterYSize();
+  // Full TIFF admission remains fail-closed pending independently audited
+  // windowed REAL*4 sampling semantics; do not allocate arbitrarily large DEMs.
+  if(static_cast<std::uint64_t>(nx)*static_cast<std::uint64_t>(ny)>30'000'000ULL)
+    throw std::runtime_error("P1 native full-raster memory budget exceeded");
   const cteas::atmos::Shape2D shape(nx, ny);
   TerrainRaster result{cteas::atmos::Array2D<std::int16_t>(shape),
                        cteas::atmos::ValidityMask2D(shape), {},

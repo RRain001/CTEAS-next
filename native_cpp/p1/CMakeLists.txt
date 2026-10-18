@@ -26,3 +26,5 @@ add_test(NAME cteas_grid_origin_three_decimal_km COMMAND cteas_grid_origin_preci
 add_executable(cteas_p1_dynamic_utm_tests ../tests/p1_dynamic_utm_tests.cpp)
 target_link_libraries(cteas_p1_dynamic_utm_tests PRIVATE cteas_p1_grid)
 add_test(NAME cteas_p1_dynamic_utm_software_only COMMAND cteas_p1_dynamic_utm_tests)
+add_executable(cteas_p1_terrain_case ../src/p1_terrain_case_cli.cpp)
+target_link_libraries(cteas_p1_terrain_case PRIVATE cteas_p1_grid)
