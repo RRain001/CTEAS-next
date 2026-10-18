@@ -103,6 +103,7 @@ class P5OfflineSelectionTests(unittest.TestCase):
 
     def test_missing_lite_fails_without_network(self):
         (self.raw / f"{self.in1.sid}-2022.csv").write_bytes(b"synthetic full only\n")
+        (self.raw / "isd_lite" / lite.filename(self.in1.sid, 2022)).unlink()
         with self.assertRaisesRegex(SystemExit, "OFFLINE_UNRESOLVED_CANDIDATE"):
             self.select([self.in1])
 
