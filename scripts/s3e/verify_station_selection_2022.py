@@ -71,6 +71,7 @@ def run() -> dict:
             return source4, True, None
 
         with patch.object(p4, "DATA_ROOT", p4out), \
+             patch.object(p4, "current_project_path", side_effect=lambda *parts: CASE.joinpath(*parts)), \
              patch.object(p4, "load_station_list", return_value=[p4st]), \
              patch.object(p4, "download_igra_data", side_effect=archived_p4_download), \
              patch.object(sys, "argv", ["download_igra", "--year", "2022", "--pstop", "500"]):
