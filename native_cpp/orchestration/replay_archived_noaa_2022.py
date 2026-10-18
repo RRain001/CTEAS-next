@@ -68,10 +68,17 @@ def byte_gate(generated: Path, expected: Path, label: str) -> dict:
         left=generated.read_bytes()
         right=expected.read_bytes()
         first=next((i for i,(a,b) in enumerate(zip(left,right)) if a!=b),min(len(left),len(right)))
-        raise ValueError(
-            label+" BYTE_MISMATCH first_byte="+str(first)+
-            " produced="+str(produced)+" expected="+str(frozen)
-        )
+        # Bounded diagnostics only, no original raw archived data copies.
+        mismatch={"status":"MISMATCH_NOT_ACCEPTED","fresh":produced,
+                  "frozen":frozen,"first_mismatch_byte_zero_based":first,
+                  "fresh_prefix_at_difference_hex":left[max(0,first-20):first+60].hex(),
+                  "frozen_prefix_at_difference_hex":right[max(0,first-20):first+60].hex(),
+                  "fresh_lines":left.count(b"\\n"),
+                  "frozen_lines":right.count(b"\\n")}
+        print("S3D_"+label+"_ARCHIVED_RAW_TO_PREPARED=DIFFERENCE_REQUIRES_REVIEW",
+              "first_byte=",first,"fresh_bytes=",len(left),
+              "frozen_bytes=",len(right),flush=True)
+        return mismatch
     print("S3D_"+label+"_ARCHIVED_RAW_TO_PREPARED_BYTE_IDENTITY=PASS",flush=True)
     return {"status":"EXACT_BYTE_PARITY","fresh":produced,"frozen":frozen}
 
@@ -181,7 +188,11 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
             raise ValueError("immutable original case mutated: "+name)
     report={
         "schema":"CTEAS_S3D_ARCHIVED_NOAA_OFFLINE_REPLAY_V1",
-        "case":CASE_ID,"source_sha":source_sha,"status":"PASS_SCOPED_RAW_TO_FSL_GENERIC",
+        "case":CASE_ID,"source_sha":source_sha,
+        "status":("PASS_SCOPED_RAW_TO_FSL_GENERIC"
+                  if p4_byte["status"]=="EXACT_BYTE_PARITY" and
+                     p5_byte["status"]=="EXACT_BYTE_PARITY"
+                  else "FAIL_RAW_TO_PREPARED_MISMATCH"),
         "no_network_download":True,"no_golden_case_mutation":True,
         "raw_sources":original,
         "p4":{"stats":stats,"filled":filled,"fsl_stats":read_stats,
@@ -198,6 +209,9 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
     audit.mkdir()
     (audit/"s3d-archived-noaa-replay.json").write_text(
         json.dumps(report,ensure_ascii=False,indent=2,default=str)+"\n")
+    if report["status"]!="PASS_SCOPED_RAW_TO_FSL_GENERIC":
+        print("S3D_RAW_REPLAY_STATUS=BLOCKED_UPSTREAM_BYTE_MISMATCH",flush=True)
+        raise ValueError("at least one true NOAA raw-to-prepared output mismatches frozen; audit emitted")
     print("S3D_P4_P5_ARCHIVED_RAW_PREPARED_BOTH_BYTE_IDENTITY=PASS")
     return report
 
