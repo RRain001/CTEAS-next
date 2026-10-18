@@ -107,7 +107,8 @@ inline frozen::SurfaceObserved parse_surface_fields(const std::string& row) {
 }
 inline SurfaceSeries read_surface_dynamic(
     const std::string& path,const std::vector<int>& declared_station_ids={},
-    std::size_t max_hours=200000,std::size_t max_stations=1000,
+    std::size_t max_hours=200000,
+    std::size_t max_stations=static_cast<std::size_t>(std::numeric_limits<int>::max()),
     std::size_t max_hour_station_slots=2000000) {
     using namespace std::chrono;
     require_surf(max_hours>=1&&max_stations>=1&&max_hour_station_slots>=1,
