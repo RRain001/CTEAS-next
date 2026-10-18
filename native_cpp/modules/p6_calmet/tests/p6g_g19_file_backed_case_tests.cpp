@@ -173,7 +173,8 @@ static std::string make_two_station_crossyear_deck(const std::string& original) 
 static void check_one_us_two_ss_source_case(const std::string& original) {
     namespace fs=std::filesystem;
     const fs::path root="g19_one_us_two_ss_synthetic_input_contract";
-    if(fs::exists(root))fs::remove_all(root);
+    if(fs::exists(root))
+        throw std::runtime_error("G1B refuses to overwrite pre-existing test fixture directory");
     fs::create_directories(root);
     const p6g::G19SourceFilePaths paths{
         (root/"met.inp").string(),(root/"GEO.DAT").string(),
