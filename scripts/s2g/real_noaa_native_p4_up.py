@@ -44,13 +44,10 @@ ROOT = Path(__file__).resolve().parents[2]
 ORIGINAL_NOAA = HEFEI / "met/upperair/2022/CHM00058424-data.txt"
 ORIGINAL_STATION = "CHM00058424"
 WMO = "58424"
-YEAR = 2023
-MODEL_START = datetime(2023, 6, 1, 1, tzinfo=timezone.utc)
+YEARS = {2022: 728, 2023: 730}
 MODEL_HOURS = 6
 # Explicit genuine before/after 00/12 UTC soundings, never duplicate,
 # extrapolate or silently manufacture a missing original sounding.
-UP_START = datetime(2023, 6, 1, 0, tzinfo=timezone.utc)
-UP_END = datetime(2023, 6, 2, 12, tzinfo=timezone.utc)
 
 
 def require_binary(path: Path) -> Path:
@@ -70,7 +67,12 @@ def _timestamp(value: datetime) -> str:
     return value.strftime("%Y-%m-%dT%H:00Z")
 
 
-def run(native_p4: Path, native_up_reader: Path) -> dict:
+def run(native_p4: Path, native_up_reader: Path, year: int) -> dict:
+    if year not in YEARS:
+        raise ValueError("only separately source-backed NOAA 2022/2023 years accepted")
+    model_start = datetime(year, 6, 1, 1, tzinfo=timezone.utc)
+    up_start = datetime(year, 6, 1, 0, tzinfo=timezone.utc)
+    up_end = datetime(year, 6, 2, 12, tzinfo=timezone.utc)
     p4bin = require_binary(native_p4)
     checker = require_binary(native_up_reader)
     if not ORIGINAL_NOAA.is_file() or ORIGINAL_NOAA.stat().st_size < 20_000_000:
@@ -85,7 +87,7 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
 
     with tempfile.TemporaryDirectory(prefix="s2g-g1bb-authentic-igra-p4-") as td:
         scratch = Path(td)
-        case = scratch / "independent_huoshan_xinqiao_noaa_2023"
+        case = scratch / f"independent_huoshan_xinqiao_noaa_{year}"
         grid_path, center_path, _ = generate_grid(case / "grid", positions)
         grid = load_strict_utm_grid(grid_path, context="S2-G1B-B1")
         center_text = center_path.read_text()
@@ -93,7 +95,7 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
         lon = float(re.search(r"longitude:\s*([-\d.]+)", center_text).group(1))
         catalog = p4.load_station_list(
             ROOT / "engine/resources/igra/igra2-station-list.txt")
-        inside, outside = p4.candidate_groups(catalog, lat, lon, grid, YEAR)
+        inside, outside = p4.candidate_groups(catalog, lat, lon, grid, year)
         if inside or not outside or outside[0]["id"] != ORIGINAL_STATION:
             raise RuntimeError("non-Hefei domain does not select original external Anqing")
         upper_root = case / "met/upperair"
@@ -119,9 +121,9 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
                 (driver, "current_project_path", case_path),
             ):
                 stack.enter_context(patch.object(module, name, value))
-            _invoke_main(p4.main, ["download_igra", "--year", str(YEAR),
+            _invoke_main(p4.main, ["download_igra", "--year", str(year),
                                     "--pstop", "500", "--yes"])
-            audit_path = upper_root / str(YEAR) / "p4_station_selection_audit.json"
+            audit_path = upper_root / str(year) / "p4_station_selection_audit.json"
             audit = json.loads(audit_path.read_text(encoding="utf-8"))
             stations = audit.get("selected", [])
             if len(stations) != 1:
@@ -129,18 +131,18 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
             st = stations[0]
             if (st.get("id") != ORIGINAL_STATION or
                     st.get("site_type") != "VIRTUAL_RELOCATED" or
-                    st.get("valid_original_slots") != 730 or
+                    st.get("valid_original_slots") != YEARS[year] or
                     st.get("coverage", 0) <= .80):
                 raise RuntimeError("Anqing original annual coverage/identity deviated")
             if (not math.isclose(st["effective_lat"], lat, abs_tol=1e-7) or
                     not math.isclose(st["effective_lon"], lon, abs_tol=1e-7)):
                 raise RuntimeError("relocated source not at new site effective position")
-            _invoke_main(parser.main, ["parse_igra_to_csv", "--year", str(YEAR),
+            _invoke_main(parser.main, ["parse_igra_to_csv", "--year", str(year),
                                        "--pstop", "500", "--yes"])
-            _invoke_main(fsl_converter.main, ["read", "--year", str(YEAR)])
+            _invoke_main(fsl_converter.main, ["read", "--year", str(year)])
             jobs = driver.station_jobs(
-                YEAR, 500., p4bin, UP_START.replace(tzinfo=None),
-                UP_END.replace(tzinfo=None))
+                year, 500., p4bin, up_start.replace(tzinfo=None),
+                up_end.replace(tzinfo=None))
             if len(jobs) != 1 or jobs[0]["station_id"] != WMO:
                 raise RuntimeError("original 2023 IGRA-to-native-READ62 station job wrong")
             job = jobs[0]
@@ -159,14 +161,14 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
             source_lines = raw_native.read_text(encoding="utf-8").splitlines()
             normalized, clipped = normalizer.normalize_updat_records(
                 source_lines, WMO, raw_native)
-            calmet_up = scratch / "up_real_anqing_2023.dat"
+            calmet_up = scratch / f"up_real_anqing_{year}.dat"
             calmet_up.write_text("\n".join(normalized) + "\n", encoding="utf-8")
             actual_raw_sha = digest(ORIGINAL_NOAA)
             if actual_raw_sha != sha_original:
                 raise RuntimeError("original retained NOAA POR changed during production")
 
-            first_end = MODEL_START + timedelta(hours=1)
-            last_end = MODEL_START + timedelta(hours=MODEL_HOURS)
+            first_end = model_start + timedelta(hours=1)
+            last_end = model_start + timedelta(hours=MODEL_HOURS)
             verify = subprocess.run([
                 str(checker), str(calmet_up), WMO,
                 str(int(first_end.timestamp())), str(int(last_end.timestamp()))
@@ -178,6 +180,24 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
             if f"WMO={WMO}" not in verify.stdout or f"HOURS={MODEL_HOURS}" not in verify.stdout:
                 raise RuntimeError("native original UP reader proof identity/clock mismatch")
 
+
+            # Two independent fail-closed checks on the SAME genuine file:
+            # wrong declared source WMO and a later simulation hour with
+            # no real next sounding MUST fail without fabricating records.
+            bad_station = subprocess.run([
+                str(checker), str(calmet_up), "58425",
+                str(int(first_end.timestamp())), str(int(last_end.timestamp()))
+            ], check=False, text=True, capture_output=True, timeout=90)
+            if bad_station.returncode == 0 or "BLOCKED_P6G_NOAA_UP_SOURCE_PREFLIGHT" not in bad_station.stderr:
+                raise RuntimeError("P6 original UP source falsely accepted wrong WMO identity")
+            impossible_last = up_end + timedelta(hours=18)
+            bad_bracket = subprocess.run([
+                str(checker), str(calmet_up), WMO,
+                str(int(first_end.timestamp())), str(int(impossible_last.timestamp()))
+            ], check=False, text=True, capture_output=True, timeout=90)
+            if bad_bracket.returncode == 0 or "BLOCKED_P6G_NOAA_UP_SOURCE_PREFLIGHT" not in bad_bracket.stderr:
+                raise RuntimeError("P6 UP parser fabricated future 00/12 source sounding")
+
             return {
                 "status": "G1BB1_REAL_NOAA_ANQING_NATIVE_P4_UP_SOURCE_PASS_SCOPED",
                 "case": "non-Hefei Huoshan/Xinqiao-centred WGS84 UTM50N",
@@ -185,7 +205,7 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
                 "source_station": ORIGINAL_STATION, "wmo": WMO,
                 "source_lat": st["source_lat"], "source_lon": st["source_lon"],
                 "effective_lat": st["effective_lat"], "effective_lon": st["effective_lon"],
-                "calendar_year": YEAR, "original_valid_slots": st["valid_original_slots"],
+                "calendar_year": year, "original_valid_slots": st["valid_original_slots"],
                 "original_expected_slots": 730,
                 "selected_audit_sha256": digest(audit_path),
                 "original_noaa_por_sha256": sha_original,
@@ -196,12 +216,14 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
                 "native_raw_up_sha256": digest(raw_native),
                 "normalized_up_sha256": digest(calmet_up),
                 "normalizer_clipped_99level_soundings": clipped,
-                "model_first_hour": _timestamp(MODEL_START),
+                "model_first_hour": _timestamp(model_start),
                 "model_hours_checked": MODEL_HOURS,
-                "writer_start": _timestamp(UP_START),
-                "writer_end": _timestamp(UP_END),
+                "writer_start": _timestamp(up_start),
+                "writer_end": _timestamp(up_end),
                 "native_P4_output": result.stdout[-1200:],
                 "independent_P6_up_source_parser": verify.stdout[-1200:],
+                "negative_wrong_wmo": "BLOCKED_AS_EXPECTED",
+                "negative_missing_future_bracket": "BLOCKED_AS_EXPECTED",
                 "P3_GEO": "NOT_PRODUCED",
                 "P5_SURF": "NOT_PRODUCED",
                 "G19_FULL_SOURCE": "BLOCKED_NO_NEW_SITE_GEO_SURF",
@@ -214,12 +236,13 @@ def run(native_p4: Path, native_up_reader: Path) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Actual original NOAA native P4 UP.DAT short input-only test")
+    p.add_argument("--year", type=int, required=True, choices=sorted(YEARS))
     p.add_argument("--native-p4-bin", required=True, type=Path)
     p.add_argument("--native-up-preflight-bin", required=True, type=Path)
     p.add_argument("--evidence-out", required=True, type=Path)
     a = p.parse_args(argv)
     try:
-        report = run(a.native_p4_bin, a.native_up_preflight_bin)
+        report = run(a.native_p4_bin, a.native_up_preflight_bin, a.year)
         if a.evidence_out.is_symlink():
             raise ValueError("evidence output symlink prohibited")
         a.evidence_out.parent.mkdir(parents=True, exist_ok=True)
