@@ -64,3 +64,20 @@ This does **not** authorize redistribution of CTGPROC vendor source or compiled 
 
 [Manual original-source GLAZAS science workflow](https://github.com/RRain001/CTEAS-next/actions/workflows/s2g1bb-issue53-glazas-original.yml) → select main → Run workflow (no inputs). The run's actual result, *not successful source compilation*, determines `P2_A_ORIGINAL_GLAZAS_PARITY`. Until the science run completes on the current code, this status remains `NOT_RUN`.
 
+
+
+## 2026-10-18 actual first original science run and improved integer oracle
+
+Manual [`Run #39128466718`](https://github.com/RRain001/CTEAS-next/actions/runs/39128466718) **actually executed the authentic pinned CTGPROC GLAZAS** on the real official 156MB GLCC and wrote its independent LU.DAT. The original 2500×38=95000 **three-decimal fraction values all matched native D1→D3 exactly (max absolute difference 0.0, exceedances 0)**. The job was marked failure because the original `ctgproc.lst` printed `ncount=56` while the comparison improperly equated it to the native **10011 sub-grid mesh hits**.
+
+**Original Fortran source audit**: `ctgproc.for` lines ~2480–2506 calls `LUGRID(ngtmp,xmesh,ymesh,lucat,ncount2)` for each successful sub-grid point; `ncount2` is the mesh-level hits counter. But the original `ncount` printed by `Number of data points used to update grid` at ~3595 is incremented only once per *GLCC source pixel* touching the grid, not once for each of its successful MESHGLAZ subpoints (line ~2505). Thus **56 and 10011 are different units and must NOT be compared**, and their numeric inequality is **not evidence of C++ physics disagreement**.
+
+The stronger scientifically valid original-reference contract requires two **independently executed original Fortran runs with identical source, grid and MESHGLAZ=20**:
+1. `LFINAL=T`: original three-decimal **FRACTION** LU.DAT, compare all 95,000 original categories against native D3 ratios (absolute tolerance ≤0.0005).
+2. `LFINAL=F`: original **integer HITS** LU.DAT (genuine original sub-grid counts per output cell × class, not the original log `ncount`). Compare all 95,000 exact integers with the new native C++ D1 `p2_glcc_usgs92_hits.csv`, saved directly from its in-memory integer count array and pinned by `hits_csv_sha256` in D1 `p2_manifest.json`. Verify for every grid cell: sum of original integer hits equals native cell_samples, exact per-class hits, consistency of original HITS vs original fractions, and original `ncount` remains unchanged between the two original control runs. **Scientific success requires both original runs to execute successfully and all numerical gates to pass.**
+3. Preserve in the artifact: original source commit/SHA and binary SHA, both original control SHA, both original LU SHA, native integer CSV SHA, max and first 20 integer field differences, original 56-type **GLCC parent pixel** count (report only, not as sub-grid sample comparator), total sub-grid hits for both original and native, provenance and numeric scope.
+
+The updated manual [same workflow](https://github.com/RRain001/CTEAS-next/actions/workflows/s2g1bb-issue53-glazas-original.yml) now invokes `native_cpp.reference.validate_p2_glazas_hits`. The PR CI tests the parser and comparator **with synthetic integer data and format fixtures only**; it may never replace the manual 156MB original science run.
+
+Original HITS is an independent source-specific reference. This change does not alter historical `ctgproc.for`, P3/MAKEGEO, the 2022 GLC mappings, the raw source products, or any upstream long-time P6/P7 validation.
+
