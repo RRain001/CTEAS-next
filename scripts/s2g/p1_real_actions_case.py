@@ -7,12 +7,13 @@ No original TERREL execution or independent parity claimed.
 from __future__ import annotations
 import argparse
 import json
+import re
 from pathlib import Path
 
 from rasterio.warp import transform
 from native_cpp.orchestration.case_admission import admit_case, verify_immutable
 from scripts.s2g.p1_real_srtm90_admission import admit as admit_90m
-from scripts.s2g.p1_terrain_source import prepare
+from scripts.s2g.p1_terrain_source import prepare, P1SourceError
 from scripts.s2g.p1_native_case import run_case
 
 CASE_NAME="issue54_p1_seam_2022"
@@ -120,7 +121,30 @@ def main(argv=None)->int:
     if a.report.exists() or a.root.exists():
         raise SystemExit("refusing to overwrite P1 existing case or report")
     a.root.mkdir(parents=True)
-    result=run(root=a.root,route=a.route,binary=a.binary,tif_dir=a.tif_dir)
+    try:
+        result=run(root=a.root,route=a.route,binary=a.binary,tif_dir=a.tif_dir)
+    except P1SourceError as exc:
+        # Never print provider response, secret, full request URL or raw
+        # exception. Preserve bounded, categorical failed-at-source proof.
+        detail=str(exc)
+        matched=re.search(
+            r"OpenTopography HTTP (\\d{3}) \\[([A-Z_]+)\\]",detail)
+        report={
+          "schema_version":"p1-issue54-real-actions-source-blocker-v1",
+          "route":a.route,
+          "status":"BLOCKED_REAL_SOURCE_INPUT",
+          "source_provider_http_code":int(matched.group(1)) if matched else None,
+          "provider_failure_category":matched.group(2) if matched else "SOURCE_CHECK_BLOCKED",
+          "source_product_authenticated":False,
+          "native_p1_executed":False,
+          "original_terrel_executed":False,
+          "science_acceptance":"NOT_ACCEPTED"
+        }
+        a.report.write_text(json.dumps(report,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+        print(json.dumps({"status":report["status"],"route":a.route,
+                          "http_status":report["source_provider_http_code"],
+                          "category":report["provider_failure_category"]}))
+        return 2
     a.report.write_text(json.dumps(result,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print(json.dumps({"status":result["status"],"route":result["route"],
                       "rows":result["row_count"],"nodata":result["source_case_nodata_pixels"],
