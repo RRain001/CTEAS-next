@@ -11,6 +11,7 @@
 #include "cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
 #include "cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
 #include "cteas/p6/p6g_g18c5_selected_p6f_fields.hpp"
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
