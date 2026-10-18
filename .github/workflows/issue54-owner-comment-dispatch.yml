@@ -1,0 +1,33 @@
+name: Issue54 owner issue-command manual workflow dispatcher
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  contents: read
+  actions: write
+jobs:
+  issue54-authorized-manual-dispatch:
+    if: >-
+      github.repository == 'RRain001/CTEAS-next' &&
+      github.event.issue.number == 54 &&
+      github.event.comment.user.login == 'RRain001' &&
+      (github.event.comment.body == '/cteas-p1-real-90m' ||
+       github.event.comment.body == '/cteas-p1-real-30m')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch fixed reviewed workflow only (main; no user-supplied paths)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ github.event.comment.body }}
+          GH_REPO: RRain001/CTEAS-next
+        run: |
+          set -euo pipefail
+          case "$BODY" in
+            /cteas-p1-real-90m) route=P1_A_90M_LOCAL;;
+            /cteas-p1-real-30m) route=P1_B_30M_DOWNLOAD;;
+            *) exit 2;;
+          esac
+          gh workflow run issue54-real-two-route-manual.yml --ref main --field "route=$route"
+          echo "ISSUE54_EXPLICIT_USER_MANUAL_WORKFLOW_DISPATCH_ACCEPTED route=$route"

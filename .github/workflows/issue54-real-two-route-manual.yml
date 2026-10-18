@@ -1,0 +1,98 @@
+name: Issue54 real SRTM 90m and 30m to native P1 (manual only)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue54-real-two-route-manual.yml'
+      - 'scripts/s2g/p1_real_actions_case.py'
+      - 'scripts/s2g/tests/test_p1_real_actions_case.py'
+  workflow_dispatch:
+    inputs:
+      route:
+        description: Genuine source route (original TERREL parity is separate)
+        required: true
+        type: choice
+        options:
+          - P1_A_90M_LOCAL
+          - P1_B_30M_DOWNLOAD
+permissions:
+  contents: read
+concurrency:
+  group: issue54-real-native-${{ github.event_name }}-${{ inputs.route || github.ref }}
+  cancel-in-progress: false
+jobs:
+  synthetic-case-admission-only:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          lfs: false
+      - name: Install offline grid dependencies
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+      - name: Check strict independent case geometry (NO DEM)
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_p1_real_actions_case
+          echo 'P1_REAL_SITE_GRID_CASE=PASS_SOFTWARE_ONLY'
+          echo 'P1_REAL_SRTM_SOURCE=NOT_RUN P1_ORIGINAL_PARITY=NOT_RUN'
+  manually-authorized-real-source-native:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    env:
+      ROUTE: ${{ inputs.route }}
+      OPENTOPOGRAPHY_API_KEY: ${{ secrets.OPENTOPOGRAPHY_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          lfs: false
+          persist-credentials: true
+      - name: Install native toolchain and source dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cmake g++ libgdal-dev git-lfs
+          python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+      - name: Materialize ONLY two documented real 90m LFS TIFFs
+        if: inputs.route == 'P1_A_90M_LOCAL'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git lfs install --local
+          git lfs pull --include='calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.tif,calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif' --exclude=''
+          test "$(stat -c '%s' calpuff_terrain_and_landuse_data/china_srtm/srtm_59_06.tif)" -eq 72096675
+          test "$(stat -c '%s' calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif)" -eq 72096675
+          echo 'LFS_90M_TWO_REAL_FILES=MATERIALIZED_SIZE_ONLY'
+      - name: Compile same audited native P1 kernel
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/p1 -B "$RUNNER_TEMP/issue54-p1-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/issue54-p1-build" --parallel 2
+          ctest --test-dir "$RUNNER_TEMP/issue54-p1-build" --output-on-failure
+      - name: Real source, shared B0, native P1; NO original Fortran parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.p1_real_actions_case \
+            --root "$RUNNER_TEMP/issue54-p1-real" \
+            --route "$ROUTE" \
+            --tif-dir "$GITHUB_WORKSPACE/calpuff_terrain_and_landuse_data/china_srtm" \
+            --binary "$RUNNER_TEMP/issue54-p1-build/cteas_p1_terrain_case" \
+            --report "$RUNNER_TEMP/issue54-p1-real-report.json"
+          echo 'P1_REAL_SELECTED_SOURCE_NATIVE=PRODUCED_UNVERIFIED'
+          echo 'ORIGINAL_FORTRAN_TERREL=NOT_RUN SCIENCE=NOT_ACCEPTED'
+      - name: Upload minimal source/native metadata; never upload DEM/vendor
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue54-real-p1-${{ inputs.route }}-native-unverified
+          path: ${{ runner.temp }}/issue54-p1-real-report.json
+          if-no-files-found: ignore
+          retention-days: 30
