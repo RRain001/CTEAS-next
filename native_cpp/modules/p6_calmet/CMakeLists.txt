@@ -977,3 +977,14 @@ if(MSVC)
 else()
   target_compile_options(cteas_p6_d9a_source_trace PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+# S2-G1B-B1 standalone REAL IGRA -> native P4 READ62 -> UP.DAT source-only
+# preflight: validates genuine 6201 bytes and hourly AA/BB brackets only.
+# This executable never runs numerical CALMET or CALPUFF physical kernels.
+add_executable(cteas_p6g_up_source_preflight src/p6g_up_source_preflight_main.cpp)
+target_link_libraries(cteas_p6g_up_source_preflight PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_up_source_preflight PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_up_source_preflight PRIVATE
+    -Wall -Wextra -Wpedantic -Werror)
+endif()
