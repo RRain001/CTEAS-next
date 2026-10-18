@@ -58,12 +58,14 @@ TerrainGridResult grid_geotiff_terrain_utm(
   const auto& t=source.geo_transform;
   if(t[2]!=0.0 || t[4]!=0.0 || t[1]<=0.0 || t[5]>=0.0)
     throw std::invalid_argument("P1 subset only supports north-up geographic GeoTIFF");
-  // GET_IFD returns approximate center of pixel (1,1); x/y/deltas
-  // are stored as original Fortran default REAL*4.
-  const float xorg=static_cast<float>(t[0]+t[1]*0.5);
-  const float yorg=static_cast<float>(t[3]+t[5]*0.5);
+  // TERREL TIFFINFO.GET_IFD stages ModelTiepoint and ModelPixelScale
+  // independently as REAL*4, then shifts PixelIsArea to pixel center.
+  // Rounding the DOUBLE expression just once is not equivalent near cell
+  // edges (actual #54 same-TIFF 30m/90m original-native forensic evidence).
   const float ddx=static_cast<float>(t[1]);
   const float ddy=static_cast<float>(t[5]);
+  const float xorg=geotiff_area_pixel_center_real4(t[0],t[1]);
+  const float yorg=geotiff_area_pixel_center_real4(t[3],t[5]);
   OGRSpatialReference srs,utm;
   OGRSpatialReference wgs84;
   if(srs.importFromWkt(source.crs_wkt.c_str())!=OGRERR_NONE||

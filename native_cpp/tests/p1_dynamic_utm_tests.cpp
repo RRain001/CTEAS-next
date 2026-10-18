@@ -73,7 +73,32 @@ void check_case(double lon,double lat,UtmProjection projection,
       throw std::runtime_error("frozen 50N wrapper not bitwise-equivalent to general path");
   }
 }
+void check_original_geotiff_real4_pixel_center_staging() {
+  // Independently calculated exactly as TERREL v7 TIFFINFO.GET_IFD:
+  // xorg=SNGL(ModelTiepointX); dxi=SNGL(ModelPixelScaleX);
+  // xorg=xorg+dxi/2.0 with REAL*4 arithmetic.
+  for (const auto& sample : {
+         std::pair<double,double>{117.0003,1.0/3600.0},
+         {117.0005,1.0/1200.0},
+         {31.9003,-1.0/3600.0},
+         {31.9001,-1.0/1200.0},
+       }) {
+    const float original=static_cast<float>(sample.first)
+                       +static_cast<float>(sample.second)/2.0f;
+    const float reproduced=geotiff_area_pixel_center_real4(sample.first,sample.second);
+    if(original!=reproduced)
+      throw std::runtime_error("original TIFFINFO REAL4 center staging disagrees");
+  }
+  // A single DOUBLE addition followed by one REAL*4 cast must not be
+  // silently substituted: near 117E, 1 ULP in longitude is ~0.72 m.
+  const double x=117.0003,dx=1.0/3600.0;
+  const float historical=geotiff_area_pixel_center_real4(x,dx);
+  const float incorrect=static_cast<float>(x+dx/2.0);
+  if(historical==incorrect)
+    throw std::runtime_error("REAL4 staging regression test is nondiscriminating");
+}
 int main() {
+  check_original_geotiff_real4_pixel_center_staging();
   // Two northern zones, one southern zone; no real DEM or original TERREL claim.
   check_case(117.0,31.0,{50,false});
   check_case(111.0,31.0,{49,false},3,5); // non-square
