@@ -18,6 +18,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+# Executed as a script rather than a -m module by the isolated Actions runner.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 from engine.run_met.station_grid import load_strict_utm_grid, lon_lat_in_utm_grid
 from native_cpp.modules.p4_read62.data_prep import download_igra as p4
 from native_cpp.modules.p5_smerge.data_prep import download_isd_by_grid as p5
