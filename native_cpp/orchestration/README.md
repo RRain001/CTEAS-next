@@ -66,3 +66,26 @@ P4 root must contain `<year>/p4_station_selection_audit.json`; P5 root `station_
 CI [PR #37](https://github.com/RRain001/CTEAS-next/pull/37) sources the real 2022–2023 original NOAA P4/P5 records from [S3-F #35](https://github.com/RRain001/CTEAS-next/pull/35). It tests **one new physical footprint** with P5 Huoshan/Luogang as *observed in-domain multi-sites* and P4 Anqing as an *out-of-domain virtual sounding station*, for both calendar years. The distinct P4 Fuyang/Anqing two-in-domain experiment is also verified, but **is not mislabeled as part of the smaller shared footprint**. No new P6/P7 science run occurs.
 
 **Regardless of successful G0 checks:** return status `SITE_STATION_INPUTS_VERIFIED_P6_P7_BLOCKED`, `ready=false`, `model_executed=false`, `scientific_acceptance=NOT_EVALUATED`. P6 hard-coded `up_58424.dat`, station `58424`, `--upper-i 25 --upper-j 26`, fixed 50×50×9 and P7 general production limitations still require independent G1/G2/G3/G4 work. G5 `met/puff/all` is not unlocked. No legacy Fortran fallback or automatic original reference MET/puff reuse is allowed.
+
+## S2-G1A: dynamic GEO/SURF/UP station handoff into G19 (source-only)
+
+`python3 -m native_cpp.orchestration.p6_g19_handoff --case-yaml /scratch/new_site/case.yaml --p4-selection-root /scratch/new_site/met/upperair --p5-selection-root /scratch/new_site/met/surface/isd_raw`
+
+This **additional** fail-closed CLI consumes the already admitted **non-Hefei** `site_plan` contract, real P4/P5 yearly station manifests, and original-compatible source files in an independent staged case root:
+
+- `run/met/met.inp`: original 2–6 `SSn/USn` stations, `NX/NY/NZ`, `IUTMZN/UTMHEM`, `XORIGKM/YORIGKM/DGRIDKM`, with the source deck's **US1, US2... order** authoritative. All control geometry must agree with `case.yaml` and numeric `grid.cmn`, which remains the southwest UTM grid authority and uses **km with exactly three decimal places**.
+- `geo/makegeo/geo.dat`, `met/surface/final/surf.dat`, and each `met/upperair/final/up_<WMO5>.dat`; the utility checks files nonempty, no symlinks, SHA256 and station identity/coordinate agreement. It never substitutes a frozen original `MET.DAT`.
+- Already tested C++ `cteas_p6g_g19_source_case_preflight` can be supplied as `--g19-native-bin /abs/path/to/executable --execute-input-preflight`. That option explicitly runs only the native *G19 source-file parser*; the executable and all staged inputs are hash-checked again before execution, and C++'s returned NX/NY, station counts and ordered IDs must match the Python source plan. No G19 execution is automatic.
+
+The current G19 original-source loading capability is **2–6 SS and 2–6 US**, nine vertical layers, `NX,NY<=400`, one static ordered station set across the selected calendar years. These reflect the **existing** G19 source loader, not an arbitrary P6 meteorology engine. Real new-site S2-G0 example using Huoshan/Xinqiao ground stations + one *external virtual* Anqing sounding is therefore **not** admitted into G19 until one-US original input support is separately independently tested; do not insert fabricated US stations to pass.
+
+Even on successful C++ source parsing, the output remains `ready=false`, `model_executed=false`, `P6D_P6E_P6F=NOT_RUN`, `P7=NOT_RUN`, `scientific_acceptance=NOT_EVALUATED`. The 143h P6 coordinator continues to be Hefei-only with hardcoded `58424` and 50×50×9 shapes. S2-G1B must bridge genuine new-site producer data to multi-station P6 hourly numerical physics with independent original comparisons; S2-G2 addresses the P7 production concentration executor. This work does not unlock G5 or the original Fortran runtime.
+
+Verify software/format without running a meteorological simulation:
+
+```bash
+python3 -m unittest -v native_cpp.orchestration.tests.test_p6_g19_handoff
+cmake -S native_cpp/modules/p6_calmet -B /tmp/p6g-g19 -DCMAKE_BUILD_TYPE=Release
+cmake --build /tmp/p6g-g19 --target cteas_p6g_g19_file_backed_case_tests cteas_p6g_g19_source_case_preflight
+ctest --test-dir /tmp/p6g-g19 --output-on-failure -R '^p6g_g19_source_file_backed_2ss_2us_g14_input_contract$'
+```
