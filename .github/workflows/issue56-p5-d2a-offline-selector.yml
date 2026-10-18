@@ -1,0 +1,33 @@
+name: Issue 56 P5 D2-A offline original station selection
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue56-p5-d2a-offline-selector.yml'
+      - 'native_cpp/modules/p5_smerge/data_prep/download_isd_by_grid.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/p5_case_producer.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_offline_selector.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_case_producer.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-selector-software-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install bounded validator dependency
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+      - name: Check original station selection without network
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_p5_offline_selector
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_p5_case_producer
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_case_archive_gate
+          echo 'P5_D2A_OFFLINE_SELECTOR=PASS_SCOPED_SOFTWARE'
+          echo 'P5_NEW_REAL_SITE_SURF=NOT_RUN P5_ORIGINAL_PARITY=NOT_RUN'
