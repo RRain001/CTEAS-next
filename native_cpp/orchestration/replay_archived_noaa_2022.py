@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Offline, immutable archived NOAA 2022 -> FSL/GENERIC selected-case replay.
+
+Runs REAL P4 IGRA and P5 full-ISD/ISD-Lite wind preprocessing, not synthetic
+test vectors. Never downloads files, updates project/current, writes to the
+golden case or invokes original READ62/SMERGE/CALMET binaries.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import json
+import os
+import re
+import shutil
+from pathlib import Path
+
+CASE_ID = "hefei5km_2022_reference_case_20261011"
+P4_RAW = "met/upperair/2022/CHM00058424-data.txt"
+P4_SELECTION = "met/upperair/2022/upperair_station_used_list.txt"
+P4_PSTOP = "met/upperair/2022/pstop_hpa.txt"
+P4_REFERENCE = "met/upperair/2022/igra2fsl/58424.txt"
+P5_FULL = "met/surface/isd_raw/58321099999-2022.csv"
+P5_LITE = "met/surface/isd_raw/isd_lite/583210-99999-2022.gz"
+P5_SELECTION = "met/surface/isd_raw/station_selection_2022.json"
+P5_REFERENCE = "met/surface/isd2smerge_ready/583210-99999.csv"
+TIME = "grid/research_time"
+SOURCES = [P4_RAW,P4_SELECTION,P4_PSTOP,P4_REFERENCE,P5_FULL,P5_LITE,
+           P5_SELECTION,P5_REFERENCE,TIME]
+
+
+def sha(path: Path) -> str:
+    d=hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda:f.read(1024*1024),b""):
+            d.update(block)
+    return d.hexdigest()
+
+
+def checked(case: Path, relative: str) -> Path:
+    p=case
+    for name in Path(relative).parts:
+        p=p/name
+        if p.is_symlink():
+            raise ValueError("symlink source not allowed: "+relative)
+    if not p.is_file():
+        raise ValueError("required source missing: "+relative)
+    return p
+
+
+def copy_source(case: Path, work: Path, relative: str) -> Path:
+    src=checked(case,relative)
+    dst=work/relative
+    dst.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(src,dst)
+    if sha(src)!=sha(dst):
+        raise ValueError("source copy changed: "+relative)
+    return dst
+
+
+def byte_gate(generated: Path, expected: Path, label: str) -> dict:
+    if not generated.is_file():
+        raise ValueError(label+" output missing")
+    produced={"bytes":generated.stat().st_size,"sha256":sha(generated)}
+    frozen={"bytes":expected.stat().st_size,"sha256":sha(expected)}
+    if produced!=frozen:
+        left=generated.read_bytes()
+        right=expected.read_bytes()
+        first=next((i for i,(a,b) in enumerate(zip(left,right)) if a!=b),min(len(left),len(right)))
+        raise ValueError(
+            label+" BYTE_MISMATCH first_byte="+str(first)+
+            " produced="+str(produced)+" expected="+str(frozen)
+        )
+    print("S3D_"+label+"_ARCHIVED_RAW_TO_PREPARED_BYTE_IDENTITY=PASS",flush=True)
+    return {"status":"EXACT_BYTE_PARITY","fresh":produced,"frozen":frozen}
+
+
+def replay(case: Path, work: Path, source_sha: str) -> dict:
+    if not re.fullmatch(r"[a-f0-9]{40}",source_sha):
+        raise ValueError("source SHA not pinned")
+    if case.name!=CASE_ID or case.is_symlink() or not case.is_dir():
+        raise ValueError("wrong archived-case root")
+    if work.exists() or work.is_symlink():
+        raise ValueError("scratch must not exist before this run")
+    if not work.parent.is_dir() or case.resolve().is_relative_to(work.resolve()) or (
+        work.resolve().is_relative_to(case.resolve())
+    ):
+        raise ValueError("unsafe scratch location")
+    original={name:{"sha256":sha(checked(case,name)),
+                    "bytes":checked(case,name).stat().st_size}
+              for name in SOURCES}
+    if checked(case,TIME).read_text().strip()!="BEGIN:20220101-000000\nEND:20220106-230000":
+        raise ValueError("research calendar changed")
+    selection=json.loads(checked(case,P5_SELECTION).read_text())
+    if (selection.get("primary_sid")!="58321099999" or
+        selection.get("year")!=2022 or len(selection.get("stations",[]))!=1 or
+        selection["stations"][0].get("wind_data_source")!="NOAA_ISD_LITE" or
+        selection["stations"][0].get("wind_treatment")!="COMPLETE_FILL_AND_CALM_REPLACE"):
+        raise ValueError("NOAA primary and wind policy changed")
+    import subprocess
+    actual_head=subprocess.check_output(["git","rev-parse","HEAD"],
+                                         text=True).strip()
+    if source_sha!=actual_head:
+        raise ValueError("checked-out source does not match pinned HEAD")
+    with checked(case,P4_SELECTION).open(newline="") as f:
+        rows=list(csv.DictReader(f))
+    if len(rows)!=1 or rows[0]["id"]!="CHM00058424" or rows[0]["year"]!="2022":
+        raise ValueError("P4 archived station selection changed")
+    if checked(case,P4_PSTOP).read_text().strip()!="500.0":
+        raise ValueError("P4 PSTOP changed")
+    work.mkdir()
+    for name in SOURCES:
+        # Reference files copied only for audit convenience, NEVER as outputs.
+        if name in (P4_REFERENCE,P5_REFERENCE): continue
+        copy_source(case,work,name)
+
+    # P4: actual 75 MB NOAA IGRA text -> 2022 cleaned 00/12 profiles
+    # -> 2022 gap policy -> FSL (existing production functions).
+    from native_cpp.modules.p4_read62.data_prep import parse_igra_to_csv as igra
+    from native_cpp.modules.p4_read62.data_prep import read as read62
+    row=rows[0]
+    csvdir=work/"met/upperair/2022/CHM00058424_igra_every_moment"
+    raw=work/P4_RAW
+    stats=igra.convert_igra_to_csv(raw,csvdir,"58424",2022,
+                                    float(row["elev_m"]),500.0)
+    filled=igra.ensure_year_completeness(
+        csvdir,"58424",2022,stats.get("dropped_slots"))
+    if filled["unresolved_slots"]>0:
+        raise ValueError("P4 still has missing 00/12 after original filling")
+    fsl=work/P4_REFERENCE
+    fsl.parent.mkdir(parents=True)
+    lat,lon=float(row["lat"]),float(row["lon"])
+    read_stats=read62.convert_csv_profiles_to_fsl(
+        csv_dir=csvdir,output_path=fsl,station_id="58424",
+        latitude=f"{abs(lat):.2f}{'N' if lat>=0 else 'S'}",
+        longitude=f"{abs(lon):.2f}{'E' if lon>=0 else 'W'}",
+        elevation=str(int(round(float(row["elev_m"])))),
+        target_year="2022",min_pressure_hpa=500.0,
+        exact_lat=lat,exact_lon=lon,coord_digits=6)
+    p4_byte=byte_gate(fsl,checked(case,P4_REFERENCE),"P4_FSL")
+    print("S3D_P4_IGRA_ORIGINAL_CLEANED_COUNT=",stats["soundings_written"],flush=True)
+
+    # P5: archived 2022 full-ISD plus full-year ISD-Lite winds ->
+    # actual original wind V2 hourly fill/interpolation + GENERIC.
+    # Never hand original case paths to the P5 script globals.
+    from native_cpp.modules.p5_smerge.data_prep import isd_to_smerge_and_fill as p5base
+    from native_cpp.modules.p5_smerge.data_prep import clean_merge_filled_by_research_time as p5clip
+    from native_cpp.modules.p5_smerge.data_prep import convert_cleaned_to_smerge_ready as p5ready
+    surface=work/"met/surface"
+    p5base.BASE_DIR=surface
+    p5base.INPUT_DIR=surface/"isd_raw"
+    p5base.OUTPUT_DIR=surface/"isd2smerge_and_fill"
+    # Guard source stage before any processing.
+    from native_cpp.modules.p5_smerge.data_prep.isd_lite_wind import parse_lite_winds
+    lite=parse_lite_winds(work/P5_LITE,2022,"58321099999")
+    if len(lite)!=8692 or sha(work/P5_LITE)!=selection["stations"][0]["wind_isd_lite"]["sha256"]:
+        raise ValueError("P5 archived ISD-Lite source selection incompatible")
+    if p5base.main()!=0:
+        raise ValueError("P5 raw ISD+Lite conversion failed")
+    p5clip.CASE_ROOT=work
+    p5clip.INPUT_DIR=p5base.OUTPUT_DIR
+    p5clip.OUTPUT_DIR=surface/"isd2smerge_cleaned"
+    p5clip.RESEARCH_TIME_FILE=work/TIME
+    if p5clip.main()!=0:
+        raise ValueError("P5 research-time filtered primary failed")
+    p5ready.CASE_ROOT=work
+    p5ready.INPUT_DIR=p5clip.OUTPUT_DIR
+    p5ready.OUTPUT_DIR=surface/"isd2smerge_ready"
+    if p5ready.main()!=0:
+        raise ValueError("P5 cleaned-to-GENERIC failed")
+    generic=work/P5_REFERENCE
+    p5_byte=byte_gate(generic,checked(case,P5_REFERENCE),"P5_GENERIC")
+    # Do not trust one manifest to independently certify the raw selections.
+    with checked(case,P5_FULL).open(newline="",encoding="utf-8") as f:
+        raw_rows=sum(1 for _ in f)-1
+    if raw_rows<8692:
+        raise ValueError("full ISD unexpectedly below selected raw coverage")
+    for name,meta in original.items():
+        if sha(checked(case,name))!=meta["sha256"]:
+            raise ValueError("immutable original case mutated: "+name)
+    report={
+        "schema":"CTEAS_S3D_ARCHIVED_NOAA_OFFLINE_REPLAY_V1",
+        "case":CASE_ID,"source_sha":source_sha,"status":"PASS_SCOPED_RAW_TO_FSL_GENERIC",
+        "no_network_download":True,"no_golden_case_mutation":True,
+        "raw_sources":original,
+        "p4":{"stats":stats,"filled":filled,"fsl_stats":read_stats,
+              "produced_fsl":p4_byte},
+        "p5":{"original_lite_hours":len(lite),"full_isd_source_rows":raw_rows,
+              "wind_source":"NOAA_ISD_LITE",
+              "produced_generic":p5_byte},
+        "research_period":"2022-01-01T00:00_to_2022-01-06T23:00",
+        "utm_xrefkm":"510.885","utm_yrefkm":"3531.269",
+        "recomputed_p4_to_p7_in_this_job":False,
+        "general_site_validated":False
+    }
+    audit=work/"audit"
+    audit.mkdir()
+    (audit/"s3d-archived-noaa-replay.json").write_text(
+        json.dumps(report,ensure_ascii=False,indent=2,default=str)+"\n")
+    print("S3D_P4_P5_ARCHIVED_RAW_PREPARED_BOTH_BYTE_IDENTITY=PASS")
+    return report
+
+
+def main() -> int:
+    p=argparse.ArgumentParser()
+    p.add_argument("--case",type=Path,required=True)
+    p.add_argument("--work",type=Path,required=True)
+    p.add_argument("--source-head",required=True)
+    a=p.parse_args()
+    replay(a.case.resolve(),a.work.absolute(),a.source_head)
+    return 0
+
+
+if __name__=="__main__":
+    raise SystemExit(main())
