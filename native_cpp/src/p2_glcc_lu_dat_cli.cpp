@@ -81,7 +81,7 @@ std::string header(int zone,bool north,int nx,int ny,const std::string& x0,const
    <<std::fixed<<std::setprecision(3)
    <<std::setw(12)<<cteas::reconstruction::geo::three_decimal_origin_km(x0)
    <<std::setw(12)<<cteas::reconstruction::geo::three_decimal_origin_km(y0)
-   <<std::setw(12)<<dkm<<std::setw(12)<<dkm<<std::setw(8)<<38<<"\nKM  M\n";
+   <<std::setw(12)<<dkm<<std::setw(12)<<dkm<<std::setw(6)<<38<<"\nKM  M\n";
   for(int cat:cteas::reconstruction::geo::kGlccUsgs92Classes)o<<std::setw(6)<<cat;
   o<<"\n";
   return o.str();
