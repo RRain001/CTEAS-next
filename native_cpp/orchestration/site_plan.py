@@ -142,6 +142,7 @@ def _year_hours(year: int) -> int:
 
 def _selection(
     years: list[int], grid: Any, p4_dir: Path, p5_dir: Path,
+    stack_lat: float, stack_lon: float,
 ) -> dict[str, Any]:
     output: dict[str, Any] = {"p4": [], "p5": []}
     alias_index: dict[str, str] = {}
@@ -149,6 +150,8 @@ def _selection(
         p4file = p4_dir / str(year) / "p4_station_selection_audit.json"
         p4, raw4 = _load(p4file, 2_000_000)
         p4 = mapping(p4, "P4 audit")
+        if "year" in p4 and p4["year"] != year:
+            raise ContractError("P4 audit year mismatch")
         selected4 = child(p4, "selected")
         if not isinstance(selected4, list) or not selected4:
             raise ContractError(f"P4 {year}: no selected station")
@@ -179,6 +182,8 @@ def _selection(
                     raise ContractError("P4 virtual source unexpectedly in domain")
                 if lon_lat_in_utm_grid(eff[1], eff[0], grid) is False:
                     raise ContractError("P4 relocated effective station outside domain")
+                _same(eff[0], stack_lat, "P4 virtual station not at physical stack")
+                _same(eff[1], stack_lon, "P4 virtual station not at physical stack")
             else:
                 raise ContractError("P4 site_type unsupported")
         output["p4"].append({
@@ -192,6 +197,8 @@ def _selection(
         p5 = mapping(p5, "P5 manifest")
         if child(p5, "year") != year:
             raise ContractError("P5 wrong manifest year")
+        mode5 = child(p5, "mode")
+        kind5 = child(p5, "station_selection_case")
         selected5 = child(p5, "stations")
         if not isinstance(selected5, list) or not selected5:
             raise ContractError(f"P5 {year}: no selected station")
@@ -232,6 +239,8 @@ def _selection(
                         or count_full * 10 <= expected * 9
                         or count_lite * 10 <= expected * 9):
                     raise ContractError("P5 virtual fallback invalid location or <=90% original hours")
+                _same(eff[0], stack_lat, "P5 virtual station not at physical stack")
+                _same(eff[1], stack_lon, "P5 virtual station not at physical stack")
             else:
                 if not lon_lat_in_utm_grid(src[1], src[0], grid):
                     raise ContractError("P5 observed source outside domain")
@@ -257,6 +266,16 @@ def _selection(
             raise ContractError("P5 different real stations share same IFSTN alias")
         if len(selected5) > 1 and any(s["relocated"] for s in selected5):
             raise ContractError("P5 multi-station selection must not include virtual sites")
+        if mode5 == "OBSERVED":
+            if any(s["relocated"] for s in selected5):
+                raise ContractError("P5 observed mode cannot contain virtual stations")
+            if kind5 != ("IN_DOMAIN_SINGLE" if len(selected5) == 1 else "IN_DOMAIN_MULTIPLE"):
+                raise ContractError("P5 observed-mode station count mismatch")
+        elif mode5 == "VIRTUAL_RELOCATED":
+            if len(selected5) != 1 or kind5 != "EXTERNAL_SINGLE_VIRTUAL" or not selected5[0]["relocated"]:
+                raise ContractError("P5 virtual-mode selection is not one external station")
+        else:
+            raise ContractError("P5 mode unsupported")
         output["p5"].append({
             "year": year, "station_ids": sorted(seen5), "primary": primary,
             "source_hours": {s["sid"]: {
@@ -315,7 +334,8 @@ def plan_site(
         raise ContractError("exactly two nonnegative species emissions required")
     if sum(emissions) <= 0:
         raise ContractError("all-zero source is not an acceptable physical acceptance fixture")
-    selected = _selection(years, grid, Path(p4_selection_root), Path(p5_selection_root))
+    selected = _selection(years, grid, Path(p4_selection_root), Path(p5_selection_root),
+                          slat, slon)
     return {
         "contract_version": "S2-G0-NONHEFEI-METADATA-ONLY-1",
         "status": "SITE_STATION_INPUTS_VERIFIED_P6_P7_BLOCKED",
