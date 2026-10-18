@@ -48,8 +48,7 @@ jobs:
           cmake --build "$RUNNER_TEMP/p5-source-cpp" --parallel 2 \
             --target cteas_p5_smerge cteas_p5_tests
           ctest --test-dir "$RUNNER_TEMP/p5-source-cpp" --output-on-failure \
-            -R '^p5_generic_utc_input_contracts
-          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-surf-source" \
+            -R '^p5_generic_utc_input_contracts          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-surf-source" \
             -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
           cmake --build "$RUNNER_TEMP/p6-surf-source" --parallel 2 \
             --target cteas_p6g_surf_source_preflight
@@ -83,14 +82,7 @@ jobs:
           assert not v["science_45_field_accepted"]
           print("G1B_B2_REAL_NOAA_NATIVE_SURF=PASS_SCOPED P6/P7=NOT_RUN")
           PY
-      - name: Upload hashes, status and logs only (not original NOAA bytes)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: s2g1bb2-source-sha-log-only
-          path: ${{ runner.temp }}/s2g1bb2-evidence/
-          if-no-files-found: warn
- 
+
           cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-surf-source" \
             -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
           cmake --build "$RUNNER_TEMP/p6-surf-source" --parallel 2 \
