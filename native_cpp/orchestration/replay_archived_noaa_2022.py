@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 CASE_ID = "hefei5km_2022_reference_case_20261011"
@@ -123,7 +124,6 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
         selection["stations"][0].get("wind_data_source")!="NOAA_ISD_LITE" or
         selection["stations"][0].get("wind_treatment")!="COMPLETE_FILL_AND_CALM_REPLACE"):
         raise ValueError("NOAA primary and wind policy changed")
-    import subprocess
     actual_head=subprocess.check_output(["git","rev-parse","HEAD"],
                                          text=True).strip()
     if source_sha!=actual_head:
@@ -152,7 +152,7 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
     # Eligibility is based on ORIGINAL cleaned 00/12 profiles before any
     # same-/previous-day clone, never on the 730 filled profiles.
     original_slots={p.stem.split("_",1)[1] for p in csvdir.glob("58424_*.csv")
-                    if re.fullmatch(r"58424_2022[0-9]{4}[01][02]\\.csv",p.name)}
+                    if re.fullmatch(r"58424_2022[0-9]{4}(00|12)\.csv",p.name)}
     original_slots={x for x in original_slots if x.endswith(("00","12"))}
     # Match is deliberately explicit and independent of the FSL output size.
     observed=len(original_slots)
