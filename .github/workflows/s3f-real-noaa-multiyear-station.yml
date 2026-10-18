@@ -1,0 +1,61 @@
+name: S3-F genuine NOAA P4 P5 2022 2023 multi-station selection only
+
+on:
+  push:
+    branches:
+      - codex/s3f-authentic-multistation-two-year
+    paths:
+      - .github/workflows/s3f-real-noaa-multiyear-station.yml
+      - scripts/s3f/**
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s3f-real-noaa-multiyear-station.yml
+      - scripts/s3f/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s3f-station-only-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-noaa-p4-p5-selection-only:
+    name: Two real sites x two real years, NOAA P4/P5, NO P6/P7
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - name: Exact SHA checkout with existing archived original NOAA observations
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install source-preparation-only Python dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          python3 -m compileall -q scripts/s3f/verify_real_noaa_2022_2023_station_selection.py
+      - name: Invoke authentic NOAA original P4/P5 selectors on real station domains
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s3f"
+          echo "S3F_SHA=$(git rev-parse HEAD)" | tee "$RUNNER_TEMP/s3f/source-provenance.txt"
+          echo 'P6=NOT_RUN P7=NOT_RUN G5=NOT_RUN' | tee -a "$RUNNER_TEMP/s3f/source-provenance.txt"
+          python3 -u scripts/s3f/verify_real_noaa_2022_2023_station_selection.py \
+            "$RUNNER_TEMP/s3f/real-noaa-two-site-two-year-report.json" \
+            2>&1 | tee "$RUNNER_TEMP/s3f/selector-observations.log"
+          grep -q 'PASS_REAL_NOAA_2_STATIONS_2_YEARS_SELECTION_ONLY' "$RUNNER_TEMP/s3f/selector-observations.log"
+      - name: Archive audits not raw observation assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3f-genuine-noaa-two-station-two-year-selector-evidence
+          path: |
+            ${{ runner.temp }}/s3f/*.json
+            ${{ runner.temp }}/s3f/*.log
+            ${{ runner.temp }}/s3f/*.txt
+          if-no-files-found: warn
