@@ -25,8 +25,6 @@ from engine.run_met.common import lon_lat_to_utm_km
 from .plan import ContractError
 from .site_plan import plan_site
 
-G19_REQUIRED_MIN = 2
-G19_REQUIRED_MAX = 6
 MAX_HASH_FILE_BYTES = 512 * 1024 * 1024
 KEYS = ("NX", "NY", "NZ", "IUTMZN", "UTMHEM", "DGRIDKM", "XORIGKM", "YORIGKM",
         "NSSTA", "NUSTA")
