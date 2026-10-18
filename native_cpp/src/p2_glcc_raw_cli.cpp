@@ -142,6 +142,7 @@ int main(int argc,char** argv){
         }
         require(candidate_included+candidate_outside==r.diagnostic_mesh.size(),
                 "DIRECT_PROBE_INTERNAL_HITS_LOST");
+        require(candidate_included>0,"DIRECT_PROBE_ZERO_INCLUDED_SCIENCE_INVALID");
         std::ofstream destf(dest/"p2_glcc_direct_laea_candidate_hits.csv");
         require(bool(destf),"DIRECT_PROBE_HITS_CSV_OPEN_FAILED");
         destf<<"i,j,samples";
