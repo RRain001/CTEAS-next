@@ -41,8 +41,13 @@ def admit_staged_case(case_root: Path, upperair_root: Path, archive_root: Path,
     case = case_root.resolve(strict=True)
     repo = repo_root.resolve(strict=True)
     output = upperair_root.resolve(strict=False)
-    if _within(case, repo) or _within(output, repo):
+    if _within(case, repo) or _within(repo, case) or _within(output, repo):
         raise ContractError("P4 case and output must be outside repository worktree")
+    archive = archive_root.resolve(strict=True)
+    if _within(archive, case) or _within(case, archive):
+        raise ContractError("NOAA source archive and isolated case must be disjoint")
+    if (case / "grid").is_symlink() or not (case / "grid").is_dir():
+        raise ContractError("staged grid directory missing or symlink")
     if output != case / "met" / "upperair" or upperair_root.is_symlink():
         raise ContractError("isolated P4 output must be staged_case/met/upperair")
     if output.exists():
