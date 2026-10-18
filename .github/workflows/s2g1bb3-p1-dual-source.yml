@@ -1,0 +1,101 @@
+name: S2-G1B-B3 P1 dual-source local TIFF + SRTMGL1 contract
+
+on:
+  push:
+    branches: [codex/s2g1bb3-p1-dual-terrain-source]
+    paths:
+      - .github/workflows/s2g1bb3-p1-dual-source.yml
+      - scripts/s2g/p1_terrain_source.py
+      - scripts/s2g/tests/test_p1_terrain_source.py
+      - docs/s2g1bb3_p1_dual_source.md
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2g1bb3-p1-dual-source.yml
+      - scripts/s2g/p1_terrain_source.py
+      - scripts/s2g/tests/test_p1_terrain_source.py
+      - docs/s2g1bb3_p1_dual_source.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s2g1bb3-p1-input-only-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-contract-no-real-api-secret:
+    name: Real-formatted synthetic GeoTIFF and mocked API 30m source adapter
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install raster handling dependencies
+        run: python3 -m pip install --disable-pip-version-check 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+      - name: Run local single/multiple and fake API source-only contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m compileall -q scripts/s2g/p1_terrain_source.py scripts/s2g/tests/test_p1_terrain_source.py
+          python3 -m unittest -v scripts.s2g.tests.test_p1_terrain_source
+          echo 'P1_DUAL_SOURCE_CONTRACT=PASS P1_REAL_API_DOWNLOAD=NOT_RUN'
+          echo 'P1_NATIVE_SCIENCE=NOT_RUN P3_GEO=NOT_RUN P6_P7=NOT_RUN'
+
+  manual-real-opentopography:
+    name: Manual actual OpenTopography SRTMGL1 new-site source-only acquisition
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Install raster dependencies
+        run: python3 -m pip install --disable-pip-version-check 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+      - name: Download one bounded SRTMGL1 independent grid based on original NOAA site
+        env:
+          OPENTOPOGRAPHY_API_KEY: ${{ secrets.OPENTOPOGRAPHY_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$OPENTOPOGRAPHY_API_KEY"
+          python3 - <<'PY'
+          import tempfile
+          from pathlib import Path
+          from scripts.s3f.verify_real_noaa_2022_2023_station_selection import generate_grid
+          from native_cpp.modules.p5_smerge.data_prep.download_isd_by_grid import parse_history_txt
+          from scripts.s3f.verify_real_noaa_2022_2023_station_selection import ROOT, P5_STATIONS
+          stations={s.sid:s for s in parse_history_txt(ROOT/"engine/resources/isd/isd-history.txt")
+                    if s.sid in P5_STATIONS}
+          assert len(stations)==2
+          path=Path(__import__("os").environ["RUNNER_TEMP"])/"p1-independent-utm"
+          generate_grid(path,[(s.lat,s.lon) for s in stations.values()])
+          print("P1_NEW_NOAA_SITE_UTM_GRID=PASS")
+          PY
+          python3 -m scripts.s2g.p1_terrain_source \
+            --grid "$RUNNER_TEMP/p1-independent-utm/grid.cmn" \
+            --out-dir "$RUNNER_TEMP/p1-real-srtmgl1-source" \
+            --opentopography --buffer-m 500 --max-pixels 30000000 \
+            > "$RUNNER_TEMP/p1-source-proof.json"
+          python3 - "$RUNNER_TEMP/p1-source-proof.json" <<'PY'
+          import json,sys
+          p=json.load(open(sys.argv[1]))
+          assert p["mode"]=="opentopography" and p["dataset"]=="SRTMGL1"
+          assert p["case_window_valid_pixels"]>0
+          assert p["p1_native_science"]=="NOT_RUN_FROZEN_HEFEI_CLI"
+          assert p["p3_geo_dat"]=="NOT_RUN"
+          assert not p["ready_for_generic_P1_physics"]
+          print("REAL_OT_SRTMGL1_SOURCE=PASS_SCOPED NATIVE_P1=NOT_RUN")
+          PY
+      - name: Save only scientific input metadata (no DEM or secret)
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: p1-real-srtmgl1-source-manifest-only
+          path: ${{ runner.temp }}/p1-real-srtmgl1-source/p1_source_manifest.json
+          if-no-files-found: error
