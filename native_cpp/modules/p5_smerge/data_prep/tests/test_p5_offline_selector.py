@@ -9,6 +9,8 @@ from unittest.mock import patch
 
 from native_cpp.modules.p5_smerge.data_prep import download_isd_by_grid as p5
 from native_cpp.modules.p5_smerge.data_prep import isd_lite_wind as lite
+from native_cpp.modules.p5_smerge.data_prep import p5_case_producer as producer
+from native_cpp.orchestration.plan import ContractError
 from native_cpp.modules.p5_smerge.data_prep.tests.test_case_archive_gate import P5ArchiveGateTests
 
 
@@ -56,6 +58,16 @@ class P5OfflineSelectionTests(unittest.TestCase):
               patch.object(lite, "download_lite_one", side_effect=AssertionError("NETWORK-LITE")),
               patch.object(sys, "argv", argv)):
             return p5.main()
+
+    def test_generic_reselection_rejects_case_without_stack_or_prior_metadata(self):
+        # The full #42 case must authorize the actual stack; center_location
+        # alone is NOT a substitute for a source coordinate.
+        with self.assertRaisesRegex(ContractError, "single-stack latitude/longitude"):
+            producer.replay_annual_selection_offline(self.fixture.case, self.fixture.history)
+        self.archive(self.in1)
+        self.select([self.in1])
+        with self.assertRaisesRegex(ContractError, "fresh selector metadata"):
+            producer.replay_annual_selection_offline(self.fixture.case, self.fixture.history)
 
     def test_in_domain_two_stations_ranked_by_lite_no_network(self):
         self.archive(self.in1)
