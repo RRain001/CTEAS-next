@@ -17,6 +17,9 @@ from pathlib import Path
 
 from engine.core.paths import current_project_path
 from native_cpp.modules.p4_read62.data_prep.p4_case_d1 import admit_staged_case, sha256_file
+from native_cpp.modules.p4_read62.data_prep.p4_case_year_gate import (
+    admit_annual_source_lineage, boundary_years, writer_window,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 MODULE = "native_cpp.modules.p4_read62.data_prep"
@@ -87,8 +90,8 @@ def main() -> int:
     isolated = any((args.case_root,args.upperair_root,args.offline_archive_root))
     if isolated and not all((args.case_root,args.upperair_root,args.offline_archive_root)):
         ap.error("isolated P4 requires --case-root, --upperair-root and --offline-archive-root")
-    if isolated and (args.pstop != 500.0 or args.skip_inputs or args.merge_final):
-        ap.error("P4 D1-A supports only PSTOP=500, fresh QA, annual raw UP; D2 final publication is blocked")
+    if isolated and (args.pstop != 500.0 or args.skip_inputs or args.merge_final or args.year is not None):
+        ap.error("isolated P4 requires PSTOP=500, full UTC/boundary years, fresh QA; final publication blocked")
     admission = None
     if isolated:
         try:
@@ -97,7 +100,12 @@ def main() -> int:
         except (ValueError,OSError,TypeError,KeyError) as exc:
             ap.error(f"P4_B0_ADMISSION_BLOCKED: {exc}")
     begin,end=research_times(args.case_root if isolated else None)
-    years=[args.year] if args.year is not None else list(range(begin.year,end.year+1))
+    years=(boundary_years(begin,end) if isolated else
+           [args.year] if args.year is not None else list(range(begin.year,end.year+1)))
+    if isolated:
+        writer_begin,writer_end=writer_window(begin,end)
+    else:
+        writer_begin,writer_end=begin,end
     if args.merge_final and set(years)!=set(range(begin.year,end.year+1)):
         ap.error("partial year range cannot be published as final")
     if args.execute and not args.cpp_bin.is_file():
@@ -115,16 +123,23 @@ def main() -> int:
             print("P4_INPUTS",cmd,flush=True)
             if args.execute:subprocess.run(cmd,cwd=REPO_ROOT,check=True)
         if args.execute or args.skip_inputs:
-            jobs=station_jobs(year,args.pstop,args.cpp_bin,begin,end,
+            jobs=station_jobs(year,args.pstop,args.cpp_bin,writer_begin,writer_end,
                               args.upperair_root if isolated else None)
             for job in jobs:
                 records.append(job)
                 print("P4_CPP_STATION",job["station_id"],job["site_type"],flush=True)
-                if args.execute:
+                if args.execute and not isolated:
                     Path(job["output_updat"]).parent.mkdir(parents=True,exist_ok=True)
                     subprocess.run(job["command"],cwd=REPO_ROOT,check=True)
     if args.execute and isolated:
-        # D1-A stops at annual raw UP: no unsafe cross-year union or cloned AA/BB.
+        # Verify all annual selections and authentic AA/BB before running native
+        # READ62; the legacy final merger is still forbidden for generic cases.
+        lineage=admit_annual_source_lineage(records,args.upperair_root,
+                                            args.offline_archive_root,begin,end)
+        for job in records:
+            Path(job["output_updat"]).parent.mkdir(parents=True,exist_ok=True)
+            subprocess.run(job["command"],cwd=REPO_ROOT,check=True)
+        # No final UP publish here: first independent original parity D3 gate.
         archive=args.offline_archive_root.resolve(strict=True)
         for job in records:
             source=Path(job["raw_igra"]).resolve(strict=True)
@@ -146,6 +161,10 @@ def main() -> int:
                   "source_path":"NOAA_IGRA_EXTRACTED_OFFLINE",
                   "pstop_hpa":500.0,"jdat":2,"ifmt":1,
                   "admission":admission,"years":years,
+                  "source_lineage":lineage,
+                  "writer_utc":{
+                      "begin":writer_begin.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                      "end":writer_end.strftime("%Y-%m-%dT%H:%M:%SZ")},
                   "cpp_executable":str(args.cpp_bin.resolve()),
                   "cpp_sha256":sha256_file(args.cpp_bin), "stations":records}
         out.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
