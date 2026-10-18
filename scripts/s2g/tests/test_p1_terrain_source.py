@@ -29,7 +29,7 @@ class P1SourcesTest(unittest.TestCase):
             "! IMAP = UTM !", "! IUTMZN = 50 !", "! LSOHEM = N !",
             "! DATUM = WGS-84 !", "! XREFKM = 510.885 !",
             "! YREFKM = 3531.269 !", "! NX = 3 !", "! NY = 3 !",
-            "! DGRIDKM = 0.1 !",
+            "! DGRIDKM = 0.1 !", "! NZ = 1 !", "! ZFACE = 0 !", "! ZFACE = 20 !",
         ])+"\n")
         self.box=p1.case_bbox(self.grid)
         self.pixel=0.0001
