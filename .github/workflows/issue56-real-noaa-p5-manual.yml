@@ -25,6 +25,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Compile independent original SMERGE from pinned vendor revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gfortran-11
+          src="$GITHUB_WORKSPACE/original-cteas/engine/vendor/src/SMERGE_v5.7.0_L121203"
+          test -s "$src/SMERGE.FOR"
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          inc="$RUNNER_TEMP/p5-original-include"
+          mkdir -p "$inc" "$RUNNER_TEMP/issue56-evidence"
+          for item in "$src"/*; do
+            name=$(basename "$item" | tr '[:upper:]' '[:lower:]')
+            test -e "$inc/$name" || ln -s "$item" "$inc/$name"
+          done
+          gfortran-11 -O0 -std=legacy -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -ffixed-line-length-none \
+            -I"$inc" "$src/SMERGE.FOR" -o "$RUNNER_TEMP/p5-original-smerge"
+          sha256sum "$src/SMERGE.FOR" > "$RUNNER_TEMP/issue56-evidence/original-source-sha256.txt"
+          sha256sum "$RUNNER_TEMP/p5-original-smerge" > "$RUNNER_TEMP/issue56-evidence/original-bin-sha256.txt"
       - name: Prepare real-source dependencies
         shell: bash
         run: |
@@ -55,13 +81,15 @@ jobs:
           python3 -u -m scripts.s2g.issue56_real_noaa_p5_case \
             --native-p5-bin "$RUNNER_TEMP/p5/cteas_p5_smerge" \
             --native-surf-preflight-bin "$RUNNER_TEMP/p6/cteas_p6g_surf_source_preflight" \
+            --original-smerge-bin "$RUNNER_TEMP/p5-original-smerge" \
             --scenario "${{ inputs.scenario }}" \
             --evidence-out "$RUNNER_TEMP/issue56-evidence/real-noaa-newsite-surf.json" \
             2>&1 | tee "$RUNNER_TEMP/issue56-evidence/execution.log"
           grep -q 'ISSUE56_REAL_NOAA_STAGE=ISSUE56_REAL_NOAA_STAGED_SURF_PRODUCED_UNVERIFIED' \
             "$RUNNER_TEMP/issue56-evidence/execution.log"
           echo 'P5_NATIVE_SURF=PRODUCED_UNVERIFIED'
-          echo 'P5_ORIGINAL_PARITY=NOT_RUN P5_TO_G19=NOT_RUN P6_FIELDS=NOT_RUN P7=NOT_RUN'
+          echo 'P5_ORIGINAL_PARITY=SCIENCE_ACCEPTED_SCOPED_IF_REPORT_CONFIRMS_BYTE_IDENTITY'
+          echo 'P5_TO_G19=NOT_RUN P6_FIELDS=NOT_RUN P7=NOT_RUN'
       - name: Preserve audit metadata only, no NOAA raw redistribution
         if: always()
         uses: actions/upload-artifact@v4
