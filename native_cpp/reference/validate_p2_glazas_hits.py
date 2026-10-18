@@ -88,6 +88,29 @@ def read_native_hits(path: Path, manifest: dict) -> tuple[list[list[int]],list[i
             "NATIVE_HITS_SAMPLES_D1_TOTAL_MISMATCH")
     return rows,samples
 
+def read_direct_candidate_hits(path: Path, manifest: dict):
+    """Optional audit candidate. Never substitutes for C++ production D1."""
+    require(manifest.get("source_sha256")==SRC_SHA,
+            "DIRECT_PROBE_UNTRUSTED_SOURCE")
+    require(manifest.get("direct_laea_candidate_hits_csv_sha256")==file_sha(path),
+            "DIRECT_PROBE_SHA_MISMATCH")
+    counts=[];samples=[]
+    with path.open(newline="",encoding="utf-8") as fp:
+        rd=csv.reader(fp)
+        require(next(rd,None)==["i","j","samples"]+[f"cat{x}" for x in CATS],
+                "DIRECT_PROBE_HEADER_MISMATCH")
+        for index,line in enumerate(rd):
+            require(index<2500 and len(line)==41 and all(
+                re.fullmatch(r"[0-9]+",v) is not None for v in line),
+                "DIRECT_PROBE_BAD_ROW")
+            require(int(line[0])==index%50+1 and int(line[1])==index//50+1,
+                "DIRECT_PROBE_ROW_ORDER")
+            n=int(line[2]);row=list(map(int,line[3:]))
+            require(sum(row)==n,"DIRECT_PROBE_ROW_SUM")
+            counts.append(row);samples.append(n)
+    require(len(counts)==2500,"DIRECT_PROBE_SHAPE")
+    return counts,samples
+
 def compare_integer_hits(original_rows, native_rows, native_samples,
                          original_fraction_rows, native_fraction_rows) -> dict:
     require(len(original_rows)==len(native_rows)==len(native_samples)==2500,
@@ -144,6 +167,7 @@ def main(argv=None) -> int:
         p.add_argument("--"+key,type=Path,required=True)
     p.add_argument("--original-bin-sha256",required=True)
     p.add_argument("--native-qa-csv",type=Path)
+    p.add_argument("--direct-probe-hits-csv",type=Path)
     p.add_argument("--timeout-sec",type=int,default=300)
     a=p.parse_args(argv)
     require(10<=a.timeout_sec<=600,"TIMEOUT_OUT_OF_BOUNDS")
@@ -170,6 +194,12 @@ def main(argv=None) -> int:
                 "NATIVE_QA_MISSING_OR_SYMLINK")
         require(d1.get("diagnostic_submesh_csv_sha256")==file_sha(a.native_qa_csv),
                 "NATIVE_QA_SOURCE_SHA_MISMATCH")
+    if a.direct_probe_hits_csv is not None:
+        require(a.direct_probe_hits_csv.is_file()
+                and not a.direct_probe_hits_csv.is_symlink(),
+                "DIRECT_PROBE_CSV_MISSING_OR_SYMLINK")
+    direct_probe = (read_direct_candidate_hits(a.direct_probe_hits_csv,d1)
+                    if a.direct_probe_hits_csv is not None else None)
     native_hits,native_samples=read_native_hits(a.native_hits_csv,d1)
     native_fractions=parse_lu(a.native_lu)
     for idx,row in enumerate(native_hits):
@@ -256,6 +286,17 @@ def main(argv=None) -> int:
                                                       "error":str(ex)}
         else:
             report["coordinate_diagnostic"]="NOT_NEEDED_ALL_INTEGER_FIELDS_EQUAL"
+        if direct_probe is not None:
+            alt=compare_integer_hits(original_hits,direct_probe[0],direct_probe[1],
+                                     original_fractions,original_fractions)
+            report["direct_laea_candidate"]={
+                "status":"DIAGNOSTIC_ONLY_NOT_PRODUCTION_AND_NOT_ACCEPTANCE",
+                "method":"Fortran_REAL4_LAEA_SOURCE_MESH_TO_GDAL_DIRECT_UTM50N",
+                "native_candidate_sha256":file_sha(a.direct_probe_hits_csv),
+                **alt,
+            }
+        else:
+            report["direct_laea_candidate"]="NOT_REQUESTED"
         (a.out_dir/"result.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
         print(json.dumps(report,indent=2,ensure_ascii=False))
         require(report["overall"]=="PASS_ORIGINAL_GLAZAS_SAME_SOURCE_INTEGER_AND_FRACTION",
