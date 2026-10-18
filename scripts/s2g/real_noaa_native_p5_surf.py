@@ -56,7 +56,7 @@ def _stage_year(raw_source: Path, case: Path, year: int) -> dict:
         shutil.copyfile(raw_source.parent / "grid" / file, grid_dir / file)
     research = grid_dir / "research_time"
     research.write_text(
-        f"BEGIN: {year}0601-000000\nEND: {year}0601-070000\n",
+        f"BEGIN: {year}0601-000000\nEND: {year}0602-000000\n",
         encoding="utf-8")
     raw = case / "met/surface/isd_raw"
     raw.mkdir(parents=True)
