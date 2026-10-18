@@ -1,0 +1,53 @@
+name: Issue53 P2 D3 GLCC 38-class LU.DAT serialization (software only)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/CMakeLists.txt
+      - native_cpp/src/p2_glcc_raw_cli.cpp
+      - native_cpp/src/p2_glcc_lu_dat_cli.cpp
+      - scripts/s2g/tests/test_glcc_lu_dat_d3.py
+      - .github/workflows/s2g1bb-issue53-p2-glcc-d3.yml
+      - docs/plans/ISSUE53_P2_D3_GLCC_LU_20261018.md
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue53-d3-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  historical-glcc-lu-serialization-software-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout no original LFS and no vendor
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          lfs: false
+          persist-credentials: false
+      - name: Install bounded C++ GDAL OpenSSL toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++-12 libgdal-dev libssl-dev
+      - name: Build historical source serializer and existing independent frozen P3 adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/p2-d3" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/p2-d3" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
+          cmake -S native_cpp/p3 -B "${RUNNER_TEMP}/p3-old" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/p3-old" --parallel 2 --target cteas_p12_to_p3_dat
+      - name: Synthetic dynamic 38-class LU.DAT and independent historical same-format oracle
+        shell: bash
+        env:
+          P2_D3_GLCC: ${{ runner.temp }}/p2-d3/cteas_p2_glcc_lu_dat
+          P12_OLD_ADAPTER: ${{ runner.temp }}/p3-old/cteas_p12_to_p3_dat
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_glcc_lu_dat_d3
+          echo 'P2_D3_GLCC_LU_SOFTWARE=PASS'
+          echo 'P2_D3_REAL_SOURCE_END_TO_END=NOT_RUN'
+          echo 'P2_ORIGINAL_GLAZAS_PARITY=NOT_RUN'
+          echo 'P2_GLC_FCS30D_CROSSWALK=P2_MAPPING_REVIEW_REQUIRED'
+          echo 'P3_GEO=NOT_RUN'
