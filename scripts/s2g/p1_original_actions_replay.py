@@ -129,7 +129,65 @@ update_terrel(Path(data['control']),v,[Path(data['selected'])],False)
 """
 
 
-def audit(*,case_root:Path,checkout:Path,route:str,report:Path)->dict:
+def lossless_uncompressed_legacy_tiff(original:Path,compat:Path)->dict:
+    """Create a separate legacy-reader-compatible copy of IDENTICAL height pixels.
+
+    Only TIFF physical compression/container changes. CRS, transform, integer
+    elevations, NoData and all pixels are verified, with a raw ordered-pixel
+    SHA256 on both files. No interpolation, reprojection, smoothing, changing
+    elevation reference or substituting DEM products is permitted.
+    """
+    from rasterio import open as rio_open
+    from scripts.s2g.p1_terrain_source import check_raster
+    if compat.exists() or compat.is_symlink():
+        raise OriginalReplayError("lossless original-compatible destination already exists")
+    before=check_raster(original)
+    with rio_open(original) as src:
+        profile=src.profile.copy()
+        for key in ("compress","predictor","blockxsize","blockysize"):
+            profile.pop(key,None)
+        profile.update(compress="none",tiled=False)
+        original_hasher=hashlib.sha256()
+        with rio_open(compat,"w",**profile) as target:
+            for _,window in src.block_windows(1):
+                values=src.read(1,window=window)
+                original_hasher.update(values.tobytes(order="C"))
+                target.write(values,1,window=window)
+    after=check_raster(compat)
+    if (after["width"]!=before["width"] or after["height"]!=before["height"]
+        or after["bounds"]!=before["bounds"]
+        or after["resolution_degrees"]!=before["resolution_degrees"]
+        or after["nodata"]!=before["nodata"]):
+        raise OriginalReplayError("lossless original-compatible TIFF changed grid metadata")
+    with rio_open(original) as src, rio_open(compat) as dst:
+        if src.crs!=dst.crs or src.transform!=dst.transform:
+            raise OriginalReplayError("lossless original-compatible TIFF changed CRS or transform")
+        if dst.compression is not None:
+            raise OriginalReplayError("original-compatible TIFF still has unsupported compression")
+        native_hasher=hashlib.sha256()
+        # Compare exactly on ORIGINAL source windows, not different destination
+        # block layouts. The hash includes every int16 elevation/NoData value.
+        for _,window in src.block_windows(1):
+            block=dst.read(1,window=window)
+            if not (src.read(1,window=window)==block).all():
+                raise OriginalReplayError("uncompressed TIFF altered original elevation samples")
+            native_hasher.update(block.tobytes(order="C"))
+    if original_hasher.hexdigest()!=native_hasher.hexdigest():
+        raise OriginalReplayError("raw pixel stream SHA changed across TIFF packaging")
+    return {
+      "conversion":"GTIFF_COMPRESSION_ONLY_LOSSLESS",
+      "compressed_source_sha256":before["sha256"],
+      "legacy_uncompressed_sha256":after["sha256"],
+      "raw_int16_ordered_pixels_sha256":original_hasher.hexdigest(),
+      "pixel_values_identical":True,
+      "utm_source_unchanged":True,
+      "original_geotiff_compression":"NONE",
+      "scientific_method_unchanged":True,
+    }
+
+
+def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
+          native_binary:Path)->dict:
     if case_root.name!="issue54_p1_seam_2022":
         raise OriginalReplayError("independent staged case name mismatch")
     if report.exists() or report.is_symlink():
@@ -153,6 +211,36 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path)->dict:
     grid=case_root/"grid/grid.cmn"
     if sha(grid)!=native["grid_sha256"]:
         raise OriginalReplayError("shared original/native authoritative grid changed")
+
+    # This historic TIFFINFO.FOR explicitly rejects all TIFF compression
+    # other than 1 (uncompressed). Keep both original submitted files and
+    # old native outputs intact. Produce a proven bit-identical INTEGER
+    # raster, then re-run the audited native kernel against EXACTLY the
+    # same newly packaged file passed to original TERREL.
+    compatible=case_root/"geo/terrel/p1_original_legacy_uncompressed.tif"
+    repack=lossless_uncompressed_legacy_tiff(selected,compatible)
+    from scripts.s2g.p1_native_case import run_case
+    from scripts.s2g.p1_terrain_source import check_raster
+    original_raw=source.copy()
+    original_raw["selected_tif"]=str(compatible)
+    original_raw["selected_tif_sha256"]=sha(compatible)
+    original_raw["selected_tif_properties"]=check_raster(compatible)
+    original_raw["original_reader_legacy_lossless"]=repack
+    source_compatible=case_root/"geo/terrel/p1_source/p1_source_manifest_legacy.json"
+    if source_compatible.exists() or source_compatible.is_symlink():
+        raise OriginalReplayError("source legacy metadata already exists")
+    source_compatible.write_text(json.dumps(original_raw,indent=2)+"\n")
+    native=run_case(
+        case_yaml=case_root/"case.yaml",
+        source_manifest=source_compatible,
+        source_product=native["product_declaration"],
+        binary=native_binary,
+        out_dir=case_root/"geo/terrel/p1_native_test")
+    native_root=case_root/"geo/terrel/p1_native_test"
+    native_m=native_root/"p1_native_manifest.json"
+    native_csv=native_root/"terrain.csv"
+    selected=compatible
+
     workspace=case_root/"geo/terrel/original_independent"
     workspace.mkdir(exist_ok=False)
     binary,build=compile_original(original_vendor,workspace)
@@ -166,6 +254,7 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path)->dict:
         return {
           "status":"BLOCKED_ORIGINAL_TERREL_EXECUTION",
           "route":route,
+          "lossless_legacy_source":repack,
           "original_fortran_build":"PASS",
           "original_returncode":run["returncode"],
           "vendor_git_sha":ORIGINAL_REV,
@@ -197,7 +286,8 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path)->dict:
     except (ComparisonError,ValueError,OSError) as exc:
         return {
           "status":"BLOCKED_ORIGINAL_NATIVE_COMPARATOR_SCHEMA",
-          "route":route,"reason_type":type(exc).__name__,
+          "route":route,
+          "lossless_legacy_source":repack,"reason_type":type(exc).__name__,
           "vendor_git_sha":ORIGINAL_REV,
           "original_source_sha256":sha(original_vendor/"terrel.for"),
           "original_control_sha256":sha(ctrl),
@@ -214,6 +304,7 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path)->dict:
     return {
       "status":compared["numeric_parity"],
       "route":route,
+      "lossless_legacy_source":repack,
       "vendor_git_sha":ORIGINAL_REV,
       "original_source_sha256":sha(original_vendor/"terrel.for"),
       "original_control_sha256":sha(ctrl),
@@ -240,12 +331,13 @@ def main(argv=None)->int:
     p=argparse.ArgumentParser()
     p.add_argument("--case-root",required=True,type=Path)
     p.add_argument("--cteas-checkout",required=True,type=Path)
+    p.add_argument("--native-binary",required=True,type=Path)
     p.add_argument("--route",required=True,choices=("P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD"))
     p.add_argument("--report",required=True,type=Path)
     args=p.parse_args(argv)
     try:
         data=audit(case_root=args.case_root,checkout=args.cteas_checkout,
-                   route=args.route,report=args.report)
+                   route=args.route,report=args.report,native_binary=args.native_binary)
     except (OriginalReplayError,OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
         # All diagnostics are immutable fixed enums from this repository.
         # No raw Fortran logs, provider response, credentials, full local
