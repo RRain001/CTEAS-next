@@ -152,7 +152,14 @@ def admit_annual_source_lineage(records: list[dict], upperair_root: Path,
             digests = []
             for f in profiles:
                 stamp = f.stem.removeprefix(wmo + "_")
-                instant = _parse_slot(stamp, year)
+                if not re.fullmatch(r"\d{10}", stamp):
+                    raise ContractError("P4 cleaned CSV timestamp malformed")
+                try:
+                    instant = datetime.strptime(stamp, "%Y%m%d%H")
+                except ValueError as exc:
+                    raise ContractError("P4 cleaned CSV calendar invalid") from exc
+                if instant.year != year:
+                    raise ContractError("P4 cleaned CSV outside source calendar")
                 digests.append({
                     "utc": stamp,
                     "original_observed": instant in slots,
