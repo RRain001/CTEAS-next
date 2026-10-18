@@ -46,6 +46,12 @@ def _lexical_grid(raw: bytes) -> dict[str, str]:
     seen: dict[str, str] = {}
     zfaces = 0
     for line in lines:
+        # The legacy numeric parser also recognizes '*' (inactive template)
+        # cards. Reject shadowed *physical* authority rather than letting a
+        # star-card silently override a validated active ! key.
+        shadow = re.fullmatch(r"\s*\*\s*([A-Z0-9_]+)\s*=.*\*\s*", line)
+        if shadow and shadow.group(1) in (*FIELDS, "ZFACE"):
+            raise ContractError("B0 inactive grid record shadows numerical authority")
         match = ACTIVE.fullmatch(line)
         if not match:
             continue
@@ -177,7 +183,13 @@ def admit_case(case_path: Path) -> CaseAdmission:
                          "preprocess.research_time")
     if timestamps.get("begin") != begin or timestamps.get("end") != end:
         raise ContractError("B0 research_time disagrees with case.yaml")
-    if grid.iutmzn != int(lexical["IUTMZN"]) or grid.lsohem != lexical["LSOHEM"]:
+    if (grid.iutmzn != int(lexical["IUTMZN"]) or grid.lsohem != lexical["LSOHEM"]
+            or grid.nx != int(lexical["NX"]) or grid.ny != int(lexical["NY"])
+            or grid.nz != int(lexical["NZ"])
+            or any(abs(actual - float(lexical[key])) > 1e-12
+                   for actual, key in ((grid.xrefkm, "XREFKM"),
+                                       (grid.yrefkm, "YREFKM"),
+                                       (grid.dgridkm, "DGRIDKM")))):
         raise ContractError("B0 original grid literals inconsistent with parsed grid")
     return CaseAdmission(
         root.name, case_path, grid_path, time_path,

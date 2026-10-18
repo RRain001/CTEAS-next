@@ -106,6 +106,16 @@ preprocess:
         self.grid.symlink_to(self.case)
         self.deny("symlink")
 
+    def test_inactive_shadowed_grid_authority_refused(self):
+        with self.grid.open("a") as out:
+            out.write("* NX = 60 *\n")
+        self.deny("inactive grid record")
+
+    def test_inactive_shadowed_origin_refused(self):
+        with self.grid.open("a") as out:
+            out.write("* XREFKM = 510.886 *\n")
+        self.deny("inactive grid record")
+
     def test_case_field_time_mismatch(self):
         self.replace(self.case, "end: 20220101-030000", "end: 20220101-020000")
         self.deny("disagrees")
