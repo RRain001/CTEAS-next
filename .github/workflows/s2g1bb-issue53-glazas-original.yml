@@ -11,6 +11,7 @@ on:
       - native_cpp/src/geo/glcc_raw_fractions.cpp
       - native_cpp/include/cteas/geo/glcc_raw_fractions.hpp
       - native_cpp/include/cteas/geo/glcc_direct_laea_probe.hpp
+      - native_cpp/include/cteas/geo/glcc_cli_modes.hpp
       - native_cpp/reference/tests/test_glazas_original_gate.py
       - native_cpp/reference/tests/test_glazas_original_integer_hits.py
       - native_cpp/src/p2_glcc_raw_cli.cpp
@@ -143,6 +144,27 @@ jobs:
           set -euo pipefail
           build="${RUNNER_TEMP}/issue53-glazas-build"
           "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20 --qa-submesh --probe-direct
+          # Prevent another full science attempt when the diagnostic trace
+          # was silently disabled (observed manual #39178123151).
+          python3 - <<'PY'
+          import csv,hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"d1-native"
+          manifest=json.loads((p/"p2_manifest.json").read_text())
+          for key,name in (
+              ("diagnostic_submesh_csv_sha256","p2_glcc_submesh_diagnostic.csv"),
+              ("direct_laea_candidate_hits_csv_sha256","p2_glcc_direct_laea_candidate_hits.csv"),
+          ):
+              f=p/name
+              assert f.is_file() and f.stat().st_size>0,name
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==manifest[key],name
+          with (p/"p2_glcc_direct_laea_candidate_hits.csv").open(newline="") as f:
+              rows=list(csv.DictReader(f))
+          assert len(rows)==2500
+          total=sum(int(r["samples"]) for r in rows)
+          assert total>0, "DIRECT_LAEA_CANDIDATE_ZERO_HITS"
+          print("DIRECT_LAEA_CANDIDATE_SCIENCE_INPUT_GATE=PASS candidate_hits=",total)
+          PY
           "$build/cteas_p2_glcc_lu_dat" "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
             "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_gen_replay.csv" "${RUNNER_TEMP}/d3-glcc"
           original_sha="$(sha256sum "${RUNNER_TEMP}/original_ctgproc.x" | awk '{print $1}')"
