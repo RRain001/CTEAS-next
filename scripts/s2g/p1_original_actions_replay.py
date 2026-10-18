@@ -319,6 +319,14 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
             coordinate_probe=execute_original_diagnostic(
                 checkout=checkout,vendor=original_vendor,selected=selected,
                 grid=native["grid"],workspace=workspace)
+            # An independent consistency check: projected proxy hit total
+            # is only evidence about native source assignment when it exactly
+            # reproduces the actually observed C++ total. Fortran trace
+            # inside-hit total likewise checked against original SAV records.
+            coordinate_probe["original_trace_hits_match_original_SAV"]=(
+                coordinate_probe["original_inside_hits"]==compared["original_hits_total"])
+            coordinate_probe["proj_proxy_hits_match_native_CXX"]=(
+                coordinate_probe["proj_proxy_inside_hits"]==compared["native_hits_total"])
         except (ImportError,OSError,ValueError,TimeoutError,subprocess.SubprocessError) as exc:
             coordinate_probe={
                 "status":"BLOCKED_FORENSIC_DIAGNOSTIC",
