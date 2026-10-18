@@ -134,20 +134,6 @@ def stage_img(source: Path, work: Path):
         shutil.copyfile(source,work/"glcc.img")
     safe_original_file(work/"glcc.img",expected=SRC_SHA,exact_size=SRC_SIZE)
 
-def execute_original(exe: Path, work: Path, control: str, seconds: int):
-    work.mkdir()
-    (work/"ctgproc.inp").write_text(control,encoding="utf-8")
-    start=time.monotonic()
-    p=subprocess.run([str(exe.resolve()),"ctgproc.inp"],
-                     cwd=work,capture_output=True,text=True,errors="replace",
-                     timeout=seconds,check=False)
-    (work/"stdout.log").write_text(p.stdout,encoding="utf-8")
-    (work/"stderr.log").write_text(p.stderr,encoding="utf-8")
-    require(p.returncode==0,"ORIGINAL_CTGPROC_EXECUTION_FAILED")
-    require((work/"lu.dat").is_file() and (work/"ctgproc.lst").is_file(),
-            "ORIGINAL_CTGPROC_OUTPUT_MISSING")
-    return round(time.monotonic()-start,3)
-
 def main(argv=None) -> int:
     p=argparse.ArgumentParser(description=__doc__)
     for key in ("source-img","original-ctgproc","original-source-file",
