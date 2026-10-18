@@ -1,0 +1,41 @@
+name: Issue53 GLC35 crosswalk independent audit (not mapping approval)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - docs/plans/ISSUE53_GLC35_USGS92_REVIEW_CANDIDATES_20261018.json
+      - docs/plans/ISSUE53_P2_D0_20261018.md
+      - scripts/s2g/audit_glc_crosswalk_review.py
+      - scripts/s2g/tests/test_glc_crosswalk_review.py
+      - .github/workflows/s2g1bb-issue53-glc-crosswalk-review.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  glc-candidate-qa:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout committed TIFF and mapping audit only
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Test authoritative 35-class legend and source hash, prevent silent approval
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_glc_crosswalk_review
+          python3 -m scripts.s2g.audit_glc_crosswalk_review \
+            --metadata data/landcover/glc_fcs30d/v1_2022/hefei/metadata.json \
+            --proposal docs/plans/ISSUE53_GLC35_USGS92_REVIEW_CANDIDATES_20261018.json \
+            --source-tif data/landcover/glc_fcs30d/v1_2022/hefei/hefei_2022_30m.tif \
+            --out "${RUNNER_TEMP}/issue53-glc-audit.json"
+          echo 'GLC35_SOURCE_AUDIT=PASS'
+          echo 'GLC35_USGS92_MAPPING_SCIENCE=P2_MAPPING_REVIEW_REQUIRED'
+          echo 'GLC_LU_DAT=NOT_AUTHORIZED P3=NOT_RUN'
+      - name: Save audit-only quantities, no fabricated LU.DAT
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue53-glc35-mapping-audit-not-approved
+          path: ${{ runner.temp }}/issue53-glc-audit.json
+          if-no-files-found: error
