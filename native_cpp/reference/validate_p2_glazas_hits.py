@@ -18,6 +18,8 @@ import os
 import subprocess
 import time
 
+from native_cpp.reference.diagnose_glazas_mesh_coordinates import audit as diagnose_coordinates
+
 from native_cpp.reference.validate_p2_glazas_original import (
     CATS, SRC_SHA, SRC_SIZE, CTEAS_ORIGINAL_COMMIT,
     CTGPROC_ORIGINAL_SOURCE_SHA256, FLOAT_TOL, GateError, require, file_sha,
@@ -141,6 +143,7 @@ def main(argv=None) -> int:
                 "native-hits-csv","native-d1-manifest","out-dir"):
         p.add_argument("--"+key,type=Path,required=True)
     p.add_argument("--original-bin-sha256",required=True)
+    p.add_argument("--native-qa-csv",type=Path)
     p.add_argument("--timeout-sec",type=int,default=300)
     a=p.parse_args(argv)
     require(10<=a.timeout_sec<=600,"TIMEOUT_OUT_OF_BOUNDS")
@@ -162,6 +165,11 @@ def main(argv=None) -> int:
             and d3.get("original_GLAZAS_parity")=="NOT_RUN"
             and d3.get("total_samples")==d1.get("included"),
             "D1_D3_ORIGINAL_BINDING_UNTRUSTED")
+    if a.native_qa_csv is not None:
+        require(a.native_qa_csv.is_file() and not a.native_qa_csv.is_symlink(),
+                "NATIVE_QA_MISSING_OR_SYMLINK")
+        require(d1.get("diagnostic_submesh_csv_sha256")==file_sha(a.native_qa_csv),
+                "NATIVE_QA_SOURCE_SHA_MISMATCH")
     native_hits,native_samples=read_native_hits(a.native_hits_csv,d1)
     native_fractions=parse_lu(a.native_lu)
     for idx,row in enumerate(native_hits):
@@ -223,6 +231,31 @@ def main(argv=None) -> int:
              (fractions["numeric_gate"]=="PASS" and ints["integer_gate"]=="PASS")
              else "FAIL_ORIGINAL_GLAZAS_INTEGER_OR_FRACTION",
         }
+        # Diagnostic pass is strictly separate from the two original science oracles.
+        # Run on mismatch only; never modify the accepted original LFINAL=T/F controls
+        # or grant PASS because a coordinate diagnostic succeeds.
+        if report["overall"]!="PASS_ORIGINAL_GLAZAS_SAME_SOURCE_INTEGER_AND_FRACTION":
+            if a.native_qa_csv is None:
+                report["coordinate_diagnostic"]="NOT_CONFIGURED";
+            else:
+                try:
+                    qa_work=a.out_dir/"original_debug_qa"
+                    qa_work.mkdir()
+                    stage_img(a.source_img,qa_work)
+                    debug_control=_edit_card(hits_control,"LQACELL","T")
+                    execute_original_existing(a.original_ctgproc,qa_work,debug_control,a.timeout_sec)
+                    require(read_hits(qa_work/"lu.dat")==original_hits,
+                            "DEBUG_QA_CHANGED_ORIGINAL_HITS")
+                    require(parse_original_used(qa_work/"ctgproc.lst")==hits_parent_count,
+                            "DEBUG_QA_CHANGED_SOURCE_PIXEL_COUNTS")
+                    report["coordinate_diagnostic"]=diagnose_coordinates(
+                        qa_work/"qamesh.dat",a.native_qa_csv)
+                    report["coordinate_diagnostic"]["original_debug_qa_control_sha256"]=file_sha(qa_work/"ctgproc.inp")
+                except Exception as ex:
+                    report["coordinate_diagnostic"]={"status":"DIAGNOSTIC_FAILED_OR_MISSING",
+                                                      "error":str(ex)}
+        else:
+            report["coordinate_diagnostic"]="NOT_NEEDED_ALL_INTEGER_FIELDS_EQUAL"
         (a.out_dir/"result.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
         print(json.dumps(report,indent=2,ensure_ascii=False))
         require(report["overall"]=="PASS_ORIGINAL_GLAZAS_SAME_SOURCE_INTEGER_AND_FRACTION",

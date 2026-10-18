@@ -81,3 +81,17 @@ The updated manual [same workflow](https://github.com/RRain001/CTEAS-next/action
 
 Original HITS is an independent source-specific reference. This change does not alter historical `ctgproc.for`, P3/MAKEGEO, the 2022 GLC mappings, the raw source products, or any upstream long-time P6/P7 validation.
 
+
+
+## 2026-10-18 second REAL original manual science run: integer disagreement requires physics diagnostic
+
+[Run #39142959390](https://github.com/RRain001/CTEAS-next/actions/runs/39142959390) on `main@1ba6b0359b469491bdb47c754a83ab9b49880a74` used official 156MB SHA-pinned GLCC and compiled genuine pinned Fortran. **Both original GLAZAS paths actually executed**, `LFINAL=T` (FRACTION) and `LFINAL=F` (HITS), and were internally consistent. Actual result:
+- FRACTION 2500×38=95,000 values, max absolute displayed delta **0**, exceedances **0**.
+- Exact INTEGER HITS 95,000 fields, **33 unequal** across 33 individual per-cell/class values; max absolute integer delta **2**, total absolute differences **34**; original **10013** hits vs native **10011**.
+- Original 1km-source parent `ncount=56` in both original runs. Incorrect old count comparison is gone.
+- All first recorded discrepancies have USGS92 category **21**, many transferring a single hit between neighboring cells. This is **consistent with but does not independently prove** a projected coordinate/REAL*4 grid-boundary assignment difference (original directly transforms spherical LAEA xmesh whereas current native replays source via GEN 7-decimal lon/lat and GDAL). **Do not change tolerances, relabel these 33 integer mismatches as passed, or close #53**. Original 3-decimal fractions cannot expose one or two hits out of a few 100 samples.
+
+**Diagnostic-only extension**: On the next manual original-science run, C++ optionally logs its existing per-submesh projected REAL*4-km XY plus source-grid indices, mesh location, target-cell index and USGS class to a SHA-pinned scratch CSV (`--qa-submesh`); production output and arithmetic are untouched. If and only if true integer parity fails, run the pinned original GLAZAS a *third time in a separate scratch*, setting `LQACELL=T` solely to produce official `qamesh.dat` and verify that the QA pass HITS remain *exactly identical* to the non-QA original HITS. Match nearby projected submesh points in an independent read-only diagnostic, report first 50 position-dependent target-cell disagreements and distances to 100m gridlines; publish only short summaries/hashes, **not raw GLCC IMG, vendor Fortran, original QA coordinate files, or native point-trace CSV**. This third QA run is *not* a scientific oracle and can never force PASS.
+
+The target after localization is C++ native GLCC's selected physical spatial-transform path itself, not remapping classes, altering 1992–1993 source, forcing HITS equal by cell redistribution, or changing the declared original-science threshold.
+
