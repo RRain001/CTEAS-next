@@ -45,11 +45,21 @@ cells match; source CTEAS original audited
 [report](https://github.com/RRain001/CTEAS/blob/dfad99a78ed84d655e21411c9d25eb0d2583bf13/docs/reconstruction_cpp/P1_TERREL_100M_SCOPED_AUDIT.md).
 
 The new independent manual-only
-`.github/workflows/issue54-hefei-frozen-manual.yml` must explicitly
-rerun the original TERREL reference capture and corrected native P1
-on the exact old cropped TIFF, compare original DAT/SAV hashes and
-unchanged integer/REAL4/F8.1 tolerances. **Mark PASS only after an actual
-main Actions result; never infer this from D2/D3.**
+`.github/workflows/issue54-hefei-frozen-manual.yml` reruns the
+original TERREL reference capture on the exact old cropped TIFF and
+verifies original DAT/SAV SHA. **Important grid-definition distinction**:
+the 2026-10-10 generator uses center-derived unrounded origins
+`510.8846439571 / 3531.2689269678 km`, whereas the current approved
+#42 B-0 case contract requires **three-decimal origins**
+`510.885 / 3531.269 km`. Directly comparing old raw-origin original
+cell bins to canonical-origin C++ is invalid (genuine initial history
+Run #39177414771 found 20 mismatches, despite identical 3,456 total
+hits). After independently attesting the true historical original
+DAT/SAV hashes, rerun **the original TERREL executable** with the same
+canonical three-decimal grid as current native and compare strict
+integer/REAL4/F8.1 tolerances. **Mark PASS only after an actual
+main Actions result; do not re-label old-source SHA as the new-grid
+reference SHA or infer a numerical pass from D2/D3.**
 
 ## 3. Source product / datum / rights audit
 
