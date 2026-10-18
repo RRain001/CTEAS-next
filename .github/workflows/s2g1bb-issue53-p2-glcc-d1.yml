@@ -1,0 +1,129 @@
+name: Issue53 GLCC original IMG D1 native vs GEN gates (original GLAZAS not run)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/include/cteas/geo/glcc_raw_fractions.hpp
+      - native_cpp/src/geo/glcc_raw_fractions.cpp
+      - native_cpp/src/p2_glcc_raw_cli.cpp
+      - native_cpp/tests/p2_glcc_gen_test_driver.cpp
+      - native_cpp/CMakeLists.txt
+      - scripts/s2g/tests/test_glcc_native_d1.py
+      - .github/workflows/s2g1bb-issue53-p2-glcc-d1.yml
+      - docker/cpp/Dockerfile
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue53-glcc-d1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  synthetic-native-gen-equality:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout no-LFS software source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          lfs: false
+      - name: Install bounded software comparison dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++-12 libgdal-dev libssl-dev
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'rasterio>=1.3,<2' 'PyYAML>=6,<7'
+      - name: Compile native D1 and original selected GEN C++ replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/issue53-d1-build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "${RUNNER_TEMP}/issue53-d1-build" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_glcc_gen_test_driver cteas_p2_gen_fraction cteas_p2_gen_tests
+          ctest --test-dir "${RUNNER_TEMP}/issue53-d1-build" --output-on-failure -R '^cteas_p2_gen_fraction_contract$'
+      - name: Synthetic 156MB layout and 2500 cell same-source comparison only
+        shell: bash
+        env:
+          P2_GLCC_TEST_DRIVER: ${{ runner.temp }}/issue53-d1-build/cteas_p2_glcc_gen_test_driver
+          P2_GEN_CLI: ${{ runner.temp }}/issue53-d1-build/cteas_p2_gen_fraction
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_glcc_native_d1
+          echo 'P2_GLCC_D1_SYNTHETIC_GEN_EQUIVALENCE=PASS'
+          echo 'REAL_GLCC_156MB=NOT_READ; ORIGINAL_GLAZAS=NOT_RUN; LU_DAT=NOT_RUN; P3=NOT_RUN'
+      - name: Official SHA-only CLI must reject pointer and bad origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          fake="${RUNNER_TEMP}/pointer.img"
+          printf 'version https://git-lfs.github.com/spec/v1\n' > "$fake"
+          bin="${RUNNER_TEMP}/issue53-d1-build/cteas_p2_glcc_raw"
+          if "$bin" "$fake" "${RUNNER_TEMP}/badout" 32650 510.885 3531.269 0.100 50 50 20; then
+            echo 'ERROR LFS pointer accepted'; exit 1
+          fi
+          test ! -e "${RUNNER_TEMP}/badout"
+
+  manual-real-original-glcc-input-and-gen:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - name: Fetch actual LFS object, never accept a pointer
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          lfs: true
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++-12 libgdal-dev libssl-dev
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'rasterio>=1.3,<2' 'PyYAML>=6,<7'
+      - name: Build production CLI and independent GEN comparator
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/issue53-d1-real-build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "${RUNNER_TEMP}/issue53-d1-real-build" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_gen_fraction
+      - name: SHA-locked original IMG read and independent Python GEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < eausgs2_0la.img)" -eq 156000000
+          echo '4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img' | sha256sum -c -
+          grid=project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn
+          build="${RUNNER_TEMP}/issue53-d1-real-build"
+          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20
+          python3 -m scripts.s2g.real_glcc_landuse_from_grid --grid "$grid" --landuse-file eausgs2_0la.img --out-dir "${RUNNER_TEMP}/d1-python-gen" --mesh-cells 20 > "${RUNNER_TEMP}/source.json"
+          "$build/cteas_p2_gen_fraction" "${RUNNER_TEMP}/d1-python-gen/glcc.generic.txt" 510.885 3531.269 "${RUNNER_TEMP}/d1-gen-reference.csv"
+          python3 - <<'PY'
+          import csv,json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          def rows(p):
+              with p.open(newline="") as f:return list(csv.DictReader(f))
+          a=rows(root/"d1-native/p2_glcc_usgs92_gen_replay.csv")
+          b=rows(root/"d1-gen-reference.csv")
+          assert len(a)==len(b)==2500
+          classes=[x for x in a[0] if x.startswith("cat")]
+          assert len(classes)==38
+          maxdiff=0.
+          for r,s in zip(a,b):
+              assert (r["i"],r["j"],r["samples"])==(s["i"],s["j"],s["samples"])
+              for k in classes:
+                  assert (r[k]=="MISSING")==(s[k]=="MISSING")
+                  if r[k]!="MISSING":
+                      d=abs(float(r[k])-float(s[k]))
+                      maxdiff=max(maxdiff,d)
+                      assert d<=.0005,(k,r["i"],r["j"],d)
+          p=json.loads((root/"d1-native/p2_manifest.json").read_text())
+          assert p["source_sha256"]=="4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a"
+          assert p["official_GLAZAS_parity"]=="NOT_RUN" and p["lu_dat"]=="NOT_RUN"
+          print("REAL_GLCC_LFS_SOURCE_AND_GEN_SCOPED=PASS; ORIGINAL_GLAZAS=NOT_RUN; max_fraction_delta=",maxdiff)
+          PY
+          cp "${RUNNER_TEMP}/d1-native/p2_manifest.json" "${RUNNER_TEMP}/glcc-real-source-evidence.json"
+      - name: Preserve only provenance and source hash, not original 156MB data
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue53-d1-actual-glcc-source-and-gen-evidence
+          path: ${{ runner.temp }}/glcc-real-source-evidence.json
+          if-no-files-found: error
