@@ -291,7 +291,9 @@ def run(native: Path, reader: Path, scenario: str, original: Path | None = None)
                 "science_acceptance": False,
             })
     return {
-        "status": "ISSUE56_REAL_NOAA_STAGED_SURF_PRODUCED_UNVERIFIED",
+        "status": ("ISSUE56_REAL_NOAA_ORIGINAL_NATIVE_BYTE_PARITY_SCOPED_PASS"
+                   if original is not None
+                   else "ISSUE56_REAL_NOAA_STAGED_SURF_PRODUCED_UNVERIFIED"),
         "case_scope": "real Huoshan/Luogang(Xinqiao) 2022/2023 only",
         "science_acceptance": False,
         "input_provenance": provenance,
