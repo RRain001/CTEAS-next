@@ -48,7 +48,14 @@ class GeneralP1ComparatorTests(unittest.TestCase):
                         record(struct.pack(f"<{n}i",*([2]*n)))+
                         record(struct.pack(f"<{n}f",*elev)))
         tif=self.folder/"selected.tif";tif.write_bytes(b"MOCK_NOT_REAL_SRTM")
-        control=self.folder/"terrel.inp";control.write_bytes(b"MOCK_NOT_REAL_CONTROL")
+        control=self.folder/"terrel.inp"
+        control.write_text("\n".join((
+          "!PMAP = UTM !", "!DATUM = WGS-84 !",
+          "!UTMHEM = N !", "!IUTMZN = 50 !",
+          "!XREFKM = 510.885 !", "!YREFKM = 3531.269 !",
+          f"!NX = {nx} !", f"!NY = {ny} !",
+          "!DGRIDKM = 0.100 !", "!NTDF = 1 !",
+          "1 !GEOTIFF = selected.tif !    !END!", "")))
         binary=self.folder/"terrel.x";binary.write_bytes(b"MOCK_NOT_REAL_FORTRAN")
         native_manifest=self.folder/"p1_native_manifest.json"
         native_manifest.write_text(json.dumps({
@@ -126,6 +133,46 @@ class GeneralP1ComparatorTests(unittest.TestCase):
         self.assertEqual(result["dat_bad_cells"],1)
         self.assertEqual(result["raw_mean_bad_cells"],1)
         self.assertEqual(result["dat_first20"][0][:2],[1,1])
+
+    def update_control_attestation(self,files):
+        att=json.loads(files["original_attestation"].read_text())
+        att["original_control_sha256"]=hash_file(files["original_control"])
+        files["original_attestation"].write_text(json.dumps(att))
+
+    def test_original_control_wrong_tiff_rejected_even_with_attested_hash(self):
+        files=self.make_fixture()
+        (self.folder/"other.tif").write_bytes(b"DIFFERENT_REAL_BYTES")
+        ctrl=files["original_control"]
+        ctrl.write_text(ctrl.read_text().replace("selected.tif","other.tif"))
+        self.update_control_attestation(files)
+        with self.assertRaisesRegex(ComparisonError,"GEOTIFF bytes differ"):
+            compare(**files)
+
+    def test_original_control_grid_mismatch_rejected_even_with_hash(self):
+        files=self.make_fixture()
+        ctrl=files["original_control"]
+        ctrl.write_text(ctrl.read_text().replace("!NX = 3 !","!NX = 4 !"))
+        self.update_control_attestation(files)
+        with self.assertRaisesRegex(ComparisonError,"mismatched NX"):
+            compare(**files)
+
+    def test_original_control_multiple_tifs_refused(self):
+        files=self.make_fixture()
+        ctrl=files["original_control"]
+        with ctrl.open("a") as stream:
+            stream.write("2 !GEOTIFF = selected.tif !    !END!\n")
+        self.update_control_attestation(files)
+        with self.assertRaisesRegex(ComparisonError,"one numbered GEOTIFF"):
+            compare(**files)
+
+    def test_original_control_missing_tiff_refused(self):
+        files=self.make_fixture()
+        ctrl=files["original_control"]
+        ctrl.write_text(ctrl.read_text().replace("selected.tif","missing.tif"))
+        self.update_control_attestation(files)
+        with self.assertRaisesRegex(ComparisonError,"missing/empty"):
+            compare(**files)
+
     def test_sav_shape_mismatch_rejected(self):
         files=self.make_fixture()
         sav=files["original_sav_path"]
