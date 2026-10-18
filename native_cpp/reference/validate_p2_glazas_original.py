@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """#53 scientific gate: ORIGINAL CTGPROC GLAZAS vs authentic native GLCC D1/D3.
 
-Requires the actual original binary *outside the public repository*, pinned by
-an independent SHA256. Never substitutes GEN, captured historical LU, or a
+Requires the authentic original binary built from a Git-SHA-locked CTEAS
+vendor source checkout in isolated Actions scratch, pinned by binary SHA256. Never substitutes GEN, captured historical LU, or a
 synthetic fixture as the original GLAZAS oracle. Invoked ONLY manually.
 """
 from __future__ import annotations
@@ -19,6 +19,8 @@ import time
 
 SRC_SHA = "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a"
 SRC_SIZE = 156_000_000
+CTEAS_ORIGINAL_COMMIT = "dfad99a78ed84d655e21411c9d25eb0d2583bf13"
+CTGPROC_ORIGINAL_SOURCE_SHA256 = "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281"
 CATS = (11,12,13,14,15,16,17,21,22,23,24,31,32,33,41,42,43,
         51,52,53,54,55,61,62,71,72,73,74,75,76,77,81,82,83,84,85,91,92)
 FROZEN = dict(nx=50, ny=50, xrefkm="510.885", yrefkm="3531.269",
@@ -172,6 +174,7 @@ def run(argv=None) -> int:
     p.add_argument("--source-img", type=Path, required=True)
     p.add_argument("--original-ctgproc", type=Path, required=True)
     p.add_argument("--original-bin-sha256", required=True)
+    p.add_argument("--original-source-file", type=Path, required=True)
     p.add_argument("--control-template", type=Path, required=True)
     p.add_argument("--grid-cmn", type=Path, required=True)
     p.add_argument("--native-lu", type=Path, required=True)
@@ -186,6 +189,7 @@ def run(argv=None) -> int:
     require(a.original_ctgproc.is_file() and os.access(a.original_ctgproc,os.X_OK),
             "ORIGINAL_BINARY_NOT_FOUND_OR_NOT_EXECUTABLE")
     safe_original_file(a.original_ctgproc,expected=a.original_bin_sha256)
+    safe_original_file(a.original_source_file,expected=CTGPROC_ORIGINAL_SOURCE_SHA256)
     require(not a.out_dir.exists() and not a.out_dir.is_symlink(),
             "OUTPUT_DIRECTORY_COLLISION")
     control = make_glazas_control(a.control_template.read_text(encoding="utf-8"))
@@ -224,6 +228,8 @@ def run(argv=None) -> int:
         report=compare(work/"lu.dat",a.native_lu,work/"ctgproc.lst",a.native_manifest)
         report.update({
             "original_bin_sha256":a.original_bin_sha256,
+            "original_source_git_commit":CTEAS_ORIGINAL_COMMIT,
+            "original_ctgproc_for_sha256":CTGPROC_ORIGINAL_SOURCE_SHA256,
             "control_sha256":file_sha(work/"ctgproc.inp"),
             "grid_sha256":file_sha(a.out_dir/"grid.cmn"),
             "original_lu_sha256":file_sha(work/"lu.dat"),
