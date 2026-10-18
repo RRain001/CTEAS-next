@@ -138,6 +138,49 @@ class AnnualAuthenticP4GateTest(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "lacks immutable original"):
             self.gate()
 
+    def _add_second_authentic_station(self, years=(2022, 2023)):
+        sid, wmo = "USM00058333", "58333"
+        raw = self.archive / (sid + "-data.txt")
+        raw.write_text("second synthetic, not NOAA evidence\n", encoding="utf-8")
+        for year in years:
+            basedir = self.upper / str(year)
+            selected = dict(self.audit[year]["selected"][0])
+            selected.update({
+                "id": sid, "source_lat": 40.1, "source_lon": -105.1,
+                "effective_lat": 40.1, "effective_lon": -105.1,
+                "raw_sha256": sha256_file(raw),
+            })
+            self.audit[year]["selected"].append(selected)
+            row = dict(self.rows[year][0])
+            row.update({
+                "id": sid, "name": "SECOND-TEST-ONLY",
+                "source_lat": "40.1", "source_lon": "-105.1",
+                "lat": "40.1", "lon": "-105.1", "raw_txt": str(raw),
+            })
+            self.rows[year].append(row)
+            csv_dir = basedir / (sid + "_igra_every_moment")
+            csv_dir.mkdir()
+            (csv_dir / f"{wmo}_{year}010100.csv").write_text("test,profile\n1,2\n")
+            fsl = basedir / "igra2fsl" / (wmo + ".txt")
+            fsl.write_text("second test FSL\n")
+            self.jobs.append({
+                "station_id": wmo, "source_station_id": sid,
+                "input_fsl": str(fsl),
+                "output_updat": str(basedir / "fsl_data" / f"up_{wmo}_{year}.dat"),
+            })
+        self.save()
+
+    def test_two_real_station_identities_kept_without_virtual_padding(self):
+        self._add_second_authentic_station()
+        evidence = self.gate()
+        self.assertEqual(evidence["station_wmo"], ["58333", "58424"])
+        self.assertEqual(len(evidence["source_and_cleaning_evidence"][2022]), 2)
+
+    def test_cross_year_second_station_disappearance_rejected(self):
+        self._add_second_authentic_station(years=(2022,))
+        with self.assertRaisesRegex(ContractError, "WMO set varies"):
+            self.gate()
+
     def test_name_collisions_and_annual_selection_mismatch_fail_closed(self):
         self.rows[2023][0]["id"] = "USM00058425"
         self.save()
