@@ -316,12 +316,13 @@ def convert_csv_profiles_to_fsl(csv_dir: Path, output_path: Path, station_id: st
 def main():
     parser = argparse.ArgumentParser(description='步骤2: 将预处理CSV批量转换为FSL文本')
     parser.add_argument('--year', type=int, help='研究年份，例如 2023')
+    parser.add_argument('--upperair-root', type=Path, help='Explicit isolated P4 output root')
     args = parser.parse_args()
     year = args.year
     if year is None:
         raise SystemExit('year is required; pass --year YYYY')
 
-    year_dir = DATA_ROOT / str(year)
+    year_dir = (args.upperair_root if args.upperair_root else DATA_ROOT) / str(year)
     year_dir.mkdir(parents=True, exist_ok=True)
     out_dir = year_dir / 'igra2fsl'
     out_dir.mkdir(parents=True, exist_ok=True)
