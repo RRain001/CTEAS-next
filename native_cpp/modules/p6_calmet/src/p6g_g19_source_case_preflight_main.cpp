@@ -18,7 +18,7 @@ int main(int argc,char** argv) {
     }
     if(argc<6) {
         std::cerr<<"G19 requires met.inp GEO.DAT SURF.DAT and "
-                    "at least two ordered UP.DAT files; --help for usage\n";
+                    "at least one ordered UP.DAT file; --help for usage\n";
         return 2;
     }
     try {
