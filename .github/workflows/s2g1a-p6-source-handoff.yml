@@ -7,12 +7,14 @@ on:
       - .github/workflows/s2g1a-p6-source-handoff.yml
       - native_cpp/orchestration/p6_g19_handoff.py
       - native_cpp/orchestration/tests/test_p6_g19_handoff.py
+      - native_cpp/orchestration/README.md
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - .github/workflows/s2g1a-p6-source-handoff.yml
       - native_cpp/orchestration/p6_g19_handoff.py
       - native_cpp/orchestration/tests/test_p6_g19_handoff.py
+      - native_cpp/orchestration/README.md
   workflow_dispatch:
 
 permissions:
