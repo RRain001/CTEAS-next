@@ -1,4 +1,4 @@
-name: Issue53 genuine original CTGPROC GLAZAS parity (manual vendor runner only)
+name: Issue53 original CTGPROC GLAZAS parity (CTEAS pinned source, manual science)
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
@@ -8,20 +8,15 @@ on:
       - .github/workflows/s2g1bb-issue53-glazas-original.yml
       - docs/plans/ISSUE53_P2_GLAZAS_ORIGINAL_GATE_20261018.md
   workflow_dispatch:
-    inputs:
-      original_binary_absolute_path:
-        description: "Original CTGPROC executable already installed on selected self-hosted runner (not repository path)"
-        required: true
-        type: string
-      original_binary_sha256:
-        description: "Independent SHA256 of the authentic original executable (64 lowercase hex chars)"
-        required: true
-        type: string
 permissions:
   contents: read
 concurrency:
   group: issue53-original-glazas-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
+env:
+  CTEAS_SOURCE_COMMIT: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+  CTGPROC_SOURCE_SHA256: 719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281
+  GLCC_SOURCE_SHA256: 4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a
 jobs:
   comparator-contract-only:
     if: github.event_name == 'pull_request'
@@ -32,72 +27,130 @@ jobs:
         with:
           persist-credentials: false
           lfs: false
-      - name: Verify original-only gate and synthetic original-format fixtures
+      - name: Original-only comparator and synthetic format tests
         run: |
           set -euo pipefail
           python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate
-          echo 'P2_GLAZAS_GATE_SOFTWARE=PASS'
-          echo 'ORIGINAL_GLAZAS_FORTRAN=NOT_RUN'
-          echo 'GLCC_LFS=NOT_READ'
+          echo 'P2_GLAZAS_GATE_SOFTWARE=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
+  authentic-source-build-only:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout frozen original CTEAS source separately, sparse and no LFS
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Install original compiler (no model scientific execution)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran
+      - name: Verify source commit and official frozen source file hash, compile real CTGPROC
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C original_cteas rev-parse HEAD)" = "$CTEAS_SOURCE_COMMIT"
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          test -f "$vendor/ctgproc.for"
+          echo "$CTGPROC_SOURCE_SHA256  $vendor/ctgproc.for" | sha256sum -c -
+          mkdir -p "${RUNNER_TEMP}/ctgproc-include"
+          for f in "$vendor"/*; do
+            test -f "$f" || continue
+            bn="${f##*/}"
+            ln -s "$f" "${RUNNER_TEMP}/ctgproc-include/${bn,,}"
+          done
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -O0 \
+            -I"${RUNNER_TEMP}/ctgproc-include" -I"$vendor" \
+            "$vendor/ctgproc.for" -o "${RUNNER_TEMP}/original_ctgproc.x"
+          test -x "${RUNNER_TEMP}/original_ctgproc.x"
+          gfortran --version | head -n 1
+          sha256sum "${RUNNER_TEMP}/original_ctgproc.x"
+          echo 'ORIGINAL_CTEAS_SOURCE_BUILD=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
+
   genuine-original-glazas:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: [self-hosted, Linux, X64, cteas-managed]
+    runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
-      - name: Checkout code and authentic GLCC Git LFS (no original vendor redistribution)
+      - name: Checkout CTEAS-next source and original 156 MB GLCC LFS
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           lfs: true
           persist-credentials: false
-      - name: Reject unchecked workflow ref, vendor binary and source
+      - name: Checkout frozen original CTEAS CTGPROC source separately
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Install Fortran and C++ science comparison toolchains
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran g++-12 cmake libgdal-dev libssl-dev
+      - name: Verify immutable source and compile authentic original CTGPROC
         shell: bash
-        env:
-          ORIGINAL_PATH: ${{ inputs.original_binary_absolute_path }}
-          ORIGINAL_HASH: ${{ inputs.original_binary_sha256 }}
         run: |
           set -euo pipefail
-          test "${GITHUB_REF}" = refs/heads/main
-          [[ "${ORIGINAL_PATH}" = /* ]]
-          [[ "${ORIGINAL_HASH}" =~ ^[0-9a-f]{64}$ ]]
-          test -f "${ORIGINAL_PATH}"
-          test -x "${ORIGINAL_PATH}"
-          test ! -L "${ORIGINAL_PATH}"
-          echo "${ORIGINAL_HASH}  ${ORIGINAL_PATH}" | sha256sum -c -
+          test "$GITHUB_REF" = refs/heads/main
+          test "$(git -C original_cteas rev-parse HEAD)" = "$CTEAS_SOURCE_COMMIT"
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          echo "$CTGPROC_SOURCE_SHA256  $vendor/ctgproc.for" | sha256sum -c -
           test "$(wc -c < eausgs2_0la.img)" -eq 156000000
-          echo '4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img' | sha256sum -c -
-      - name: Build GLCC native D1 producer and D3 historical LU writer, no GLC crosswalk
+          echo "$GLCC_SOURCE_SHA256  eausgs2_0la.img" | sha256sum -c -
+          mkdir -p "${RUNNER_TEMP}/ctgproc-include"
+          for f in "$vendor"/*; do
+            test -f "$f" || continue
+            bn="${f##*/}"
+            ln -s "$f" "${RUNNER_TEMP}/ctgproc-include/${bn,,}"
+          done
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -O0 \
+            -I"${RUNNER_TEMP}/ctgproc-include" -I"$vendor" \
+            "$vendor/ctgproc.for" -o "${RUNNER_TEMP}/original_ctgproc.x"
+          test -x "${RUNNER_TEMP}/original_ctgproc.x"
+          gfortran --version | head -n 1
+          sha256sum "${RUNNER_TEMP}/original_ctgproc.x"
+      - name: Build CTEAS-next C++ D1 original-IMG and D3 historical LU writer
         shell: bash
         run: |
           set -euo pipefail
-          cmake -S native_cpp -B "${RUNNER_TEMP}/issue53-glazas-build" -DCMAKE_BUILD_TYPE=Release
-          cmake --build "${RUNNER_TEMP}/issue53-glazas-build" --parallel 4 --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
-      - name: Actual GLCC D1 -> D3 and original GLAZAS same-source scientific comparison
+          cmake -S native_cpp -B "${RUNNER_TEMP}/issue53-glazas-build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "${RUNNER_TEMP}/issue53-glazas-build" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
+      - name: Authentic original GLAZAS vs same-source native D1-D3 numerical comparison
         shell: bash
-        env:
-          ORIGINAL_PATH: ${{ inputs.original_binary_absolute_path }}
-          ORIGINAL_HASH: ${{ inputs.original_binary_sha256 }}
         run: |
           set -euo pipefail
           build="${RUNNER_TEMP}/issue53-glazas-build"
           "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20
           "$build/cteas_p2_glcc_lu_dat" "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
             "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_gen_replay.csv" "${RUNNER_TEMP}/d3-glcc"
+          original_sha="$(sha256sum "${RUNNER_TEMP}/original_ctgproc.x" | awk '{print $1}')"
           python3 native_cpp/reference/validate_p2_glazas_original.py \
             --source-img eausgs2_0la.img \
-            --original-ctgproc "${ORIGINAL_PATH}" --original-bin-sha256 "${ORIGINAL_HASH}" \
+            --original-ctgproc "${RUNNER_TEMP}/original_ctgproc.x" --original-bin-sha256 "$original_sha" \
             --control-template project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp \
             --grid-cmn project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn \
             --native-lu "${RUNNER_TEMP}/d3-glcc/lu.dat" \
             --native-manifest "${RUNNER_TEMP}/d3-glcc/p2_d3_manifest.json" \
-            --out-dir "${RUNNER_TEMP}/glazas-original" \
-            --timeout-sec 300
-          echo 'P2_A_GLCC_ORIGINAL_GLAZAS_PARITY=PASS_IF_SAME_SOURCE_CONTROLS_POINTS_AND_ALL_95000_FIELDS'
-      - name: Preserve provenance and first-difference report only (never vendor or raw IMG)
+            --out-dir "${RUNNER_TEMP}/glazas-original" --timeout-sec 300
+          echo 'P2_ORIGINAL_GLAZAS_SCIENCE=PASS_SAME_SOURCE_ONLY'
+      - name: Save manifest and first differences, never vendor/raw-IMG/Fortran binaries
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: issue53-original-glazas-external-vendor-science-report
+          name: issue53-original-glazas-pinned-cteas-source-science
           path: |
             ${{ runner.temp }}/glazas-original/result.json
             ${{ runner.temp }}/glazas-original/FAILED.txt
