@@ -22,14 +22,14 @@ class P5HandoffTests(unittest.TestCase):
         # Three hour-ending records; one intentionally missing observation.
         # Values exist only in this synthetic test, never NOAA evidence.
         header = (
-            f"{'SURF.DAT':<16}{'2.1':<16}\\n"
-            "0\\nNONE\\nUTC+0000\\n"
-            "2022 1 0 0 2022 1 3 0 1\\n583140\\n"
+            f"{'SURF.DAT':<16}{'2.1':<16}\n"
+            "0\nNONE\nUTC+0000\n"
+            "2022 1 0 0 2022 1 3 0 1\n583140\n"
         )
         hourly = [
-            "2022 1 0 0 2022 1 1 0\\n1.000 90.000 10 9999 290.000 40 1000.000 0\\n",
-            "2022 1 1 0 2022 1 2 0\\n9999.000 9999.000 9999 9999 9999.000 9999 9999.000 9999\\n",
-            "2022 1 2 0 2022 1 3 0\\n0.000 0.000 10 4 285.000 50 1001.000 0\\n",
+            "2022 1 0 0 2022 1 1 0\n1.000 90.000 10 9999 290.000 40 1000.000 0\n",
+            "2022 1 1 0 2022 1 2 0\n9999.000 9999.000 9999 9999 9999.000 9999 9999.000 9999\n",
+            "2022 1 2 0 2022 1 3 0\n0.000 0.000 10 4 285.000 50 1001.000 0\n",
         ]
         raw.write_text(header + "".join(hourly), encoding="utf-8")
         published = self.case / "met/surface/final/surf.dat"
