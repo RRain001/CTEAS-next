@@ -70,14 +70,21 @@ class OriginalGlazasGates(unittest.TestCase):
         v=compare(src,copy,lst,manifest)
         self.assertEqual(v["compared_values"],95000)
         self.assertEqual(v["exceedances"],0)
-        self.assertEqual(v["point_difference"],0)
         self.assertEqual(v["max_absolute_fraction_difference"],0)
-        # Pure comparison result is synthetic; no execution of original binary.
-        lst.write_text("Number of data points used to update grid: 10012\n")
+        self.assertEqual(v["original_glcc_source_pixels_used"],10011)
+        self.assertEqual(v["native_d1_d3_submesh_hits"],10011)
+        self.assertEqual(v["point_count_comparison"],"NOT_COMPARABLE_DIFFERENT_UNITS")
+        self.assertEqual(v["overall"],"PASS_FRACTION_ONLY_PENDING_INTEGER_HITS")
+        # Matching parent-pixel and mesh-hit numeric values by coincidence MUST NOT
+        # imply scientific original parity, and changing ncount MUST NOT fail
+        # fraction-only numeric agreement.
+        lst.write_text("Number of data points used to update grid: 56\n")
         v=compare(src,copy,lst,manifest)
+        self.assertEqual(v["original_glcc_source_pixels_used"],56)
+        self.assertEqual(v["native_d1_d3_submesh_hits"],10011)
         self.assertEqual(v["numeric_gate"],"PASS")
-        self.assertEqual(v["point_count_gate"],"FAIL")
-        self.assertEqual(v["overall"],"FAIL_ORIGINAL_GLAZAS_PARITY")
+        self.assertEqual(v["point_count_comparison"],"NOT_COMPARABLE_DIFFERENT_UNITS")
+        self.assertEqual(v["overall"],"PASS_FRACTION_ONLY_PENDING_INTEGER_HITS")
 
     def test_nonzero_difference_exceeds_predeclared_threshold(self):
         original=CASE/"lu.dat"
