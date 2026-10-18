@@ -29,3 +29,6 @@ project/cases/** -text
 
 # Disabled workflow archive is provenance, not newly formatted YAML.
 docs/migration/historical-workflows/** -text
+
+# Full GLCC landuse raster is stored in Git LFS.
+/eausgs2_0la.img filter=lfs diff=lfs merge=lfs -text
