@@ -121,8 +121,14 @@ def build_p5_handoff(case: Path, producer: dict, reader: dict) -> dict:
     # file. Its bytes must be bound to the same P5 producer SHA ledger.
     for station in index:
         raw_file = Path(station["source_file"])
+        approved_prefixes = (
+            ("met", "surface", "isd2smerge_ready"),
+            ("run", "smerge", "original_smerge_sparse_runtime"),
+        )
         if (raw_file.is_absolute() or ".." in raw_file.parts or
-                not raw_file.parts[:3] == ("met", "surface", "isd2smerge_ready")):
+                len(raw_file.parts) != 4 or
+                raw_file.parts[:3] not in approved_prefixes or
+                raw_file.suffix.lower() != ".csv"):
             raise ContractError("P5 D4 untrusted GENERIC station source path")
         source_path = root / raw_file
         if (produced_shas.get(raw_file.as_posix()) is None or
