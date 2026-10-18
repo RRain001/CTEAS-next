@@ -16,7 +16,7 @@ int main(int argc,char** argv) {
                     "Does NOT run or validate P6D/P6E/P6F physics.\n";
         return 0;
     }
-    if(argc<6) {
+    if(argc<5) {
         std::cerr<<"G19 requires met.inp GEO.DAT SURF.DAT and "
                     "at least one ordered UP.DAT file; --help for usage\n";
         return 2;
