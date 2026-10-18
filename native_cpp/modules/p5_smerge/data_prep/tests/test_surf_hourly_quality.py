@@ -29,13 +29,14 @@ class SurfHourlyQualityTests(unittest.TestCase):
              "0.000 0.000 10 4 285.000 50 1001.000 0\n"),
         ]
         self.raw.write_text(self.header + "".join(a + b for a, b in self.hours))
+        def cloud_only(row: str) -> str:
+            fields = row.split()
+            if fields[3] == "9999":
+                fields[3] = "0"
+            return " ".join(fields) + "\n"
+
         self.published.write_text(
-            self.header + "".join(
-                a + b.replace("10 9999 290.000", "10 0 290.000").replace(
-                    "9999 9999.000", "0 9999.000")
-                for a, b in self.hours
-            )
-        )
+            self.header + "".join(a + cloud_only(b) for a, b in self.hours))
         self.reader = {"populated_station_hours": 2,
                        "missing_station_hours": 1,
                        "valid_wind_station_hours": 2}
