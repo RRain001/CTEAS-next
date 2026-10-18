@@ -8,6 +8,8 @@ on:
       - 'scripts/s2g/p1_original_actions_replay.py'
       - 'scripts/s2g/tests/test_p1_original_actions_replay.py'
       - 'scripts/s2g/tests/test_p1_original_legacy_tiff.py'
+      - 'scripts/s2g/p1_original_hit_diagnostics.py'
+      - 'scripts/s2g/tests/test_p1_original_hit_diagnostics.py'
   workflow_dispatch:
     inputs:
       route:
@@ -41,7 +43,7 @@ jobs:
       - name: Check structural integrity and lossless TIFF bytes; no proprietary original
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_p1_original_actions_replay scripts.s2g.tests.test_p1_original_legacy_tiff
+          python3 -m unittest -v scripts.s2g.tests.test_p1_original_actions_replay scripts.s2g.tests.test_p1_original_legacy_tiff scripts.s2g.tests.test_p1_original_hit_diagnostics
           python3 -m py_compile scripts/s2g/p1_original_actions_replay.py
           echo 'ORIGINAL_TERREL_CONTRACT_SOFTWARE=PASS_REAL_ORIGINAL_NOT_RUN'
 
