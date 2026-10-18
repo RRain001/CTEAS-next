@@ -1,0 +1,40 @@
+name: Issue 55 P4 D1-A offline contract
+
+on:
+  pull_request:
+    paths:
+      - native_cpp/modules/p4_read62/data_prep/**
+      - .github/workflows/issue55-p4-d1a-offline.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p4-d1a-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  p4-d1a-software:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install bounded Python test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+      - name: Compile and run P4 D1-A and pre-existing selector regression tests
+        run: |
+          set -euo pipefail
+          python -m compileall -q native_cpp/modules/p4_read62/data_prep
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest -v             native_cpp.modules.p4_read62.data_prep.tests.test_p4_case_d1             native_cpp.modules.p4_read62.data_prep.tests.test_p4_integration             native_cpp.modules.p4_read62.data_prep.tests.test_p4_data_prep
+          echo "P4_D1A_SOFTWARE_TESTS_PASS"
+          echo "P4_NATIVE_FULL_YEAR_ORIGINAL_PARITY=NOT_RUN"
+          echo "P4_GENERIC_FINAL_UP_G19=BLOCKED_D2_D3"
