@@ -1,0 +1,31 @@
+name: Issue 42 shared B0 case admission offline contract
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue42-b0-case-admission.yml'
+      - 'native_cpp/orchestration/case_admission.py'
+      - 'native_cpp/orchestration/tests/test_case_admission.py'
+      - 'native_cpp/orchestration/site_plan.py'
+      - 'engine/run_met/station_grid.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  b0-synthetic-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install read-only case validator dependency
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+      - name: Run B0 contract tests (no source, no model)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.orchestration.tests.test_case_admission
+          echo 'B0_GRID_TIME_CASE_ADMISSION=PASS_SCOPED_SOFTWARE'
+          echo 'B1_SCRATCH=NOT_RUN FIVE_PRODUCER_SCIENCE=NOT_RUN'
