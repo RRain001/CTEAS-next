@@ -10,6 +10,16 @@ struct TerrainGridSpec {
   double southwest_x_m{}, southwest_y_m{}, cell_size_m{};
   std::size_t nx{},ny{};
 };
+// Original TERREL TIFFINFO.GET_IFD first rounds the TIFF tiepoint and
+// pixel scale separately to REAL*4, THEN computes the area-pixel center.
+// This differs from rounding (double_tiepoint + double_spacing / 2).
+// Supported scoped path: north-up WGS84 PixelIsArea; the caller verifies it.
+[[nodiscard]] inline float geotiff_area_pixel_center_real4(double tiepoint,
+                                                             double signed_spacing) {
+  const float origin=static_cast<float>(tiepoint);
+  const float delta=static_cast<float>(signed_spacing);
+  return origin+delta/2.0f;
+}
 // WGS84 UTM CRS for a case-provided numeric grid (not a per-pixel auto-zone).
 struct UtmProjection {
   int zone{};                    // 1..60
