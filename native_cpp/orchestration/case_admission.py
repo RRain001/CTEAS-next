@@ -162,6 +162,8 @@ def admit_case(case_path: Path) -> CaseAdmission:
     begin, end = _lexical_time(time_raw)
     try:
         case = mapping(yaml.load(case_raw, Loader=_UniqueSafeLoader), "B0 case")
+    except ContractError:
+        raise
     except (yaml.YAMLError, UnicodeError, ValueError) as exc:
         raise ContractError("B0 invalid case YAML") from exc
     if case.get("case_name") != root.name:
