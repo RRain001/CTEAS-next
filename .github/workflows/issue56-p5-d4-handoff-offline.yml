@@ -1,0 +1,31 @@
+name: Issue 56 P5 D4 source-only handoff contract
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue56-p5-d4-handoff-offline.yml'
+      - 'native_cpp/modules/p5_smerge/data_prep/p5_handoff.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_handoff.py'
+      - 'scripts/s2g/issue56_real_noaa_p5_case.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  d4-source-contract-software-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install software-only dependencies
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'numpy>=1.23,<3' 'pandas>=1.5,<3'
+      - name: Test P5 source-only D4 evidence without NOAA downloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_p5_handoff
+          python3 -m unittest -v scripts.s2g.tests.test_issue56_real_noaa_p5_case
+          echo 'ISSUE56_P5_D4_SOURCE_HANDOFF=PASS_SOFTWARE_SCOPED'
+          echo 'P5_G19_JOINT=NOT_RUN P6_NUMERICAL=NOT_RUN'

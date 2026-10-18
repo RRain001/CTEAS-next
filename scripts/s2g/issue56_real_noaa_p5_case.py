@@ -32,6 +32,7 @@ from native_cpp.modules.p5_smerge.data_prep.download_isd_by_grid import (
     parse_center, parse_history_txt,
 )
 from native_cpp.modules.p5_smerge.data_prep.p5_case_producer import produce
+from native_cpp.modules.p5_smerge.data_prep.p5_handoff import build_p5_handoff
 from scripts.s3f.verify_real_noaa_2022_2023_station_selection import (
     ROOT, P5_STATIONS, YEARS, digest, p5_check,
 )
@@ -270,6 +271,7 @@ def run(native: Path, reader: Path, scenario: str, original: Path | None = None)
                 if year["mode"] != "OBSERVED":
                     raise RuntimeError("genuine in-domain station suddenly became virtual")
             read_result = _native_surf_preflight(reader, case, producer)
+            handoff = build_p5_handoff(case, producer, read_result)
             parity = (compare_original_smerge(original, case, producer, independent)
                       if original is not None else {"P5_ORIGINAL_PARITY": "NOT_RUN"})
             results.append({
@@ -286,6 +288,7 @@ def run(native: Path, reader: Path, scenario: str, original: Path | None = None)
                 "sm_input_control_sha256":
                     producer["produced_output_sha256"]["run/smerge/smerge.inp"],
                 "source_reader": read_result,
+                "p5_to_issue42_d4_source_handoff": handoff,
                 "producer_step_exits": {s["stage"]: s["exit_code"]
                                        for s in producer["producer_steps"]},
                 "science_acceptance": False,
