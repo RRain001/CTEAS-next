@@ -73,8 +73,8 @@ def byte_gate(generated: Path, expected: Path, label: str) -> dict:
                   "frozen":frozen,"first_mismatch_byte_zero_based":first,
                   "fresh_prefix_at_difference_hex":left[max(0,first-20):first+60].hex(),
                   "frozen_prefix_at_difference_hex":right[max(0,first-20):first+60].hex(),
-                  "fresh_lines":left.count(b"\\n"),
-                  "frozen_lines":right.count(b"\\n")}
+                  "fresh_lines":left.count(b"\n"),
+                  "frozen_lines":right.count(b"\n")}
         print("S3D_"+label+"_ARCHIVED_RAW_TO_PREPARED=DIFFERENCE_REQUIRES_REVIEW",
               "first_byte=",first,"fresh_bytes=",len(left),
               "frozen_bytes=",len(right),flush=True)
@@ -138,14 +138,34 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
     fsl=work/P4_REFERENCE
     fsl.parent.mkdir(parents=True)
     lat,lon=float(row["lat"]),float(row["lon"])
-    read_stats=read62.convert_csv_profiles_to_fsl(
-        csv_dir=csvdir,output_path=fsl,station_id="58424",
+    kwargs=dict(
+        csv_dir=csvdir,station_id="58424",
         latitude=f"{abs(lat):.2f}{'N' if lat>=0 else 'S'}",
         longitude=f"{abs(lon):.2f}{'E' if lon>=0 else 'W'}",
         elevation=str(int(round(float(row["elev_m"])))),
-        target_year="2022",min_pressure_hpa=500.0,
-        exact_lat=lat,exact_lon=lon,coord_digits=6)
+        target_year="2022",min_pressure_hpa=500.0)
+    # The original frozen FSL predates the OPTIONAL trailing P4EXACT
+    # header extension. Replay the historical format for byte identity,
+    # then independently demonstrate that the current 6-decimal-station
+    # metadata extension changes NO old READ62-readable input bytes.
+    read_stats=read62.convert_csv_profiles_to_fsl(
+        output_path=fsl,**kwargs)
     p4_byte=byte_gate(fsl,checked(case,P4_REFERENCE),"P4_FSL")
+    modern_fsl=work/"met/upperair/2022/igra2fsl/58424-with-P4EXACT.txt"
+    read62.convert_csv_profiles_to_fsl(
+        output_path=modern_fsl,exact_lat=lat,exact_lon=lon,
+        coord_digits=6,**kwargs)
+    import re as _re
+    encoded=modern_fsl.read_bytes()
+    # Only the optional FSL header extension is permitted to differ;
+    # explicitly check the number of affected header records.
+    extra=(f" P4EXACT_LAT={lat:.6f} P4EXACT_LON={lon:.6f}").encode("ascii")
+    if encoded.count(extra)!=730:
+        raise ValueError("P4 exact-coordinate extension count not 730")
+    normalized=encoded.replace(extra,b"")
+    if normalized!=fsl.read_bytes():
+        raise ValueError("P4EXACT extension unexpectedly changes fixed-column FSL values")
+    print("S3D_P4_OPTIONAL_6DP_STATION_METADATA_PRESERVES_LEGACY_FSL=PASS",flush=True)
     print("S3D_P4_IGRA_ORIGINAL_CLEANED_COUNT=",stats["soundings_written"],flush=True)
 
     # P5: archived 2022 full-ISD plus full-year ISD-Lite winds ->
@@ -196,7 +216,10 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
         "no_network_download":True,"no_golden_case_mutation":True,
         "raw_sources":original,
         "p4":{"stats":stats,"filled":filled,"fsl_stats":read_stats,
-              "produced_fsl":p4_byte},
+              "produced_fsl":p4_byte,
+              "new_optional_p4exact_extension_profiles":730,
+              "new_optional_p4exact_extension_sha256":sha(modern_fsl),
+              "exact_coord_is_station_metadata_not_utm_grid_origin":True},
         "p5":{"original_lite_hours":len(lite),"full_isd_source_rows":raw_rows,
               "wind_source":"NOAA_ISD_LITE",
               "produced_generic":p5_byte},
