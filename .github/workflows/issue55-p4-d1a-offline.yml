@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m compileall -q native_cpp/modules/p4_read62/data_prep
-          PYTHONDONTWRITEBYTECODE=1 python -m unittest -v             native_cpp.modules.p4_read62.data_prep.tests.test_p4_case_d1             native_cpp.modules.p4_read62.data_prep.tests.test_p4_integration             native_cpp.modules.p4_read62.data_prep.tests.test_p4_data_prep
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest -v             native_cpp.modules.p4_read62.data_prep.tests.test_p4_case_d1             native_cpp.modules.p4_read62.data_prep.tests.test_p4_case_year_gate             native_cpp.modules.p4_read62.data_prep.tests.test_p4_integration             native_cpp.modules.p4_read62.data_prep.tests.test_p4_data_prep
           echo "P4_D1A_SOFTWARE_TESTS_PASS"
           echo "P4_NATIVE_FULL_YEAR_ORIGINAL_PARITY=NOT_RUN"
           echo "P4_GENERIC_FINAL_UP_G19=BLOCKED_D2_D3"
