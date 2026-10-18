@@ -162,6 +162,29 @@ class SourceFileHandoffTests(unittest.TestCase):
         self.assertFalse(res["ready"])
         self.assertEqual(res["scientific_acceptance"], "NOT_EVALUATED")
 
+    def test_original_source_mutation_after_plan_fails_closed(self):
+        exe = self.c.root.parent / "mock_native_g19"
+        exe.write_text("#!/bin/sh\necho PASS_P6G_G19_FILE_SOURCE_CONTRACT\n")
+        exe.chmod(0o700)
+        req = self.plan(exe)
+        self.geo.write_bytes(self.geo.read_bytes() + b"TAMPERED")
+        with self.assertRaisesRegex(ContractError, "source bytes changed"):
+            execute_source_preflight(req)
+
+    def test_g19_stdout_station_order_mismatch_fails_closed(self):
+        exe = self.c.root.parent / "mock_native_g19"
+        exe.write_text(
+            "#!/bin/sh\necho PASS_P6G_G19_FILE_SOURCE_CONTRACT\n"
+            "echo 'NX=20 NY=20 DGRID_KM=2 UTM_ZONE=13 UTM_HEM=N'\n"
+            "echo 'NSSTA=2 NUSTA=2 HOURS=1'\n"
+            "echo 'SS_IDS=7247001,7246901'\n"
+            "echo 'US_IDS=12345,23456'\nexit 0\n"
+        )
+        exe.chmod(0o700)
+        req = self.plan(exe)
+        with self.assertRaisesRegex(ContractError, "SS_IDS"):
+            execute_source_preflight(req)
+
     def test_cli_dry_run_refuses_unparsed_g19_roles(self):
         proc = subprocess.run([
             sys.executable, "-m", "native_cpp.orchestration.p6_g19_handoff",
