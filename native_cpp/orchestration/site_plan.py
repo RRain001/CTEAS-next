@@ -208,7 +208,7 @@ def _selection(
                 raise ContractError("P5 duplicate station")
             seen5.add(sid)
             alias = child(s, "ifstn")
-            if not isinstance(alias, str) or not re.fullmatch(r"\d{7}", alias):
+            if not isinstance(alias, str) or not re.fullmatch(r"\d{6,7}", alias):
                 raise ContractError("P5 IFSTN alias malformed")
             if sid in alias_index and alias_index[sid] != alias:
                 raise ContractError("P5 IFSTN alias changed between calendar years")
