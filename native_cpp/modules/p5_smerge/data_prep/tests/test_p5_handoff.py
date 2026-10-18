@@ -34,9 +34,15 @@ class P5HandoffTests(unittest.TestCase):
         raw.write_text(header + "".join(hourly), encoding="utf-8")
         published = self.case / "met/surface/final/surf.dat"
         published.parent.mkdir(parents=True)
-        published.write_text(header + "".join(x.replace(
-            "10 9999 290.000", "10 0 290.000").replace(
-            "9999 9999.000", "0 9999.000") for x in hourly), encoding="utf-8")
+        def cloud_only(hour: str) -> str:
+            times, values, _ = hour.split("\n")
+            fields = values.split()
+            if fields[3] == "9999":
+                fields[3] = "0"
+            return times + "\n" + " ".join(fields) + "\n"
+
+        published.write_text(header + "".join(cloud_only(x) for x in hourly),
+                             encoding="utf-8")
         self.csv = published.parent / "stations.csv"
         with self.csv.open("w", encoding="utf-8", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=[
