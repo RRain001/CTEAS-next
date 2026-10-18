@@ -1,0 +1,84 @@
+name: Issue54 frozen Hefei historical original P1 science replay
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue54-hefei-frozen-manual.yml'
+      - 'scripts/s2g/p1_hefei_frozen_replay.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-structure-only:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Static parse only; no original data on PR
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/s2g/p1_hefei_frozen_replay.py
+          echo 'HISTORIC_REAL_P1_ORIGINAL=NOT_RUN_SYNTHETIC_ONLY'
+
+  genuine-original-hefei:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    env:
+      ORIGINAL_REV: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+    steps:
+      - name: Checkout reviewed native CTEAS-next main
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
+      - name: Checkout exact original CTEAS, private assets are not re-published
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: cteas-historic-vendor
+          persist-credentials: false
+          lfs: false
+      - name: Verify frozen source revision and original cropped fixture
+        run: |
+          set -euo pipefail
+          test "$(git -C cteas-historic-vendor rev-parse HEAD)" = "$ORIGINAL_REV"
+          test -f cteas-historic-vendor/calpuff_terrain_and_landuse_data_crop/hefei_5km/china_srtm/srtm_60_06_hefei_5km.tif
+          test -f cteas-historic-vendor/engine/vendor/src/TERREL_v7.0.0_L141010/terrel.for
+      - name: Install genuine C++ GDAL and original Fortran toolchains
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gfortran g++ cmake libgdal-dev
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'rasterio>=1.3,<2' 'pyproj>=3.4,<4'
+      - name: Build and regression test reviewed P1 C++ only
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/p1 -B "$RUNNER_TEMP/issue54-hefei-p1" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/issue54-hefei-p1" --parallel 2
+          ctest --test-dir "$RUNNER_TEMP/issue54-hefei-p1" --output-on-failure
+      - name: Rebuild actual original TERREL/CTGPROC, rerun historical TIFF, compare native
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.p1_hefei_frozen_replay \
+            --original-root "$GITHUB_WORKSPACE/cteas-historic-vendor" \
+            --next-root "$GITHUB_WORKSPACE" \
+            --binary "$RUNNER_TEMP/issue54-hefei-p1/cteas_p1_terrain" \
+            --workspace "$RUNNER_TEMP/issue54-hefei-independent" \
+            --report "$RUNNER_TEMP/issue54-hefei-metadata-only.json"
+      - name: Publish bounded evidence only (never DEM, Fortran, DAT/SAV)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue54-hefei-frozen-original-metadata-only
+          path: ${{ runner.temp }}/issue54-hefei-metadata-only.json
+          if-no-files-found: warn
+          retention-days: 7
