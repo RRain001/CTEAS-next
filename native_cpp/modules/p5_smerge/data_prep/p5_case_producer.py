@@ -139,8 +139,14 @@ def replay_annual_selection_offline(case_yaml: Path, history: Path) -> dict:
     admission = admit_case(case_yaml)
     root = admission.case_path.parent
     raw = root / "met/surface/isd_raw"
-    if not raw.is_dir() or raw.is_symlink():
-        raise ContractError("P5 D2-A original NOAA archive must be staged")
+    for rel in ("met", "met/surface", "met/surface/isd_raw",
+                "met/surface/isd_raw/isd_lite"):
+        directory = root / rel
+        if not directory.is_dir() or directory.is_symlink():
+            raise ContractError("P5 D2-A staged archive directory missing/symlinked: " + rel)
+    if not history.is_absolute() or history.is_symlink() or not history.is_file():
+        raise ContractError("P5 D2-A requires an explicit regular ISD history source")
+    history_before = digest(history)
     if (list(raw.glob("station_selection_*.json")) or
             list(raw.glob("download_report_*.json")) or
             list(raw.glob("surf_station_list_*.txt"))):
@@ -175,9 +181,25 @@ def replay_annual_selection_offline(case_yaml: Path, history: Path) -> dict:
         raise ContractError("P5 original annual offline selector rejected staged source: " +
                             completed.stderr[-1200:] + completed.stdout[-1200:])
     verify_immutable(admission)
+    if digest(history) != history_before:
+        raise ContractError("P5 D2-A station history changed during source selection")
+    # The selector's candidate audit is mandatory evidence of why each NOAA
+    # candidate was accepted or rejected, not just a final station list.
+    begin = datetime.strptime(admission.research_begin, "%Y%m%d-%H%M%S")
+    end = datetime.strptime(admission.research_end, "%Y%m%d-%H%M%S")
+    selector_files = []
+    for year in range(begin.year, end.year + 1):
+        selector_files.extend((
+            raw / f"station_selection_{year}.json",
+            raw / f"download_report_{year}.json",
+            raw / f"surf_station_list_{year}.txt",
+        ))
+    selector_sha = _hash_outputs(root, selector_files)
     return {"step": "original_annual_selector_offline",
             "command": cmd, "exit_code": completed.returncode,
-            "stdout_tail": completed.stdout[-1600:], "offline_no_download": True}
+            "stdout_tail": completed.stdout[-1600:], "offline_no_download": True,
+            "candidate_and_selection_sha256": selector_sha,
+            "isd_history_sha256": history_before}
 
 
 def preflight(case_yaml: Path, history: Path, native: Path, template: Path) -> tuple:
