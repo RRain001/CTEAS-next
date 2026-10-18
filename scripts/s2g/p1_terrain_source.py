@@ -257,7 +257,8 @@ def _download_api(bbox: dict, dest: Path, key: str, *, max_bytes: int,
 def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | None = None,
             tif_dir: Path | None = None, buffer_m: float = 500,
             max_pixels: int = MAX_OUTPUT_PIXELS, max_bytes: int = MAX_RESPONSE_BYTES,
-            allow_nodata: bool = False) -> dict:
+            allow_nodata: bool = False,
+            allow_public_bulk_fallback: bool = False) -> dict:
     if output_dir.exists() or output_dir.is_symlink():
         raise P1SourceError("P1 output directory already exists; no overwrite of source/case")
     if max_pixels < 1 or max_bytes < 512:
@@ -265,6 +266,8 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
     bbox = case_bbox(grid, buffer_m)
     if source not in ("local", "opentopography"):
         raise P1SourceError("P1 source must be local or opentopography")
+    if allow_public_bulk_fallback and source != "opentopography":
+        raise P1SourceError("public SRTMGL1 bulk recovery belongs only to route B")
     if source == "opentopography":
         if tifs or tif_dir:
             raise P1SourceError("API source must not silently mix local TIF inputs")
@@ -286,10 +289,28 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     output_dir.mkdir(exist_ok=False)
     try:
+        source_transport="opentopography_globaldem_api" if source=="opentopography" else "user_local"
+        bulk_used=False
         if source == "opentopography":
             selected = output_dir / "srtmgl1_30m.tif"
-            _download_api(bbox, selected, secret, max_bytes=max_bytes)
-            originals = [check_raster(selected)]
+            try:
+                _download_api(bbox, selected, secret, max_bytes=max_bytes)
+            except P1SourceError as exc:
+                # Opt-in transport, same SRTMGL1 dataset, only HTTP 406.
+                # No 90m/product substitution or changed P1 physics.
+                if (not allow_public_bulk_fallback or
+                        not str(exc).startswith("OpenTopography HTTP 406")):
+                    raise
+                if selected.exists():
+                    selected.unlink()
+                from scripts.s2g.p1_opentopo_bulk import fetch_and_crop
+                originals=fetch_and_crop(
+                    bbox,output_dir/"srtmgl1_bulk_tiles",selected,
+                    max_pixels=max_pixels,max_bytes=max_bytes)
+                source_transport="opentopography_official_public_s3_bulk"
+                bulk_used=True
+            else:
+                originals = [check_raster(selected)]
         elif len(paths) == 1:
             selected = paths[0]  # direct source, no redundant crop/copy
         else:
@@ -317,11 +338,14 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
             "status":"P1_TERRAIN_SOURCE_VERIFIED_NATIVE_NUMERICS_NOT_RUN",
             "mode":source,"case_grid":str(grid.absolute()),
             "dataset":DATASET if source == "opentopography" else "USER_PROVIDED_GEOTIFF",
+            "transport":source_transport,
+            "public_bulk_opt_in":bool(allow_public_bulk_fallback),
+            "bulk_recovery_used":bulk_used,
             "api_key_logged":False,"download_request_url_logged":False,
             "source_tifs":originals,"selected_tif":str(selected.absolute()),
             "selected_tif_sha256":derived["sha256"],
             "selected_tif_properties":derived,
-            "mosaic_created":source=="local" and len(paths)>1,
+            "mosaic_created":(source=="local" and len(paths)>1) or bulk_used,
             "bbox_wgs84":bbox,"bbox_buffer_m":buffer_m,
             "case_window_valid_pixels":valid,
             "case_window_nodata_pixels":nodata_count,
@@ -350,12 +374,15 @@ def main(argv: list[str] | None = None) -> int:
     cli.add_argument("--buffer-m",type=float,default=500)
     cli.add_argument("--max-pixels",type=int,default=MAX_OUTPUT_PIXELS)
     cli.add_argument("--allow-nodata",action="store_true")
+    cli.add_argument("--allow-public-srtmgl1-bulk-fallback",action="store_true",
+                     help="Opt in to official OpenTopography S3 SRTMGL1 on API HTTP 406")
     opts=cli.parse_args(argv)
     try:
         result=prepare(opts.grid,opts.out_dir,
                        "local" if opts.local else "opentopography",
                        tifs=opts.tif,tif_dir=opts.tif_dir,buffer_m=opts.buffer_m,
-                       max_pixels=opts.max_pixels,allow_nodata=opts.allow_nodata)
+                       max_pixels=opts.max_pixels,allow_nodata=opts.allow_nodata,
+                       allow_public_bulk_fallback=opts.allow_public_srtmgl1_bulk_fallback)
     except (P1SourceError,ValueError,OSError,rasterio.errors.RasterioError):
         # No exception text from transport or urllib can leak API keys.
         print(json.dumps({"status":"BLOCKED_P1_TERRAIN_SOURCE",
