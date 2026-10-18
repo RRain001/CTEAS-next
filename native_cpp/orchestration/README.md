@@ -44,3 +44,25 @@ python3 -m unittest discover -s native_cpp/orchestration/tests -p 'test_*.py' -v
 ```
 
 The S2-2C Draft PR tracks real end-to-end integration and an independent 143h scientific gate. G5 `met`/`puff`/`all` remain blocked.
+
+## S2-G0: new-site case.yaml → real P4/P5 station manifest handoff (metadata-only)
+
+`site_plan.py` is a **separate** fail-closed native integration input contract for non-Hefei projects, developed under [S2-G #36](https://github.com/RRain001/CTEAS-next/issues/36). It **does not modify** frozen `plan.py`, `run_p6.py`, scientific reference files, or G5. It **does not execute P1/P2/P3/P4/P5/P6/P7**; it checks actual annual selector manifest metadata prepared by P4/P5. An independent S2-G0 CI harness invokes the **production P4/P5 original NOAA selectors** to prepare source-backed manifests before this read-only validator.
+
+New-site `case.yaml` uses `schema_version: 1`, a directory-matching non-Hefei `case_name`, `settings.timezone: UTC+0000`, `preprocess.grid` (explicit `utm_zone`, `hemisphere`, `center`, `domain`, `resolution_km`, `nz`) and the published `grid/grid.cmn` as the **sole** numerical footprint authority. The grid must be WGS84 UTM, both `XREFKM` and `YREFKM` expressed in km with **exactly three digits after the decimal**; dimensions/resolution, coordinate validity and stack footprint are cross-checked. User-defined `research_time` is whole-hour UTC and every overlapping calendar year requires original P4/P5 annual selection manifests; multi-year IFSTN aliases must be stable. The no-rain/no-chemistry original selected **control keys and values** remain fixed until independent physics acceptance. One positive HTO point source is supported for *planning only*.
+
+Given a case whose original P4/P5 station-selection programs already ran:
+
+```bash
+python3 -m native_cpp.orchestration.site_plan \
+  --case-yaml /authorized/new_site/case.yaml \
+  --p4-selection-root /authorized/new_site/met/upperair \
+  --p5-selection-root /authorized/new_site/met/surface/isd_raw
+python3 -m unittest discover -s native_cpp/orchestration/tests -p 'test_*.py' -v
+```
+
+P4 root must contain `<year>/p4_station_selection_audit.json`; P5 root `station_selection_<year>.json`. These are checked for station IDs, >80% original 00/12 P4 slots, original ISD and ISD-Lite calendar counts, original/effective physical source positions, external P5 fallback strictly >90% original both products, exact virtual effective placement at stack, one annual P5 primary chosen by raw Lite/full/ID ranking, sparse auxiliaries, and stable IFSTN. **A syntactically valid input manifest does not independently prove that raw NOAA bytes were authentic**. The separate original observation replay records original-source hashes.
+
+CI [PR #37](https://github.com/RRain001/CTEAS-next/pull/37) sources the real 2022–2023 original NOAA P4/P5 records from [S3-F #35](https://github.com/RRain001/CTEAS-next/pull/35). It tests **one new physical footprint** with P5 Huoshan/Luogang as *observed in-domain multi-sites* and P4 Anqing as an *out-of-domain virtual sounding station*, for both calendar years. The distinct P4 Fuyang/Anqing two-in-domain experiment is also verified, but **is not mislabeled as part of the smaller shared footprint**. No new P6/P7 science run occurs.
+
+**Regardless of successful G0 checks:** return status `SITE_STATION_INPUTS_VERIFIED_P6_P7_BLOCKED`, `ready=false`, `model_executed=false`, `scientific_acceptance=NOT_EVALUATED`. P6 hard-coded `up_58424.dat`, station `58424`, `--upper-i 25 --upper-j 26`, fixed 50×50×9 and P7 general production limitations still require independent G1/G2/G3/G4 work. G5 `met/puff/all` is not unlocked. No legacy Fortran fallback or automatic original reference MET/puff reuse is allowed.
