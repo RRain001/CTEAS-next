@@ -299,6 +299,14 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
           "original_run_stderr_sha256":run["stderr_sha256"],
           "science_acceptance":"NOT_ACCEPTED"
         }
+    # Count residuals localize the defect without exposing TIFF, full
+    # terrain elevations or a per-pixel original coordinate stream.
+    from native_cpp.reference.compare_p1_general import fortran_sav,native_csv as read_native_csv
+    from scripts.s2g.p1_original_hit_diagnostics import localize_hit_differences
+    shape=native["grid"]
+    _,fortran_hits=fortran_sav(sav,shape["nx"],shape["ny"])
+    cpp_hits,_=read_native_csv(native_csv,shape["nx"],shape["ny"])
+    localization=localize_hit_differences(list(fortran_hits),cpp_hits,shape["nx"],shape["ny"])
     # THIS is a numeric comparison; independent review of original
     # execution and physical input source remains a distinct D4 audit.
     return {
@@ -322,6 +330,10 @@ def audit(*,case_root:Path,checkout:Path,route:str,report:Path,
       "raw_mean_bad_cells":compared["raw_mean_bad_cells"],
       "max_dat_error_m":compared["max_dat_error_m"],
       "max_raw_mean_error_m":compared["max_raw_mean_error_m"],
+      "hit_assignment_localization":localization,
+      "original_native_hit_count_first20":compared["hit_count_first20"],
+      "original_native_dat_elevation_first20":compared["dat_first20"],
+      "original_native_raw_mean_elevation_first20":compared["raw_mean_first20"],
       "parity_comparison_report_sha256":sha(output),
       "science_acceptance":"NOT_ACCEPTED_INDEPENDENT_ORIGINAL_RUN_AUDIT_REQUIRED"
     }
