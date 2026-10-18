@@ -1,0 +1,104 @@
+name: Issue 54 original/native TERREL general parity
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue54-p1-general-parity.yml'
+      - 'native_cpp/reference/compare_p1_general.py'
+      - 'native_cpp/reference/tests/test_compare_p1_general.py'
+  workflow_dispatch:
+    inputs:
+      case_id:
+        description: 'Independent staged case slug (A-Z a-z 0-9 underscore dash)'
+        required: true
+        type: string
+      route:
+        description: 'Prepared genuine original/native SRTM route'
+        required: true
+        type: choice
+        options:
+          - P1_A_90M_LOCAL
+          - P1_B_30M_DOWNLOAD
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-comparator:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Run synthetic Fortran DAT/SAV and provenance negative tests
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.reference.tests.test_compare_p1_general
+          echo 'P1_GENERAL_COMPARATOR=PASS_SOFTWARE_ONLY'
+          echo 'REAL_90M=NOT_RUN REAL_30M=NOT_RUN ORIGINAL_PARITY=NOT_RUN'
+
+  manual-real-parity:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, cteas-managed]
+    timeout-minutes: 60
+    env:
+      EVIDENCE_ROOT: ${{ vars.CTEAS_P1_EVIDENCE_ROOT }}
+      CASE_ID: ${{ inputs.case_id }}
+      ROUTE: ${{ inputs.route }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
+      - name: Admission of independent original and native artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CASE_ID" =~ ^[A-Za-z0-9_-]+$ ]]
+          test -n "$EVIDENCE_ROOT"
+          test -d "$EVIDENCE_ROOT"
+          case "$ROUTE" in
+            P1_A_90M_LOCAL) stage="a90m";;
+            P1_B_30M_DOWNLOAD) stage="b30m";;
+            *) echo 'INVALID_ROUTE'; exit 2;;
+          esac
+          base="$(realpath "$EVIDENCE_ROOT")"
+          casepath="$base/$CASE_ID/$stage"
+          test -d "$casepath"
+          for suffix in selected.tif native/p1_native_manifest.json native/terrain.csv \
+              original/terrel.dat original/terrel.sav original/terrel.inp \
+              original/terrel.x original/original_attestation.json; do
+            path="$casepath/$suffix"
+            test -f "$path" && test -s "$path" && test ! -L "$path" || {
+              echo 'BLOCKED_REAL_ASSETS_OR_ORIGINAL_RUN_EVIDENCE'; exit 2;
+            }
+          done
+          printf 'P1_CASEPATH=%s\n' "$casepath" >> "$GITHUB_ENV"
+          echo 'P1_ASSET_PATH_ADMISSION=PRESENT_NOT_INDEPENDENTLY_AUDITED'
+      - name: Compare selected TIFF and original/native bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m native_cpp.reference.compare_p1_general \
+            --native-manifest "$P1_CASEPATH/native/p1_native_manifest.json" \
+            --original-attestation "$P1_CASEPATH/original/original_attestation.json" \
+            --native-terrain "$P1_CASEPATH/native/terrain.csv" \
+            --original-dat-path "$P1_CASEPATH/original/terrel.dat" \
+            --original-sav-path "$P1_CASEPATH/original/terrel.sav" \
+            --original-control "$P1_CASEPATH/original/terrel.inp" \
+            --original-executable "$P1_CASEPATH/original/terrel.x" \
+            --selected-tif "$P1_CASEPATH/selected.tif" \
+            --report "$RUNNER_TEMP/p1_original_native_comparison.json"
+          echo 'NUMERIC=PROVISIONAL SCIENCE=INDEPENDENT_RUN_AUDIT_REQUIRED'
+      - name: Upload only comparison JSON; never share DEM or vendor
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue54-provisional-numeric-comparison
+          path: ${{ runner.temp }}/p1_original_native_comparison.json
+          if-no-files-found: ignore
+          retention-days: 14
