@@ -1,0 +1,49 @@
+name: Issue 54 P1 D1-B offline two-route native case gate
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue54-p1-d1b-native-case.yml'
+      - 'native_cpp/src/p1_terrain_case_cli.cpp'
+      - 'native_cpp/src/geo/terrain.cpp'
+      - 'native_cpp/src/geo/terrain_grid.cpp'
+      - 'native_cpp/p1/CMakeLists.txt'
+      - 'scripts/s2g/p1_native_case.py'
+      - 'scripts/s2g/tests/test_p1_native_case.py'
+      - 'native_cpp/orchestration/case_admission.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  p1-case-synthetic-offline:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install local testing toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cmake g++ libgdal-dev
+          python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'numpy>=1.23,<3' 'rasterio>=1.3,<2'
+      - name: Compile isolated P1 native binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/p1 -B "$RUNNER_TEMP/p1-d1b" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p1-d1b" --parallel 2
+          ctest --test-dir "$RUNNER_TEMP/p1-d1b" --output-on-failure
+      - name: Test both source adapters feeding native P1; all synthetic
+        env:
+          P1_CASE_BINARY: ${{ runner.temp }}/p1-d1b/cteas_p1_terrain_case
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v \
+            native_cpp.orchestration.tests.test_case_admission \
+            scripts.s2g.tests.test_p1_terrain_source \
+            scripts.s2g.tests.test_p1_native_case
+          echo 'P1_D1B_TWO_ROUTE_SOFTWARE=PASS_SCOPED_SYNTHETIC'
+          echo 'REAL_90M=NOT_RUN REAL_30M=NOT_RUN ORIGINAL_PARITY=NOT_RUN'
