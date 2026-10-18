@@ -25,13 +25,14 @@ from typing import Dict, List, Tuple
 from decimal import Decimal, ROUND_HALF_UP
 
 from engine.core.paths import current_project_path, engine_path
+from .p5_case_paths import case_root, history_file
 
-CASE_ROOT = current_project_path()
+CASE_ROOT = case_root()
 
 INPUT_DIR = CASE_ROOT / 'met' / 'surface' / 'isd2smerge_ready'
 OUTPUT_DIR = CASE_ROOT / 'run' / 'smerge'
 SMERGE_INP = OUTPUT_DIR / 'smerge.inp'
-ISD_HISTORY = engine_path("resources", "isd", "isd-history.txt")
+ISD_HISTORY = history_file()
 OUTPUT_TXT = OUTPUT_DIR / 'smerge_manual_sections.txt'
 
 FILLED_PATTERN = re.compile(r'^([0-9A-Za-z]{6})-([0-9A-Za-z]{5})\.csv$')

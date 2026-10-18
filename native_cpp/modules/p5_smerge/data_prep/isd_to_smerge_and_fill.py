@@ -11,10 +11,11 @@ from collections import defaultdict
 from .isd_lite_wind import parse_lite_winds, filename as lite_filename, sha256_file
 
 from engine.core.paths import current_project_path, engine_path
+from .p5_case_paths import case_root
 
 MISSING_NUM = 9999
 SCRIPT_DIR = Path(__file__).resolve().parent
-BASE_DIR = current_project_path("met", "surface")
+BASE_DIR = case_root() / "met" / "surface"
 INPUT_DIR = BASE_DIR / "isd_raw"
 OUTPUT_DIR = BASE_DIR / "isd2smerge_and_fill"
 

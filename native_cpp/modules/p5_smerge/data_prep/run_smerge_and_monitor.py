@@ -20,9 +20,10 @@ from pathlib import Path
 
 from engine.core.paths import BIN_ROOT, VENDOR_BIN_DIR, case_path, current_case_name, current_project_path, resolve_executable
 from engine.core.runner import run_binary
+from native_cpp.modules.p5_smerge.data_prep.p5_case_paths import case_root, ROOT_ENV
 
 
-CASE_ROOT = current_project_path().resolve()
+CASE_ROOT = case_root().resolve()
 WORK_DIR = CASE_ROOT / "run" / "smerge"
 SMERGE_INP = WORK_DIR / "smerge.inp"
 RUNTIME_LOG = WORK_DIR / "smerge_runtime.log"
@@ -241,8 +242,11 @@ def main() -> int:
     ap.add_argument("--native-cpp-bin", type=Path, default=None,
                     help="Use independent C++20 SURF.DAT writer. Never calls original Fortran.")
     args = ap.parse_args()
-    case_name = current_case_name()
-    set_case_paths(case_name)
+    # In staged mode, CASE_ROOT came from an admitted absolute path.
+    # Never reset that path from the global current-case selection.
+    if not os.environ.get(ROOT_ENV):
+        case_name = current_case_name()
+        set_case_paths(case_name)
     native_binary = args.native_cpp_bin
     if native_binary is not None:
         native_binary = native_binary.resolve()

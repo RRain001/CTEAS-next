@@ -8,8 +8,9 @@ from pathlib import Path
 import pandas as pd
 
 from engine.core.paths import current_project_path
+from .p5_case_paths import case_root
 
-CASE_ROOT = current_project_path()
+CASE_ROOT = case_root()
 
 INPUT_DIR = CASE_ROOT / "met" / "surface" / "isd2smerge_and_fill"
 OUTPUT_DIR = CASE_ROOT / "met" / "surface" / "isd2smerge_cleaned"
