@@ -128,7 +128,7 @@ def main(argv=None)->int:
         # exception. Preserve bounded, categorical failed-at-source proof.
         detail=str(exc)
         matched=re.search(
-            r"OpenTopography HTTP (\\d{3}) \\[([A-Z_]+)\\]",detail)
+            r"OpenTopography HTTP (\d{3}) \[([A-Z_]+)\]",detail)
         report={
           "schema_version":"p1-issue54-real-actions-source-blocker-v1",
           "route":a.route,
