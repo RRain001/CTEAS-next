@@ -17,6 +17,7 @@ from pathlib import Path
 
 from engine.core.paths import current_project_path
 from native_cpp.modules.p4_read62.data_prep.p4_case_d1 import admit_staged_case, sha256_file
+from native_cpp.modules.p4_read62.data_prep.p4_case_final import publish_source_only_candidate
 from native_cpp.modules.p4_read62.data_prep.p4_case_year_gate import (
     admit_annual_source_lineage, boundary_years, writer_window,
 )
@@ -81,6 +82,8 @@ def main() -> int:
     ap.add_argument("--pstop",type=float,default=500.)
     ap.add_argument("--skip-inputs",action="store_true",help="Use already prepared IGRA/FSL")
     ap.add_argument("--merge-final",action="store_true",help="Execute scoped copied original UP.DAT merger")
+    ap.add_argument("--candidate-final",action="store_true",
+                    help="Isolated source-only final UP candidate; NOT original parity or G19 PASS")
     ap.add_argument("--execute",action="store_true",help="Default dry run (no downloads/writes)")
     ap.add_argument("--case-root",type=Path,help="Already-staged independent case from #42 B-0")
     ap.add_argument("--upperair-root",type=Path,help="case_root/met/upperair, initially nonexistent")
@@ -90,6 +93,8 @@ def main() -> int:
     isolated = any((args.case_root,args.upperair_root,args.offline_archive_root))
     if isolated and not all((args.case_root,args.upperair_root,args.offline_archive_root)):
         ap.error("isolated P4 requires --case-root, --upperair-root and --offline-archive-root")
+    if args.candidate_final and not isolated:
+        ap.error("--candidate-final requires explicit independent B-0 staged case")
     if isolated and (args.pstop != 500.0 or args.skip_inputs or args.merge_final or args.year is not None):
         ap.error("isolated P4 requires PSTOP=500, full UTC/boundary years, fresh QA; final publication blocked")
     admission = None
@@ -153,15 +158,18 @@ def main() -> int:
                 continue
             if sha256_file(args.case_root / relative) != expected:
                 raise ValueError(f"immutable B-0 case input changed during P4 execution: {relative}")
+        candidate=(publish_source_only_candidate(records,lineage,args.upperair_root,begin,end)
+                   if args.candidate_final else None)
         out=args.upperair_root/"p4_d1a_annual_manifest.json"
         manifest={"status":"PRODUCED_UNVERIFIED", "producer_issue":55,
                   "gate":"P4_D1A_ANNUAL_RAW_ONLY",
                   "scientific_acceptance":"NOT_EVALUATED",
-                  "final_up_g19":"BLOCKED_D2_D3",
+                  "final_up_g19":"PRODUCED_UNVERIFIED_NOT_G19" if args.candidate_final else "BLOCKED_D2_D3",
                   "source_path":"NOAA_IGRA_EXTRACTED_OFFLINE",
                   "pstop_hpa":500.0,"jdat":2,"ifmt":1,
                   "admission":admission,"years":years,
                   "source_lineage":lineage,
+                  "candidate_final":candidate,
                   "writer_utc":{
                       "begin":writer_begin.strftime("%Y-%m-%dT%H:%M:%SZ"),
                       "end":writer_end.strftime("%Y-%m-%dT%H:%M:%SZ")},
