@@ -19,10 +19,24 @@ class P5HandoffTests(unittest.TestCase):
         self.case = self.fixture.root
         raw = self.case / "run/smerge/surf.dat"
         raw.parent.mkdir(parents=True)
-        raw.write_bytes(b"SYNTHETIC RAW SURF FOR QA ONLY\n")
+        # Three hour-ending records; one intentionally missing observation.
+        # Values exist only in this synthetic test, never NOAA evidence.
+        header = (
+            f"{'SURF.DAT':<16}{'2.1':<16}\\n"
+            "0\\nNONE\\nUTC+0000\\n"
+            "2022 1 0 0 2022 1 3 0 1\\n583140\\n"
+        )
+        hourly = [
+            "2022 1 0 0 2022 1 1 0\\n1.000 90.000 10 9999 290.000 40 1000.000 0\\n",
+            "2022 1 1 0 2022 1 2 0\\n9999.000 9999.000 9999 9999 9999.000 9999 9999.000 9999\\n",
+            "2022 1 2 0 2022 1 3 0\\n0.000 0.000 10 4 285.000 50 1001.000 0\\n",
+        ]
+        raw.write_text(header + "".join(hourly), encoding="utf-8")
         published = self.case / "met/surface/final/surf.dat"
         published.parent.mkdir(parents=True)
-        published.write_bytes(b"SYNTHETIC CLOUD-ADJUSTED SURF\n")
+        published.write_text(header + "".join(x.replace(
+            "10 9999 290.000", "10 0 290.000").replace(
+            "9999 9999.000", "0 9999.000") for x in hourly), encoding="utf-8")
         self.csv = published.parent / "stations.csv"
         with self.csv.open("w", encoding="utf-8", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=[
@@ -70,6 +84,14 @@ class P5HandoffTests(unittest.TestCase):
         self.assertNotEqual(handoff["raw_native_surf"]["sha256"],
                             handoff["published_surf"]["sha256"])
         self.assertFalse(handoff["science_acceptance"])
+        quality = handoff["per_hour_field_quality"]
+        self.assertEqual(len(quality["hourly_station_flags"]), 3)
+        self.assertEqual(quality["source_reader_aggregate_count_agreement"] if
+                         "source_reader_aggregate_count_agreement" in quality else
+                         quality["reader_aggregate_count_agreement"], True)
+        self.assertEqual(quality["raw_valid_station_hours_by_field"]["wind"], 2)
+        self.assertEqual(quality["raw_to_published_other_meteorology_changes"], 0)
+        self.assertGreater(quality["raw_to_published_cloud_fallback_count"], 0)
 
     def test_changed_noaa_or_surf_sha_rejected(self):
         source = self.case / "met/surface/isd_raw/58314099999-2022.csv"
