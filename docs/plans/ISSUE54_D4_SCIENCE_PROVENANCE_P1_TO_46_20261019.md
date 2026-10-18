@@ -44,6 +44,13 @@ Historical acceptance: exactly 3,456 accepted pixels; all 2,500 grid
 cells match; source CTEAS original audited
 [report](https://github.com/RRain001/CTEAS/blob/dfad99a78ed84d655e21411c9d25eb0d2583bf13/docs/reconstruction_cpp/P1_TERREL_100M_SCOPED_AUDIT.md).
 
+### Re-run results (same-grid vs historical high-precision grid)
+
+- First real [Run #39177414771](https://github.com/RRain001/CTEAS-next/actions/runs/39177414771): correctly verified original historical TIFF, DAT and SAV SHA, 3,456 source pixels, but got 20 model-cell hit mismatches when comparing the **original center-derived high-precision origin** against the **current 3-decimal-km native origin**. This is a scientifically invalid mismatched-grid comparison, not evidence of model-equivalent field mismatch.
+- [PR #99](https://github.com/RRain001/CTEAS-next/pull/99) updates the reference runner to independently retain the historical high-precision original SHA, then rerun the **untouched original Fortran TERREL** against the exact same authoritative `510.885/3531.269 km` grid as corrected native P1.
+- Genuine new [Run #39177939964](https://github.com/RRain001/CTEAS-next/actions/runs/39177939964) **SUCCESS / PASS_FROZEN_HEFEI_ORIGINAL**: historical unmodified reference DAT/SAV and 90x77 source TIFF SHA match the 2026-10-10 published baseline; separately generated canonical-grid original DAT SHA `b35d48762e1e060dcf9236a6edd90f2fd8b8bd5a819f5ecd92cc94be03e9175e`; canonical original/native source accepted `3456/3456`; **0** per-cell count mismatches, **0** empty-mask mismatch, **0** raw REAL4 mean errors above unchanged `1e-5m` tolerance and **0** F8.1 DAT height differences above unchanged `0.0500001m` tolerance. Max raw error `1.271333339047942e-6 m`.
+- Do not compare original high-precision-grid DAT bit hash to the new canonical-grid DAT bit hash or claim either source raster was altered; the two original execution controls explicitly differ by grid origin only.
+
 The new independent manual-only
 `.github/workflows/issue54-hefei-frozen-manual.yml` reruns the
 original TERREL reference capture on the exact old cropped TIFF and
@@ -142,7 +149,7 @@ P3 `GEO.DAT` or P1-P7 end-to-end PASS.
 ## 5. Decision rule
 
 - D2 & D3 `NUMERIC_PASS_PROVISIONAL`: established.
-- Historical frozen Hefei PASS: only after actual manual rerun.
+- Historical frozen Hefei **PASS**: actual manually dispatched original-vs-native same-canonical-grid science replay [#39177939964](https://github.com/RRain001/CTEAS-next/actions/runs/39177939964), together with separately verified exact old reference hashes.
 - D4 **independent review**: evidence exists for selected numeric
   physics and source-licensing limits; product-specific attribution
   for user-owned 90m files and absolute vertical datum still require
