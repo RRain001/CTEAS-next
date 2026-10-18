@@ -166,6 +166,110 @@ static std::string make_two_station_crossyear_deck(const std::string& original) 
     two+="! US2 = 'U002' 58425 553.384 3573.772 0 !\n";
     return two;
 }
+// G1B source-only new site shape: two independent SS, ONE genuine US.
+// This uses original-compatible synthetic GEO/SURF/UP records and source
+// READCF controls. It does NOT constitute NOAA provenance or P6 physics.
+static void check_one_us_two_ss_source_case(const std::string& original) {
+    namespace fs=std::filesystem;
+    const fs::path root="g19_one_us_two_ss_synthetic_input_contract";
+    if(fs::exists(root))fs::remove_all(root);
+    fs::create_directories(root);
+    const p6g::G19SourceFilePaths paths{
+        (root/"met.inp").string(),(root/"GEO.DAT").string(),
+        (root/"SURF.DAT").string(),{(root/"UP1.DAT").string()}};
+    try {
+        std::string one=replace_one(make_two_station_crossyear_deck(original),
+                                    "NUSTA","1");
+        const std::string extra="! US2 = 'U002' 58425 553.384 3573.772 0 !\\n";
+        const auto where=one.find(extra);
+        check(where!=std::string::npos,"G1B cannot identify synthetic US2");
+        one.erase(where,extra.size());
+        save(paths.met_inp,one);
+        geo_file(paths.geo_dat);
+        const auto begin=sys_days{year{2023}/December/31}+hours{22};
+        surface_file(paths.surf_dat,begin,6);
+        upper_file(paths.ordered_up_dat[0],58424,
+                   sys_days{year{2023}/December/31});
+        const auto source=p6g::g19_load_original_source_case(paths);
+        auto scheduler=source.make_scheduler();
+        check(source.stations.surface.size()==2&&
+              source.stations.upper.size()==1&&
+              source.surface.station_ids==std::vector<int>({583210,583220})&&
+              source.upper.size()==1&&source.upper[0].station_id==58424&&
+              source.stheor_upper_ordinal_for_surface==
+                  std::vector<std::size_t>({0,0})&&
+              scheduler.planned_hours()==6&&
+              scheduler.completed_hours()==0&&
+              scheduler.has_original_controls()&&
+              scheduler.preview_next_hour().input.upper.size()==1&&
+              scheduler.preview_next_hour().input.end==begin+hours{1},
+              "G1B 2SS/1US original-file clock or station binding failed");
+        const auto choice=p6g::g18b3_source_deck_upper_choice(
+            source.grid,source.stations,source.original_metinp);
+        check(choice.iupt==-1&&choice.nearu.size()==144&&
+              std::all_of(choice.nearu.begin(),choice.nearu.end(),
+                          [](int id){return id==1;}),
+              "G1B 1US IUPT=-1 source SETCOM NEARU must have ordinal 1");
+        const p6g::CaseInputPaths g14{
+            paths.geo_dat,paths.surf_dat,paths.ordered_up_dat,
+            paths.met_inp,p6g::g19_source_grid_spec(one),2,1};
+        auto independent=p6g::load_unified_multistation_case(g14);
+        const auto p=scheduler.preview_next_hour(),q=independent.preview_next_hour();
+        check(independent.planned_hours()==6&&
+              p.input.end==q.input.end&&p.surface.start==q.surface.start&&
+              p.input.upper[0].earlier==q.input.upper[0].earlier&&
+              p.input.upper[0].later==q.input.upper[0].later&&
+              p.input.upper[0].span_seconds==q.input.upper[0].span_seconds,
+              "G1B G14B/G19 identical 1US original AA/BB bracket mismatch");
+        // No incomplete stage, no reference MET, no fake wind, can commit.
+        struct AbsentSolver final:p6g::MultiHourPhysics {
+            cteas::calmet::p6::NativeHourStageResult run(
+                cteas::calmet::p6::NativeHourStage,
+                p6g::MultiHourFrame&) override {
+                return {cteas::calmet::p6::NativeHourSource::Unknown,false};
+            }
+        } no_physics;
+        rejects([&]{scheduler.advance(no_physics);},
+                "G1B 1US source-input parser bypassed native G14 physics admission");
+        check(scheduler.completed_hours()==0&&
+              scheduler.committed_memory().zi_m[0]==0.f,
+              "G1B rejected hour altered prior-hour state");
+        // The original deck must admit no invented second UP or missing US1.
+        save(paths.met_inp,replace_one(one,"NUSTA","2"));
+        rejects([&]{(void)p6g::g19_load_original_source_case(paths);},
+                "G1B mismatched NUSTA=2 and one UP silently accepted");
+        save(paths.met_inp,one);
+        auto wrong=p6g::G19SourceFilePaths{paths};
+        wrong.ordered_up_dat.emplace_back(paths.ordered_up_dat[0]);
+        rejects([&]{(void)p6g::g19_load_original_source_case(wrong);},
+                "G1B duplicate UP path fabricated a missing second US");
+        // Original UP identity must match US1 in met.inp.
+        upper_file(paths.ordered_up_dat[0],58425,
+                   sys_days{year{2023}/December/31});
+        rejects([&]{(void)p6g::g19_load_original_source_case(paths);},
+                "G1B unexpected UP station identity accepted");
+        upper_file(paths.ordered_up_dat[0],58424,
+                   sys_days{year{2023}/December/31});
+        // Unsupported/wrong original source chronology must fail closed.
+        save(paths.ordered_up_dat[0],
+             "UP.DAT 2.1\\nINCOMPLETE ORIGINAL 00/12 UTC BRACKET\\n");
+        rejects([&]{(void)p6g::g19_load_original_source_case(paths);},
+                "G1B missing real 00/12 upper bracket accepted");
+        // Preserve explicit two-ground station lower bound.
+        auto one_surface=replace_one(one,"NSSTA","1");
+        save(paths.met_inp,one_surface);
+        rejects([&]{(void)p6g::g19_load_original_source_case(paths);},
+                "G1B single SS deck incorrectly admitted as multiple ground stations");
+        fs::remove_all(root);
+        std::cout<<"PASS_P6G_G19_FILE_BACKED_2SS_1US_CROSS_YEAR_SOURCE_INPUT "
+                    "NEARU_ORDINAL_ONE ORIGINAL_G14B_CLOCK_MATCH "
+                    "PRODUCTION_PHYSICS_NOT_ACCEPTED\\n";
+    } catch(...) {
+        fs::remove_all(root);
+        throw;
+    }
+}
+
 int main(int argc,char** argv){
     if(argc>=4&&argc<=8&&std::string(argv[1])=="--export-case") {
         try {
@@ -229,6 +333,7 @@ int main(int argc,char** argv){
     try{
         check(argc==2,"G19 requires pinned original CALMET met.inp path");
         const auto original=read(argv[1]);
+        check_one_us_two_ss_source_case(original);
         // The real single-station Hefei deck must not be promoted to a
         // two-surface/two-upper station scientific run.
         const auto source=p6g::g19_source_grid_spec(original);
