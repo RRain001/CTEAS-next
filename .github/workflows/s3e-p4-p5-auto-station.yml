@@ -1,0 +1,84 @@
+name: S3-E P4 P5 auto station selection only
+
+on:
+  push:
+    branches:
+      - codex/s3e-p4-p5-autostation-ci
+    paths:
+      - .github/workflows/s3e-p4-p5-auto-station.yml
+      - scripts/s3e/**
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s3e-p4-p5-auto-station.yml
+      - scripts/s3e/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s3e-station-only-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  station-only:
+    name: P4 P5 selected-source and annual-decision tests (NO P6 P7)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install only station-selection preprocessing dependencies
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          python3 -m compileall -q scripts/s3e/verify_station_selection_2022.py
+      - name: P4 and P5 multi-inside, external nearest and year-switch selector decisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s3e"
+          python3 -m unittest -v \
+            native_cpp.modules.p4_read62.data_prep.tests.test_p4_integration.SelectionIntegrationTest \
+            native_cpp.modules.p4_read62.data_prep.tests.test_p4_data_prep \
+            native_cpp.modules.p5_smerge.data_prep.tests.test_p5_rules.P5SelectionTests \
+            native_cpp.modules.p5_smerge.data_prep.tests.test_p5_station_roles.SparseStationTests \
+            2>&1 | tee "$RUNNER_TEMP/s3e/controlled-selector-tests.log"
+          echo "S3E_MULTI_INSIDE_EXTERNAL_FALLBACK_ANNUAL_RESELECTION=PASS_CONTROLLED_MOCK_DATA"
+      - name: Real NOAA catalogs and archived 2022 hourly source-backed eligible station auto-selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/s3e/verify_station_selection_2022.py \
+            "$RUNNER_TEMP/s3e/real-noaa-selected-source.json" \
+            2>&1 | tee "$RUNNER_TEMP/s3e/source-backed-2022.log"
+          grep -q 'PASS_SOURCE_BACKED_SELECTED_STATION_ONLY' "$RUNNER_TEMP/s3e/source-backed-2022.log"
+          echo "S3E_ARCHIVED_NOAA_OBSERVATIONS_STATION_GATE=PASS_SOURCE_BACKED_SELECTED_STATION_ONLY"
+      - name: Report bounded scientific acceptance and source SHA
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s3e"
+          {
+            echo "S3E_SOURCE_SHA=$(git rev-parse HEAD)"
+            echo "S3E_SCOPE=P4_P5_STATION_SELECTION_ONLY"
+            echo "S3E_P6_CALMET_EXECUTION=NOT_RUN"
+            echo "S3E_P7_CALPUFF_EXECUTION=NOT_RUN"
+            echo "S3E_GLOBAL_STATION_DISCOVERY_REAL_MULTIYEAR=NOT_ACCEPTED"
+            echo "S3E_UTM_ORIGIN_KM=510.885,3531.269"
+          } > "$RUNNER_TEMP/s3e/acceptance-limits.txt"
+      - name: Upload source-backed JSON and test logs only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3e-p4-p5-station-selection-only-audit
+          path: |
+            ${{ runner.temp }}/s3e/*.json
+            ${{ runner.temp }}/s3e/*.log
+            ${{ runner.temp }}/s3e/*.txt
+          if-no-files-found: error
