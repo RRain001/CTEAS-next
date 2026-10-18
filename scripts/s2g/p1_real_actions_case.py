@@ -73,7 +73,8 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
         # not authenticated by this supplied 3-arcsec TIFF hash.
         product="CGIAR-CSI-SRTM-v4.1"
     elif route=="P1_B_30M_DOWNLOAD":
-        source=prepare(case_root/"grid/grid.cmn",src_out,"opentopography")
+        source=prepare(case_root/"grid/grid.cmn",src_out,"opentopography",
+                       allow_public_bulk_fallback=True)
         inventory={"status":"P1_B_ACTUAL_REQUEST_SOURCE_ONLY","required_tiles":[]}
         product="SRTMGL1"
     else:
@@ -101,6 +102,8 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
       "source_case_valid_pixels":source["case_window_valid_pixels"],
       "source_case_nodata_pixels":source["case_window_nodata_pixels"],
       "source_mosaic_created":source["mosaic_created"],
+      "source_transport":source["transport"],
+      "official_bulk_recovery_used":source["bulk_recovery_used"],
       "owner_90m_input_byte_gate":inventory["status"],
       "source_product_declaration":product,
       "source_product_version_authenticated":False,
