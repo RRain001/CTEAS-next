@@ -299,7 +299,8 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
                 # Opt-in transport, same SRTMGL1 dataset, only HTTP 406.
                 # No 90m/product substitution or changed P1 physics.
                 if (not allow_public_bulk_fallback or
-                        not str(exc).startswith("OpenTopography HTTP 406")):
+                        not str(exc).startswith(
+                            "OpenTopography HTTP 406 [UNCLASSIFIED_PROVIDER_REJECTION]")):
                     raise
                 if selected.exists():
                     selected.unlink()
