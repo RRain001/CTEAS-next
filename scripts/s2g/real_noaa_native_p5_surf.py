@@ -249,7 +249,9 @@ def run(native_p5: Path, cpp_reader: Path) -> dict:
                     for s in setup["manifest"]["stations"]
                 },
                 "original_noaa_sha256": source_hashes,
-                **prepared, **compiled,
+                "wind_stages": prepared["wind_stages"],
+                "source_stage_files_sha256": prepared["source_stage_files_sha256"],
+                **compiled,
             })
         return {
             "status": "G1BB2_REAL_NOAA_P5_NATIVE_SURF_INPUT_PASS_SCOPED",
