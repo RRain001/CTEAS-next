@@ -1,0 +1,92 @@
+name: Issue 54 D2 real 90m owner-tile admission
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue54-d2-real-90m-admission.yml'
+      - 'scripts/s2g/p1_real_srtm90_admission.py'
+      - 'scripts/s2g/tests/test_p1_real_srtm90_admission.py'
+  workflow_dispatch:
+    inputs:
+      case_id:
+        description: 'Pre-staged independent case slug in protected runner evidence root'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-bbox-hash-and-lfs-denial:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          lfs: false
+      - name: Install source-contract dependencies
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+      - name: Run synthetic footprint and rejection tests ONLY
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_p1_real_srtm90_admission
+          echo 'P1_A_SIX_TILE_ADMISSION_SOFTWARE=PASS'
+          echo 'P1_A_OWNER_REAL_BYTES=NOT_RUN P1_A_ORIGINAL_PARITY=NOT_RUN'
+
+  manual-real-owner-tiff-preflight:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, cteas-managed]
+    timeout-minutes: 45
+    env:
+      EVIDENCE_ROOT: ${{ vars.CTEAS_P1_EVIDENCE_ROOT }}
+      TILE_DIR: ${{ vars.CTEAS_P1_90M_DIR }}
+      CASE_ID: ${{ inputs.case_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
+      - name: Validate protected case, source paths and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CASE_ID" =~ ^[A-Za-z0-9_-]+$ ]]
+          test -n "$EVIDENCE_ROOT" && test -n "$TILE_DIR"
+          test -d "$EVIDENCE_ROOT" && test -d "$TILE_DIR"
+          casepath="$(realpath "$EVIDENCE_ROOT")/$CASE_ID"
+          test -d "$casepath"
+          test ! -L "$casepath" && test ! -L "$casepath/grid"
+          test -f "$casepath/case.yaml"
+          test -f "$casepath/grid/grid.cmn"
+          test -f "$casepath/grid/research_time"
+          printf 'P1_CASE_DIR=%s\n' "$casepath" >> "$GITHUB_ENV"
+          python3 -c 'import rasterio, yaml, numpy'
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from native_cpp.orchestration.case_admission import admit_case
+          admit_case(Path(os.environ["P1_CASE_DIR"]) / "case.yaml")
+          print("P1_SHARED_B0_CASE=PASS")
+          PY
+          echo 'P1_A_TRUSTED_RUNNER_CASE=STAGED_NOT_AUDITED'
+      - name: Rehash real 90m TIFFs required for staged grid
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.p1_real_srtm90_admission \
+            --grid "$P1_CASE_DIR/grid/grid.cmn" --tif-dir "$TILE_DIR" \
+            --report "$RUNNER_TEMP/p1_90m_real_tile_input_gate.json"
+          echo 'P1_A_REAL_TILE_BYTES_GEOMETRY=VERIFIED_SCOPE_ONLY'
+          echo 'P1_A_NATIVE=NOT_RUN P1_A_ORIGINAL_PARITY=NOT_RUN'
+      - name: Upload SHA-only metadata; no TIFF or vendor code
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue54-90m-source-admission-only
+          path: ${{ runner.temp }}/p1_90m_real_tile_input_gate.json
+          if-no-files-found: ignore
+          retention-days: 14
