@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -60,13 +61,49 @@ def replay(original_root:Path,next_root:Path,exe:Path,out:Path)->dict:
         abs(manifest["grid"]["x0_km"]-510.8846439571007)>0.000001 or
         abs(manifest["grid"]["y0_km"]-3531.2689269678035)>0.000001):
         raise RuntimeError("original reference frozen grid/source differs")
+    # The 2026-10-10 reference uses the raw center-derived grid origin,
+    # e.g. 510.8846439571km, 3531.2689269678km. Since #42, the
+    # authoritative case grid strictly uses 3-decimal km 510.885/3531.269.
+    # Comparing these DIFFERENT control grids cell-by-cell is invalid and
+    # previously produced 20 false historical-regression hit mismatches.
+    # First independently retain the historical exact-bit-for-bit fixture,
+    # then rerun the ORIGINAL TERREL with the reviewed canonical origin.
+    historical_heights=original(dat)
+    historical_sums,historical_hits=original_save(sav)
+    if len(historical_heights)!=2500 or sum(historical_hits)!=FROZEN_ACCEPTED_HITS:
+        raise RuntimeError("historical 2026-10-10 original source baseline differs")
+    legacy_dat_sha,legacy_sav_sha=sha(dat),sha(sav)
+    canonical=out/"original_canonical_grid"
+    canonical.mkdir()
+    control=canonical/"terrel.inp"
+    shutil.copyfile(reference/"p1/terrel.inp",control)
+    selected=reference/"data/srtm_60_06_hefei_5km.tif"
+    if not selected.is_file() or sha(selected)!=CROP_SHA:
+        raise RuntimeError("historical selected TIFF differs before canonical original")
+    update_code="""
+import json,sys
+from pathlib import Path
+from engine.preprocess.terrel.auto_select_srtm_to_terrel import GridDef,update_terrel
+v=json.loads(sys.argv[1])
+g=GridDef(imap='UTM',iutmzn=50,lsohem='N',datum='WGS-84',
+          xrefkm=float(v['x']),yrefkm=float(v['y']),
+          nx=50,ny=50,dgridkm=0.1)
+update_terrel(Path(v['control']),g,[Path(v['tif'])],dry_run=False)
+"""
+    run([sys.executable,"-c",update_code,json.dumps(
+            {"x":GRID_X,"y":GRID_Y,"control":str(control),"tif":str(selected)})],
+        cwd=original_root,timeout=35)
+    original_exe=reference/"bin/terrel.x"
+    if not original_exe.is_file():
+        raise RuntimeError("original independently compiled TERREL binary absent")
+    run([str(original_exe),"terrel.inp"],cwd=canonical,timeout=300)
+    dat=canonical/"terrel.dat"
+    sav=canonical/"terrel.sav"
     heights=original(dat)
     sums,old_hits=original_save(sav)
     csv=out/"native_hefei.csv"
     run([str(exe),str(tif),GRID_X,GRID_Y,str(csv)],cwd=next_root)
     native_hits,native_height=cpp(csv)
-    if len(heights)!=2500 or sum(old_hits)!=FROZEN_ACCEPTED_HITS:
-        raise RuntimeError("historical baseline count/shape differs")
     count_bad=sum(a!=b for a,b in zip(old_hits,native_hits))
     missing_bad=sum((a==0)!=(b==0) for a,b in zip(old_hits,native_hits))
     raw_errors=[abs((s/k if k else -999.0)-v)
@@ -82,7 +119,13 @@ def replay(original_root:Path,next_root:Path,exe:Path,out:Path)->dict:
         "original_vendor_ref":VENDOR_REF,
         "source_tiff_sha256":sha(tif),
         "source_width":90,"source_height":77,
-        "original_dat_sha256":sha(dat),"original_sav_sha256":sha(sav),
+        "historical_2026_10_10_dat_sha256":legacy_dat_sha,
+        "historical_2026_10_10_sav_sha256":legacy_sav_sha,
+        "historical_2026_10_10_grid_xrefkm":manifest["grid"]["x0_km"],
+        "historical_2026_10_10_grid_yrefkm":manifest["grid"]["y0_km"],
+        "historical_2026_10_10_accepted_hits":sum(historical_hits),
+        "original_canonical_dat_sha256":sha(dat),
+        "original_canonical_sav_sha256":sha(sav),
         "native_csv_sha256":sha(csv),"grid_xrefkm":GRID_X,
         "grid_yrefkm":GRID_Y,"grid_nx":50,"grid_ny":50,
         "grid_spacing_m":100,
