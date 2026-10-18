@@ -64,11 +64,15 @@ int main(int argc,char** argv){
         }f<<"\n";
       }
       require(bool(f),"P2_GLCC_CSV_WRITE_FAILED");
+      f.close();
+      require(bool(f),"P2_GLCC_CSV_CLOSE_FAILED");
+      const auto csv_sha=sha256(dest/"p2_glcc_usgs92_gen_replay.csv");
       std::ofstream meta(dest/"p2_manifest.json");
       require(bool(meta),"P2_GLCC_MANIFEST_OPEN_FAILURE");
       meta<<"{\n  \"producer\": \"cteas_p2_glcc_raw\",\n"
           <<"  \"source_product\": \"USGS_GLCC_EURASIA_1992_1993_ORIGINAL_1KM\",\n"
           <<"  \"source_sha256\": \""<<observed<<"\",\n"
+          <<"  \"fractions_csv_sha256\": \""<<csv_sha<<"\",\n"
           <<"  \"source_size_bytes\": 156000000,\n"
           <<"  \"utm_epsg\": "<<epsg<<", \"nx\": "<<nx<<", \"ny\": "<<ny<<",\n"
           <<"  \"xrefkm\": \""<<argv[4]<<"\", \"yrefkm\": \""<<argv[5]<<"\",\n"
