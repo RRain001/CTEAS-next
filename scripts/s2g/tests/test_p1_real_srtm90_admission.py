@@ -37,8 +37,8 @@ class D2SRTM90Admissions(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             folder=Path(tmp)
             for name in ("srtm_59_06.tif","srtm_60_06.tif"):
-                (folder/name).write_bytes(b"FOUR_BYTES_NONREAL")
-            with patch.object(gate,"TILE_SIZE",len(b"FOUR_BYTES_NONREAL")):
+                (folder/name).write_bytes(b"MOCK"*200)
+            with patch.object(gate,"TILE_SIZE",len(b"MOCK"*200)):
                 with patch.object(gate,"check_raster",side_effect=mock_props):
                     with patch.object(gate,"case_bbox",return_value={
                         "west":114.99,"east":115.01,"south":31.9,"north":32.1}):
@@ -50,12 +50,12 @@ class D2SRTM90Admissions(unittest.TestCase):
 
     def test_changed_owner_sha_denied_even_if_geometry_mock_valid(self):
         with tempfile.TemporaryDirectory() as tmp:
-            folder=Path(tmp);(folder/"srtm_60_06.tif").write_bytes(b"PLACEHOLDER_BYTES")
+            folder=Path(tmp);(folder/"srtm_60_06.tif").write_bytes(b"BAD"*200)
             def invalid_props(path):
                 props=mock_props(path)
                 props["sha256"]="0"*64
                 return props
-            with patch.object(gate,"TILE_SIZE",len(b"PLACEHOLDER_BYTES")):
+            with patch.object(gate,"TILE_SIZE",len(b"BAD"*200)):
                 with patch.object(gate,"check_raster",side_effect=invalid_props):
                     with patch.object(gate,"case_bbox",return_value={
                         "west":116,"east":117,"south":31,"north":32}):
