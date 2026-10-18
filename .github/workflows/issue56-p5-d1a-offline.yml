@@ -1,0 +1,32 @@
+name: Issue 56 P5 D1-A offline archive gate
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue56-p5-d1a-offline.yml'
+      - 'native_cpp/modules/p5_smerge/data_prep/case_archive_gate.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_case_archive_gate.py'
+      - 'native_cpp/orchestration/case_admission.py'
+      - 'native_cpp/orchestration/site_plan.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/station_identity.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  p5-source-custody-software-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install read-only gate dependency
+        run: python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+      - name: Audit offline P5 source custody and selector contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_case_archive_gate
+          echo 'P5_D1A_ARCHIVE_ADMISSION=PASS_SCOPED_SOFTWARE'
+          echo 'P5_NATIVE_SURF=NOT_RUN P5_ORIGINAL_PARITY=NOT_RUN P5_TO_G19=NOT_RUN'
