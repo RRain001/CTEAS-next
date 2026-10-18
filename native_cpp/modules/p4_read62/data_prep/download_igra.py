@@ -215,9 +215,14 @@ def main():
             audit["checked"].append(record)
             return None
         try:
+            if args.offline_archive_root:
+                from native_cpp.modules.p4_read62.data_prep.p4_case_d1 import sha256_file
+                record["raw_sha256"] = sha256_file(raw)
             qc = observed_year_coverage(raw, station["id"], args.year,
                                         station["elev_m"], args.pstop)
             record.update(qc)
+            if args.offline_archive_root and sha256_file(raw) != record["raw_sha256"]:
+                raise ValueError("NOAA raw archive changed during original coverage QA")
             if not coverage_passes(qc["valid_original_slots"], qc["expected_slots"]):
                 record["status"] = "REJECTED_COVERAGE_NOT_GT80"
                 audit["checked"].append(record)
@@ -266,6 +271,9 @@ def main():
                 "source_elev_m": station["elev_m"],
                 "valid_original_slots": info["valid_original_slots"],
                 "coverage": info["coverage"],
+                **({"raw_sha256": info["raw_sha256"],
+                    "original_utc_slots": info["original_utc_slots"]}
+                   if args.offline_archive_root else {}),
             })
     audit_file.write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
                           encoding="utf-8")
