@@ -11,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CXX=/usr/bin/g++-12 \
     FC=/usr/bin/gfortran-12
 RUN apt-get update -qq && apt-get install -y --no-install-recommends \
-      ca-certificates cmake g++-12 gfortran-12 make libgdal-dev \
+      ca-certificates cmake g++-12 gfortran-12 make libgdal-dev libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
@@ -47,11 +47,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH=/opt/cteas/bin:${PATH}
 RUN apt-get update -qq && apt-get install -y --no-install-recommends \
-      ca-certificates libgdal32 libstdc++6 \
+      ca-certificates libgdal32 libssl3 libstdc++6 \
     && rm -rf /var/lib/apt/lists/*
 # Explicit, scoped standalone CLIs; intentionally no reference fixtures, GUI
 # runtime, original Fortran binaries, or automatic all-stages orchestrator.
 COPY --from=builder /tmp/cteas-software/build-inputs/cteas_p2_gen_fraction /opt/cteas/bin/
+COPY --from=builder /tmp/cteas-software/build-inputs/cteas_p2_glc_raw /opt/cteas/bin/
 COPY --from=builder /tmp/cteas-software/build-p1/cteas_p1_terrain /opt/cteas/bin/
 COPY --from=builder /tmp/cteas-software/build-p3/cteas_p3_makegeo /opt/cteas/bin/
 COPY --from=builder /tmp/cteas-software/build-p4/cteas_p4_read62 /opt/cteas/bin/
