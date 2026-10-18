@@ -414,7 +414,8 @@ def observed_year_coverage(igra_path: Path, station_id: str, year: int, elevatio
                     coverage=count / expected, eligible=count * 5 > expected * 4,
                     soundings_cleaned=stats["soundings_written"],
                     soundings_dropped=stats["soundings_dropped_after_cleaning"]
-                    + stats["soundings_dropped_bottom_wind_missing"])
+                    + stats["soundings_dropped_bottom_wind_missing"],
+                    original_utc_slots=sorted(original))
 
 
 def main():
