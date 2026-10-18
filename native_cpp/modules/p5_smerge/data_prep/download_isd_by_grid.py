@@ -302,6 +302,8 @@ def main() -> int:
     ap.add_argument("--retries", type=int, default=3)
     ap.add_argument("--max-stations", type=int, default=0,
                     help="legacy argument; only 0 is accepted (all in-domain stations)")
+    ap.add_argument("--offline", action="store_true",
+                    help="D2-A: use only archived original ISD and ISD-Lite; NEVER network")
     args = ap.parse_args()
     if args.max_stations != 0:
         ap.error("--max-stations must be 0: never truncate in-domain stations")
@@ -360,10 +362,25 @@ def main() -> int:
         for st in ordered:
             success = False
             detail = ""
-            for attempt in range(args.retries):
-                success, detail, _ = download_one(year, st.sid, args.out_dir, args.timeout)
-                if success:
-                    break
+            if args.offline:
+                candidate = args.out_dir / f"{st.sid}-{year}.csv"
+                # Never silently skip a closer external station lacking an
+                # archived source: it may be the nearest qualified fallback.
+                if candidate.is_symlink() or not candidate.is_file():
+                    raise SystemExit(
+                        f"P5_OFFLINE_UNRESOLVED_CANDIDATE year={year} sid={st.sid}: "
+                        "full-ISD archive missing; no network, no silent skip"
+                    )
+                try:
+                    original_coverage(candidate, year, st.sid)
+                except (ValueError, OSError) as exc:
+                    raise SystemExit(f"P5_OFFLINE_INVALID_FULL_ISD {candidate}: {exc}") from exc
+                success, detail = True, f"offline verified cache {candidate}"
+            else:
+                for attempt in range(args.retries):
+                    success, detail, _ = download_one(year, st.sid, args.out_dir, args.timeout)
+                    if success:
+                        break
             full_count, expected = (0, expected_hours_in_year(year))
             if success:
                 try:
@@ -377,11 +394,20 @@ def main() -> int:
                 msg = f"full ISD download failed: {detail}"
             lite_ok, lite_msg, lite_count = False, "ISD-Lite not attempted", 0
             if success and (mode == "OBSERVED" or full_count * 10 > 9 * expected):
-                for attempt in range(args.retries):
-                    lite_ok, lite_msg, _ = download_lite_one(
-                        year, st.sid, lite_dir, args.timeout)
-                    if lite_ok:
-                        break
+                if args.offline:
+                    candidate_lite = lite_dir / lite_filename(st.sid, year)
+                    if candidate_lite.is_symlink() or not candidate_lite.is_file():
+                        raise SystemExit(
+                            f"P5_OFFLINE_UNRESOLVED_CANDIDATE year={year} sid={st.sid}: "
+                            "ISD-Lite archive missing; no network, no silent skip"
+                        )
+                    lite_ok, lite_msg = True, "offline existing ISD-Lite archive"
+                else:
+                    for attempt in range(args.retries):
+                        lite_ok, lite_msg, _ = download_lite_one(
+                            year, st.sid, lite_dir, args.timeout)
+                        if lite_ok:
+                            break
                 if lite_ok:
                     lite_file = lite_dir / lite_filename(st.sid, year)
                     try:
