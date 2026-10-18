@@ -15,6 +15,15 @@ int main(int argc,char** argv){
     const auto nx=std::size_t(std::stoul(argv[6])),ny=std::size_t(std::stoul(argv[7]));
     const int mesh=std::stoi(argv[8]);
     const auto r=compute_glcc_gen_replay(argv[1],{x,y,dx,nx,ny},epsg,mesh);
+    // Software-only synthetic replay: enabling optional coordinate QA MUST NOT
+    // mutate any production GLCC category hits, grid counts, or coverage.
+    const auto traced=compute_glcc_gen_replay(argv[1],{x,y,dx,nx,ny},epsg,mesh,true);
+    if(traced.counts!=r.counts||traced.cell_samples!=r.cell_samples||
+       traced.included!=r.included||traced.outside!=r.outside||
+       traced.raw_pixels!=r.raw_pixels||!r.diagnostic_mesh.empty()||
+       traced.diagnostic_mesh.size()!=traced.included+traced.outside){
+      std::cerr<<"GLCC_QA_MESH_CHANGED_PRODUCTION_COUNTS\n";return 5;
+    }
     std::ofstream out(argv[9]);if(!out)return 3;
     out<<"i,j,samples";
     for(int k:kGlccUsgs92Classes)out<<",cat"<<k;
