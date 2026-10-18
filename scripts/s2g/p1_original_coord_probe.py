@@ -11,6 +11,7 @@ from pathlib import Path
 import json
 import math
 import shutil
+import subprocess
 
 class CoordinateProbeError(ValueError):
     pass
