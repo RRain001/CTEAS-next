@@ -1,7 +1,7 @@
 """S2-G1A source-only P6 G19 handoff for variable UTM grids/stations.
 
 Bridges G0 annual P4/P5 genuine-source *selection metadata* to the existing
-C++ G19 file-backed CALMET reader (2-6 SS/US, 9 layers). Independently verifies
+C++ G19 file-backed CALMET reader (2-6 surface / 1-6 upper stations, nine layers). Independently verifies
 the full original-format file roles and deck identities/geometry before
 constructing a command. Optional --native-input-preflight executes ONLY G19
 file ingestion, never P6D/P6E/P6F, P7 or the legacy Fortran runtime.
