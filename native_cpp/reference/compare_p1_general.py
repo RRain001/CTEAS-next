@@ -130,6 +130,63 @@ def native_csv(path:Path,nx:int,ny:int):
         raise ComparisonError("native terrain CSV incomplete")
     return hits,heights
 
+
+def validate_original_terrel_control(path:Path, selected_tif:Path, grid:dict)->dict:
+    """Fail closed unless the original TERREL input deck names the same TIFF bytes
+    and the exact zone, origin, dimensions and spacing as native P1.
+    This cannot by itself prove the original executable was actually launched.
+    """
+    try:
+        deck=path.read_text(encoding="utf-8")
+    except (UnicodeError,OSError) as e:
+        raise ComparisonError("original TERREL control unreadable") from e
+
+    def key(name:str)->str:
+        found=re.findall(r"!\s*"+re.escape(name)+r"\s*=\s*([^!]*?)\s*!",deck,re.IGNORECASE)
+        if len(found)!=1:
+            raise ComparisonError("TERREL control absent/duplicated "+name)
+        return found[0].strip()
+
+    if key("PMAP").upper()!="UTM" or key("DATUM").upper()!="WGS-84":
+        raise ComparisonError("TERREL control projection/datum mismatch")
+    if key("UTMHEM").upper()!=grid["hemisphere"]:
+        raise ComparisonError("TERREL control hemisphere mismatch")
+    for name,expected in (("IUTMZN",grid["zone"]),
+                          ("NX",grid["nx"]),("NY",grid["ny"]),("NTDF",1)):
+        value=key(name)
+        if not re.fullmatch(r"\d+",value) or int(value)!=expected:
+            raise ComparisonError("TERREL control mismatched "+name)
+    for name,expected in (("XREFKM",float(grid["xrefkm"])),
+                          ("YREFKM",float(grid["yrefkm"])),
+                          ("DGRIDKM",grid["dgridkm"])):
+        try:
+            value=float(key(name))
+        except ValueError as e:
+            raise ComparisonError("TERREL control invalid "+name) from e
+        if not math.isfinite(value) or abs(value-expected)>1e-8:
+            raise ComparisonError("TERREL control mismatched "+name)
+
+    # The selected original's GEOTIFF card is numbered in Subgroup 0b.
+    # Exactly one non-ambiguous TIFF is supported for the existing unified
+    # source manifest. Multiple original inputs must be re-audited separately.
+    sources=re.findall(r"^\s*(\d+)\s*!GEOTIFF\s*=\s*([^!]+?)\s*!",
+                       deck,re.MULTILINE|re.IGNORECASE)
+    if len(sources)!=1 or sources[0][0]!="1":
+        raise ComparisonError("TERREL control requires one numbered GEOTIFF")
+    raw=sources[0][1].strip()
+    if not raw:
+        raise ComparisonError("TERREL control GEOTIFF path empty")
+    original_tif=Path(raw)
+    if not original_tif.is_absolute():
+        original_tif=path.parent/original_tif
+    # No silent missing path or symlink indirection; actual bytes must be same.
+    source_sha=sha(original_tif)
+    if source_sha!=sha(selected_tif):
+        raise ComparisonError("TERREL original GEOTIFF bytes differ from native selected TIFF")
+    return {"original_control_geotiff_sha256":source_sha,
+            "original_control_geotiff_count":1,
+            "original_control_geometry":"MATCH_NATIVE_P1"}
+
 def compare(*,native_manifest:Path,original_attestation:Path,native_terrain:Path,
             original_dat_path:Path,original_sav_path:Path,original_control:Path,
             original_executable:Path,selected_tif:Path,report:Path)->dict:
@@ -167,7 +224,10 @@ def compare(*,native_manifest:Path,original_attestation:Path,native_terrain:Path
         raise ComparisonError("original attestation does not match actual bytes")
     if attest.get("grid_sha256")!=native.get("grid_sha256") or attest.get("route")!=native["route"]:
         raise ComparisonError("original/native grid or route identities differ")
-    # This attestation is only a provenance *claim*, not independent proof.
+    # Verify the actual original TERREL control references the same selected
+    # source bytes and authoritative grid, rather than merely trusting JSON.
+    control_binding=validate_original_terrel_control(original_control,selected_tif,grid)
+    # This still does not independently prove that original TERREL executed.
     data=fortran_dat(original_dat_path,grid)
     sums,oldhits=fortran_sav(original_sav_path,nx,ny)
     newhits,newz=native_csv(native_terrain,nx,ny)
@@ -197,6 +257,7 @@ def compare(*,native_manifest:Path,original_attestation:Path,native_terrain:Path
       "original_terrel_dat_sha256":actual["original_terrel_dat_sha256"],
       "original_terrel_sav_sha256":actual["original_terrel_sav_sha256"],
       "original_control_sha256":actual["original_control_sha256"],
+      "original_control_source_binding":control_binding,
       "original_executable_sha256":actual["original_executable_sha256"],
       "original_hits_total":sum(oldhits),"native_hits_total":sum(newhits),
       "hit_count_mismatches":len(badcounts),"hit_count_first20":badcounts[:20],
