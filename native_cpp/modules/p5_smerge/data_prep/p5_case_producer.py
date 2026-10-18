@@ -273,6 +273,7 @@ def produce(case_yaml: Path, history: Path, native: Path, template: Path,
     final = root / "met/surface/final/surf.dat"
     stations = root / "met/surface/final/stations.csv"
     ready = sorted((root / "met/surface/isd2smerge_ready").glob("*.csv"))
+    runtime = sorted((run / "original_smerge_sparse_runtime").glob("*.csv"))
     if not ready or not surf.is_file() or not final.is_file() or not stations.is_file():
         raise ContractError("P5 native producer omitted mandatory SURF or station metadata")
     verify_immutable(admission)
@@ -299,7 +300,7 @@ def produce(case_yaml: Path, history: Path, native: Path, template: Path,
         "ordered_ifstn": order,
         "raw_native_surf_sha256": digest(surf),
         "published_surf_sha256": digest(final),
-        "produced_output_sha256": _hash_outputs(root, [control, surf, final, stations, *ready]),
+        "produced_output_sha256": _hash_outputs(root, [control, surf, final, stations, *ready, *runtime]),
     })
     dest = root / "evidence/p5.json"
     dest.parent.mkdir(parents=True, exist_ok=True)
