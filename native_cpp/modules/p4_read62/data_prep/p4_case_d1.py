@@ -107,6 +107,8 @@ def offline_igra(archive_root: Path, station_id: str, year: int):
         return None, False, {"error": "missing or ambiguous immutable NOAA archive", "station_id": station_id}
     path = existing[0]
     try:
+        if path.is_symlink():
+            raise ContractError("NOAA source symlink forbidden")
         if not _within(path.resolve(strict=True), archive):
             raise ContractError("NOAA path escapes archive")
         sha256_file(path)
