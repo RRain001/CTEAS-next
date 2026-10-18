@@ -1,5 +1,6 @@
 #include "cteas/geo/glcc_raw_fractions.hpp"
 #include "cteas/geo/glcc_direct_laea_probe.hpp"
+#include "cteas/geo/glcc_cli_modes.hpp"
 #include "cteas/geo/grid_origin.hpp"
 #include <openssl/evp.h>
 #include <array>
@@ -35,9 +36,9 @@ std::string sha256(const fs::path& path){
 }
 }
 int main(int argc,char** argv){
-  if(argc!=10 && !(argc==11 && std::string(argv[10])=="--qa-submesh") &&
-     !(argc==12 && std::string(argv[10])=="--qa-submesh" &&
-       std::string(argv[11])=="--probe-direct")){
+  const auto modes=cteas::reconstruction::geo::glcc_cli_modes(argc,
+                                 const_cast<const char* const*>(argv));
+  if(!modes.valid){
     std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--qa-submesh [--probe-direct]]\n";
     return 2;
   }
@@ -56,7 +57,7 @@ int main(int argc,char** argv){
     const double d=real(argv[6])*1000.;
     const int nx=integer(argv[7]),ny=integer(argv[8]),mesh=integer(argv[9]);
     require(nx>0&&ny>0,"P2_GLCC_GRID_POSITIVE_DIMENSIONS");
-    const bool diag=argc==11;
+    const bool diag=modes.qa_submesh;
     const auto r=compute_glcc_gen_replay(source.string(),{x,y,d,std::size_t(nx),std::size_t(ny)},epsg,mesh,diag);
     fs::create_directory(dest);
     try {
@@ -114,7 +115,10 @@ int main(int argc,char** argv){
       // Its 95k integer field differences against original Fortran must be
       // reported separately by the independent manual science comparator.
       std::string direct_probe_sha;
-      if(argc==12) {
+      if(modes.direct_probe) {
+        require(diag&&!r.diagnostic_mesh.empty(),"DIRECT_PROBE_TRACE_MISSING");
+        require(r.diagnostic_mesh.size()==r.included+r.outside,
+                "DIRECT_PROBE_TRACE_COUNT_INCONSISTENT");
         DirectLaeaProbe probe(epsg);
         const std::size_t nc=r.grid.nx*r.grid.ny;
         std::vector<std::uint32_t> candidate(nc*kGlccUsgs92Classes.size(),0);
@@ -166,7 +170,7 @@ int main(int argc,char** argv){
           <<"  \"source_product\": \"USGS_GLCC_EURASIA_1992_1993_ORIGINAL_1KM\",\n"
           <<"  \"source_sha256\": \""<<observed<<"\",\n"
           <<"  \"fractions_csv_sha256\": \""<<csv_sha<<"\",\n"          <<"  \"hits_csv_sha256\": \""<<hits_sha<<"\",\n"          <<(diag?"  \"diagnostic_submesh_csv_sha256\": \""+diag_sha+"\",\n":"")
-          <<(argc==12?"  \"direct_laea_candidate_hits_csv_sha256\": \""+direct_probe_sha+"\",\n":"")
+          <<(modes.direct_probe?"  \"direct_laea_candidate_hits_csv_sha256\": \""+direct_probe_sha+"\",\n":"")
 
           <<"  \"source_size_bytes\": 156000000,\n"
           <<"  \"utm_epsg\": "<<epsg<<", \"nx\": "<<nx<<", \"ny\": "<<ny<<",\n"
