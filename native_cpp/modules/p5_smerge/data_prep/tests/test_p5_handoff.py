@@ -116,6 +116,23 @@ class P5HandoffTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "GENERIC source SHA mismatch"):
             build_p5_handoff(self.case, self.producer, self.reader)
 
+    def test_sparse_original_fortran_eof_adapter_is_hashed_and_allowed(self):
+        # A secondary may point to the approved run/smerge EOF compatibility
+        # adapter, not the immutable ready CSV. This is *not* a new hourly obs.
+        rel = "run/smerge/original_smerge_sparse_runtime/583140-99999.csv"
+        adapter = self.case / rel
+        adapter.parent.mkdir(parents=True)
+        adapter.write_bytes(b"SYNTHETIC ORIGINAL EOF ADAPTER ONLY\\n")
+        content = self.csv.read_text()
+        self.csv.write_text(content.replace(
+            "met/surface/isd2smerge_ready/583140-99999.csv", rel))
+        self.producer["produced_output_sha256"]["met/surface/final/stations.csv"] = sha256(self.csv)
+        self.producer["produced_output_sha256"][rel] = sha256(adapter)
+        self.assertTrue(build_p5_handoff(self.case, self.producer, self.reader)["handoff_validated"])
+        adapter.write_bytes(b"TAMPERED ORIGINAL EOF ADAPTER\\n")
+        with self.assertRaisesRegex(ContractError, "GENERIC source SHA mismatch"):
+            build_p5_handoff(self.case, self.producer, self.reader)
+
     def test_source_reader_mismatch_or_annual_primary_drift_rejected(self):
         self.reader["stdout_tail"] = (
             self.reader["stdout_tail"].replace("HOURS=3", "HOURS=4")
