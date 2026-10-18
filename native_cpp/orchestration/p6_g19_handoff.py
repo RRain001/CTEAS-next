@@ -266,16 +266,16 @@ def execute_source_preflight(plan: dict[str, Any]) -> dict[str, Any]:
         "US_IDS": ",".join(str(x) for x in plan["ordered_upper_wmo_ids"]),
     }
     for name, ids in expected_site_lines.items():
-        observed = re.search(r"(?m)^" + name + r"=([0-9,]+)\\s*$", run.stdout)
+        observed = re.search(r"(?m)^" + name + r"=([0-9,]+)\s*$", run.stdout)
         if observed is None or observed.group(1) != ids:
             raise ContractError(f"native G19 parser {name} differs from authenticated deck order")
-    counts = re.search(r"\\bNSSTA=(\\d+)\\s+NUSTA=(\\d+)\\b", run.stdout)
+    counts = re.search(r"\bNSSTA=(\d+)\s+NUSTA=(\d+)\b", run.stdout)
     if counts is None or (int(counts.group(1)), int(counts.group(2))) != (
             len(plan["ordered_surface_station_ids"]), len(plan["ordered_upper_station_ids"])):
         raise ContractError("native G19 parser station counts differ from authenticated deck")
     geo = plan["grid"]
     for name, value in (("NX", geo["nx"]), ("NY", geo["ny"])):
-        field = re.search(r"\\b" + name + r"=(\\d+)\\b", run.stdout)
+        field = re.search(r"\b" + name + r"=(\d+)\b", run.stdout)
         if field is None or int(field.group(1)) != value:
             raise ContractError(f"native G19 {name} differs from case grid")
     result = dict(plan)
