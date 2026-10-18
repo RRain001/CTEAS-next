@@ -1,0 +1,176 @@
+{
+  "grid_path": "project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn",
+  "grid_sha256": "2df82272b5d6438475125d065330255f719788de569b15dd2953b80b5f5d408e",
+  "original_bounds_utm_m": [
+    510885.0,
+    3531269.0,
+    515885.0,
+    3536269.0
+  ],
+  "buffer_m": 60,
+  "buffered_bounds_utm_m": [
+    510825.0,
+    3531209.0,
+    515945.0,
+    3536329.0
+  ],
+  "original_corners_wgs84": [
+    [
+      117.11513631682759,
+      31.917247092989818
+    ],
+    [
+      117.16802375826379,
+      31.91718816082011
+    ],
+    [
+      117.16810584844828,
+      31.962297464389643
+    ],
+    [
+      117.11519256833839,
+      31.96235649944079
+    ],
+    [
+      117.11513631682759,
+      31.917247092989818
+    ]
+  ],
+  "buffered_corners_wgs84": [
+    [
+      117.11450099611369,
+      31.916706351668616
+    ],
+    [
+      117.16865741887861,
+      31.91664600639089
+    ],
+    [
+      117.16874179673187,
+      31.962837931742424
+    ],
+    [
+      117.11455828015384,
+      31.962898384899148
+    ],
+    [
+      117.11450099611369,
+      31.916706351668616
+    ]
+  ],
+  "crs": "EPSG:32650",
+  "pixel_resolution": [
+    30.0,
+    30.0
+  ],
+  "transform": [
+    30.0,
+    0.0,
+    510810.0,
+    0.0,
+    -30.0,
+    3536340.0
+  ],
+  "bounds": [
+    510810.0,
+    3531180.0,
+    515970.0,
+    3536340.0
+  ],
+  "width": 172,
+  "height": 172,
+  "dtype": "uint8",
+  "nodata": 0.0,
+  "nodata_or_fill_count": 0,
+  "nodata_fraction": 0.0,
+  "classes_histogram": {
+    "10": 3413,
+    "11": 376,
+    "20": 21814,
+    "52": 298,
+    "62": 74,
+    "72": 1,
+    "130": 142,
+    "182": 238,
+    "183": 17,
+    "190": 2809,
+    "200": 9,
+    "210": 393
+  },
+  "pixel_sha256": "9bfa1d5c36b33fe7ca4f6cc8fe18c9092e044807101adeb20633dd4185b598cc",
+  "sha256": "340d224d961c88637363be9616302bdf6b955b4921144edc814b875ef9798473",
+  "size_bytes": 6168,
+  "source": "GLC_FCS30D Earth Engine Community Catalog",
+  "doi": "10.5281/zenodo.8239305",
+  "version": "v1-community-gee",
+  "year": 2022,
+  "band": "b23",
+  "asset_path": "projects/sat-io/open-datasets/GLC-FCS30D/annual",
+  "image_ids": [
+    "projects/sat-io/open-datasets/GLC-FCS30D/annual/GLC_FCS30D_20002022_E115N35_Annual"
+  ],
+  "tile_count": 1,
+  "mosaic_order": "system:index ascending; last valid pixel wins",
+  "resampling": "Earth Engine default nearest neighbour; no class remapping",
+  "license": "CC-BY-4.0",
+  "download_utc": "2026-10-18T07:14:38.133257+00:00",
+  "script_version": "1.0.0",
+  "script_sha256": "85444f4f9f4027f84bdd34205da7d0ab388de867488221b9bc0c779c014939af",
+  "source_catalog": "https://gee-community-catalog.org/projects/glc_fcs/",
+  "community_import_date": "2024-02-20",
+  "allowed_class_codes": [
+    10,
+    11,
+    12,
+    20,
+    51,
+    52,
+    61,
+    62,
+    71,
+    72,
+    81,
+    82,
+    91,
+    92,
+    120,
+    121,
+    122,
+    130,
+    140,
+    150,
+    152,
+    153,
+    181,
+    182,
+    183,
+    184,
+    185,
+    186,
+    187,
+    190,
+    200,
+    201,
+    202,
+    210,
+    220
+  ],
+  "fill_codes": [
+    0,
+    250
+  ],
+  "repeat_download": {
+    "pixels_equal": true,
+    "transform_equal": true,
+    "histogram_equal": true,
+    "bytes_equal": true,
+    "second_sha256": "340d224d961c88637363be9616302bdf6b955b4921144edc814b875ef9798473"
+  },
+  "dependencies": {
+    "earthengine-api": "1.7.48",
+    "rasterio": "1.5.2",
+    "pyproj": "3.8.0",
+    "numpy": "2.5.4",
+    "requests": "2.34.2"
+  }
+}
