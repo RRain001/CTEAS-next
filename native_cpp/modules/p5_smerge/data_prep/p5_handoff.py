@@ -116,6 +116,18 @@ def build_p5_handoff(case: Path, producer: dict, reader: dict) -> dict:
     if (not isinstance(produced_shas, dict) or
             produced_shas.get("met/surface/final/stations.csv") != sha256(stations_path)):
         raise ContractError("P5 D4 published station index SHA mismatch")
+    # A station entry is a producer-owned GENERIC source, never a caller
+    # controlled absolute path, old current case, or unverified out-of-case
+    # file. Its bytes must be bound to the same P5 producer SHA ledger.
+    for station in index:
+        raw_file = Path(station["source_file"])
+        if (raw_file.is_absolute() or ".." in raw_file.parts or
+                not raw_file.parts[:3] == ("met", "surface", "isd2smerge_ready")):
+            raise ContractError("P5 D4 untrusted GENERIC station source path")
+        source_path = root / raw_file
+        if (produced_shas.get(raw_file.as_posix()) is None or
+                sha256(source_path) != produced_shas[raw_file.as_posix()]):
+            raise ContractError("P5 D4 station GENERIC source SHA mismatch")
     annual = producer.get("years")
     if not isinstance(annual, list) or len(annual) == 0:
         raise ContractError("P5 D4 annual original NOAA station selection missing")
