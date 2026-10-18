@@ -1,0 +1,47 @@
+name: S2-G1B-B3 GLCC source-only UTM crop contract (no native P2 physics)
+
+on:
+  push:
+    branches: [codex/s2g1bb3-glcc-from-grid-source-only]
+    paths:
+      - .github/workflows/s2g1bb3-glcc-source.yml
+      - scripts/s2g/real_glcc_landuse_from_grid.py
+      - scripts/s2g/tests/test_real_glcc_landuse_from_grid.py
+      - docs/s2g1bb3_p1_p2_sources.md
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2g1bb3-glcc-source.yml
+      - scripts/s2g/real_glcc_landuse_from_grid.py
+      - scripts/s2g/tests/test_real_glcc_landuse_from_grid.py
+      - docs/s2g1bb3_p1_p2_sources.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s2g1bb3-glcc-source-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthetic-original-layout-input-contract:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          lfs: false
+      - name: Install geospatial source adapter dependencies
+        run: python3 -m pip install --disable-pip-version-check 'rasterio>=1.3,<2' 'numpy>=1.23,<3'
+      - name: Run source-only GLCC 24-to-38 and anti-LFS-pointer tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m compileall -q scripts/s2g/real_glcc_landuse_from_grid.py
+          python3 -m unittest -v scripts.s2g.tests.test_real_glcc_landuse_from_grid
+          echo 'GLCC_LAYOUT_SYNTHETIC_TESTS=PASS'
+          echo 'ORIGINAL_REAL_LFS_GEO=NOT_DOWNLOADED'
+          echo 'P2_NATIVE_LU=NOT_RUN P3_GEO=NOT_RUN P6=NOT_RUN'
