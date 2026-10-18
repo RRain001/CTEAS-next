@@ -1,7 +1,11 @@
 #include "cteas/geo/glcc_raw_fractions.hpp"
+#include "cteas/geo/glcc_direct_laea_probe.hpp"
 #include "cteas/geo/grid_origin.hpp"
 #include <openssl/evp.h>
 #include <array>
+#include <algorithm>
+#include <vector>
+#include <cstdint>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -31,7 +35,12 @@ std::string sha256(const fs::path& path){
 }
 }
 int main(int argc,char** argv){
-  if(argc!=10 && !(argc==11 && std::string(argv[10])=="--qa-submesh")){std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--qa-submesh]\n";return 2;}
+  if(argc!=10 && !(argc==11 && std::string(argv[10])=="--qa-submesh") &&
+     !(argc==12 && std::string(argv[10])=="--qa-submesh" &&
+       std::string(argv[11])=="--probe-direct")){
+    std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--qa-submesh [--probe-direct]]\n";
+    return 2;
+  }
   try {
     using namespace cteas::reconstruction::geo;
     const fs::path source=argv[1],dest=argv[2];
@@ -100,12 +109,64 @@ int main(int argc,char** argv){
         diag_sha=sha256(dest/"p2_glcc_submesh_diagnostic.csv");
       }
 
+      // NON-PRODUCTION scientific candidate: direct LAEA (ESR-S sphere) to
+      // WGS84/UTM. This NEVER changes r.counts, r.cell_samples or D3 LU.DAT.
+      // Its 95k integer field differences against original Fortran must be
+      // reported separately by the independent manual science comparator.
+      std::string direct_probe_sha;
+      if(argc==12) {
+        DirectLaeaProbe probe(epsg);
+        const std::size_t nc=r.grid.nx*r.grid.ny;
+        std::vector<std::uint32_t> candidate(nc*kGlccUsgs92Classes.size(),0);
+        std::vector<std::uint32_t> candidate_samples(nc,0);
+        std::uint64_t candidate_included=0,candidate_outside=0;
+        const float x0=static_cast<float>(r.grid.x0_m/1000.);
+        const float y0=static_cast<float>(r.grid.y0_m/1000.);
+        const float step=static_cast<float>(r.grid.dx_m/1000.);
+        for(const auto& p:r.diagnostic_mesh) {
+          const auto q=probe.project(p.source_i,p.source_j,p.mesh_i,p.mesh_j,
+                                     mesh,x0,y0,step);
+          if(q.i<1||q.j<1||q.i>nx||q.j>ny){++candidate_outside;continue;}
+          const auto cell=(std::size_t(q.j)-1)*r.grid.nx+std::size_t(q.i-1);
+          const auto k=std::find(kGlccUsgs92Classes.begin(),
+                                 kGlccUsgs92Classes.end(),p.category);
+          require(k!=kGlccUsgs92Classes.end(),"DIRECT_PROBE_UNKNOWN_CLASS");
+          candidate[cell*kGlccUsgs92Classes.size()+
+                    std::size_t(k-kGlccUsgs92Classes.begin())]++;
+          candidate_samples[cell]++;
+          ++candidate_included;
+        }
+        require(candidate_included+candidate_outside==r.diagnostic_mesh.size(),
+                "DIRECT_PROBE_INTERNAL_HITS_LOST");
+        std::ofstream destf(dest/"p2_glcc_direct_laea_candidate_hits.csv");
+        require(bool(destf),"DIRECT_PROBE_HITS_CSV_OPEN_FAILED");
+        destf<<"i,j,samples";
+        for(int cat:kGlccUsgs92Classes)destf<<",cat"<<cat;
+        destf<<"\n";
+        for(std::size_t j=0;j<r.grid.ny;++j)
+          for(std::size_t i=0;i<r.grid.nx;++i) {
+            const auto cell=j*r.grid.nx+i;
+            destf<<i+1<<","<<j+1<<","<<candidate_samples[cell];
+            for(std::size_t k=0;k<kGlccUsgs92Classes.size();++k)
+              destf<<","<<candidate[cell*kGlccUsgs92Classes.size()+k];
+            destf<<"\n";
+          }
+        require(bool(destf),"DIRECT_PROBE_HITS_CSV_WRITE_FAILED");
+        destf.close();
+        require(bool(destf),"DIRECT_PROBE_HITS_CSV_CLOSE_FAILED");
+        direct_probe_sha=sha256(dest/"p2_glcc_direct_laea_candidate_hits.csv");
+        std::cout<<"DIRECT_LAEA_SPHERE_CANDIDATE_DIAGNOSTIC_ONLY INCLUDED="
+                 <<candidate_included<<" OUTSIDE="<<candidate_outside
+                 <<" ORIGINAL_INTEGER_PARITY=NOT_TESTED\n";
+      }
+
       std::ofstream meta(dest/"p2_manifest.json");
       require(bool(meta),"P2_GLCC_MANIFEST_OPEN_FAILURE");
       meta<<"{\n  \"producer\": \"cteas_p2_glcc_raw\",\n"
           <<"  \"source_product\": \"USGS_GLCC_EURASIA_1992_1993_ORIGINAL_1KM\",\n"
           <<"  \"source_sha256\": \""<<observed<<"\",\n"
           <<"  \"fractions_csv_sha256\": \""<<csv_sha<<"\",\n"          <<"  \"hits_csv_sha256\": \""<<hits_sha<<"\",\n"          <<(diag?"  \"diagnostic_submesh_csv_sha256\": \""+diag_sha+"\",\n":"")
+          <<(argc==12?"  \"direct_laea_candidate_hits_csv_sha256\": \""+direct_probe_sha+"\",\n":"")
 
           <<"  \"source_size_bytes\": 156000000,\n"
           <<"  \"utm_epsg\": "<<epsg<<", \"nx\": "<<nx<<", \"ny\": "<<ny<<",\n"
