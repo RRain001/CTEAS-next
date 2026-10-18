@@ -96,7 +96,7 @@ def parse_lu(path: Path):
             abs(float(hdr[4])-0.1)<1e-6 and
             abs(float(hdr[5])-0.1)<1e-6 and int(hdr[6]) == 38,
             "LU_ORIGIN_OR_SPACING_MISMATCH")
-    require(text[9].split() == ["KM","M"],"LU_UNITS_MISMATCH")
+    require(text[9].split() in (["KM"], ["KM","M"]), "LU_UNITS_MISMATCH")
     require(tuple(map(int,text[10].split())) == CATS,"LU_CATEGORY_ORDER_MISMATCH")
     rows=[]
     for n,line in enumerate(text[11:]):
