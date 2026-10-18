@@ -1,6 +1,7 @@
 // Test-only fixture reader: accepts sparse artificial 156MB source. Never
 // issue source acceptance; the production CLI requires a fixed official SHA.
 #include "cteas/geo/glcc_raw_fractions.hpp"
+#include "cteas/geo/glcc_direct_laea_probe.hpp"
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -14,6 +15,21 @@ int main(int argc,char** argv){
     const double x=std::stod(argv[3]),y=std::stod(argv[4]),dx=std::stod(argv[5]);
     const auto nx=std::size_t(std::stoul(argv[6])),ny=std::size_t(std::stoul(argv[7]));
     const int mesh=std::stoi(argv[8]);
+    // Synthetic-only projection test. This candidate does not replace native D1.
+    {
+      DirectLaeaProbe direct(32650);
+      const auto projected=direct.project(9614,4210,18,17,20,
+                                          510.885f,3531.269f,0.100f);
+      if(std::fabs(projected.x_km-511.485107f)>0.001f ||
+         std::fabs(projected.y_km-3531.31641f)>0.001f ||
+         projected.i<1||projected.i>50||projected.j<1||projected.j>50)
+        throw std::runtime_error("DIRECT_LAEA_CANDIDATE_PROJECTION_BROKEN");
+      bool invalid_zone_rejected=false;
+      try {DirectLaeaProbe outside_scope(32651);}
+      catch(const std::invalid_argument&) {invalid_zone_rejected=true;}
+      if(!invalid_zone_rejected)
+        throw std::runtime_error("DIRECT_LAEA_CANDIDATE_SCOPE_BROKEN");
+    }
     const auto r=compute_glcc_gen_replay(argv[1],{x,y,dx,nx,ny},epsg,mesh);
     // Software-only synthetic replay: enabling optional coordinate QA MUST NOT
     // mutate any production GLCC category hits, grid counts, or coverage.
