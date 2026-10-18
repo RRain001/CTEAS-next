@@ -4,6 +4,7 @@
 #include "cteas/geo/grid_origin.hpp"
 #include <cpl_json.h>
 #include <openssl/evp.h>
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
