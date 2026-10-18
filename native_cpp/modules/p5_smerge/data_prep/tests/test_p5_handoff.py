@@ -34,12 +34,18 @@ class P5HandoffTests(unittest.TestCase):
                 "lon": "117.141610855", "xelev_m": "26", "tz_hour": "0",
                 "anem_m": "10.0", "source_file": "met/surface/isd2smerge_ready/583140-99999.csv",
             })
+        self.ready = self.case / "met/surface/isd2smerge_ready/583140-99999.csv"
+        self.ready.parent.mkdir(parents=True)
+        self.ready.write_bytes(b"SYNTHETIC GENERIC FOR PATH CUSTODY ONLY\\n")
         self.producer.update({
             "P5_NATIVE_SURF": "PRODUCED_UNVERIFIED",
             "ordered_ifstn": ["583140"],
             "raw_native_surf_sha256": sha256(raw),
             "published_surf_sha256": sha256(published),
-            "produced_output_sha256": {"met/surface/final/stations.csv": sha256(self.csv)},
+            "produced_output_sha256": {
+                "met/surface/final/stations.csv": sha256(self.csv),
+                "met/surface/isd2smerge_ready/583140-99999.csv": sha256(self.ready),
+            },
         })
         self.reader = {
             "source_reader": "PASS_SCOPED_INPUT_ONLY",
@@ -95,6 +101,19 @@ class P5HandoffTests(unittest.TestCase):
         self.reader["stdout_tail"] = self.reader["stdout_tail"].replace(
             "MISSING_STATION_HOURS=1", "MISSING_STATION_HOURS=0")
         with self.assertRaisesRegex(ContractError, "completeness count inconsistent"):
+            build_p5_handoff(self.case, self.producer, self.reader)
+
+    def test_station_generic_path_escape_or_changed_bytes_rejected(self):
+        content = self.csv.read_text()
+        self.csv.write_text(content.replace(
+            "met/surface/isd2smerge_ready/583140-99999.csv", "../../other-case/station.csv"))
+        self.producer["produced_output_sha256"]["met/surface/final/stations.csv"] = sha256(self.csv)
+        with self.assertRaisesRegex(ContractError, "untrusted GENERIC"):
+            build_p5_handoff(self.case, self.producer, self.reader)
+        self.csv.write_text(content)
+        self.producer["produced_output_sha256"]["met/surface/final/stations.csv"] = sha256(self.csv)
+        self.ready.write_bytes(b"GENERATED FILE TAMPERED AFTER P5 PRODUCTION\\n")
+        with self.assertRaisesRegex(ContractError, "GENERIC source SHA mismatch"):
             build_p5_handoff(self.case, self.producer, self.reader)
 
     def test_source_reader_mismatch_or_annual_primary_drift_rejected(self):
