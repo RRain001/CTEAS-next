@@ -50,3 +50,17 @@ The #53 selected original GLCC / 24→38 history can only be marked `PASS_ORIGIN
 The modern 2022 `GLC_FCS30D` 35→USGS-92 crosswalk is **not yet approved**: especially 182 herbaceous wetland, 183 floodplain, 190 impervious, 210 open water. Its historical-style LU may not be generated as science-pass without explicit reviewed mapping and physical impacts. `P2_MAPPING_REVIEW_REQUIRED` and #53 `OPEN` remain.
 
 **No long CALMET/CALPUFF test, vendor re-publication or P3 algorithm was introduced here.**
+
+
+## 2026-10-18 updated CTEAS original source workflow (without preinstalled binaries)
+
+The original **CTEAS** repository `RRain001/CTEAS` is publicly readable. Its pinned `main` commit is `dfad99a78ed84d655e21411c9d25eb0d2583bf13`, source path `engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for`, 269543 bytes, independently recorded source SHA256 `719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281`. This is the historical Exponent CTGPROC Version 7.0.0 Level 150211, not a native reimplementation. Its compilation options come from CTEAS `scripts/build_native_linux_x86_64.sh` and existing `native_cpp/reference/capture_p1_p2.py`: `gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0` with an isolated lower-case INCLUDE alias directory for legacy case-sensitive names.
+
+**No user-supplied binary path or hash is necessary now**. On automatic PR only, a *build-only* Actions job performs sparse checkout of this exact original SHA in a separate temporary directory, checks original file SHA and actually compiles `ctgproc.for`. It **does not run original science**, fetch real 156MB LFS, or upload third-party code/executable. A second automatic job runs comparator-only synthetic/previous format fixture tests.
+
+On user-approved manual `workflow_dispatch`, hosted Ubuntu 22.04 pulls the exact same CTEAS original commit (sparse no-LFS checkout) and **CTEAS-next** original 156MB GLCC Git LFS (strict original SHA). It compiles authentic CTGPROC from original source and independently hashes the executable, then runs C++ native D1→D3 and actual CTGPROC `GLAZAS` in the same-source frozen 50×50 domain. `validate_p2_glazas_original.py` now also requires the original Fortran `ctgproc.for` file and checks its SHA; if the original returns no `LU.DAT`/LST or any of the 95,000 values/point-count gates fail, the scientific job fails and preserves only metadata/difference report.
+
+This does **not** authorize redistribution of CTGPROC vendor source or compiled binary in CTEAS-next; separate checkout is transient and outputs deliberately exclude original code, binary, and raw IMG. Original source has third-party Exponent copyright; original CTEAS GitHub availability is **not** itself a grant of new redistribution rights.
+
+[Manual original-source GLAZAS science workflow](https://github.com/RRain001/CTEAS-next/actions/workflows/s2g1bb-issue53-glazas-original.yml) → select main → Run workflow (no inputs). The run's actual result, *not successful source compilation*, determines `P2_A_ORIGINAL_GLAZAS_PARITY`. Until the science run completes on the current code, this status remains `NOT_RUN`.
+
