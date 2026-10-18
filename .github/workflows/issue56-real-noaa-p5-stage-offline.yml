@@ -1,0 +1,36 @@
+name: Issue 56 real NOAA runner offline staging contract
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '.github/workflows/issue56-real-noaa-p5-stage-offline.yml'
+      - '.github/workflows/issue56-real-noaa-p5-manual.yml'
+      - 'scripts/s2g/issue56_real_noaa_p5_case.py'
+      - 'scripts/s2g/tests/test_issue56_real_noaa_p5_case.py'
+      - 'native_cpp/modules/p5_smerge/data_prep/p5_case_producer.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  newsite-staging-contract-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install bounded software dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check \
+            'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+      - name: Test new-site admission and truthful scoped evidence, no actual NOAA request
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_issue56_real_noaa_p5_case
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_p5_case_producer
+          echo 'ISSUE56_NEW_SITE_STAGING=PASS_SOFTWARE_ONLY'
+          echo 'REAL_NOAA_REPLAY=NOT_RUN ORIGINAL_SMERGE_PARITY=NOT_RUN'
