@@ -20,7 +20,7 @@ struct G18B3UpperChoice {
 };
 inline int g18b3_parse_original_iupt(const std::string& metinp,
                                      std::size_t upper_count) {
-    if(upper_count==0||upper_count>1000)
+    if(upper_count==0)
         throw std::invalid_argument("G18B3 upper station count invalid");
     const auto value=source_wind_normalize(source_wind_value(metinp,"IUPT"));
     std::size_t used=0;int requested=0;
