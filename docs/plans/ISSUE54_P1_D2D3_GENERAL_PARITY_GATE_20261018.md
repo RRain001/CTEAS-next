@@ -56,3 +56,24 @@ The six tracked 90m SRTM tiles under calpuff_terrain_and_landuse_data/china_srtm
 The 30m SRTMGL1 download adapter exists with secret isolation, but no actual cached 30m file and independently rerun original TERREL dataset were validated here. Original vendor files must be restored on the authorized runner; they are excluded from the public repository.
 
 D2 P1_A_REAL=NOT_RUN, D3 P1_B_REAL=NOT_RUN, D4 SCIENCE=NOT_ACCEPTED; Issue #54 remains OPEN.
+
+## Additional mandatory original input-deck binding (#54 follow-up)
+
+For a provisional numeric comparison, it is no longer sufficient merely
+to attest that a TERREL control file exists and has a stable SHA256.
+The independent comparator now parses the actual `terrel.inp` and
+requires exactly one active `PMAP=UTM`, `DATUM=WGS-84`,
+`UTMHEM`, `IUTMZN`, `XREFKM/YREFKM`, `NX/NY`,
+`DGRIDKM`, and `NTDF=1` field. Every geometry value must match
+the native admitted grid. There must be exactly one numbered
+`1 !GEOTIFF = ... !` input card, and its currently reachable
+file bytes must hash to the **same** selected TIFF that produced the
+native CSV. Symlinked, missing and otherwise unreadable original source
+paths fail closed. The real asset paths and original input-control
+must remain accessible to the trusted runner for independent review.
+
+This rule does not rewrite the control, change original TERREL, allow
+multiple GeoTIFF records, or claim that original Fortran truly executed
+the inspected control. The actual execution command, timestamps,
+stdout/stderr and original data product/rights still require human
+independent provenance review; numeric pass remains PROVISIONAL.
