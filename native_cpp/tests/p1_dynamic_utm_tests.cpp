@@ -47,9 +47,13 @@ TerrainGridSpec make_grid(double lon,double lat,const UtmProjection& projection)
   const double y0=std::floor(y/100.0)*100.0-150.0;
   return {x0,y0,100.0,5,5};
 }
-void check_case(double lon,double lat,UtmProjection projection) {
+void check_case(double lon,double lat,UtmProjection projection,
+                std::size_t nx=5,std::size_t ny=5,double cell_size_m=100.0) {
   auto raster=make_source(lon,lat);
-  const auto grid=make_grid(lon,lat,projection);
+  auto grid=make_grid(lon,lat,projection);
+  grid.nx=nx;
+  grid.ny=ny;
+  grid.cell_size_m=cell_size_m;
   const auto computed=grid_geotiff_terrain_utm(raster,grid,projection);
   const auto hits=std::accumulate(computed.point_count.begin(),
                                  computed.point_count.end(),std::uint32_t{0});
@@ -72,8 +76,9 @@ void check_case(double lon,double lat,UtmProjection projection) {
 int main() {
   // Two northern zones, one southern zone; no real DEM or original TERREL claim.
   check_case(117.0,31.0,{50,false});
-  check_case(111.0,31.0,{49,false});
-  check_case(117.0,-31.0,{50,true});
+  check_case(111.0,31.0,{49,false},3,5); // non-square
+  check_case(117.0,-31.0,{50,true},5,3); // southern and non-square
+  check_case(117.0,31.0,{50,false},5,5,60.0); // alternate resolution
   auto source=make_source(117.0,31.0);
   const auto grid=make_grid(117.0,31.0,{50,false});
   for(const int zone: {0,61}) {
