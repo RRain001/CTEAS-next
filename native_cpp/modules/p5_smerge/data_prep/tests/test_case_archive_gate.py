@@ -82,6 +82,7 @@ preprocess:
             "mode": "VIRTUAL_RELOCATED" if virtual else "OBSERVED",
             "selection_geometry": "STRICT_WGS84_UTM_GRID_CMN_SW_CORNER_CLOSED_EDGES",
             "utm_zone": 50, "utm_hemisphere": "N",
+            "utm_bounds_km": [510.885, 515.885, 3531.269, 3536.269],
             "primary_sid": primary, "stations": rows,
         }), encoding="utf-8")
         return path
@@ -149,6 +150,14 @@ preprocess:
         data["stations"][0]["ifstn"] = "999999"
         mf.write_text(json.dumps(data))
         with self.assertRaisesRegex(ContractError, "identity/effective position conflict"):
+            self.gate()
+
+    def test_same_zone_wrong_footprint_is_not_reused(self):
+        mf = self.manifest(2022, [self.station("58314099999", 2022)])
+        data = json.loads(mf.read_text())
+        data["utm_bounds_km"][0] += 1.0
+        mf.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ContractError, "footprint differs"):
             self.gate()
 
     def test_no_worktree_or_legacy_case_alias(self):
