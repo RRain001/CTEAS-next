@@ -128,13 +128,39 @@ class SourceFileHandoffTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "cannot silently change p4"):
             self.plan()
 
-    def test_reject_one_upper_when_g19_only_2_to_6(self):
+    def test_one_genuine_upper_station_two_surface_station_manifest(self):
+        # Original one-upper / two-ground station G19 source handoff.
+        # Test-only GEO/SURF/UP byte placeholders here; separately run the
+        # REAL-format compiled C++ parser for original-format evidence.
         for year in (2022, 2023):
             path = self.c.p4 / str(year) / "p4_station_selection_audit.json"
             doc = json.loads(path.read_text())
             doc["selected"] = doc["selected"][:1]
             path.write_text(json.dumps(doc))
-        with self.assertRaisesRegex(ContractError, "only accepts 2-6 real upper-air"):
+        def one_upper(lines):
+            lines[9] = "! NUSTA = 1 !"
+            lines.pop()  # remove US2; never substitute a phantom WMO station
+        self.write_deck(one_upper)
+        result = self.plan()
+        self.assertEqual(result["ordered_upper_station_ids"], ["USM00012345"])
+        self.assertEqual(result["ordered_upper_wmo_ids"], [12345])
+        self.assertEqual(result["ordered_surface_ifstn_ids"], [7246901, 7247001])
+        self.assertEqual(sorted(result["roles"]), [
+            "met_deck", "p3_geo", "p4_upper_us1", "p5_surface"])
+        self.assertFalse(result["ready"])
+        self.assertFalse(result["model_executed"])
+        self.assertEqual(result["P6D_P6E_P6F"], "NOT_RUN")
+
+    def test_one_upper_file_missing_is_rejected(self):
+        for year in (2022, 2023):
+            path = self.c.p4 / str(year) / "p4_station_selection_audit.json"
+            doc = json.loads(path.read_text())
+            doc["selected"] = doc["selected"][:1]
+            path.write_text(json.dumps(doc))
+        self.write_deck(lambda lines: (
+            lines.__setitem__(9, "! NUSTA = 1 !"), lines.pop()))
+        (self.up / "up_12345.dat").unlink()
+        with self.assertRaisesRegex(ContractError, "missing or empty"):
             self.plan()
 
     def test_input_preflight_failure_never_marked_as_science_pass(self):
