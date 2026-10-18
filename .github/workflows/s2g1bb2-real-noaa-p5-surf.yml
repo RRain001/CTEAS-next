@@ -1,0 +1,57 @@
+name: S2-G1B-B2 real NOAA ISD-Lite native P5 SURF source
+on:
+  push:
+    branches: [codex/s2g1bb2-real-noaa-p5-surf-native]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2g1bb2-real-noaa-p5-surf.yml
+      - scripts/s2g/real_noaa_native_p5_surf.py
+      - native_cpp/modules/p6_calmet/src/p6g_surf_source_preflight_main.cpp
+      - native_cpp/modules/p6_calmet/CMakeLists.txt
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: s2g1bb2-source-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  authentic-source-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Python authentic NOAA dependencies
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          python3 -m compileall -q scripts/s2g/real_noaa_native_p5_surf.py
+      - name: Compile independent native P5 writer and P6 SURF reader
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p5_smerge -B "$RUNNER_TEMP/p5cpp" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/p5cpp" --parallel 2 --target cteas_p5_smerge cteas_p5_tests
+          ctest --test-dir "$RUNNER_TEMP/p5cpp" --output-on-failure -R p5_generic_utc_input_contracts
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6cpp" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/p6cpp" --parallel 2 --target cteas_p6g_surf_source_preflight
+      - name: Process genuine original NOAA 2022 and 2023 input only
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/evidence/exact-head.txt"
+          python3 -u -m scripts.s2g.real_noaa_native_p5_surf \
+            --native-p5-bin "$RUNNER_TEMP/p5cpp/cteas_p5_smerge" \
+            --native-surf-preflight-bin "$RUNNER_TEMP/p6cpp/cteas_p6g_surf_source_preflight" \
+            --evidence-out "$RUNNER_TEMP/evidence/authentic-noaa-p5-surf.json" \
+            2>&1 | tee "$RUNNER_TEMP/evidence/source.log"
+          grep -q G1BB2_REAL_NOAA_P5_NATIVE_SURF_INPUT_PASS_SCOPED "$RUNNER_TEMP/evidence/source.log"
+      - name: Save metadata evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s2g1bb2-authentic-noaa-hash-metadata
+          path: ${{ runner.temp }}/evidence/
+          if-no-files-found: warn
