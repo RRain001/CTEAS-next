@@ -17,7 +17,7 @@ from pathlib import Path
 import re
 import sys
 
-from engine.run_met.station_grid import load_strict_utm_grid, lon_lat_in_utm_grid
+from engine.run_met.station_grid import load_strict_utm_grid, lon_lat_in_utm_grid, utm_bounds_km
 from native_cpp.orchestration.case_admission import admit_case, verify_immutable
 from native_cpp.orchestration.plan import ContractError
 from .isd_lite_wind import filename as lite_filename
@@ -78,6 +78,14 @@ def _selection(path: Path, year: int, grid, raw: Path) -> tuple[dict, list[dict]
         raise ContractError("P5 selected geometry is not the approved UTM algorithm")
     if payload.get("utm_zone") != grid.iutmzn or payload.get("utm_hemisphere") != grid.lsohem:
         raise ContractError("P5 station selection grid zone/hemisphere mismatch")
+    # An old same-zone selection cannot silently be admitted for a different
+    # grid. The selector publishes its exact UTM closed-edge bounds.
+    reported_bounds = payload.get("utm_bounds_km")
+    actual_bounds = utm_bounds_km(grid)
+    if (not isinstance(reported_bounds, (list, tuple)) or len(reported_bounds) != 4 or
+            any(type(v) not in (int, float) or abs(v - expected) > 1e-8
+                for v, expected in zip(reported_bounds, actual_bounds))):
+        raise ContractError("P5 station selection footprint differs from staged grid")
     if payload.get("mode") not in ("OBSERVED", "VIRTUAL_RELOCATED"):
         raise ContractError("P5 station selection mode unsupported")
     rows = payload.get("stations")
