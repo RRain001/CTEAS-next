@@ -17,6 +17,7 @@ import subprocess
 
 from native_cpp.orchestration.case_admission import admit_case, verify_immutable
 from native_cpp.orchestration.plan import ContractError
+from scripts.s2g.p1_terrain_source import check_raster
 
 LOCAL_PRODUCTS = {"CGIAR-CSI-SRTM-v4.1", "NASA-SRTMGL3-v003"}
 API_PRODUCT = "SRTMGL1"
@@ -73,7 +74,13 @@ def run_case(*, case_yaml: Path, source_manifest: Path, source_product: str,
     properties = data.get("selected_tif_properties")
     if not isinstance(properties, dict) or properties.get("sha256") != selected_sha:
         raise ContractError("P1 source raster properties inconsistent with SHA")
-    width,height=properties.get("width"),properties.get("height")
+    # Independently re-read georeferencing and resolution from the current
+    # TIFF bytes via PR #49's validated reader; never trust source JSON alone.
+    actual = check_raster(selected)
+    for key in ("sha256", "width", "height", "nodata", "resolution_degrees"):
+        if actual[key] != properties.get(key):
+            raise ContractError("P1 source raster metadata differs from actual GeoTIFF")
+    width,height=actual["width"],actual["height"]
     if (type(width) is not int or type(height) is not int or
             width <= 0 or height <= 0 or width*height > MAX_PIXELS):
         raise ContractError("P1 selected raster exceeds native input budget")
@@ -88,6 +95,7 @@ def run_case(*, case_yaml: Path, source_manifest: Path, source_product: str,
     expected_parent=case_root / "geo/terrel"
     if (out_dir.parent != expected_parent or out_dir.name not in {"p1_native", "p1_native_test"}
             or not expected_parent.is_dir() or expected_parent.is_symlink()
+            or (case_root / "geo").is_symlink()
             or out_dir.exists() or out_dir.is_symlink()):
         raise ContractError("P1 output must be a fresh producer directory under staged case")
     manifest_sha = sha256(source_manifest)
