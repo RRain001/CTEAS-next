@@ -1,17 +1,12 @@
 name: S2D P6 native MET to standalone P7 real original same-MET science
+# Heavy real-original 143-hour P6/P7 science comparison: MANUAL ONLY.
+# Development PRs run scoped source-contract and software regressions instead.
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2d-p7-native-p6-integrated.yml
-      - native_cpp/modules/p6_calmet/**
-      - native_cpp/modules/p7_calpuff/src/**
-      - native_cpp/modules/p7_calpuff/include/**
-      - native_cpp/modules/p7_calpuff/CMakeLists.txt
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: s2d-p7-native-p6-same-met-${{ github.event.pull_request.number }}
+  group: s2d-p7-native-p6-same-met-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   independently-validated-p6-to-p7:
