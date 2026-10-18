@@ -480,7 +480,7 @@ int main(int argc,char** argv){
         check_one_us_two_ss_source_case(original);
         // Independent cardinalities: 1/1, 1/7, 7/1, 7/7. Existing
         // 2/1 and 2/2 coverage remains unmodified.
-        for(const auto [nss,nus]:
+        for(const auto& [nss,nus]:
             std::vector<std::pair<int,int>>{{1,1},{1,7},{7,1},{7,7}})
             check_unbounded_original_source_cardinality(original,nss,nus);
         // The real single-station Hefei deck must not be promoted to a
