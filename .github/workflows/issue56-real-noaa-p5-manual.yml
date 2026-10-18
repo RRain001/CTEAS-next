@@ -1,0 +1,100 @@
+name: Issue 56 manual authentic new-site P5 SURF production
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Authentic Huoshan/Xinqiao original NOAA replay window"
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - year2022
+          - year2023
+          - crossyear
+permissions:
+  contents: read
+concurrency:
+  group: issue56-real-noaa-manual-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  authentic-p5-source-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Compile independent original SMERGE from pinned vendor revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gfortran-11
+          src="$GITHUB_WORKSPACE/original-cteas/engine/vendor/src/SMERGE_v5.7.0_L121203"
+          test -s "$src/SMERGE.FOR"
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          inc="$RUNNER_TEMP/p5-original-include"
+          mkdir -p "$inc" "$RUNNER_TEMP/issue56-evidence"
+          for item in "$src"/*; do
+            name=$(basename "$item" | tr '[:upper:]' '[:lower:]')
+            test -e "$inc/$name" || ln -s "$item" "$inc/$name"
+          done
+          gfortran-11 -O0 -std=legacy -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -ffixed-line-length-none \
+            -I"$inc" "$src/SMERGE.FOR" -o "$RUNNER_TEMP/p5-original-smerge"
+          sha256sum "$src/SMERGE.FOR" > "$RUNNER_TEMP/issue56-evidence/original-source-sha256.txt"
+          sha256sum "$RUNNER_TEMP/p5-original-smerge" > "$RUNNER_TEMP/issue56-evidence/original-bin-sha256.txt"
+      - name: Prepare real-source dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check \
+            'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          python3 -m unittest -v scripts.s2g.tests.test_issue56_real_noaa_p5_case
+          python3 -m unittest -v native_cpp.modules.p5_smerge.data_prep.tests.test_p5_offline_selector
+      - name: Compile independent C++ SMERGE writer and SURF source preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p5_smerge \
+            -B "$RUNNER_TEMP/p5" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/p5" --parallel 2 \
+            --target cteas_p5_smerge cteas_p5_tests
+          ctest --test-dir "$RUNNER_TEMP/p5" --output-on-failure
+          cmake -S native_cpp/modules/p6_calmet \
+            -B "$RUNNER_TEMP/p6" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/p6" --parallel 2 \
+            --target cteas_p6g_surf_source_preflight
+      - name: Recreate selected new-site NOAA source to native SURF
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/issue56-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/issue56-evidence/source-head.txt"
+          python3 -u -m scripts.s2g.issue56_real_noaa_p5_case \
+            --native-p5-bin "$RUNNER_TEMP/p5/cteas_p5_smerge" \
+            --native-surf-preflight-bin "$RUNNER_TEMP/p6/cteas_p6g_surf_source_preflight" \
+            --original-smerge-bin "$RUNNER_TEMP/p5-original-smerge" \
+            --scenario "${{ inputs.scenario }}" \
+            --evidence-out "$RUNNER_TEMP/issue56-evidence/real-noaa-newsite-surf.json" \
+            2>&1 | tee "$RUNNER_TEMP/issue56-evidence/execution.log"
+          grep -q 'ISSUE56_REAL_NOAA_STAGE=ISSUE56_REAL_NOAA_ORIGINAL_NATIVE_BYTE_PARITY_SCOPED_PASS' \
+            "$RUNNER_TEMP/issue56-evidence/execution.log"
+          echo 'P5_NATIVE_SURF=PRODUCED_UNVERIFIED'
+          echo 'P5_ORIGINAL_PARITY=SCIENCE_ACCEPTED_SCOPED_IF_REPORT_CONFIRMS_BYTE_IDENTITY'
+          echo 'P5_TO_G19=NOT_RUN P6_FIELDS=NOT_RUN P7=NOT_RUN'
+      - name: Preserve audit metadata only, no NOAA raw redistribution
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue56-real-noaa-newsite-metadata-${{ github.run_id }}
+          path: ${{ runner.temp }}/issue56-evidence/
+          retention-days: 14
+          if-no-files-found: warn
