@@ -11,6 +11,7 @@ from pathlib import Path
 
 from native_cpp.orchestration.plan import ContractError
 from native_cpp.modules.p4_read62.data_prep.p4_case_d1 import sha256_file
+from native_cpp.modules.p4_read62.data_prep.p4_case_final import publish_source_only_candidate
 from native_cpp.modules.p4_read62.data_prep.p4_case_year_gate import (
     admit_annual_source_lineage, boundary_years, writer_window,
 )
@@ -142,6 +143,54 @@ class AnnualAuthenticP4GateTest(unittest.TestCase):
         self.save()
         with self.assertRaisesRegex(ContractError, "does not match QA"):
             self.gate()
+
+
+    def _raw_up(self, year, soundings):
+        """Faithful 6201/level syntax; synthetic records, not scientific data."""
+        header = [
+            "UP.DAT          2.1", "   1", "Produced by READ62 Version: 5.661",
+            "NONE    ", "UTC+0000",
+            " 2022 365 12 0 2023 1 12 0 500. 2 1",
+            "     F    F    F    F",
+        ]
+        for when in soundings:
+            h = "   6201  " + f"{int(WMO):8d}"
+            for _ in range(2):
+                h += "    " + f"{when.year:4d}{when.month:4d}{when.day:3d}{when.hour:3d}{0:5d}"
+            h += f"{2:5d}   {2:5d}"
+            header.append(h)
+            header.append("   1000.0/  100./293.2/180/  5   500.0/ 5200./273.2/200/  7")
+        raw = self.upper / str(year) / "fsl_data" / f"up_{WMO}_{year}.dat"
+        raw.write_text("\n".join(header) + "\n", encoding="utf-8")
+        return raw
+
+    def test_candidate_final_has_authentic_header_and_no_cloned_record(self):
+        self._raw_up(2022, [datetime(2022, 12, 31, 12)])
+        self._raw_up(2023, [datetime(2023, 1, 1, 0), datetime(2023, 1, 1, 12)])
+        proof = publish_source_only_candidate(
+            self.jobs, self.gate(), self.upper, START, END)
+        self.assertEqual(proof["status"], "PRODUCED_UNVERIFIED")
+        self.assertEqual(proof["station_count"], 1)
+        self.assertEqual(proof["files"][0]["soundings"], 3)
+        self.assertEqual(proof["p4_to_g19"], "NOT_RUN")
+        text = (self.upper / "final" / f"up_{WMO}.dat").read_text()
+        self.assertEqual(text.count("6201"), 3)
+        self.assertIn("500.", text)
+        self.assertTrue((self.upper / "final" / "stations.csv").is_file())
+
+    def test_candidate_rejects_unrequested_cloned_or_extra_time_without_publish(self):
+        self._raw_up(2022, [datetime(2022, 12, 31, 0), datetime(2022, 12, 31, 12)])
+        self._raw_up(2023, [datetime(2023, 1, 1, 0), datetime(2023, 1, 1, 12)])
+        with self.assertRaisesRegex(ContractError, "unrequested original time"):
+            publish_source_only_candidate(self.jobs, self.gate(), self.upper, START, END)
+        self.assertFalse((self.upper / "final").exists())
+
+    def test_candidate_rejects_missing_required_00_12_native_record(self):
+        self._raw_up(2022, [datetime(2022, 12, 31, 12)])
+        self._raw_up(2023, [datetime(2023, 1, 1, 0)])
+        with self.assertRaisesRegex(ContractError, "missing or extra genuine"):
+            publish_source_only_candidate(self.jobs, self.gate(), self.upper, START, END)
+        self.assertFalse((self.upper / "final").exists())
 
 
 if __name__ == "__main__":
