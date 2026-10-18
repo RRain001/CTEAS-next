@@ -85,7 +85,7 @@ jobs:
             --scenario "${{ inputs.scenario }}" \
             --evidence-out "$RUNNER_TEMP/issue56-evidence/real-noaa-newsite-surf.json" \
             2>&1 | tee "$RUNNER_TEMP/issue56-evidence/execution.log"
-          grep -q 'ISSUE56_REAL_NOAA_STAGE=ISSUE56_REAL_NOAA_STAGED_SURF_PRODUCED_UNVERIFIED' \
+          grep -q 'ISSUE56_REAL_NOAA_STAGE=ISSUE56_REAL_NOAA_ORIGINAL_NATIVE_BYTE_PARITY_SCOPED_PASS' \
             "$RUNNER_TEMP/issue56-evidence/execution.log"
           echo 'P5_NATIVE_SURF=PRODUCED_UNVERIFIED'
           echo 'P5_ORIGINAL_PARITY=SCIENCE_ACCEPTED_SCOPED_IF_REPORT_CONFIRMS_BYTE_IDENTITY'
