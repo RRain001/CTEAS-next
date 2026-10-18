@@ -1,0 +1,62 @@
+name: S2C Issue25 source-stage static audit (no scientific model)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/s2c-issue25-all-fresh-143h.yml
+      - .github/workflows/s2c-issue25-pr-source-audit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-stage-contract-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Parse workflow and fail closed on missing physical provenance stages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+          python3 - <<'PY'
+          import pathlib, yaml
+          path=pathlib.Path('.github/workflows/s2c-issue25-all-fresh-143h.yml')
+          source=path.read_text()
+          doc=yaml.safe_load(source)
+          triggers=doc.get('on',doc.get(True))
+          assert isinstance(triggers,dict),triggers
+          assert set(triggers)=={'workflow_dispatch'},triggers
+          jobs=list(doc.get('jobs',{}).values())
+          assert len(jobs)==1
+          steps=jobs[0]['steps']
+          names=[s.get('name','') for s in steps]
+          geo=next(i for i,v in enumerate(names) if 'fresh native P1 P2 P3 GEO' in v)
+          noaa=next(i for i,v in enumerate(names) if 'selected P4/P5 actual 2022' in v)
+          p6=next(i for i,v in enumerate(names) if '143h native P6 without' in v)
+          original=next(i for i,v in enumerate(names) if 'Independent untouched original CALMET' in v)
+          assert noaa<geo<p6<original
+          need=('c4211914fce527d2ad41ecac1e668d7faa2904bbbfd9135868ee83ef0d32123f',
+                'bd937d99fb13b49ac6185c080359bef050afe76fc63945ac53b7d676547d43dc',
+                'cteas_p1_terrain','cteas_p2_gen_fraction','cteas_p12_to_p3_dat',
+                'cteas_p3_makegeo','verify_p4_p5_frozen_lineage.py',
+                'replay_archived_noaa_2022.py','cteas_p6_native_hourly_driver',
+                'ISSUE25_ALL_FRESH_P1_P2_P3_P4_P5_NATIVE_P6_VS_ORIGINAL_143H=PASS_SCOPED',
+                'total_exceedances','"intervals"]==143','original/run/met/met.dat',
+                'sha256sum -c -')
+          for item in need: assert item in source,item
+          assert 'cteas_p7_native_hefei_2022' not in source
+          assert 'CALPUFF 7.2.1' not in source
+          assert 'git checkout --detach' not in source
+          for name in ('native_cpp/src/p1_terrain_cli.cpp',
+                       'native_cpp/src/p2_gen_fraction_cli.cpp',
+                       'native_cpp/p3/p12_native_dat_adapter.cpp',
+                       'native_cpp/orchestration/replay_archived_noaa_2022.py',
+                       'native_cpp/orchestration/verify_p4_p5_frozen_lineage.py'):
+              assert pathlib.Path(name).is_file(),name
+          print('ISSUE25_ALL_FRESH_MANUAL_WORKFLOW_STRUCTURE=PASS_SOFTWARE_ONLY')
+          print('ISSUE25_FULL_143H_NATIVE_AND_ORIGINAL_SCIENCE=NOT_RUN_IN_PR')
+          PY
