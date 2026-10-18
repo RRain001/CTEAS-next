@@ -23,8 +23,7 @@ inline StationSet original_calmet_multi_station_deck(
     const std::string& deck,float xorig_km,float yorig_km,
     int expected_surface,int expected_upper) {
     if(!std::isfinite(xorig_km)||!std::isfinite(yorig_km)||
-       expected_surface<1||expected_surface>1000||
-       expected_upper<1||expected_upper>1000)
+       expected_surface<1||expected_upper<1)
         throw std::invalid_argument("invalid dynamic CALMET station-count/origin");
     StationSet result;
     std::set<int> surface_ordinals,upper_ordinals;
