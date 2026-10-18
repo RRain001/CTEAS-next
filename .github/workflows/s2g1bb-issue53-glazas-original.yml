@@ -7,8 +7,10 @@ on:
       - native_cpp/reference/validate_p2_glazas_hits.py
       - native_cpp/reference/diagnose_glazas_mesh_coordinates.py
       - native_cpp/reference/tests/test_glazas_mesh_coordinates.py
+      - native_cpp/reference/tests/test_glazas_direct_candidate.py
       - native_cpp/src/geo/glcc_raw_fractions.cpp
       - native_cpp/include/cteas/geo/glcc_raw_fractions.hpp
+      - native_cpp/include/cteas/geo/glcc_direct_laea_probe.hpp
       - native_cpp/reference/tests/test_glazas_original_gate.py
       - native_cpp/reference/tests/test_glazas_original_integer_hits.py
       - native_cpp/src/p2_glcc_raw_cli.cpp
@@ -37,7 +39,7 @@ jobs:
       - name: Original-only comparator and synthetic format tests
         run: |
           set -euo pipefail
-          python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate native_cpp.reference.tests.test_glazas_original_integer_hits native_cpp.reference.tests.test_glazas_mesh_coordinates
+          python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate native_cpp.reference.tests.test_glazas_original_integer_hits native_cpp.reference.tests.test_glazas_mesh_coordinates native_cpp.reference.tests.test_glazas_direct_candidate
           echo 'P2_GLAZAS_GATE_SOFTWARE=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
   authentic-source-build-only:
     if: github.event_name == 'pull_request'
@@ -140,7 +142,7 @@ jobs:
         run: |
           set -euo pipefail
           build="${RUNNER_TEMP}/issue53-glazas-build"
-          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20 --qa-submesh
+          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20 --qa-submesh --probe-direct
           "$build/cteas_p2_glcc_lu_dat" "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
             "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_gen_replay.csv" "${RUNNER_TEMP}/d3-glcc"
           original_sha="$(sha256sum "${RUNNER_TEMP}/original_ctgproc.x" | awk '{print $1}')"
@@ -154,6 +156,7 @@ jobs:
             --native-hits-csv "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_hits.csv" \
             --native-d1-manifest "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
             --native-qa-csv "${RUNNER_TEMP}/d1-native/p2_glcc_submesh_diagnostic.csv" \
+            --direct-probe-hits-csv "${RUNNER_TEMP}/d1-native/p2_glcc_direct_laea_candidate_hits.csv" \
             --out-dir "${RUNNER_TEMP}/glazas-original" --timeout-sec 300
           echo 'P2_ORIGINAL_GLAZAS_SCIENCE=PASS_FRACTION_AND_INTEGER_HITS_IF_TRUE'
       - name: Save manifest and first differences, never vendor/raw-IMG/Fortran binaries
