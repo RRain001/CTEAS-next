@@ -11,14 +11,14 @@ int main(int argc,char** argv) {
         std::cout<<"Usage: cteas_p6g_g19_source_case_preflight "
                     "<met.inp> <GEO.DAT> <SURF.DAT> "
                     "<US1_UP.DAT> <US2_UP.DAT> [US3_UP.DAT ...]\n"
-                    "Checks original 2-6 SS/US stations, UTM 9-layer GEO, "
+                    "Checks original 2-6 SS / 1-6 US stations, UTM 9-layer GEO, "
                     "ordered SURF and per-US upper file brackets. "
                     "Does NOT run or validate P6D/P6E/P6F physics.\n";
         return 0;
     }
-    if(argc<6) {
+    if(argc<5) {
         std::cerr<<"G19 requires met.inp GEO.DAT SURF.DAT and "
-                    "at least two ordered UP.DAT files; --help for usage\n";
+                    "at least one ordered UP.DAT file; --help for usage\n";
         return 2;
     }
     try {

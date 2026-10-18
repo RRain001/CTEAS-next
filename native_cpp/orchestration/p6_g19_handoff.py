@@ -1,7 +1,7 @@
 """S2-G1A source-only P6 G19 handoff for variable UTM grids/stations.
 
 Bridges G0 annual P4/P5 genuine-source *selection metadata* to the existing
-C++ G19 file-backed CALMET reader (2-6 SS/US, 9 layers). Independently verifies
+C++ G19 file-backed CALMET reader (2-6 surface / 1-6 upper stations, nine layers). Independently verifies
 the full original-format file roles and deck identities/geometry before
 constructing a command. Optional --native-input-preflight executes ONLY G19
 file ingestion, never P6D/P6E/P6F, P7 or the legacy Fortran runtime.
@@ -140,8 +140,8 @@ def prepare_g19(
                 f"P6 G19 static met deck cannot silently change {branch} station identities across years")
     upper_ids = accepted["p4"][0]["station_ids"]
     surface_ids = accepted["p5"][0]["station_ids"]
-    if not G19_REQUIRED_MIN <= len(upper_ids) <= G19_REQUIRED_MAX:
-        raise ContractError("G19 only accepts 2-6 real upper-air stations: do not fake a second station")
+    if not 1 <= len(upper_ids) <= G19_REQUIRED_MAX:
+        raise ContractError("G19 only accepts 1-6 genuine upper-air stations")
     if not G19_REQUIRED_MIN <= len(surface_ids) <= G19_REQUIRED_MAX:
         raise ContractError("G19 only accepts 2-6 surface stations")
     p4raw = json.loads((p4_root / str(years[0]) / "p4_station_selection_audit.json").read_text())

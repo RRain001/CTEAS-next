@@ -100,12 +100,14 @@ inline G19FileBackedCase g19_load_original_source_case(
         throw std::invalid_argument("G19 empty original met.inp");
     const auto ns=g18c1_source_integer(result.original_metinp,"NSSTA");
     const auto nu=g18c1_source_integer(result.original_metinp,"NUSTA");
-    // This narrow 2-6 source branch is the current tested multi-station
-    // scope. Never silently degrade a 1SS or 1US deck into a fake 2SS/2US.
-    if(ns<2||ns>6||nu<2||nu>6||
+    // Original CALMET supports one real upper-air sounding station with
+    // multiple independent surface stations. This input-only branch admits
+    // 2..6 surface / 1..6 upper stations; never synthesize US2 to satisfy
+    // an earlier synthetic two-UP test. Physics acceptance is unchanged.
+    if(ns<2||ns>6||nu<1||nu>6||
        paths.ordered_up_dat.size()!=static_cast<std::size_t>(nu))
         throw std::invalid_argument(
-            "G19 required 2-6 source SS/US and one ordered UP file per US");
+            "G19 requires 2-6 source SS, 1-6 US, and one original UP file per US");
     if(g18c1_source_integer(result.original_metinp,"IRTYPE")!=1||
        g18c1_source_integer(result.original_metinp,"IWFCOD")!=1||
        source_wind_normalize(source_wind_value(
