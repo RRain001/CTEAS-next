@@ -48,6 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/s3d-raw-noaa-replay"
+          export PYTHONPATH="$GITHUB_WORKSPACE${PYTHONPATH:+:$PYTHONPATH}"
           case=project/cases/hefei5km_2022_reference_case_20261011
           python3 native_cpp/orchestration/replay_archived_noaa_2022.py \
             --case "$case" --work "$work" \
