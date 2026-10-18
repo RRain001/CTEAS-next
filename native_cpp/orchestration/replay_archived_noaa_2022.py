@@ -94,9 +94,27 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
         work.resolve().is_relative_to(case.resolve())
     ):
         raise ValueError("unsafe scratch location")
-    original={name:{"sha256":sha(checked(case,name)),
-                    "bytes":checked(case,name).stat().st_size}
-              for name in SOURCES}
+    # An on-disk hash alone is a self-reference: pin EVERY original NOAA,
+    # historical prepared output and source manifest to the checked-out Git
+    # tree object. A tampered worktree must fail before any replay happens.
+    repo_root=Path(__file__).resolve().parents[2]
+    if case.resolve()!=repo_root.joinpath("project/cases",CASE_ID).resolve():
+        raise ValueError("archived original input must be the pinned repository case")
+    original={}
+    for name in SOURCES:
+        selected=checked(case,name)
+        rel=selected.relative_to(repo_root).as_posix()
+        expected_blob=subprocess.check_output(
+            ["git","-C",str(repo_root),"rev-parse",source_sha+":"+rel],
+            text=True).strip()
+        present_blob=subprocess.check_output(
+            ["git","-C",str(repo_root),"hash-object",str(selected)],
+            text=True).strip()
+        if expected_blob!=present_blob:
+            raise ValueError("archived raw/manifest differs from pinned Git tree: "+name)
+        original[name]={"sha256":sha(selected),
+                        "bytes":selected.stat().st_size,
+                        "git_blob":expected_blob}
     if checked(case,TIME).read_text().strip()!="BEGIN:20220101-000000\nEND:20220106-230000":
         raise ValueError("research calendar changed")
     selection=json.loads(checked(case,P5_SELECTION).read_text())
@@ -131,6 +149,15 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
     raw=work/P4_RAW
     stats=igra.convert_igra_to_csv(raw,csvdir,"58424",2022,
                                     float(row["elev_m"]),500.0)
+    # Eligibility is based on ORIGINAL cleaned 00/12 profiles before any
+    # same-/previous-day clone, never on the 730 filled profiles.
+    original_slots={p.stem.split("_",1)[1] for p in csvdir.glob("58424_*.csv")
+                    if re.fullmatch(r"58424_2022[0-9]{4}[01][02]\\.csv",p.name)}
+    original_slots={x for x in original_slots if x.endswith(("00","12"))}
+    # Match is deliberately explicit and independent of the FSL output size.
+    observed=len(original_slots)
+    if observed*5<=730*4:
+        raise ValueError("P4 original IGRA observation coverage not strict >80%")
     filled=igra.ensure_year_completeness(
         csvdir,"58424",2022,stats.get("dropped_slots"))
     if filled["unresolved_slots"]>0:
@@ -185,6 +212,16 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
         raise ValueError("P5 archived ISD-Lite source selection incompatible")
     if p5base.main()!=0:
         raise ValueError("P5 raw ISD+Lite conversion failed")
+    native_source=surface/"isd2smerge_and_fill/583210-99999-2022_isd_lite_source.json"
+    if not native_source.is_file():
+        raise ValueError("P5 native source-audit not emitted from actual NOAA")
+    wind_source=json.loads(native_source.read_text())
+    expected=selection["stations"][0]
+    if (wind_source.get("original_full_isd_hour_count")!=expected["full_isd_raw_hours"] or
+        wind_source.get("original_lite_hour_count")!=expected["isd_lite_raw_hours"] or
+        expected["full_isd_raw_hours"]*10<=8760*9 or
+        expected["isd_lite_raw_hours"]*10<=8760*9):
+        raise ValueError("P5 raw full+Lite year 2022 eligibility not strictly >90%")
     p5clip.CASE_ROOT=work
     p5clip.INPUT_DIR=p5base.OUTPUT_DIR
     p5clip.OUTPUT_DIR=surface/"isd2smerge_cleaned"
@@ -215,12 +252,18 @@ def replay(case: Path, work: Path, source_sha: str) -> dict:
                   else "FAIL_RAW_TO_PREPARED_MISMATCH"),
         "no_network_download":True,"no_golden_case_mutation":True,
         "raw_sources":original,
-        "p4":{"stats":stats,"filled":filled,"fsl_stats":read_stats,
+        "p4":{"stats":stats,"original_valid_slots":observed,
+              "year_expected_slots":730,
+              "raw_coverage_strict_above_80_percent":True,
+              "filled":filled,"fsl_stats":read_stats,
               "produced_fsl":p4_byte,
               "new_optional_p4exact_extension_profiles":730,
               "new_optional_p4exact_extension_sha256":sha(modern_fsl),
               "exact_coord_is_station_metadata_not_utm_grid_origin":True},
-        "p5":{"original_lite_hours":len(lite),"full_isd_source_rows":raw_rows,
+        "p5":{"original_lite_hours":len(lite),
+              "raw_full_and_lite_coverage_strict_above_90_percent":True,
+              "verified_native_full_isd_hours":wind_source["original_full_isd_hour_count"],
+              "full_isd_source_rows":raw_rows,
               "wind_source":"NOAA_ISD_LITE",
               "produced_generic":p5_byte},
         "research_period":"2022-01-01T00:00_to_2022-01-06T23:00",
