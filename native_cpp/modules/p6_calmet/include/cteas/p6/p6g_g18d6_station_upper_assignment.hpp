@@ -23,7 +23,7 @@ inline std::vector<std::size_t> g18d6_station_uppers_from_source_setcom(
     const auto n=nx*ny;
     if(!explicitly_test_only||choice.iupt!=-1||
        choice.nearu.size()!=n||grid.landuse.size()!=n||
-       stations.surface.size()<2||stations.upper.empty())
+       stations.surface.empty()||stations.upper.empty())
         throw std::invalid_argument(
             "G18D6 source selected NEARU station STHEOR scope not accepted");
     const float dx=grid.grid_km*1000.f;
