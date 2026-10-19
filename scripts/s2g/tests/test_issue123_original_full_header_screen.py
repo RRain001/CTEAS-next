@@ -22,7 +22,7 @@ def poly(identifier=0, *, points=3, level=1, area=123,
 class TestOriginalFullHeaderScreen(unittest.TestCase):
     def test_realistic_full_header_and_wolsong_candidates(self):
         b = poly(0) + poly(1, west=80_000_000, east=90_000_000) + poly(
-            2, area=0) + poly(3, level=2, south=34_000_000, north=35_000_000)
+            2, points=0, area=0) + poly(3, level=2, south=34_000_000, north=35_000_000)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "gshhs_f.b"
             path.write_bytes(b)
