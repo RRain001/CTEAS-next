@@ -76,6 +76,32 @@ class D3GlccLuContract(unittest.TestCase):
         self.assertEqual(report["lu_dat_sha256"],hashlib.sha256(
             (self.d/"out/lu.dat").read_bytes()).hexdigest())
 
+    def test_selected_direct_production_glcc_fraction_to_d3(self):
+        # Synthetic contract; genuine original HITS gate is manual-only.
+        csv_path,manifest=input_files(self.d,50,50)
+        p=json.loads(manifest.read_text())
+        p["method"]="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"
+        manifest.write_text(json.dumps(p))
+        r=self.invoke(manifest,csv_path)
+        self.assertEqual(r.returncode,0,r.stderr)
+        report=json.loads((self.d/"out/p2_d3_manifest.json").read_text())
+        self.assertEqual(report["input_d1_method"],p["method"])
+        self.assertEqual(report["total_samples"],10000)
+        self.assertEqual(report["real_source_gen_replay_ci"],
+                         "NOT_APPLICABLE_DIRECT_LAEA_METHOD")
+        self.assertEqual(report["original_GLAZAS_parity"],"NOT_RUN")
+
+    def test_direct_laea_unreviewed_utm_zone_rejected(self):
+        input_files(self.d,3,2,epsg=32651)
+        p=self.d/"p2_manifest.json"
+        m=json.loads(p.read_text())
+        m["method"]="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"
+        p.write_text(json.dumps(m))
+        r=self.invoke()
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn("DIRECT_SCOPE_UTM50N_ONLY",r.stderr)
+        self.assertFalse((self.d/"out").exists())
+
     def test_generic_grid_and_southern_utm(self):
         input_files(self.d,3,2,epsg=32748,x0="500.000",y0="7000.000",dx=.025)
         r=self.invoke()
