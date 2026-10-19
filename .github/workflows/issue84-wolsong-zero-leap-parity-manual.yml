@@ -5,6 +5,8 @@ on:
       - scripts/s2g/issue84_real_noaa_p5_zero_leap.py
       - scripts/s2g/tests/test_issue84_real_noaa_p5_zero_leap.py
       - .github/workflows/issue84-wolsong-zero-leap-parity-manual.yml
+      - native_cpp/modules/p6_calmet/src/p6g_surf_source_preflight_main.cpp
+      - native_cpp/modules/p6_calmet/tests/p6g_surface_dynamic_tests.cpp
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,6 +29,87 @@ jobs:
           python3 -m py_compile scripts/s2g/issue84_real_noaa_p5_zero_leap.py
           python3 -m scripts.s2g.issue84_real_noaa_p5_zero_leap --help
           python3 -m unittest -v scripts.s2g.tests.test_issue84_real_noaa_p5_zero_leap
+      - name: Build single-station P6 source preflight and verify 2024 leap-hour reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-source-only" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6-source-only" --parallel 2 \
+            --target cteas_p6g_surf_source_preflight cteas_p6g_surface_dynamic_tests
+          ctest --test-dir "$RUNNER_TEMP/p6-source-only" --output-on-failure \
+            -R '^p6g_surface_multi_site_multiyear_frozen_143h_parity
+  authentic-2024-noaa-original-native-raw-parity:
+    if: github.event_name == 'workflow_dispatch'
+    needs: offline-zero-leap-contract
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Compile pinned original Fortran SMERGE independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gfortran-11
+          src="$GITHUB_WORKSPACE/original-cteas/engine/vendor/src/SMERGE_v5.7.0_L121203"
+          test -s "$src/SMERGE.FOR"
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          inc="$RUNNER_TEMP/issue84-original-include"
+          mkdir -p "$inc" "$RUNNER_TEMP/issue84-science-metadata"
+          for item in "$src"/*; do
+            name=$(basename "$item" | tr '[:upper:]' '[:lower:]')
+            test -e "$inc/$name" || ln -s "$item" "$inc/$name"
+          done
+          gfortran-11 -O0 -std=legacy -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -ffixed-line-length-none \
+            -I"$inc" "$src/SMERGE.FOR" -o "$RUNNER_TEMP/p5-original-smerge"
+          sha256sum "$src/SMERGE.FOR" > "$RUNNER_TEMP/issue84-science-metadata/original-source-sha256.txt"
+          sha256sum "$RUNNER_TEMP/p5-original-smerge" > "$RUNNER_TEMP/issue84-science-metadata/original-bin-sha256.txt"
+      - name: Compile existing native C++ SMERGE and independent P6 surface reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7' 'numpy>=1.23,<3' 'pandas>=1.5,<3'
+          cmake -S native_cpp/modules/p5_smerge \
+            -B "$RUNNER_TEMP/issue84-p5" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/issue84-p5" --parallel 2 \
+            --target cteas_p5_smerge cteas_p5_tests
+          ctest --test-dir "$RUNNER_TEMP/issue84-p5" --output-on-failure
+          cmake -S native_cpp/modules/p6_calmet \
+            -B "$RUNNER_TEMP/issue84-p6" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+          cmake --build "$RUNNER_TEMP/issue84-p6" --parallel 2 \
+            --target cteas_p6g_surf_source_preflight
+      - name: Execute real 0-station/2024 leap-day same-source original-vs-C++ comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$RUNNER_TEMP/issue84-science-metadata/source-head.txt"
+          python3 -u -m scripts.s2g.issue84_real_noaa_p5_zero_leap \
+            --native-p5-bin "$RUNNER_TEMP/issue84-p5/cteas_p5_smerge" \
+            --native-surf-preflight-bin "$RUNNER_TEMP/issue84-p6/cteas_p6g_surf_source_preflight" \
+            --original-smerge-bin "$RUNNER_TEMP/p5-original-smerge" \
+            --evidence-out "$RUNNER_TEMP/issue84-science-metadata/wolsong-zero-virtual-2024-leap-parity.json" \
+            2>&1 | tee "$RUNNER_TEMP/issue84-science-metadata/execution.log"
+          grep -q 'ISSUE84_REAL_NOAA_ZERO_LEAP=ISSUE84_REAL_2024_ZERO_VIRTUAL_LEAP_RAW_ORIGINAL_NATIVE_SCOPED_PARITY_PASS' \
+            "$RUNNER_TEMP/issue84-science-metadata/execution.log"
+          echo 'NATURAL_PRIMARY_SWITCH=NOT_RUN REAL_ONE_OR_THREE_STATIONS=NOT_RUN WET_DEPOSITION=NOT_RUN'
+      - name: Preserve science audit metadata only; no NOAA originals or vendor binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue84-real-zero-leap-scoped-metadata-${{ github.run_id }}
+          path: ${{ runner.temp }}/issue84-science-metadata/
+          retention-days: 14
+          if-no-files-found: warn
+
   authentic-2024-noaa-original-native-raw-parity:
     if: github.event_name == 'workflow_dispatch'
     needs: offline-zero-leap-contract
