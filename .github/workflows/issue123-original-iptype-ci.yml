@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           cmake -S native_cpp -B "${RUNNER_TEMP}/original-iptype" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
-          cmake --build "${RUNNER_TEMP}/original-iptype" --parallel 2 --target cteas_p2_original_iptype_tests
+          cmake --build "${RUNNER_TEMP}/original-iptype" --parallel 2 --target cteas_p2_original_iptype_tests cteas_p2_original_coast_policy_tests
       - name: Test synthetic hierarchy and source-format rejection (never real science)
         run: |
           set -euo pipefail
