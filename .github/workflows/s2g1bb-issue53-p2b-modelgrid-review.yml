@@ -3,6 +3,9 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
+      - docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json
+      - docs/plans/ISSUE53_P2B_GSHHG_WATER_REVIEW_20261019.md
+      - scripts/s2g/tests/test_p2b_user_mapping_20261019.py
       - scripts/s2g/audit_glc_modelgrid_crosswalk.py
       - scripts/s2g/audit_p2b_makegeo_38to14.py
       - scripts/s2g/tests/test_p2b_makegeo_38to14.py
@@ -34,7 +37,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_glc_crosswalk_review scripts.s2g.tests.test_glc_modelgrid_crosswalk scripts.s2g.tests.test_p2b_makegeo_38to14
+          python3 -m unittest -v scripts.s2g.tests.test_glc_crosswalk_review scripts.s2g.tests.test_glc_modelgrid_crosswalk scripts.s2g.tests.test_p2b_makegeo_38to14 scripts.s2g.tests.test_p2b_user_mapping_20261019
           python3 -m py_compile scripts/s2g/audit_glc_modelgrid_crosswalk.py
       - name: Install bounded native D2 prerequisites (no remote landcover)
         run: |

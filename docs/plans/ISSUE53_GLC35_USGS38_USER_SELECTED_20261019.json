@@ -1,0 +1,233 @@
+{
+  "schema": "cteas.p2b.glc35_usgs38_user_selected_mapping.v1",
+  "decision_date": "2026-10-19",
+  "decision": "USER_SELECTED_34_FIXED_CLASSES_AND_GLC210_L1_LAND_TO_52_SEA_TO_55",
+  "source_legend": "GLC_FCS30D_35_CLASSES",
+  "output_contract": "USGS92_38_CLASS_LU_DAT_V2_1",
+  "reference_hefei_glc_2022_sha256": "340d224d961c88637363be9616302bdf6b955b4921144edc814b875ef9798473",
+  "basis": "User-provided 35-row GLC35→USGS38 table; GLC183 and GLC184 both explicitly revised to USGS77. On 2026-10-19 user explicitly selected GSHHG land/sea partition for GLC210: inside land coastline → USGS52; seaward → USGS55, including bays and estuaries. All other selected codes unchanged.",
+  "production_authorized": false,
+  "p3_makegeo_modified": false,
+  "legacy_p2a_modified": false,
+  "fixed_classes": [
+    {
+      "glc_code": 10,
+      "glc_label": "Rainfed cropland",
+      "usgs_code": 21
+    },
+    {
+      "glc_code": 11,
+      "glc_label": "Herbaceous cropland",
+      "usgs_code": 21
+    },
+    {
+      "glc_code": 12,
+      "glc_label": "Tree/shrub cropland",
+      "usgs_code": 22
+    },
+    {
+      "glc_code": 20,
+      "glc_label": "Irrigated cropland",
+      "usgs_code": 21
+    },
+    {
+      "glc_code": 51,
+      "glc_label": "Closed evergreen broadleaved forest",
+      "usgs_code": 42
+    },
+    {
+      "glc_code": 52,
+      "glc_label": "Open evergreen broadleaved forest",
+      "usgs_code": 42
+    },
+    {
+      "glc_code": 61,
+      "glc_label": "Closed deciduous broadleaved forest",
+      "usgs_code": 41
+    },
+    {
+      "glc_code": 62,
+      "glc_label": "Open deciduous broadleaved forest",
+      "usgs_code": 41
+    },
+    {
+      "glc_code": 71,
+      "glc_label": "Closed evergreen needle-leaved forest",
+      "usgs_code": 42
+    },
+    {
+      "glc_code": 72,
+      "glc_label": "Open evergreen needle-leaved forest",
+      "usgs_code": 42
+    },
+    {
+      "glc_code": 81,
+      "glc_label": "Closed deciduous needle-leaved forest",
+      "usgs_code": 41
+    },
+    {
+      "glc_code": 82,
+      "glc_label": "Open deciduous needle-leaved forest",
+      "usgs_code": 41
+    },
+    {
+      "glc_code": 91,
+      "glc_label": "Closed mixed-leaf forest",
+      "usgs_code": 43
+    },
+    {
+      "glc_code": 92,
+      "glc_label": "Open mixed-leaf forest",
+      "usgs_code": 43
+    },
+    {
+      "glc_code": 120,
+      "glc_label": "Shrubland",
+      "usgs_code": 32
+    },
+    {
+      "glc_code": 121,
+      "glc_label": "Evergreen shrubland",
+      "usgs_code": 32
+    },
+    {
+      "glc_code": 122,
+      "glc_label": "Deciduous shrubland",
+      "usgs_code": 32
+    },
+    {
+      "glc_code": 130,
+      "glc_label": "Grassland",
+      "usgs_code": 31
+    },
+    {
+      "glc_code": 140,
+      "glc_label": "Lichens and mosses",
+      "usgs_code": 83
+    },
+    {
+      "glc_code": 150,
+      "glc_label": "Sparse vegetation",
+      "usgs_code": 77
+    },
+    {
+      "glc_code": 152,
+      "glc_label": "Sparse shrubland",
+      "usgs_code": 77
+    },
+    {
+      "glc_code": 153,
+      "glc_label": "Sparse herbaceous cover",
+      "usgs_code": 77
+    },
+    {
+      "glc_code": 181,
+      "glc_label": "Swamp",
+      "usgs_code": 61
+    },
+    {
+      "glc_code": 182,
+      "glc_label": "Marsh",
+      "usgs_code": 62
+    },
+    {
+      "glc_code": 183,
+      "glc_label": "Flooded flat",
+      "usgs_code": 77
+    },
+    {
+      "glc_code": 184,
+      "glc_label": "Saline",
+      "usgs_code": 77
+    },
+    {
+      "glc_code": 185,
+      "glc_label": "Mangrove",
+      "usgs_code": 61
+    },
+    {
+      "glc_code": 186,
+      "glc_label": "Salt marsh",
+      "usgs_code": 62
+    },
+    {
+      "glc_code": 187,
+      "glc_label": "Tidal flat",
+      "usgs_code": 72
+    },
+    {
+      "glc_code": 190,
+      "glc_label": "Impervious surfaces",
+      "usgs_code": 16
+    },
+    {
+      "glc_code": 200,
+      "glc_label": "Bare areas",
+      "usgs_code": 77
+    },
+    {
+      "glc_code": 201,
+      "glc_label": "Consolidated bare areas",
+      "usgs_code": 74
+    },
+    {
+      "glc_code": 202,
+      "glc_label": "Unconsolidated bare areas",
+      "usgs_code": 73
+    },
+    {
+      "glc_code": 220,
+      "glc_label": "Permanent snow and ice",
+      "usgs_code": 91
+    }
+  ],
+  "conditional_classes": [
+    {
+      "glc_code": 210,
+      "glc_label": "Water body",
+      "outcomes": [
+        {
+          "condition": "GLC210_VALID_AREA_ON_GSHHS_FULL_L1_TERRESTRIAL_SIDE_INCLUDING_INLAND_LAKES_RIVERS",
+          "usgs_code": 52
+        },
+        {
+          "condition": "GLC210_VALID_AREA_ON_GSHHS_FULL_L1_SEAWARD_SIDE_INCLUDING_BAYS_ESTUARIES",
+          "usgs_code": 55
+        }
+      ],
+      "policy_status": "USER_APPROVED_BINARY_RULE_PENDING_GSHHG_SOURCE_AND_IMPLEMENTATION_VALIDATION",
+      "fallback_usgs": null,
+      "shoreline_cutting_method": "Exact (within case projected plane) polygon intersection: split original valid GLC210 polygon area into USGS52 terrestrial portion and USGS55 marine portion; no centre-point pixel vote.",
+      "inland_levels": "GSHHS_f_L2/L3/L4 for QA of nested lakes/islands/ponds; GLC210 enclosed by L1 remains USGS52 even where absent from L2 polygons.",
+      "antartica_policy": "L5/L6 require separately approved ice-front/grounding-line choice; unsupported coverage fails closed.",
+      "ocean_nodata_policy": "NoData 0/250, uncovered offshore GLC raster cells and geometry errors MUST NOT be auto-populated as USGS55.",
+      "notes": "This is a USER-APPROVED modelling convention, not a claim that all ocean-side water physically meets a distinct USGS55 definition. Historical P2-A unchanged; both shoreline sides have the same six source surface parameters in selected MAKEGEO but different output water-category codes."
+    }
+  ],
+  "source_authentication": {
+    "external_gshhg_version": "2.3.7",
+    "distribution": "GSHHG_2_3_7_ESRI_SHAPEFILE_GSHHS_SHORELINE_FULL_ONLY",
+    "release": "https://github.com/GenericMappingTools/gshhg-gmt/releases/download/2.3.7/gshhg-shp-2.3.7.zip",
+    "published_zip_sha256": "8dbbe7e071e77e9e75f2d639239099ebca8d5c16d6a07df8169729d49f15cf41",
+    "zip_downloaded_and_verified": false,
+    "selected_resolution": "f",
+    "primary_land_sea_polygon": "GSHHS_shp/f/GSHHS_f_L1.shp",
+    "secondary_inland_topology_polygons": [
+      "GSHHS_shp/f/GSHHS_f_L2.shp",
+      "GSHHS_shp/f/GSHHS_f_L3.shp",
+      "GSHHS_shp/f/GSHHS_f_L4.shp"
+    ],
+    "wdbii_required_for_binary_water_split": false,
+    "wdbii_shp_usage": "Optional river/border line diagnostics only; never the land-sea polygon classifier.",
+    "high_resolution_role": "High (h) is optional sensitivity comparison only; Full (f) is the primary baseline for 30 m raster"
+  },
+  "gates": [
+    "VERIFY_GSHHG_V2_3_7_ARCHIVE_SHA256_AND_LICENSE",
+    "VERIFY_GSHHS_FULL_L1_L4_POLYGON_FILES_AND_WGS84_TO_GRID_REPROJECTION",
+    "VERIFY_BINARY_L1_LAND_SEA_SPLIT_WITH_SYNTHETIC_SHORE_AND_LAKES",
+    "VERIFY_REAL_2022_GLC_COASTAL_SOURCE_COVERAGE_AND_0_250_NODATA",
+    "VERIFY_FULL_VS_HIGH_COASTLINE_CLASS_DIFFERENCE_AND_TRACE_CONFLICTS",
+    "VERIFY_CROSSWALK_AREA_CONSERVATION_35_TO_38_USGS",
+    "VERIFY_38_CLASS_LU_DAT_AND_ORIGINAL_P3_PARITY"
+  ]
+}
