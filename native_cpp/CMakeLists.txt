@@ -32,6 +32,21 @@ add_executable(cteas_p2_gen_tests tests/p2_gen_fraction_tests.cpp)
 target_link_libraries(cteas_p2_gen_tests PRIVATE cteas_p2_gen)
 add_test(NAME cteas_p2_gen_fraction_contract COMMAND cteas_p2_gen_tests)
 
+# Issue #123: isolate the original Fortran LUGRID / SVGRID point controls.
+# Does NOT link or alter the frozen P2-B EXACT_AREA_V1 producer.
+add_executable(cteas_p2_original_coast_policy_tests
+               tests/p2_original_coast_policy_tests.cpp)
+target_include_directories(cteas_p2_original_coast_policy_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(MSVC)
+  target_compile_options(cteas_p2_original_coast_policy_tests PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_coast_policy_tests
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME cteas_p2_original_coast_policy_synthetic
+         COMMAND cteas_p2_original_coast_policy_tests)
+
 # Enforce case-grid precision independently from data availability.
 add_executable(cteas_grid_origin_precision_tests tests/grid_origin_precision_tests.cpp)
 target_include_directories(cteas_grid_origin_precision_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
