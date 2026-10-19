@@ -104,7 +104,8 @@ class RealModelGridCrosswalkReview(unittest.TestCase):
 
     def test_source_method_and_kind_must_remain_true(self):
         for bad in ({"method":"point_sampling"}, {"source_sha256":"0"*64},
-                    {"crosswalk_status":"PASS"},{"usgs92_lu_dat":"RUN"},
+                    {"crosswalk_status":"PASS"},{"evidence_status":"APPROVED"},
+                    {"usgs92_lu_dat":"RUN"},
                     {"utm_epsg":3857}):
             with self.subTest(bad=bad):
                 m=dict(self.manifest,**bad)
