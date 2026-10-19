@@ -17,6 +17,8 @@ on:
       - scripts/s2g/issue123_d9_original_coastal_hits.py
       - scripts/s2g/tests/test_issue123_d9_original_coastal_hits.py
       - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
+      - scripts/s2g/issue123_science_run_callback.py
+      - scripts/s2g/tests/test_issue123_science_run_callback.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   push:
     branches: [main]
@@ -35,6 +37,8 @@ on:
       - scripts/s2g/issue123_d9_original_coastal_hits.py
       - scripts/s2g/tests/test_issue123_d9_original_coastal_hits.py
       - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
+      - scripts/s2g/issue123_science_run_callback.py
+      - scripts/s2g/tests/test_issue123_science_run_callback.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   workflow_dispatch:
 permissions:
@@ -54,7 +58,7 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype scripts.s2g.tests.test_issue123_d9_original_coastal_hits
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype scripts.s2g.tests.test_issue123_d9_original_coastal_hits scripts.s2g.tests.test_issue123_science_run_callback
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
       - name: D8 source/runtime preflight checkout (compile only, no real scientific claims)
         uses: actions/checkout@v4
@@ -102,6 +106,9 @@ jobs:
   genuine-original-wolsong-coastext-io-adapted:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [offline-original-deck-and-bln-contract]
+    permissions:
+      contents: read
+      issues: write
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
@@ -264,3 +271,17 @@ jobs:
             ${{ runner.temp }}/issue123-d9-hits-report.json
           if-no-files-found: warn
           retention-days: 21
+      - name: Return authentic main science run URL and bounded D6-D9 report to Issue 123
+        if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m scripts.s2g.issue123_science_run_callback \
+            --root "$RUNNER_TEMP" \
+            --run-id "$GITHUB_RUN_ID" \
+            --head-sha "$GITHUB_SHA" \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$GITHUB_REF" \
+            --event "$GITHUB_EVENT_NAME" \
+            --publish
