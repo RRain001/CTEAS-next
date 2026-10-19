@@ -47,7 +47,7 @@ int main(int argc,char** argv){
       const float north=coordlib_real4_km_from_metres(3534540.04);
       if(std::bit_cast<std::uint32_t>(east)!=0x43ff8ae8u ||
          std::bit_cast<std::uint32_t>(north)!=0x455ce8a5u)
-        throw std::runtime_error("GLCC_COODLIB_REAL4_XMULTO_BITS_MISMATCH");
+        throw std::runtime_error("GLCC_COORDLIB_REAL4_XMULTO_BITS_MISMATCH");
       if(east==static_cast<float>(511085.175/1000.) ||
          north==static_cast<float>(3534540.04/1000.))
         throw std::runtime_error("GLCC_REAL4_XMULTO_REGRESSION_NONDISCRIMINATING");
