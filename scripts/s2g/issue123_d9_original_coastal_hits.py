@@ -49,7 +49,7 @@ def validate_controls(control: Path) -> None:
 
 def parse_lu_header(fp):
     lines = [fp.readline().rstrip("\r\n") for _ in range(11)]
-    require(all(lines),"ORIGINAL_HITS_SHORT_HEADER")
+    require(len(lines)==11 and bool(lines[10]),"ORIGINAL_HITS_SHORT_HEADER")
     require(lines[0].split()[:2]==["LU.DAT","2.1"],"ORIGINAL_HITS_VERSION")
     require(lines[4].strip()=="HITS" and lines[5].strip()=="UTM" and
             lines[6].strip()=="52N" and lines[7].startswith("WGS-84"),
@@ -88,8 +88,6 @@ def audit_inputs(original_dir:Path,native:Path,glcc:Path) -> dict:
     d6file=original_dir/"original_coastext_report.json"
     d8file=original_dir.parent/"issue123-d8-oracle"/"d8_iptype_report.json"
     # When oracle lives in the runner temp parallel to D6 as by workflow:
-    if not d8file.is_file():
-        d8file=original_dir.parent/"issue123-d8-oracle"/"d8_iptype_report.json"
     require(d6file.is_file() and not d6file.is_symlink(),"D6_AUDIT_MISSING")
     require(d8file.is_file() and not d8file.is_symlink(),"D8_SCIENCE_GATE_MISSING")
     d6=json.loads(d6file.read_text())
