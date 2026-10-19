@@ -1,0 +1,21 @@
+{
+  "schema": "CTEAS_NEXT_BRANCH_SOURCE_ARCHIVE_V1",
+  "category": "science",
+  "description": "Historical one-off GitHub Action/trigger source retained to allow safe remote branch removal. Not executed from this docs path.",
+  "files": [
+    {
+      "branch": "automation/science/c1/20261017-001",
+      "head_sha": "6d705df3d16df2c9843a32e57393d374341076f3",
+      "path": ".github/science-triggers/c1.request",
+      "blob_sha": "b70228f4161a0c91eb6cdaf7a8b029e6bd8b2908",
+      "source": "SOURCE_SHA=41a1be3d4b6b0a00e213774e5274fe6c27b94b60\nCASE=C1\nREQUEST_ID=20261017-001\n"
+    },
+    {
+      "branch": "automation/science/c2/20261017-001",
+      "head_sha": "cafc17e3462eef95ab5467039aec32d7de866dc6",
+      "path": ".github/science-triggers/c2.request",
+      "blob_sha": "2f42ef21008ae27555e76f83a2d57c664c0fef43",
+      "source": "SOURCE_SHA=62fe98afdab661d90ae3327e2b068b27acd27935\n"
+    }
+  ]
+}
