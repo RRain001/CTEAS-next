@@ -1,0 +1,94 @@
+name: Issue53 P2-B model-grid 35-class mapping exposure (offline review only)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/audit_glc_modelgrid_crosswalk.py
+      - scripts/s2g/tests/test_glc_modelgrid_crosswalk.py
+      - scripts/s2g/audit_glc_crosswalk_review.py
+      - docs/plans/ISSUE53_GLC35_USGS92_REVIEW_CANDIDATES_20261018.json
+      - native_cpp/src/geo/glc_area_fractions.cpp
+      - native_cpp/src/p2_glc_area_cli.cpp
+      - .github/workflows/s2g1bb-issue53-p2b-modelgrid-review.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p2b-modelgrid-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  actual-hefei-model-grid-class-area-review:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout 2022 committed 30m GeoTIFF, never fetch GEE/LFS
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Run offline science-review software unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_glc_crosswalk_review scripts.s2g.tests.test_glc_modelgrid_crosswalk
+          python3 -m py_compile scripts/s2g/audit_glc_modelgrid_crosswalk.py
+      - name: Install bounded native D2 prerequisites (no remote landcover)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++-12 libgdal-dev libssl-dev
+      - name: Real 6168-byte GLCC-independent GLC D2 exact-area calculation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/p2b-build" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/p2b-build" --parallel 2 --target cteas_p2_glc_raw cteas_p2_glc_area_tests
+          ctest --test-dir "${RUNNER_TEMP}/p2b-build" --output-on-failure -R '^cteas_p2_glc_raw_area_contract$'
+          TIFF=data/landcover/glc_fcs30d/v1_2022/hefei/hefei_2022_30m.tif
+          SHA=340d224d961c88637363be9616302bdf6b955b4921144edc814b875ef9798473
+          test "$(wc -c < "$TIFF")" -eq 6168
+          echo "$SHA  $TIFF" | sha256sum -c -
+          "${RUNNER_TEMP}/p2b-build/cteas_p2_glc_raw" \
+            "$TIFF" "${RUNNER_TEMP}/p2b-real-raw" "$SHA" \
+            32650 510.885 3531.269 0.100 50 50
+      - name: Real 50x50 cell-level crosswalk impact quantification; never issue LU.DAT
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.audit_glc_modelgrid_crosswalk \
+            --metadata data/landcover/glc_fcs30d/v1_2022/hefei/metadata.json \
+            --proposal docs/plans/ISSUE53_GLC35_USGS92_REVIEW_CANDIDATES_20261018.json \
+            --source-tif data/landcover/glc_fcs30d/v1_2022/hefei/hefei_2022_30m.tif \
+            --d2-manifest "${RUNNER_TEMP}/p2b-real-raw/p2_manifest.json" \
+            --d2-fractions "${RUNNER_TEMP}/p2b-real-raw/p2_raw_fractions.csv" \
+            --d2-areas "${RUNNER_TEMP}/p2b-real-raw/p2_raw_class_area_m2.csv" \
+            --out-dir "${RUNNER_TEMP}/p2b-modelgrid-review"
+          python3 - <<'PY'
+          import csv,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2b-modelgrid-review"
+          report=json.loads((p/"review.json").read_text())
+          assert report["source_tif_bytes_verified"]
+          assert report["status"]=="P2_MAPPING_REVIEW_REQUIRED"
+          assert report["model_cells"]==2500
+          assert abs(report["model_area_m2"]-25_000_000.)<1e-5
+          assert abs(sum(report["fraction_by_review_tier"].values())-1)<1e-10
+          assert report["GLC_TO_USGS92_LU_DAT"]=="NOT_AUTHORIZED"
+          assert report["P3_GEO_DAT"]=="NOT_RUN"
+          with (p/"p2_usgs92_candidate_only_NOT_APPROVED.csv").open(newline="") as f:
+            rows=list(csv.DictReader(f))
+          assert len(rows)==2500
+          assert len([k for k in rows[0] if k.startswith("candidate_usgs")])==38
+          assert not (p/"lu.dat").exists()
+          print("P2B_REAL_GRID_AREA_AUDIT=PASS_SOFTWARE_SOURCE_ONLY")
+          print("P2B_SCIENCE_MAPPING=P2_MAPPING_REVIEW_REQUIRED; LU_DAT=NOT_AUTHORIZED")
+          print("P2B_REVIEW_AREAS=",json.dumps(report["fraction_by_review_tier"],sort_keys=True))
+          PY
+      - name: Upload only source-bound model-grid-area review; no new landcover assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue53-p2b-actual-hefei-grid-crosswalk-review-not-approved
+          path: |
+            ${{ runner.temp }}/p2b-modelgrid-review/review.json
+            ${{ runner.temp }}/p2b-modelgrid-review/p2_usgs92_candidate_only_NOT_APPROVED.csv
+          if-no-files-found: error
