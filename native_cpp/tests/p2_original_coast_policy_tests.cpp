@@ -6,6 +6,7 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
+#include <utility>
 using namespace cteas::reconstruction::geo;
 namespace {
 void need(bool v,const char* message) {
@@ -49,7 +50,7 @@ int main() {
   // Distinct sampled classes may coexist within one model grid cell.
   // This is integer NGRID/ISUM, NOT physical intersected area.
   std::array<std::uint32_t,2> counts{0,0};
-  for(const auto [cat,iptype]:std::array<std::pair<int,int>,5>{{
+  for(const auto& [cat,iptype]:std::array<std::pair<int,int>,5>{{
       {52,1},{52,1},{52,0},{55,0},{55,1}}}) {
     const auto mapped=original_lugrid_coastal_category(original,cat,iptype);
     if(!mapped)continue;
