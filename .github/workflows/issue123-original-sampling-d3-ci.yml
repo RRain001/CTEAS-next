@@ -1,0 +1,41 @@
+name: Issue123 D3 original sampling opt-in recount (synthetic only)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_recount.hpp
+      - native_cpp/src/geo/ctgproc_original_sampling_recount.cpp
+      - native_cpp/tests/p2_original_sampling_recount_tests.cpp
+      - native_cpp/CMakeLists.txt
+      - scripts/s2g/gshhg_full_hierarchy.py
+      - scripts/s2g/tests/test_gshhg_full_hierarchy.py
+      - docs/plans/ISSUE123_ORIGINAL_SAMPLING_D3_20261019.md
+      - .github/workflows/issue123-original-sampling-d3-ci.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  d3-synthetic-contracts-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install native dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++-12 libgdal-dev libgeos-dev libssl-dev
+      - name: Build original policy IPTYPE and opt-in recount synthetic programs
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/issue123-d3" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/issue123-d3" --parallel 2 --target cteas_p2_original_coast_policy_tests cteas_p2_original_iptype_tests cteas_p2_original_sampling_recount_tests
+      - name: Test D1 D2 D3 software contracts and Full-only source manifest parser
+        run: |
+          set -euo pipefail
+          ctest --test-dir "${RUNNER_TEMP}/issue123-d3" -R '^cteas_p2_original_(coast_policy|full_iptype|sampling_recount)_synthetic$' --output-on-failure
+          /usr/bin/python3 -m unittest -v scripts.s2g.tests.test_gshhg_full_hierarchy
+          echo "ISSUE123_D3=PASS_SYNTHETIC_ONLY AUTHENTIC_FULL_L1_L4=NOT_RUN ORIGINAL_FORTRAN_PARITY=NOT_RUN"
