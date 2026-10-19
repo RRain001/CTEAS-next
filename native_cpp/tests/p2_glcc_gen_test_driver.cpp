@@ -104,10 +104,21 @@ int main(int argc,char** argv){
          projected.i<1||projected.i>50||projected.j<1||projected.j>50)
         throw std::runtime_error("DIRECT_LAEA_CANDIDATE_PROJECTION_BROKEN");
       bool invalid_zone_rejected=false;
-      try {DirectLaeaProbe outside_scope(32651);}
+      try {DirectLaeaProbe outside_scope(3857);}
       catch(const std::invalid_argument&) {invalid_zone_rejected=true;}
       if(!invalid_zone_rejected)
-        throw std::runtime_error("DIRECT_LAEA_CANDIDATE_SCOPE_BROKEN");
+        throw std::runtime_error("DIRECT_LAEA_NON_UTM_EPSG_NOT_REJECTED");
+      // A different WGS84 UTM zone is now a software-supported
+      // projection; it must not be mistaken for original-science parity.
+      DirectLaeaProbe other_zone(32654);
+      DirectLaeaProbe southern(32748);
+      const auto east=other_zone.project(9614,4210,18,17,20,
+                                          0.f,0.f,0.100f);
+      const auto south=southern.project(9614,4210,18,17,20,
+                                         0.f,0.f,0.100f);
+      if(!std::isfinite(east.x_km)||!std::isfinite(east.y_km)||
+         !std::isfinite(south.x_km)||!std::isfinite(south.y_km))
+        throw std::runtime_error("DIRECT_LAEA_MULTI_UTM_PROJECTION_NONFINITE");
     }
     const auto r=compute_glcc_gen_replay(argv[1],{x,y,dx,nx,ny},epsg,mesh);
     // Software-only synthetic replay: enabling optional coordinate QA MUST NOT
@@ -140,7 +151,7 @@ int main(int argc,char** argv){
       throw std::runtime_error("GLCC_SELECTED_DIRECT_PRODUCTION_QA_OR_SOURCE_DRIFT");
     std::vector<std::uint32_t> independent_counts(production.counts.size(),0);
     std::vector<std::uint32_t> independent_samples(production.cell_samples.size(),0);
-    DirectLaeaProbe independent(32650);
+    DirectLaeaProbe independent(epsg);
     const float x0=static_cast<float>(grid.x0_m/1000.);
     const float y0=static_cast<float>(grid.y0_m/1000.);
     const float step=static_cast<float>(grid.dx_m/1000.);
@@ -175,13 +186,11 @@ int main(int argc,char** argv){
        independent_samples!=production.cell_samples||
        independent_counts!=production.counts)
       throw std::runtime_error("GLCC_SELECTED_PRODUCTION_NOT_INDEPENDENT_CANDIDATE");
-    if(epsg==32650) {
-      bool unsupported_zone_rejected=false;
-      try{(void)compute_glcc_direct_laea(argv[1],grid,32651,mesh);}
-      catch(const std::runtime_error&){unsupported_zone_rejected=true;}
-      if(!unsupported_zone_rejected)
-        throw std::runtime_error("GLCC_DIRECT_OUTSIDE_PROVEN_UTM_ZONE_ACCEPTED");
-    }
+    bool invalid_epsg_rejected=false;
+    try{(void)compute_glcc_direct_laea(argv[1],grid,3857,mesh);}
+    catch(const std::runtime_error&){invalid_epsg_rejected=true;}
+    if(!invalid_epsg_rejected)
+      throw std::runtime_error("GLCC_DIRECT_NON_WGS84_UTM_ACCEPTED");
     std::ofstream out(argv[9]);if(!out)return 3;
     out<<"i,j,samples";
     for(int k:kGlccUsgs92Classes)out<<",cat"<<k;
