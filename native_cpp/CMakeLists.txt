@@ -67,6 +67,32 @@ endif()
 add_test(NAME cteas_p2_original_full_iptype_synthetic
          COMMAND cteas_p2_original_iptype_tests)
 
+# Issue #123 D4: read original COASTRD-extracted BLN and emulate PNPOLY
+# with REAL*4 intermediates (synthetic only, not an original Fortran PASS).
+# Independent of the GEOS D2 adapter and of all production P2 code paths.
+add_library(cteas_p2_original_bln_pnpoly STATIC
+            src/geo/ctgproc_original_bln_pnpoly.cpp)
+target_include_directories(cteas_p2_original_bln_pnpoly
+                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(MSVC)
+  target_compile_options(cteas_p2_original_bln_pnpoly PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_bln_pnpoly
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_executable(cteas_p2_original_bln_pnpoly_tests
+               tests/p2_original_bln_pnpoly_tests.cpp)
+target_link_libraries(cteas_p2_original_bln_pnpoly_tests
+                      PRIVATE cteas_p2_original_bln_pnpoly)
+if(MSVC)
+  target_compile_options(cteas_p2_original_bln_pnpoly_tests PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_bln_pnpoly_tests
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_test(NAME cteas_p2_original_bln_pnpoly_synthetic
+         COMMAND cteas_p2_original_bln_pnpoly_tests)
+
 # Enforce case-grid precision independently from data availability.
 add_executable(cteas_grid_origin_precision_tests tests/grid_origin_precision_tests.cpp)
 target_include_directories(cteas_grid_origin_precision_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
