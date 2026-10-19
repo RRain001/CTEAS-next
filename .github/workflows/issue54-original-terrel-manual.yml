@@ -67,11 +67,12 @@ jobs:
           echo 'ORIGINAL_TERREL_CONTRACT_SOFTWARE=PASS_REAL_ORIGINAL_NOT_RUN'
 
   genuine-original-vs-native:
-    # Historical routes remain main-only. New GL3 may be tested manually on the
-    # fixed reviewed PR branch BEFORE merge, by the repo owner alone.
+    # On main, the three reviewed products remain manually dispatchable
+    # after merge. Before merge, only the owner may manually replay GL3 on
+    # this exact PR branch; historical routes remain main-only.
     if: >-
       github.event_name == 'workflow_dispatch' &&
-      ((github.ref == 'refs/heads/main' && inputs.route != 'P1_B_90M_DOWNLOAD') ||
+      (github.ref == 'refs/heads/main' ||
        (github.ref == 'refs/heads/codex/p1-opentopo-srtmgl3-selectable' &&
         inputs.route == 'P1_B_90M_DOWNLOAD' && github.actor == 'RRain001'))
     runs-on: ubuntu-22.04
