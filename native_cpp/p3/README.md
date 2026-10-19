@@ -1,7 +1,18 @@
 # S2-2B: native P1/P2 output serialization into original MAKEGEO inputs
 
-This is **an I/O adapter**, not a reimplementation or modification of P1/P2/P3 physics.
-Supported scope: frozen Hefei 2022, 50×50@100m, UTM50N WGS84, fixed x0=510.885 km / y0=3531.269 km, 38 land-use categories.
+The `cteas_p12_to_p3_dat` **I/O adapter remains scoped to frozen Hefei** 2022,
+50×50@100m, UTM50N WGS84, fixed x0=510.885 km / y0=3531.269 km, and 38 land-use categories.
+It is not a reimplementation or modification of P1/P2 physics.
+
+**Issue #46 D1-A:** the separate `cteas_p3_makegeo` computation and
+`GEO.DAT` writer accept bounded dynamic WGS84 UTM grid parameters from an
+original-format MAKEGEO.INP **provided** that the independently produced
+`LU.DAT` and `TERREL.DAT` share the exact same zone/hemisphere, dimensions,
+three-decimal-km origin and spacing. Existing selected 38→14-class physical
+formula and unsupported-option gates are unchanged. Dynamic P1/P2 CSV→DAT
+serialization has **not** been generalized; this software test uses only small
+synthetic input files, not a real non-Hefei case or original Fortran parity.
+See `docs/plans/ISSUE46_P3_D1A_DYNAMIC_MAKEGEO_20261019.md`.
 
 ## Build and example
 
