@@ -25,14 +25,31 @@ class BulkFallbackAdmissionTests(unittest.TestCase):
             tiles_for_bbox({"west":114,"east":115,"south":60,"north":61})
 
     def test_gl3_bulk_urls_use_official_latitude_bands(self):
-        self.assertIn("/SRTM_GL3_srtm/North_0_29/N29E115.tif",
-                      _tile_url("N29E115.tif","SRTMGL3"))
-        self.assertIn("/SRTM_GL3_srtm/North_30_60/N31E115.tif",
-                      _tile_url("N31E115.tif","SRTMGL3"))
-        self.assertIn("/SRTM_GL3_srtm/South/S01E115.tif",
-                      _tile_url("S01E115.tif","SRTMGL3"))
-        self.assertIn("/SRTM_GL1_srtm/N31E115.tif",
-                      _tile_url("N31E115.tif","SRTMGL1"))
+        # 2026-10-19 official S3 ListObjectsV2: northern tiles require
+        # an intermediate North/ folder, while South has no latitude band.
+        root="https://opentopography.s3.sdsc.edu/raster/SRTM_GL3/SRTM_GL3_srtm/"
+        self.assertEqual(
+            _tile_url("N29E115.tif","SRTMGL3"),
+            root+"North/North_0_29/N29E115.tif")
+        self.assertEqual(
+            _tile_url("N30E115.tif","SRTMGL3"),
+            root+"North/North_30_60/N30E115.tif")
+        self.assertEqual(
+            _tile_url("N31E114.tif","SRTMGL3"),
+            root+"North/North_30_60/N31E114.tif")
+        self.assertEqual(
+            _tile_url("N31E115.tif","SRTMGL3"),
+            root+"North/North_30_60/N31E115.tif")
+        self.assertEqual(
+            _tile_url("S01E006.tif","SRTMGL3"),
+            root+"South/S01E006.tif")
+        self.assertEqual(
+            _tile_url("S01E115.tif","SRTMGL3"),
+            root+"South/S01E115.tif")
+        self.assertEqual(
+            _tile_url("N31E115.tif","SRTMGL1"),
+            "https://opentopography.s3.sdsc.edu/raster/SRTM_GL1/"
+            "SRTM_GL1_srtm/N31E115.tif")
         with self.assertRaises(OpenTopoBulkError):
             _tile_url("../secret.tif","SRTMGL3")
         with self.assertRaises(OpenTopoBulkError):
