@@ -35,7 +35,10 @@ def parse_header(raw: bytes) -> dict:
     flag = packed & 0xffffffff
     level, version = flag & 255, (flag >> 8) & 255
     source = (flag >> 24) & 1
-    if (ident < 0 or not 3 <= npts <= MAX_POINTS_PER_POLYGON or
+    # Original COASTEXT skips zero-area river/border records, including
+    # degenerate zero/short-point records; do not reject genuine source.
+    if (ident < 0 or not 0 <= npts <= MAX_POINTS_PER_POLYGON or
+            (area != 0 and npts < 3) or
             level not in (1, 2, 3, 4) or not 10 <= version <= 30 or
             not -360_000_000 <= west <= 360_000_000 or
             not -360_000_000 <= east <= 360_000_000 or
