@@ -110,6 +110,39 @@ jobs:
           (out/'wolsong_evidence.json').write_text(json.dumps(result,indent=2)+'\n')
           print(json.dumps(result,sort_keys=True))
           PY
+      - name: Extract verified GSHHG High L1 from the exact official v2.3.7 archive
+        if: ${{ inputs.validation_scope == 'full_p2b' }}
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+          from scripts.s2g import gshhg_v237_cache
+          cache=Path(os.environ['RUNNER_TEMP'])/'gshhg/2.3.7'
+          gshhg_v237_cache.verify(cache)  # Strict official ZIP and Full L1 sidecar SHA
+          high=cache/'GSHHS_h_L1'
+          high.mkdir(exist_ok=False)
+          with ZipFile(cache/'gshhg-shp-2.3.7.zip') as z:
+              for ext in ('.shp','.shx','.dbf','.prj'):
+                  suffix='GSHHS_shp/h/GSHHS_h_L1'+ext
+                  items=[i for i in z.infolist() if i.filename.endswith(suffix)]
+                  if len(items)!=1 or not 0<items[0].file_size<300*1024*1024:
+                      raise RuntimeError('VERIFIED_GSHHG_HIGH_L1_MEMBER_MISSING_OR_OVERSIZE:'+ext)
+                  (high/('GSHHS_h_L1'+ext)).write_bytes(z.read(items[0]))
+          print('GSHHG_HIGH_L1=EXTRACTED_FROM_SHA_VERIFIED_OFFICIAL_V237_ARCHIVE')
+          PY
+      - name: Audit 222 52/55 mixed cells with independent GSHHG Full/High geometry
+        if: ${{ inputs.validation_scope == 'full_p2b' }}
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.p2b_wolsong_mixed_coast_audit \
+            --tif data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif \
+            --lu-dat "${RUNNER_TEMP}/wolsong-p2b-real/lu.dat" \
+            --full-shp "${RUNNER_TEMP}/gshhg/2.3.7/GSHHS_f_L1/GSHHS_f_L1.shp" \
+            --high-shp "${RUNNER_TEMP}/gshhg/2.3.7/GSHHS_h_L1/GSHHS_h_L1.shp" \
+            --out "${RUNNER_TEMP}/wolsong-evidence/mixed-geo-audit"
+          echo "P2B_52_55_MIXED_GEOMETRY=AUDITED_SCOPED; 2022_OBSERVED_SHORELINE=NOT_VERIFIED; P3=NOT_RUN"
       - name: Preserve real coast diagnostic even if later stages blocked
         if: always()
         uses: actions/upload-artifact@v4
@@ -117,6 +150,8 @@ jobs:
           name: issue119-wolsong-real-coast
           path: |
             ${{ runner.temp }}/wolsong-evidence/coast_utm52n.json
+            ${{ runner.temp }}/wolsong-evidence/mixed-geo-audit/mixed_52_55_cells.csv
+            ${{ runner.temp }}/wolsong-evidence/mixed-geo-audit/mixed_52_55_audit.json
             ${{ runner.temp }}/wolsong-p2b-real/p2_b_d3_manifest.json
             ${{ runner.temp }}/wolsong-p2b-real/lu.dat
             ${{ runner.temp }}/wolsong-p2b-real/wolsong_evidence.json
