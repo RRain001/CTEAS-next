@@ -87,9 +87,22 @@ int main(int argc,char** argv){
     const auto& qa_mesh=legacy_qa?legacy_qa->diagnostic_mesh:r.diagnostic_mesh;
     const char* fraction_file=modes.production_direct
         ?"p2_glcc_usgs92_direct_laea.csv":"p2_glcc_usgs92_gen_replay.csv";
-    const char* method=modes.production_direct
-        ?"GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"
-        :"GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY";
+    // Preserve the already-science-compared UTM50N provenance identifier.
+    // Other WGS84 UTM zones MUST have a distinct unvalidated method tag.
+    const char* method=!modes.production_direct
+        ?"GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY"
+        :(epsg==32650
+          ?"GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"
+          :"GLCC_HEADERLESS_LAEA_DIRECT_WGS84_UTM_REAL4_GLOBE_LUGRID");
+    const bool exact_hefei_profile=epsg==32650 && nx==50 && ny==50 &&
+          mesh==20 && std::abs(x-510885.)<1e-6 &&
+          std::abs(y-3531269.)<1e-6 && std::abs(d-100.)<1e-6;
+    // A matching geometry alone is NOT a new science acceptance:
+    // the actual pinned source, original binary and independent comparison
+    // are checked only by the manual GLAZAS workflow.
+    const char* science_scope=exact_hefei_profile
+        ?"HEFEI_UTM50N_CONFIG_ELIGIBLE_FOR_MANUAL_ORIGINAL_SCIENCE"
+        :"NON_HEFEI_OR_NON_REFERENCE_CONFIG_NO_ORIGINAL_SCIENCE_VERDICT";
     fs::create_directory(dest);
     try {
       std::ofstream f(dest/fraction_file);
@@ -241,6 +254,7 @@ int main(int argc,char** argv){
       meta<<"],\n  \"included\": "<<r.included<<", \"outside\": "<<r.outside<<", \"nonempty_cells\": "<<nonempty<<",\n"
           <<"  \"method\": \""<<method<<"\",\n"
           <<"  \"fractions_filename\": \""<<fraction_file<<"\",\n"
+          <<"  \"original_science_scope\": \""<<science_scope<<"\",\n"
           <<"  \"point_counts_are_not_pixel_areas\": true,\n"
           <<"  \"evidence_status\": \"PRODUCED_UNVERIFIED\",\n"
           <<"  \"official_GLAZAS_parity\": \"NOT_RUN\",\n"
