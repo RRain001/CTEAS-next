@@ -54,7 +54,7 @@ def parse_original_makegeo(path: Path):
     water=[]
     controls={}
     for line in source.splitlines():
-        m=re.match(r"^\s*!\s*(X|OUTCAT|IWAT|NINCAT|NOUTCAT|NSPLIT|CFRACT|FLUMIN)\s*=\s*([^!]+)!",line)
+        m=re.search(r"!\s*(X|OUTCAT|IWAT|NINCAT|NOUTCAT|NSPLIT|CFRACT|FLUMIN)\s*=\s*([^!]+)!",line)
         if not m:
             continue
         key,values=m.groups()
