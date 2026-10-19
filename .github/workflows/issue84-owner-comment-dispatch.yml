@@ -30,3 +30,25 @@ jobs:
             --field years=2023,2024 --field max_nearest=6
           echo 'ISSUE84_OWNER_MANUAL_NOAA_SOURCE_SCREEN_DISPATCH_ACCEPTED'
           echo 'Candidate evidence only: P5_ORIGINAL_PARITY=NOT_RUN, SCIENCE_PASS=NO'
+
+  owner-explicit-issue84-real-zero-leap:
+    if: >-
+      github.repository == 'RRain001/CTEAS-next' &&
+      github.event.issue.number == 84 &&
+      !github.event.issue.pull_request &&
+      github.event.issue.state == 'open' &&
+      github.event.comment.user.login == 'RRain001' &&
+      github.event.comment.body == '/cteas-p5-84-zero-leap-real'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch real 2024 NOAA zero-virtual SMERGE scientific parity from main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: RRain001/CTEAS-next
+        run: |
+          set -euo pipefail
+          gh workflow run issue84-wolsong-zero-leap-parity-manual.yml --ref main
+          echo 'ISSUE84_OWNER_REAL_ZERO_LEAP_MANUAL_DISPATCH_ACCEPTED'
+          echo 'Only downstream original-vs-native artifact may establish a scoped PASS'
