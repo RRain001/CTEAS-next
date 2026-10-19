@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - scripts/s2g/issue84_noaa_source_screen.py
+      - scripts/s2g/tests/test_issue84_noaa_source_screen.py
       - .github/workflows/issue84-noaa-source-screen.yml
   workflow_dispatch:
     inputs:
@@ -39,6 +40,7 @@ jobs:
           python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
           python3 -m py_compile scripts/s2g/issue84_noaa_source_screen.py
           python3 -m scripts.s2g.issue84_noaa_source_screen --help
+          python3 -m unittest -v scripts.s2g.tests.test_issue84_noaa_source_screen
   authentic-noaa-candidate-screen:
     if: github.event_name == 'workflow_dispatch'
     needs: offline-entrypoint-contract
