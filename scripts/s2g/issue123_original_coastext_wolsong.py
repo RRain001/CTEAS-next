@@ -100,7 +100,7 @@ def prepare(template: Path, source: Path, glcc: Path,
                   "original_source_sha256": SOURCE_SHA,
                   "original_glcc_sha256": GLCC_SHA,
                   "original_gshhs_full_sha256": manifest["binary_sha256"],
-                  "original_bln": "NOT_RUN", "real_iptype_parity": "NOT_RUN",
+                  "original_coastext_bln": "NOT_RUN", "real_iptype_parity": "NOT_RUN",
                   "original_hits_lu_parity": "NOT_RUN"}
         (out / "input_provenance.json").write_text(json.dumps(result, indent=2) + "\n")
         return result
