@@ -53,3 +53,27 @@ the patched params include nor vendor/executable/BLN is uploaded.
 does not establish independent C++ equivalence or all-compiler portability.
 Further original Fortran/C++ real same-BLN IPTYPE and 38-class HITS/LU
 checks remain mandatory. No Antarctica science/validation is added.
+
+## GNU STREAM EOF compatibility (D6-B2)
+
+[Real Run #39269621552](https://github.com/RRain001/CTEAS-next/actions/runs/39269621552)
+advanced beyond the earlier GSHHS initial read: the adapted original
+`COASTEXT` scanned the genuine binary until an expected EOF, but
+gfortran STREAM signaled `End of file` at pinned original
+`BREADH` line ~7131 instead of following the source's `ERR=99`
+branch. Original CTGPROC was written to treat an input read error as
+a signal that the source stream ended; GNU STREAM distinguishes
+`END=` from `ERR=`.
+
+D6-B2 generates a second **fully documented runtime I/O derivative**:
+on a SHA-pinned, transient copy of original `ctgproc.for` it changes
+only the 8 `READ(IOGSHHS,ERR=99)` control clauses *within BREADH*
+to equal-width `READ(IOGSHHS,END=99)`. It SHA-hashes the adapted
+source and publishes metadata only. All calculations, polygon logic,
+projection/datum transforms, original BLN writing, GSHHG and GLCC bytes
+remain unchanged. **This is NOT byte-identical unmodified vendor
+Fortran**. Both adapters must appear in the audit manifest; failure to
+validate the exact number of edits blocks execution. Successful
+original BLN creation remains a limited IO-adapted oracle, and true
+Fortran/C++ original same-BLN IPTYPE and 38-class output comparison
+still require separate strict tests.

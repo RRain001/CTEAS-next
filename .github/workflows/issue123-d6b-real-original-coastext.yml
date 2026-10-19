@@ -5,6 +5,8 @@ on:
     paths:
       - scripts/s2g/issue123_original_coastext_wolsong.py
       - scripts/s2g/issue123_gfortran_stream_io_adapter.py
+      - scripts/s2g/issue123_gfortran_eof_adapter.py
+      - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
       - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
@@ -13,6 +15,8 @@ on:
     paths:
       - scripts/s2g/issue123_original_coastext_wolsong.py
       - scripts/s2g/issue123_gfortran_stream_io_adapter.py
+      - scripts/s2g/issue123_gfortran_eof_adapter.py
+      - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
       - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
@@ -34,9 +38,9 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
-  genuine-unmodified-original-wolsong-coastext:
+  genuine-original-wolsong-coastext-io-adapted:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [offline-original-deck-and-bln-contract]
     runs-on: ubuntu-22.04
@@ -61,7 +65,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends gfortran
-      - name: SHA-pin original source and build genuine original CTGPROC
+      - name: SHA-pin original source and build original algorithms with audited GNU IO adapters
         run: |
           set -euo pipefail
           test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
@@ -79,6 +83,9 @@ jobs:
           python3 -m scripts.s2g.issue123_gfortran_stream_io_adapter \
             --original-params "$vendor/params.ctg" --original-source "$vendor/ctgproc.for" \
             --out "$stage/params.ctg" --manifest "$RUNNER_TEMP/issue123-d6b-io-adapter.json"
+          python3 -m scripts.s2g.issue123_gfortran_eof_adapter \
+            --original-source "$vendor/ctgproc.for" --staged-source "$stage/ctgproc.for" \
+            --manifest "$RUNNER_TEMP/issue123-d6b-eof-adapter.json"
           gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 -I"$stage" "$stage/ctgproc.for" -o "$RUNNER_TEMP/issue123-original-ctgproc"
       - name: Verify real GSHHG Full and GLCC source SHA
         run: |
@@ -96,6 +103,7 @@ jobs:
             --cache "$RUNNER_TEMP/issue123-d6b-gshhs" \
             --out "$RUNNER_TEMP/issue123-d6b-original-run"
           cp "$RUNNER_TEMP/issue123-d6b-io-adapter.json" "$RUNNER_TEMP/issue123-d6b-original-run/io_adapter_manifest.json"
+          cp "$RUNNER_TEMP/issue123-d6b-eof-adapter.json" "$RUNNER_TEMP/issue123-d6b-original-run/eof_adapter_manifest.json"
       - name: Execute genuine original Fortran COASTEXT
         run: |
           set -euo pipefail
@@ -132,6 +140,7 @@ jobs:
           path: |
             ${{ runner.temp }}/issue123-d6b-original-run/input_provenance.json
             ${{ runner.temp }}/issue123-d6b-original-run/io_adapter_manifest.json
+            ${{ runner.temp }}/issue123-d6b-original-run/eof_adapter_manifest.json
             ${{ runner.temp }}/issue123-d6b-original-run/original_coastext_report.json
           if-no-files-found: warn
           retention-days: 21

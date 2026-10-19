@@ -19,6 +19,7 @@ import sys
 from native_cpp.reference.validate_p2_glazas_original import _edit_card
 from scripts.s2g import issue123_gshhg_binary_full as binary
 from scripts.s2g.issue123_gfortran_stream_io_adapter import STATUS as IO_STATUS
+from scripts.s2g.issue123_gfortran_eof_adapter import STATUS as EOF_STATUS
 
 SOURCE_SHA = "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281"
 GLCC_SHA = "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a"
@@ -192,6 +193,15 @@ def audit(out: Path, original_binary: Path) -> dict:
             adapter.get("original_fortran_compiler") != "gfortran -std=legacy" or
             adapter.get("original_ctgproc_fortran_body_changed") is not False):
         raise ValueError("D6B_ORIGINAL_GNU_IO_ADAPTER_PROVENANCE_DRIFT")
+    eof_file = out / "eof_adapter_manifest.json"
+    if eof_file.is_symlink() or not eof_file.is_file():
+        raise ValueError("D6B_MISSING_BREADH_EOF_ADAPTER_AUDIT")
+    eof_adapter = json.loads(eof_file.read_text())
+    if (eof_adapter.get("status") != EOF_STATUS or
+            eof_adapter.get("original_ctgproc_sha256") != SOURCE_SHA or
+            eof_adapter.get("patched_header_reads") != 8 or
+            eof_adapter.get("computational_physics_changes") is not False):
+        raise ValueError("D6B_BREADH_EOF_ADAPTER_PROVENANCE_DRIFT")
     result = parse_bln(out / "coast.bln")
     lst = out / "ctgproc.lst"
     if lst.is_symlink() or not lst.is_file() or lst.stat().st_size < 100:
@@ -200,7 +210,8 @@ def audit(out: Path, original_binary: Path) -> dict:
         raise ValueError("D6B_ORIGINAL_BINARY_MISSING")
     summary = {**provenance, **result,
                "gnu_stream_io_adapter": adapter,
-               "status": "D6B_GNU_STREAM_IO_ADAPTED_ORIGINAL_COASTEXT_GENERATED_BLN_SCOPED",
+               "gnu_breadh_eof_adapter": eof_adapter,
+               "status": "D6B_GNU_STREAM_EOF_ADAPTED_ORIGINAL_COASTEXT_GENERATED_BLN_SCOPED",
                "original_executable_sha256": sha(original_binary),
                "original_ctgproc_lst_sha256": sha(lst),
                "original_coastext_bln": "PASS_ORIGINAL_OUTPUT_PRESENT",
