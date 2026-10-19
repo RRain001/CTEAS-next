@@ -1,0 +1,177 @@
+name: Issue46 manual real P2-B LU to original/native MAKEGEO P3 parity (same input)
+on:
+  workflow_dispatch:
+    inputs:
+      p2b_source_run_id:
+        description: Verified genuine GSHHG Full + real Hefei GLC P2-B D3 run id
+        type: string
+        required: true
+        default: '39212589623'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: issue46-p3-p2b-hefei-real-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  original-fortran-versus-native-p3-new-real-p2b-lu:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout original CTEAS-next source, avoid vendor redistribution
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
+      - name: Checkout original MAKEGEO vendor from separate public CTEAS repository (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+          lfs: false
+      - name: Retrieve verified P2-B real-GSHHG Full source run artifact, not synthetic output
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.p2b_source_run_id }}
+          name: issue53-p2b-real-glc2022-gshhs-full-hefei-source-only-NOT_SCIENCE
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/issue46-real-p2b
+      - name: Verify original 2022 P2-B LU source SHA, year, 38 class rows and binding
+        env:
+          P2_B_RUN_ID: ${{ inputs.p2b_source_run_id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'issue46-real-p2b'
+          a=json.loads((p/'real_gshhg_source_attestation.json').read_text())
+          b=json.loads((p/'p2_b_d3_manifest.json').read_text())
+          s=lambda f:hashlib.sha256(f.read_bytes()).hexdigest()
+          expect_lu='bf8941b13085f3cde7bf08f0e6c02e8e36b788909e8d68e2e7e3c4202659bc29'
+          expect_zip='8dbbe7e071e77e9e75f2d639239099ebca8d5c16d6a07df8169729d49f15cf41'
+          expect_glc='340d224d961c88637363be9616302bdf6b955b4921144edc814b875ef9798473'
+          assert os.environ['P2_B_RUN_ID']=='39212589623','P2B_CASE_SOURCE_ONLY_BASELINE_RUN_REQUIRED'
+          assert a['gate']=='ISSUE53_P2B_REAL_GSHHG_FULL_AND_GLC2022_SOURCE_VERIFIED_ENGINEERING_ONLY'
+          assert a['archive_sha256_verified'] is True and a['release_zip_sha256']==expect_zip
+          assert a['glc_tif_sha256']==expect_glc
+          assert a['lu_dat_sha256']==b['lu_dat_sha256']==s(p/'lu.dat')==expect_lu
+          assert b['n_cells']==2500 and b['n_usgs_classes']==38
+          assert abs(a['inland_m2']-340140.)<.01 and abs(a['marine_m2'])<.01
+          assert a['original_makegeo_science_validation']=='NOT_RUN'
+          assert s(Path('docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json'))==a['mapping_policy_sha256']
+          lines=(p/'lu.dat').read_text().splitlines()
+          assert len(lines)==2511 and lines[0].split()[:2]==['LU.DAT','2.1']
+          assert len(lines[10].split())==38 and len(lines[11].split())==41
+          print('P2B_REAL_SOURCE_REUSED_AND_SHA_BOUND PASS',expect_lu)
+          PY
+      - name: Install original Fortran and strict C++ compilers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran g++-12 cmake
+      - name: Compile unchanged original MAKEGEO Fortran from pinned CTEAS source
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          base=Path('original-cteas/engine/vendor/src/MAKEGEO_V3.2_L110401')
+          assert (base/'makegeo.for').is_file()
+          alias=Path(__import__('os').environ['RUNNER_TEMP'])/'issue46-original-include'
+          alias.mkdir()
+          for f in base.iterdir():
+            if f.is_file():
+              d=alias/f.name.lower()
+              if not d.exists():d.symlink_to(f.resolve())
+          print('ORIGINAL_MAKEGEO_SOURCE',base.resolve())
+          PY
+          mkdir -p "${RUNNER_TEMP}/issue46-bin"
+          gfortran -std=legacy -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -ffixed-line-length-none -O0 \
+            -I"${RUNNER_TEMP}/issue46-original-include" \
+            -Ioriginal-cteas/engine/vendor/src/MAKEGEO_V3.2_L110401 \
+            original-cteas/engine/vendor/src/MAKEGEO_V3.2_L110401/makegeo.for \
+            -o "${RUNNER_TEMP}/issue46-bin/original_makegeo"
+          sha256sum original-cteas/engine/vendor/src/MAKEGEO_V3.2_L110401/makegeo.for
+      - name: Compile unchanged C++ Hefei scoped P3 MAKEGEO
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/p3 -B "${RUNNER_TEMP}/issue46-p3-build" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/issue46-p3-build" \
+            --parallel 2 --target cteas_p3_makegeo
+      - name: Run original Fortran and native C++ on SAME new P2-B LU and frozen captured TERREL
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/issue46-original-run" "${RUNNER_TEMP}/issue46-native-run"
+          cp "${RUNNER_TEMP}/issue46-real-p2b/lu.dat" "${RUNNER_TEMP}/issue46-original-run/lu.dat"
+          cp project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.dat \
+             "${RUNNER_TEMP}/issue46-original-run/terrel.dat"
+          cp project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp \
+             "${RUNNER_TEMP}/issue46-original-run/makegeo.inp"
+          python3 - <<'PY'
+          import os,re,hashlib
+          from pathlib import Path
+          original=Path(os.environ['RUNNER_TEMP'])/'issue46-original-run'
+          control=original/'makegeo.inp'
+          s=control.read_text()
+          for key,name in [('LUDAT','lu.dat'),('TERRDAT','terrel.dat')]:
+            rx=re.compile(r'(!\s*'+key+r'\s*=\s*)([^!]*?)(\s*!)')
+            assert len(rx.findall(s))==1,key
+            s=rx.sub(lambda m:m.group(1)+name+' '+m.group(3),s,count=1)
+          control.write_text(s)
+          src=Path('project/cases/hefei5km_2022_reference_case_20261011/geo/terrel/terrel.dat')
+          print('ORIGINAL_CAPTURED_TERREL_SHA256',hashlib.sha256(src.read_bytes()).hexdigest())
+          print('SAME_P3_MAKEGEO_CONTROL_SHA256',hashlib.sha256(control.read_bytes()).hexdigest())
+          PY
+          (
+            cd "${RUNNER_TEMP}/issue46-original-run"
+            "${RUNNER_TEMP}/issue46-bin/original_makegeo" makegeo.inp \
+              > "${RUNNER_TEMP}/issue46-original.stdout.txt" 2> "${RUNNER_TEMP}/issue46-original.stderr.txt"
+          )
+          test -s "${RUNNER_TEMP}/issue46-original-run/geo.dat"
+          "${RUNNER_TEMP}/issue46-p3-build/cteas_p3_makegeo" \
+            "${RUNNER_TEMP}/issue46-original-run/makegeo.inp" \
+            "${RUNNER_TEMP}/issue46-original-run/lu.dat" \
+            "${RUNNER_TEMP}/issue46-original-run/terrel.dat" \
+            "${RUNNER_TEMP}/issue46-native-run/native_p3.csv" \
+            "${RUNNER_TEMP}/issue46-native-run/geo.dat"
+      - name: Independent 2500 cell x 8 field original/native MAKEGEO benchmark
+        run: |
+          set -euo pipefail
+          python3 native_cpp/reference/compare_p3_makegeo.py \
+            --reference "${RUNNER_TEMP}/issue46-original-run/geo.dat" \
+            --cpp "${RUNNER_TEMP}/issue46-native-run/native_p3.csv" \
+            --cpp-geo "${RUNNER_TEMP}/issue46-native-run/geo.dat" \
+            --report "${RUNNER_TEMP}/issue46-native-run/real_glc_p2b_original_p3_parity.json"
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          f=root/'issue46-native-run/real_glc_p2b_original_p3_parity.json'
+          j=json.loads(f.read_text())
+          assert j['status']=='PASS_SCOPED' and j['failures']==0
+          assert all(v['bad_cells']==0 for v in j['metrics'].values())
+          assert all(v['displayed_value_mismatch_count']==0 for v in j['writer_exact_formatted_value_gate'].values())
+          j['source_run_id']='39212589623'
+          j['input_source_kind']='REAL_GLC_FCS30D_2022_30M_HEFEI_WITH_REAL_GSHHG_FULL_L1'
+          j['p2b_lu_dat_sha256']=hashlib.sha256((root/'issue46-real-p2b/lu.dat').read_bytes()).hexdigest()
+          j['terrain_kind']='PREVIOUSLY_CAPTURED_HEFEI_TERREL_REUSED_NOT_REGENERATED'
+          j['original_makegeo_source_commit']='dfad99a78ed84d655e21411c9d25eb0d2583bf13'
+          j['scope']='SAME_INPUT_FORTRAN_VS_CPP_P3_38_TO_14_HEFEI_ONLY_NO_P1_REGEN_NO_COASTAL_REAL_NO_P6_P7'
+          f.write_text(json.dumps(j,indent=2)+'\n')
+          print('P2B_REAL_SOURCE_TO_ORIGINAL_AND_NATIVE_P3=',j['status'])
+          PY
+      - name: Upload only P3 comparison report and GEO, no vendor source or GSHHG
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue46-p2b-real-hefei-original-native-makegeo-PARITY-OR-DIAGNOSTIC
+          path: |
+            ${{ runner.temp }}/issue46-native-run/real_glc_p2b_original_p3_parity.json
+            ${{ runner.temp }}/issue46-native-run/native_p3.csv
+            ${{ runner.temp }}/issue46-native-run/geo.dat
+            ${{ runner.temp }}/issue46-original.stdout.txt
+            ${{ runner.temp }}/issue46-original.stderr.txt
+          if-no-files-found: warn
