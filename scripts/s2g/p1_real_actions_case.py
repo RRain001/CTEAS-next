@@ -1,4 +1,4 @@
-"""#54: genuine source (owner SRTM90m / OpenTopography SRTMGL1) -> native P1.
+"""#54 and #118: genuine source (owner SRTM90m / OpenTopography GL1 or GL3) -> native P1.
 
 Only for manually dispatched GitHub Actions. Real bytes, non-Hefei UTM50
 seam case, B-0 admitted, actual #49 source adapter, actual native binary.
@@ -72,11 +72,11 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
         # A route classification only. Actual official product version is
         # not authenticated by this supplied 3-arcsec TIFF hash.
         product="CGIAR-CSI-SRTM-v4.1"
-    elif route=="P1_B_30M_DOWNLOAD":
+    elif route in ("P1_B_30M_DOWNLOAD","P1_B_90M_DOWNLOAD"):
+        product=("SRTMGL1" if route=="P1_B_30M_DOWNLOAD" else "SRTMGL3")
         source=prepare(case_root/"grid/grid.cmn",src_out,"opentopography",
-                       allow_public_bulk_fallback=True)
+                       dem=product,allow_public_bulk_fallback=True)
         inventory={"status":"P1_B_ACTUAL_REQUEST_SOURCE_ONLY","required_tiles":[]}
-        product="SRTMGL1"
     else:
         raise ValueError("forbidden P1 source route")
     actual=run_case(case_yaml=case_yaml,
@@ -106,6 +106,7 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
       "official_bulk_recovery_used":source["bulk_recovery_used"],
       "owner_90m_input_byte_gate":inventory["status"],
       "source_product_declaration":product,
+      "official_dataset_documentation":source.get("official_dataset_documentation"),
       "source_product_version_authenticated":False,
       "height_vertical_datum_authenticated":False,
       "original_terrel_executed":False,
@@ -113,10 +114,77 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
       "science_acceptance":"NOT_ACCEPTED"
     }
 
+# Only fixed literals from our downloader/validator may reach public metadata.
+# Never persist an untrusted provider body, request URL, API key or traceback.
+_SOURCE_FAILURES = {
+    "OPENTOPOGRAPHY_API_KEY is not configured": ("SOURCE_PRECHECK", "API_KEY_MISSING"),
+    "SRTM available only ~56S..60N, no DEM substitute": ("SOURCE_PRECHECK", "SRTM_COVERAGE_REJECTED"),
+    "OpenTopography selected DEM exceeds product-specific API area limit": ("SOURCE_PRECHECK", "API_AREA_LIMIT_EXCEEDED"),
+    "selected DEM case pixels exceed input staging memory budget": ("SOURCE_PRECHECK", "SOURCE_PIXEL_BUDGET_EXCEEDED"),
+    "OpenTopography unexpected redirect refused (API key protected)": ("OPENTOPOGRAPHY_API", "API_REDIRECT_REFUSED"),
+    "OpenTopography network/IO error (request URL withheld)": ("OPENTOPOGRAPHY_API", "API_NETWORK_IO_ERROR"),
+    "OpenTopography exceeds configured byte budget": ("OPENTOPOGRAPHY_API", "API_BYTE_BUDGET_EXCEEDED"),
+    "OpenTopography returned empty/non-TIFF response": ("OPENTOPOGRAPHY_API", "API_EMPTY_RESPONSE"),
+    "public S3 bulk mirror redirect refused": ("S3_BULK_DOWNLOAD", "BULK_REDIRECT_REFUSED"),
+    "official public SRTM tile network/IO failure": ("S3_BULK_DOWNLOAD", "BULK_NETWORK_IO_ERROR"),
+    "SRTM bulk tile absent/truncated": ("S3_BULK_DOWNLOAD", "BULK_TILE_TRUNCATED"),
+    "SRTM tile exceeds bounded source bytes": ("S3_BULK_DOWNLOAD", "BULK_TILE_BYTE_BUDGET_EXCEEDED"),
+    "SRTMGL1 bulk total byte budget exhausted": ("S3_BULK_DOWNLOAD", "BULK_TOTAL_BYTE_BUDGET_EXCEEDED"),
+    "bulk transport restricted to nine 1-degree tiles": ("S3_BULK_PRECHECK", "BULK_TILE_COUNT_REJECTED"),
+    "SRTM bulk bbox outside supported geographic range": ("S3_BULK_PRECHECK", "BULK_COVERAGE_REJECTED"),
+    "official bulk SRTM resolution does not match selected product": ("GEOTIFF_VALIDATION", "BULK_RESOLUTION_MISMATCH"),
+    "unexpected SRTM tile dimensions": ("GEOTIFF_VALIDATION", "BULK_TILE_DIMENSION_REJECTED"),
+    "OpenTopography returned resolution inconsistent with requested DEM": ("GEOTIFF_VALIDATION", "SOURCE_RESOLUTION_MISMATCH"),
+    "P1 local GeoTIFF must exist and not be a symlink": ("GEOTIFF_VALIDATION", "SOURCE_FILE_ABSENT"),
+    "P1 GeoTIFF corrupt or unreadable": ("GEOTIFF_VALIDATION", "GEOTIFF_UNREADABLE"),
+    "P1 native reader requires single-band Int16 WGS84 EPSG:4326 GeoTIFF": ("GEOTIFF_VALIDATION", "SOURCE_FORMAT_UNSUPPORTED"),
+    "P1 source missing valid int16 NoData metadata": ("GEOTIFF_VALIDATION", "SOURCE_NODATA_METADATA_MISSING"),
+    "P1 source geographic bounds invalid": ("GEOTIFF_VALIDATION", "SOURCE_BOUNDS_INVALID"),
+    "rotated/south-up/nonfinite GeoTIFF source unsupported": ("GEOTIFF_VALIDATION", "SOURCE_GEOTRANSFORM_UNSUPPORTED"),
+    "P1 source mosaic/DEM does not cover buffered case bbox": ("CASE_RASTER_ADMISSION", "SOURCE_COVERAGE_INSUFFICIENT"),
+    "P1 source case window exceeds pixel memory budget": ("CASE_RASTER_ADMISSION", "CASE_PIXEL_BUDGET_EXCEEDED"),
+    "P1 case DEM has no valid elevation pixels": ("CASE_RASTER_ADMISSION", "CASE_ALL_NODATA"),
+}
+
+
+def classify_source_failure(exc:P1SourceError)->dict:
+    """Map only recognized safe strings to structured reason/stage; fail closed."""
+    detail=str(exc)
+    api=re.fullmatch(
+        r"OpenTopography HTTP ([1-5]\d{2}) \[([A-Z_]+)\]; key, URL and (?:provider )?body withheld",
+        detail)
+    allowed={"API_KEY_REJECTED","QUOTA_OR_RATE_LIMIT","REQUEST_BBOX_REJECTED",
+             "DATASET_UNAVAILABLE","UNCLASSIFIED_PROVIDER_REJECTION"}
+    if api and api.group(2) in allowed:
+        return {"source_provider_http_code":int(api.group(1)),
+                "provider_failure_category":api.group(2),
+                "source_failure_stage":"OPENTOPOGRAPHY_API",
+                "source_failure_reason_code":"API_HTTP_REJECTED"}
+    bulk=re.fullmatch(
+        r"official public SRTM tile HTTP ([1-5]\d{2}), body withheld",detail)
+    if bulk:
+        return {"source_provider_http_code":int(bulk.group(1)),
+                "provider_failure_category":"BULK_TILE_HTTP_REJECTED",
+                "source_failure_stage":"S3_BULK_DOWNLOAD",
+                "source_failure_reason_code":"BULK_TILE_HTTP_REJECTED"}
+    value=_SOURCE_FAILURES.get(detail)
+    if value is None and re.fullmatch(
+            r"P1 DEM has \d+ NoData pixels in buffered case; "
+            r"use --allow-nodata only after documenting void handling",detail):
+        value=("CASE_RASTER_ADMISSION","CASE_NODATA_PRESENT")
+    if value is None:
+        value=("UNCLASSIFIED_SOURCE_STAGE","UNCLASSIFIED_SOURCE_FAILURE")
+    return {"source_provider_http_code":None,
+            "provider_failure_category":"SOURCE_CHECK_BLOCKED",
+            "source_failure_stage":value[0],
+            "source_failure_reason_code":value[1]}
+
+
 def main(argv=None)->int:
     p=argparse.ArgumentParser()
     p.add_argument("--root",type=Path,required=True)
-    p.add_argument("--route",choices=["P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD"],required=True)
+    p.add_argument("--route",choices=["P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD",
+                                       "P1_B_90M_DOWNLOAD"],required=True)
     p.add_argument("--binary",type=Path,required=True)
     p.add_argument("--tif-dir",type=Path)
     p.add_argument("--report",type=Path,required=True)
@@ -129,15 +197,12 @@ def main(argv=None)->int:
     except P1SourceError as exc:
         # Never print provider response, secret, full request URL or raw
         # exception. Preserve bounded, categorical failed-at-source proof.
-        detail=str(exc)
-        matched=re.search(
-            r"OpenTopography HTTP (\d{3}) \[([A-Z_]+)\]",detail)
+        diagnosis=classify_source_failure(exc)
         report={
-          "schema_version":"p1-issue54-real-actions-source-blocker-v1",
+          "schema_version":"p1-issue54-real-actions-source-blocker-v2",
           "route":a.route,
           "status":"BLOCKED_REAL_SOURCE_INPUT",
-          "source_provider_http_code":int(matched.group(1)) if matched else None,
-          "provider_failure_category":matched.group(2) if matched else "SOURCE_CHECK_BLOCKED",
+          **diagnosis,
           "source_product_authenticated":False,
           "native_p1_executed":False,
           "original_terrel_executed":False,
@@ -146,7 +211,9 @@ def main(argv=None)->int:
         a.report.write_text(json.dumps(report,indent=2,sort_keys=True)+"\n",encoding="utf-8")
         print(json.dumps({"status":report["status"],"route":a.route,
                           "http_status":report["source_provider_http_code"],
-                          "category":report["provider_failure_category"]}))
+                          "category":report["provider_failure_category"],
+                          "stage":report["source_failure_stage"],
+                          "reason_code":report["source_failure_reason_code"]}))
         return 2
     a.report.write_text(json.dumps(result,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print(json.dumps({"status":result["status"],"route":result["route"],

@@ -99,7 +99,8 @@ preprocess:
     def test_cached_srtmgl1_offline_mock_is_unverified(self):
         tiff=self.fixture("synthetic_1arcsec.tif",1)
         stage=self.base/"source_api_mock"
-        def fake_download(bbox,destination,key,*,max_bytes,timeout=150):
+        def fake_download(bbox,destination,key,*,max_bytes,timeout=150,dem="SRTMGL1"):
+            self.assertEqual(dem,"SRTMGL1")
             shutil.copyfile(tiff,destination)
         with patch.dict(os.environ,{source.SECRET_ENV:"SYNTHETIC_KEY_NOT_REAL"}):
             with patch.object(source,"_download_api",side_effect=fake_download):
@@ -108,6 +109,22 @@ preprocess:
         self.assertEqual(report["route"],"P1_B_30M_DOWNLOAD")
         self.assertEqual(report["science_acceptance"],"NOT_RUN")
         self.assertEqual(report["row_count"],2500)
+
+    def test_cached_srtmgl3_offline_mock_is_unverified(self):
+        tiff=self.fixture("synthetic_api_3arcsec.tif",3)
+        stage=self.base/"source_api_90m_mock"
+        def fake_download(bbox,destination,key,*,max_bytes,timeout=150,dem="SRTMGL1"):
+            self.assertEqual(dem,"SRTMGL3")
+            shutil.copyfile(tiff,destination)
+        with patch.dict(os.environ,{source.SECRET_ENV:"SYNTHETIC_KEY_NOT_REAL"}):
+            with patch.object(source,"_download_api",side_effect=fake_download):
+                source.prepare(self.grid,stage,"opentopography",dem="SRTMGL3")
+        report=self.run_terrain(stage/"p1_source_manifest.json","SRTMGL3",name="p1_native_test")
+        self.assertEqual(report["route"],"P1_B_90M_DOWNLOAD")
+        self.assertEqual(report["science_acceptance"],"NOT_RUN")
+        self.assertEqual(report["row_count"],2500)
+        with self.assertRaisesRegex(ContractError,"matching cached SRTMGL1/SRTMGL3"):
+            self.run_terrain(stage/"p1_source_manifest.json","SRTMGL1",name="p1_native_test")
 
     def test_refuse_wrong_route_and_sha_and_no_output(self):
         tiff=self.fixture("srtm_3arcsec.tif",3)

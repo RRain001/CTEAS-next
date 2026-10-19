@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P1 source admission: multiple local WGS84 GeoTIFFs OR OpenTopography SRTMGL1.
+"""P1 source admission: multiple local WGS84 GeoTIFFs OR OpenTopography SRTMGL1/SRTMGL3.
 
 No P1 physics is executed: current native P1 still has a frozen Hefei-only
 50x50 / UTM50N solver. This entry point provides one audited GeoTIFF that
@@ -29,9 +29,38 @@ from engine.run_met.station_grid import load_strict_utm_grid
 from rasterio.warp import transform as project_coords
 
 BASE = "https://portal.opentopography.org/API/globaldem"
-DATASET = "SRTMGL1"
+DATASET = "SRTMGL1"  # Historic API default; existing callers remain 30m.
+DEM_PRODUCTS = {
+    "SRTMGL1": {"arcsec": 1.0, "max_area_km2": 450_000.0, "filename": "srtmgl1_30m.tif"},
+    "SRTMGL3": {"arcsec": 3.0, "max_area_km2": 4_050_000.0, "filename": "srtmgl3_90m.tif"},
+}
+# Official *dataset-level* provenance, not a per-tile cryptographic
+# authentication. EPSG:4326 is horizontal; EPSG:5773 is EGM96 geoid height,
+# NOT WGS84 ellipsoidal height. Source pixels are never vertically converted.
+SRTMGL3_OFFICIAL_DOCUMENTATION = {
+    "provider": "OpenTopography",
+    "provider_product": "SRTM_GL3",
+    "provider_collection_id": "OT.042013.4326.1",
+    "provider_collection_uri":
+        "https://portal.opentopography.org/datasetMetadata?otCollectionID=OT.042013.4326.1",
+    "nasa_product_family": "SRTMGL3.003",
+    "nasa_product_doi": "10.5067/MEASURES/SRTM/SRTMGL3.003",
+    "nasa_product_uri": "https://doi.org/10.5067/MEASURES/SRTM/SRTMGL3.003",
+    "source_horizontal_crs": "EPSG:4326",
+    "declared_vertical_crs": "EPSG:5773",
+    "declared_vertical_datum": "EGM96 geoid",
+    "declared_vertical_units": "m",
+    "vertical_reference_uri":
+        "https://www.usgs.gov/centers/eros/science/usgs-eros-archive-digital-elevation-shuttle-radar-topography-mission-srtm",
+    "evidence_level": "OFFICIAL_COLLECTION_METADATA_ONLY",
+    "tile_matches_independent_nasa_granule": False,
+    "tile_independent_published_checksum_verified": False,
+    "tiff_embedded_vertical_crs_verified": False,
+    "vertical_conversion_applied": False,
+}
+
 SECRET_ENV = "OPENTOPOGRAPHY_API_KEY"
-MAX_AREA_KM2 = 450_000.0
+MAX_AREA_KM2 = 450_000.0  # Legacy 30m contract.
 MAX_RESPONSE_BYTES = 500_000_000
 MAX_OUTPUT_PIXELS = 30_000_000
 
@@ -199,8 +228,10 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def _download_api(bbox: dict, dest: Path, key: str, *, max_bytes: int,
-                  timeout: int = 150) -> None:
-    params = {"demtype": DATASET, **bbox, "outputFormat":"GTiff","API_Key":key}
+                  timeout: int = 150, dem: str = DATASET) -> None:
+    if dem not in DEM_PRODUCTS:
+        raise P1SourceError("unsupported OpenTopography DEM product")
+    params = {"demtype": dem, **bbox, "outputFormat":"GTiff","API_Key":key}
     # Query string contains the user secret. NEVER log or preserve the URL.
     url = BASE + "?" + urllib.parse.urlencode(params)
     request = urllib.request.Request(url, headers={"Accept":"image/tiff",
@@ -258,7 +289,8 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
             tif_dir: Path | None = None, buffer_m: float = 500,
             max_pixels: int = MAX_OUTPUT_PIXELS, max_bytes: int = MAX_RESPONSE_BYTES,
             allow_nodata: bool = False,
-            allow_public_bulk_fallback: bool = False) -> dict:
+            allow_public_bulk_fallback: bool = False,
+            dem: str = DATASET) -> dict:
     if output_dir.exists() or output_dir.is_symlink():
         raise P1SourceError("P1 output directory already exists; no overwrite of source/case")
     if max_pixels < 1 or max_bytes < 512:
@@ -266,20 +298,25 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
     bbox = case_bbox(grid, buffer_m)
     if source not in ("local", "opentopography"):
         raise P1SourceError("P1 source must be local or opentopography")
+    if dem not in DEM_PRODUCTS:
+        raise P1SourceError("P1 DEM product must be SRTMGL1 or SRTMGL3")
+    if source == "local" and dem != DATASET:
+        raise P1SourceError("--dem is only supported for OpenTopography; local TIFF source is unchanged")
+    product = DEM_PRODUCTS[dem]
     if allow_public_bulk_fallback and source != "opentopography":
-        raise P1SourceError("public SRTMGL1 bulk recovery belongs only to route B")
+        raise P1SourceError("public SRTM bulk recovery belongs only to route B")
     if source == "opentopography":
         if tifs or tif_dir:
             raise P1SourceError("API source must not silently mix local TIF inputs")
         if bbox["south"] < -56 or bbox["north"] > 60:
-            raise P1SourceError("SRTMGL1 available only ~56S..60N, no DEM substitute")
+            raise P1SourceError("SRTM available only ~56S..60N, no DEM substitute")
         area = (111.32**2 * (bbox["north"]-bbox["south"]) *
                 (bbox["east"]-bbox["west"]) *
                 math.cos(math.radians((bbox["south"]+bbox["north"])/2)))
-        if area <= 0 or area > MAX_AREA_KM2:
-            raise P1SourceError("OpenTopography SRTMGL1 request exceeds 450000 km2 limit")
-        if _expected_output_pixels(bbox) > max_pixels:
-            raise P1SourceError("SRTMGL1 case pixels exceed input staging memory budget")
+        if area <= 0 or area > product["max_area_km2"]:
+            raise P1SourceError("OpenTopography selected DEM exceeds product-specific API area limit")
+        if _expected_output_pixels(bbox, approx_arcsec=product["arcsec"]) > max_pixels:
+            raise P1SourceError("selected DEM case pixels exceed input staging memory budget")
         secret = os.environ.get(SECRET_ENV, "").strip()
         if not secret:
             raise P1SourceError("OPENTOPOGRAPHY_API_KEY is not configured")
@@ -292,12 +329,12 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
         source_transport="opentopography_globaldem_api" if source=="opentopography" else "user_local"
         bulk_used=False
         if source == "opentopography":
-            selected = output_dir / "srtmgl1_30m.tif"
+            selected = output_dir / product["filename"]
             try:
-                _download_api(bbox, selected, secret, max_bytes=max_bytes)
+                _download_api(bbox, selected, secret, max_bytes=max_bytes, dem=dem)
             except P1SourceError as exc:
-                # Opt-in transport, same SRTMGL1 dataset, only HTTP 406.
-                # No 90m/product substitution or changed P1 physics.
+                # Opt-in transport, SAME requested product, only HTTP 406.
+                # Never silently switch resolution or change P1 physics.
                 if (not allow_public_bulk_fallback or
                         not str(exc).startswith(
                             "OpenTopography HTTP 406 [UNCLASSIFIED_PROVIDER_REJECTION]")):
@@ -306,8 +343,8 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
                     selected.unlink()
                 from scripts.s2g.p1_opentopo_bulk import fetch_and_crop
                 originals=fetch_and_crop(
-                    bbox,output_dir/"srtmgl1_bulk_tiles",selected,
-                    max_pixels=max_pixels,max_bytes=max_bytes)
+                    bbox,output_dir/f"{dem.lower()}_bulk_tiles",selected,
+                    max_pixels=max_pixels,max_bytes=max_bytes,dem=dem)
                 source_transport="opentopography_official_public_s3_bulk"
                 bulk_used=True
             else:
@@ -318,6 +355,10 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
             selected = output_dir / "p1_local_mosaic.tif"
             _build_local_mosaic(paths, bbox, selected, max_pixels=max_pixels)
         derived = check_raster(selected)
+        if source == "opentopography":
+            expected_degrees = product["arcsec"] / 3600.0
+            if any(abs(v - expected_degrees) > 1e-9 for v in derived["resolution_degrees"]):
+                raise P1SourceError("OpenTopography returned resolution inconsistent with requested DEM")
         with rasterio.open(selected) as ds:
             if not _covers_box(ds,bbox):
                 raise P1SourceError("P1 source mosaic/DEM does not cover buffered case bbox")
@@ -338,7 +379,8 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
         report = {
             "status":"P1_TERRAIN_SOURCE_VERIFIED_NATIVE_NUMERICS_NOT_RUN",
             "mode":source,"case_grid":str(grid.absolute()),
-            "dataset":DATASET if source == "opentopography" else "USER_PROVIDED_GEOTIFF",
+            "dataset":dem if source == "opentopography" else "USER_PROVIDED_GEOTIFF",
+            "requested_resolution_arcsec":product["arcsec"] if source == "opentopography" else None,
             "transport":source_transport,
             "public_bulk_opt_in":bool(allow_public_bulk_fallback),
             "bulk_recovery_used":bulk_used,
@@ -355,6 +397,12 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
             "p3_geo_dat":"NOT_RUN","p6_p7":"NOT_RUN",
             "ready_for_generic_P1_physics":False,
         }
+        # Source documentation is an explicit scoped assertion, not proof
+        # that public S3 GeoTIFF bytes equal an authenticated NASA granule.
+        if source == "opentopography" and dem == "SRTMGL3":
+            report["official_dataset_documentation"] = dict(SRTMGL3_OFFICIAL_DOCUMENTATION)
+            report["source_product_version_authenticated"] = False
+            report["height_vertical_datum_authenticated"] = False
         (output_dir/"p1_source_manifest.json").write_text(
             json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
         return report
@@ -369,21 +417,26 @@ def main(argv: list[str] | None = None) -> int:
     cli.add_argument("--out-dir",required=True,type=Path)
     modes=cli.add_mutually_exclusive_group(required=True)
     modes.add_argument("--local",action="store_true",help="Use explicitly specified real GeoTIFFs")
-    modes.add_argument("--opentopography",action="store_true",help="Download 30m SRTMGL1 using env secret")
+    modes.add_argument("--opentopography",action="store_true",help="Download selected original SRTMGL1 (30m) or SRTMGL3 (90m) using env secret")
+    cli.add_argument("--dem",choices=tuple(DEM_PRODUCTS),default=DATASET,
+                     help="OpenTopography product (default SRTMGL1, preserving old cases)")
     cli.add_argument("--tif",type=Path,action="append",default=[],help="Repeat for multiple local TIFs")
     cli.add_argument("--tif-dir",type=Path,help="Scan local directory for *.tif or *.tiff")
     cli.add_argument("--buffer-m",type=float,default=500)
     cli.add_argument("--max-pixels",type=int,default=MAX_OUTPUT_PIXELS)
     cli.add_argument("--allow-nodata",action="store_true")
-    cli.add_argument("--allow-public-srtmgl1-bulk-fallback",action="store_true",
-                     help="Opt in to official OpenTopography S3 SRTMGL1 on API HTTP 406")
+    cli.add_argument("--allow-public-srtmgl1-bulk-fallback",
+                     "--allow-public-srtm-bulk-fallback",
+                     dest="allow_public_bulk_fallback",action="store_true",
+                     help="Opt in to official OpenTopography S3 for same selected DEM on API HTTP 406")
     opts=cli.parse_args(argv)
     try:
         result=prepare(opts.grid,opts.out_dir,
                        "local" if opts.local else "opentopography",
                        tifs=opts.tif,tif_dir=opts.tif_dir,buffer_m=opts.buffer_m,
                        max_pixels=opts.max_pixels,allow_nodata=opts.allow_nodata,
-                       allow_public_bulk_fallback=opts.allow_public_srtmgl1_bulk_fallback)
+                       allow_public_bulk_fallback=opts.allow_public_bulk_fallback,
+                       dem=opts.dem)
     except (P1SourceError,ValueError,OSError,rasterio.errors.RasterioError):
         # No exception text from transport or urllib can leak API keys.
         print(json.dumps({"status":"BLOCKED_P1_TERRAIN_SOURCE",

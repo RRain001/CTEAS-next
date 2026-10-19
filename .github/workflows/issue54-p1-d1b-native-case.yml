@@ -9,6 +9,10 @@ on:
       - 'native_cpp/src/geo/terrain_grid.cpp'
       - 'native_cpp/p1/CMakeLists.txt'
       - 'scripts/s2g/p1_native_case.py'
+      - 'scripts/s2g/p1_terrain_source.py'
+      - 'scripts/s2g/p1_opentopo_bulk.py'
+      - 'scripts/s2g/tests/test_p1_terrain_source.py'
+      - 'scripts/s2g/tests/test_p1_opentopo_bulk.py'
       - 'scripts/s2g/tests/test_p1_native_case.py'
       - 'native_cpp/orchestration/case_admission.py'
   workflow_dispatch:
@@ -44,6 +48,7 @@ jobs:
           python3 -m unittest -v \
             native_cpp.orchestration.tests.test_case_admission \
             scripts.s2g.tests.test_p1_terrain_source \
+            scripts.s2g.tests.test_p1_opentopo_bulk \
             scripts.s2g.tests.test_p1_native_case
           echo 'P1_D1B_TWO_ROUTE_SOFTWARE=PASS_SCOPED_SYNTHETIC'
-          echo 'REAL_90M=NOT_RUN REAL_30M=NOT_RUN ORIGINAL_PARITY=NOT_RUN'
+          echo 'REAL_90M=NOT_RUN REAL_30M=NOT_RUN ORIGINAL_PARITY=NOT_RUN GL3_REAL_API=NOT_RUN'

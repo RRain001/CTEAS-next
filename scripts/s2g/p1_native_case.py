@@ -1,7 +1,8 @@
 """#54 P1 native case adapter: consume #42 admission + #49 source manifest.
 
-Only two routes: user-declared local SRTM 3 arc-sec, or cached OpenTopography
-SRTMGL1 1 arc-sec. Does not download, mosaic, substitute DEM or modify physics.
+Only two source routes: user-declared local SRTM 3 arc-sec, or cached
+OpenTopography SRTMGL1 1 arc-sec / SRTMGL3 3 arc-sec. Does not download,
+mosaic, substitute DEM or modify physics.
 No scientific equivalence is asserted by a successful run.
 """
 from __future__ import annotations
@@ -20,7 +21,11 @@ from native_cpp.orchestration.plan import ContractError
 from scripts.s2g.p1_terrain_source import check_raster
 
 LOCAL_PRODUCTS = {"CGIAR-CSI-SRTM-v4.1", "NASA-SRTMGL3-v003"}
-API_PRODUCT = "SRTMGL1"
+API_PRODUCT = "SRTMGL1"  # Backwards compatible default.
+API_PRODUCTS = {
+    "SRTMGL1": (1.0 / 3600.0, "P1_B_30M_DOWNLOAD"),
+    "SRTMGL3": (3.0 / 3600.0, "P1_B_90M_DOWNLOAD"),
+}
 MAX_PIXELS = 30_000_000
 
 
@@ -56,12 +61,12 @@ def run_case(*, case_yaml: Path, source_manifest: Path, source_product: str,
         spacing = 3.0 / 3600.0
         route = "P1_A_90M_LOCAL"
     elif mode == "opentopography":
-        if data.get("dataset") != "SRTMGL1" or source_product != API_PRODUCT:
-            raise ContractError("P1-B requires cached SRTMGL1 1-arc-sec source")
-        spacing = 1.0 / 3600.0
-        route = "P1_B_30M_DOWNLOAD"
+        declared = data.get("dataset")
+        if declared not in API_PRODUCTS or source_product != declared:
+            raise ContractError("P1-B requires matching cached SRTMGL1/SRTMGL3 source declaration")
+        spacing, route = API_PRODUCTS[declared]
     else:
-        raise ContractError("P1 route is neither local 90m nor cached SRTMGL1 30m")
+        raise ContractError("P1 route is neither local SRTM nor cached OpenTopography SRTM")
     original_grid = Path(data.get("case_grid", ""))
     _regular_file(original_grid)
     if sha256(original_grid) != admission.grid_sha256:
