@@ -70,13 +70,35 @@ Rasterio confirmed in both original downloaded tiles: 1201 × 1201, EPSG:4326, s
 
 PR implementation now prepends `North/` **only to GL3 northern URLs**, preserving direct `South/`, unchanged GL1 URLs, exact DEM product, 406-only same-product fallback, native scientific code and Fortran numeric gates. Exact URL tests guard the 29°/30° band boundary and the two actually downloaded northern tiles. Real source staging, mosaic and original parity must still be proven on the updated branch by another explicit manual run; **no science PASS is implied by the local download**.
 
+## True 90m original-vs-native numerical success and official metadata review
+
+[Owner-manual GitHub Actions run #39235263223](https://github.com/RRain001/CTEAS-next/actions/runs/39235263223) used PR head `f5115ae` with `P1_B_90M_DOWNLOAD`. All authentic stages passed: OpenTopography public S3 **same-product** GL3 download, source mosaic/coverage, native P1, unchanged pinned Fortran TERREL 7.0.0 compilation and execution, lossless identical-pixel TIFF repackaging and same-TIFF numeric comparison. The metadata-only artifact is [#12179340340](https://github.com/RRain001/CTEAS-next/actions/runs/39235263223/artifacts/12179340340). Logged status: `NUMERIC_PASS_PROVISIONAL`; the intentionally strict software evidence schema still calls scientific acceptance `NOT_ACCEPTED_INDEPENDENT_ORIGINAL_RUN_AUDIT_REQUIRED`.
+
+Per the reviewed run's separate evidence report: model cells=2500, valid source-window pixels=5293, NoData=0; original/native hits=3438/3438, per-cell hit mismatches=0; F8.1 DAT bad cells=0, max elevation difference=0.04999999999999716 m (<0.0500001 m); SAV raw-mean bad cells=0, max absolute difference=2.542666678095884e-06 m (<1e-5 m). The uncompressed and source GeoTIFF files have **different container hashes** due to lossless repackaging; their ordered Int16 pixel values and georeferencing were checked identical, and Fortran and native used that same repacked TIFF.
+
+### Dataset-level product identity: documented, not tile-cryptographically authenticated
+
+- [NASA LP DAAC product SRTMGL3.003](https://doi.org/10.5067/MEASURES/SRTM/SRTMGL3.003): official SRTM Global 3 arcsecond / 90m Version 003, data product DOI and NASA product family. NASA's LP DAAC also lists **SRTMGL3S.003** and **SRTMGL3N.003** as distinct 3 arcsecond products; the family DOI does **not** by itself establish an OpenTopography GeoTIFF is byte-identical to any one of those NASA HGT granules.
+- [OpenTopography collection metadata](https://portal.opentopography.org/datasetMetadata?otCollectionID=OT.042013.4326.1): source collection `OT.042013.4326.1`, product `SRTM_GL3`, published data label SRTM Version 3, sourced from NASA and its partners; coordinates WGS84 horizontal EPSG:4326. Its public S3 objects are registered under `SRTM_GL3/SRTM_GL3_srtm/`, and the true two source files were downloaded and SHA256 logged in the [source evidence comment](https://github.com/RRain001/CTEAS-next/pull/118#issuecomment-6264039201).
+- **Evidence verdict**: `OFFICIAL_COLLECTION_METADATA_ONLY`. The OpenTopography SRTM_GL3 public provenance is consistent with NASA SRTM Version 3, and the actual TIFF raster properties independently meet the specified 3 arcsecond grid/type/coverage contract. **Per-granule NASA cross-check or publisher checksum for the two raw source tiles was not performed.** Therefore keep `source_product_version_authenticated=false`, and distinguish it from the now-supported *official provider dataset metadata*.
+
+### Vertical reference: officially documented EGM96 height, not WGS84 ellipsoid
+
+- The [OpenTopography SRTM GL3 dataset page](https://portal.opentopography.org/raster?jobId=rt1781899650092) and [full collection metadata](https://portal.opentopography.org/datasetMetadata?otCollectionID=OT.042013.4326.1) state horizontal **WGS84 EPSG:4326** and vertical **EGM1996 Geoid EPSG:5773**. The page combines the wording “WGS84 Ellipsoid/EGM1996 Geoid”, but the authoritative **EPSG:5773** vertical CRS specifically denotes the EGM96 gravity-related height system, in metres, **not WGS84 ellipsoidal height**.
+- [USGS SRTM Product Specifications](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-digital-elevation-shuttle-radar-topography-mission-srtm) independently lists **horizontal WGS84; vertical datum EGM96; height unit metres**.
+- [EPSG:5773 definition](https://epsg.io/5773) independently defines EGM96 height as gravity-related height above the EGM96 geoid (metre).
+- **Evidence verdict**: `EGM96_DECLARED_BY_OFFICIAL_DATASET_METADATA`. The downloaded GeoTIFF's **EPSG:4326 tag represents only its horizontal reference**, not proof the raster also embeds a vertical EPSG:5773 axis. Raster samples were not converted to WGS84 ellipsoidal heights; keep `height_vertical_datum_authenticated=false` as the **per-file** verification flag. The model should treat these values as provider-declared EGM96 geoid heights in m, and must not call them ellipsoidal heights nor silently apply a geoid transformation.
+
+The new manifest `official_dataset_documentation` on GL3 carries the **documentary claims only**, explicitly marks the per-tile verification flags false and reports no vertical conversion. GL1 and local CGIAR/owner GeoTIFF workflows are unchanged. This separates **provenance-documentation PASS** from **per-granule independent authentication NOT_DONE**, while preserving the accepted **scoped real numeric parity** without lowering any scientific tolerance.
+
 ## Status
 
-- PR software-only CI: pending or PASS depending on latest checks.
-- SRTMGL3 **owner-triggered integrated Actions attempts**: #39226316981 BLOCKED (old diagnostic); #39229622789 BLOCKED HTTP 404 on S3 GL3 northern tile URL. Corrected-path integrated rerun NOT_RUN.
-- SRTMGL3 **direct official S3 north-tile downloads outside workflow**: 2/2 HTTP 200 and metadata PASS with hashes above (owner-verified); whole-case source mosaic still NOT_RERUN.
-- SRTMGL3 **authentic original TERREL same-TIFF comparison**: NOT_RUN.
-- All existing #54 historical scientific acceptance remains unchanged.
+- Run #39235263223: authentic owner manual **SUCCESS** on head `f5115ae`; `NUMERIC_PASS_PROVISIONAL` with 2500 cells, 0 hit count mismatches, 0 numerical threshold violations; source mosaicking and original Fortran execution completed.
+- Independent GitHub-steps/script/metadata review: **PASS_SCOPED_REAL_GL3_NUMERIC_PARITY**. Not a global source or physics certification.
+- Dataset-level declared product/version: **OFFICIAL_COLLECTION_DOCUMENTED** as OpenTopography SRTM_GL3, NASA SRTM Version 3 / SRTMGL3.003 family. Specific raw OpenTopography tile-to-NASA granule byte identity: **NOT_VERIFIED**.
+- Vertical datum: official OpenTopography + USGS metadata and EPSG registry document **EGM96 geoid height (EPSG:5773), metres**. Per-TIFF vertical CRS tag/granule authentication: **NOT_VERIFIED**.
+- Explicit schema flags remain `source_product_version_authenticated=false` / `height_vertical_datum_authenticated=false`; do not silently promote them based on documentation.
+- PR #118: **DRAFT**, real numeric tests PASS within scoped case, documentary provenance now recorded, unmerged pending final owner decision; historic Issue #54 stays closed.
 
 ## Provider references
 
