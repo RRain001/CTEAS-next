@@ -67,9 +67,14 @@ def _tile_url(name:str,dem:str)->str:
         raise OpenTopoBulkError("bulk tile name invalid")
     if dem == "SRTMGL1":
         return S3_ROOTS[dem]+"/"+name
-    # Official GL3 bulk tree is grouped by northern/southern latitude band.
+    # Official SRTMGL3 ListObjectsV2: North/<latitude band>/tile.tif,
+    # but South/tile.tif directly. No alternate DEM or raster resampling.
+    # Verified at the public S3 root and with real N31E114/N31E115 GETs.
     lat=int(name[1:3])
-    folder="South" if name[0]=="S" else ("North_0_29" if lat<30 else "North_30_60")
+    if name[0]=="S":
+        folder="South"
+    else:
+        folder="North/"+("North_0_29" if lat<30 else "North_30_60")
     return S3_ROOTS[dem]+"/"+folder+"/"+name
 
 
