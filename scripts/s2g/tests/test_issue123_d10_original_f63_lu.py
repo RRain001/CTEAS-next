@@ -40,6 +40,15 @@ class D10OriginalFractionContracts(unittest.TestCase):
                          31,32,33,41,42,43,51,52,53,54,55,61,62,71,
                          72,73,74,75,76,77,81,82,83,84,85,91,92)))]
         validate_fraction_header(header("HITS"),header("FRACTION"))
+        # Authentic WRTHEAD: HITS uses I5 for 38 class IDs,
+        # FRACTION uses I6, not an identical header byte-string.
+        hist=header("HITS")
+        final=header("FRACTION")
+        ids=tuple(map(int,hist[10].split()))
+        hist[10]="          "+"".join(f"{v:5d}" for v in ids)
+        final[10]="          "+"".join(f"{v:6d}" for v in ids)
+        self.assertNotEqual(hist[10],final[10])
+        validate_fraction_header(hist,final)
         wrong=header("FRACTION")
         wrong[6]="50N"
         with self.assertRaisesRegex(ValueError,"HEADER_DRIFT"):
