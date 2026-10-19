@@ -1,4 +1,5 @@
 #include "cteas/geo/glcc_raw_fractions.hpp"
+#include "cteas/geo/glcc_direct_laea_probe.hpp"
 #include <ogr_spatialref.h>
 #include <algorithm>
 #include <array>
@@ -99,7 +100,11 @@ double GlccRawResult::fraction(std::size_t i,std::size_t j,std::size_t k) const 
   if(!cell_samples.at(cell))throw std::domain_error("P2_GLCC_EMPTY_CELL");
   return double(counts.at(cell*kGlccUsgs92Classes.size()+k))/double(cell_samples.at(cell));
 }
-GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int epsg,int mesh,bool diagnostic_mesh) {
+namespace {
+GlccRawResult compute_glcc_raw_selected(const std::string& path,P2Grid grid,int epsg,int mesh,
+                                        bool diagnostic_mesh,bool direct_laea) {
+  if(direct_laea)
+    require(epsg==32650,"P2_GLCC_DIRECT_LAEA_SCOPE_UTM50N_ONLY");
   validate_grid(grid,epsg,mesh);
   const std::filesystem::path source(path);
   require(!std::filesystem::is_symlink(std::filesystem::symlink_status(source))&&
@@ -125,6 +130,8 @@ GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int ep
   const float y0=static_cast<float>(grid.y0_m/1000.);
   const float step=static_cast<float>(grid.dx_m/1000.);
   const double xm=static_cast<double>(0.001f);
+  std::unique_ptr<DirectLaeaProbe> direct;
+  if(direct_laea) direct=std::make_unique<DirectLaeaProbe>(epsg);
   for(int j=win.j1;j>=win.j0;--j) {
     const std::uint64_t offset=std::uint64_t(kNy-j)*kNx+(win.i0-1);
     in.seekg(static_cast<std::streamoff>(offset),std::ios::beg);
@@ -142,26 +149,40 @@ GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int ep
       const std::size_t category=std::size_t(cat-kGlccUsgs92Classes.begin());
       const double xc=-8000.+double(i-1),yc=-5499.+double(j-1);
       for(int im=0;im<mesh;++im)for(int jm=0;jm<mesh;++jm) {
-        auto [lon,lat]=laea_inverse(xc-.5+(im+.5)/mesh,yc-.5+(jm+.5)/mesh);
-        // Existing Python GENERIC format: seven decimal digits, then REAL*4.
-        char buf[96]{};
-        std::snprintf(buf,sizeof(buf),"%.7f",lon);lon=double(static_cast<float>(std::stod(buf)));
-        std::snprintf(buf,sizeof(buf),"%.7f",lat);lat=double(static_cast<float>(std::stod(buf)));
-        require(to_utm->Transform(1,&lon,&lat)!=0,"P2_GLCC_GEO_TO_UTM_FAILED");
-        const float dx=static_cast<float>(lon*xm)-x0;
-        const float dy=static_cast<float>(lat*xm)-y0;
-        const double rx=double(dx)/step,ry=double(dy)/step;
-        require(std::isfinite(rx)&&std::isfinite(ry)&&std::abs(rx)<1e8&&std::abs(ry)<1e8,
-                "P2_GLCC_INDEX_OVERFLOW");
-        // Match prior P2 compute_generic_utm50n REAL*4 division ordering.
-        const int ix=static_cast<int>(dx/step)+(dx>=0?1:0);
-        const int jy=static_cast<int>(dy/step)+(dy>=0?1:0);
+        float x_km=0.f,y_km=0.f;
+        int ix=0,jy=0;
+        if(direct_laea) {
+          // Independently verified against untouched original GLAZAS:
+          // 95,000 integer HITS exact on Hefei case (Run #39187178797).
+          // The source-pixel and MESHGLAZ subpoint arithmetic is REAL*4;
+          // inverse LAEA / UTM is GDAL, then COORDLIB XMULTO is REAL*4
+          // promoted to REAL*8, GLOBE result REAL*4, LUGRID bins REAL*4.
+          const auto q=direct->project(i,j,im+1,jm+1,mesh,x0,y0,step);
+          x_km=q.x_km;y_km=q.y_km;
+          ix=q.i;jy=q.j;
+        } else {
+          auto [lon,lat]=laea_inverse(xc-.5+(im+.5)/mesh,yc-.5+(jm+.5)/mesh);
+          // Historical GEN: seven decimal digits then REAL*4.
+          char buf[96]{};
+          std::snprintf(buf,sizeof(buf),"%.7f",lon);lon=double(static_cast<float>(std::stod(buf)));
+          std::snprintf(buf,sizeof(buf),"%.7f",lat);lat=double(static_cast<float>(std::stod(buf)));
+          require(to_utm->Transform(1,&lon,&lat)!=0,"P2_GLCC_GEO_TO_UTM_FAILED");
+          x_km=static_cast<float>(lon*xm);
+          y_km=static_cast<float>(lat*xm);
+          const float dx=x_km-x0;
+          const float dy=y_km-y0;
+          const double rx=double(dx)/step,ry=double(dy)/step;
+          require(std::isfinite(rx)&&std::isfinite(ry)&&std::abs(rx)<1e8&&std::abs(ry)<1e8,
+                  "P2_GLCC_INDEX_OVERFLOW");
+          ix=static_cast<int>(dx/step)+(dx>=0?1:0);
+          jy=static_cast<int>(dy/step)+(dy>=0?1:0);
+        }
         if(diagnostic_mesh) {
           require(out.diagnostic_mesh.size()<3000000,"P2_GLCC_DIAGNOSTIC_BUDGET");
           // GLOBE's corresponding xgrid/ygrid arguments are Fortran REAL*4 km.
           // No altered coordinate path: record the existing production calculation.
           out.diagnostic_mesh.push_back({i,j,im+1,jm+1,mapped,
-             static_cast<float>(lon*xm),static_cast<float>(lat*xm),ix,jy});
+             x_km,y_km,ix,jy});
         }
         if(ix<1||jy<1||std::size_t(ix)>grid.nx||std::size_t(jy)>grid.ny){++out.outside;continue;}
         const auto cell=(std::size_t(jy)-1)*grid.nx+(std::size_t(ix)-1);
@@ -174,5 +195,16 @@ GlccRawResult compute_glcc_gen_replay(const std::string& path,P2Grid grid,int ep
   }
   require(out.included>0,"P2_GLCC_NO_INCLUDED_SAMPLES");
   return out;
+}
+} // anonymous namespace
+
+GlccRawResult compute_glcc_gen_replay(
+    const std::string& path,P2Grid grid,int epsg,int mesh,bool diagnostic_mesh) {
+  return compute_glcc_raw_selected(path,grid,epsg,mesh,diagnostic_mesh,false);
+}
+
+GlccRawResult compute_glcc_direct_laea(
+    const std::string& path,P2Grid grid,int epsg,int mesh,bool diagnostic_mesh) {
+  return compute_glcc_raw_selected(path,grid,epsg,mesh,diagnostic_mesh,true);
 }
 } // namespace cteas::reconstruction::geo
