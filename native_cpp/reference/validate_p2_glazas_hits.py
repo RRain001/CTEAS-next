@@ -19,6 +19,9 @@ import subprocess
 import time
 
 from native_cpp.reference.diagnose_glazas_mesh_coordinates import audit as diagnose_coordinates
+from native_cpp.reference.coordlib_stage_trace import (
+    create_staged_include, read_staged_records, summarize_staged_records,
+)
 from native_cpp.reference.exact_glazas_coordinate_lineage import (
     create_pinned_instrumented_source,read_original as read_indexed_original,
     read_native as read_indexed_native,summarize_lineage,
@@ -318,10 +321,24 @@ def main(argv=None) -> int:
                                     a.original_source_file,indexed_src)
                                 indexed_exe=scratch/"indexed_ctgproc.x"
                                 vendor=a.original_source_file.parent
+                                # COORDLIB is instrumented ONLY in a scratch
+                                # override of the original lower-case include
+                                # directory; the pristine original executable
+                                # and source files are never touched.
+                                stage_dir=scratch/"stage-include"
+                                stage_dir.mkdir()
+                                for alias in a.original_fortran_include_dir.iterdir():
+                                    if alias.name.lower()=="coordlib.for":
+                                        continue
+                                    if alias.is_file():
+                                        (stage_dir/alias.name).symlink_to(alias.resolve())
+                                stage_sha=create_staged_include(
+                                    vendor/"COORDLIB.FOR",stage_dir/"coordlib.for")
                                 build=[ "gfortran","-std=legacy",
                                     "-ffixed-line-length-72","-fno-automatic",
                                     "-fno-align-commons",
                                     "-fallow-argument-mismatch","-O0",
+                                    "-I"+str(stage_dir.resolve()),
                                     "-I"+str(a.original_fortran_include_dir.resolve()),
                                     "-I"+str(vendor.resolve()),
                                     str(indexed_src),"-o",str(indexed_exe)]
@@ -357,6 +374,17 @@ def main(argv=None) -> int:
                                     d1["direct_laea_candidate_mesh_csv_sha256"])
                                 lineage=summarize_lineage(
                                     orig_index["rows"],native_gen,native_direct)
+                                # Source-keyed original GCTP double stage
+                                # diagnostics are non-authoritative. Both
+                                # original LU and qamesh were byte-compared
+                                # above before parsing this derivative.
+                                staged=read_staged_records(indexed_work/"fort.99")
+                                lineage["coordlib_stage_trace"]=summarize_staged_records(
+                                    orig_index["rows"],staged)
+                                lineage["coordlib_stage_trace"].update({
+                                    "instrumented_coordlib_include_sha256":stage_sha,
+                                    "raw_trace_sha256":file_sha(indexed_work/"fort.99"),
+                                })
                                 lineage.update({
                                     "original_source_sha256":file_sha(a.original_source_file),
                                     "instrumented_source_sha256":derived_sha,
