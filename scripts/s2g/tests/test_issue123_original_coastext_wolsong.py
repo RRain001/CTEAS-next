@@ -69,7 +69,7 @@ class OriginalWolsongContract(unittest.TestCase):
             self.assertEqual(report["classes"]["1"], 1)
 
     def test_malformed_unclosed_and_wrong_grid_fail_closed(self):
-        for item in (bln(closed=False), bln("5,1,\\"1,2,72\\""),
+        for item in (bln(closed=False), bln('5,1,"1,2,72"'),
                      bln().replace("533.216", "200.000"),
                      bln().splitlines()[0] + "\n"):
             with self.subTest(item=item[:80]):
