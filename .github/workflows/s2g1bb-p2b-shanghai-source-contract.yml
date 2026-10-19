@@ -1,0 +1,38 @@
+name: P2-B GSHHG project asset and Shanghai 2022 contract (no science)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/gshhg_v237_cache.py
+      - scripts/s2g/glc_fcs30d_shanghai_acquire.py
+      - scripts/s2g/tests/test_p2b_gshhg_shanghai_asset_contract.py
+      - .github/workflows/issue53-gshhg-publish-project-release.yml
+      - .github/workflows/issue46-p2b-shanghai-real-coastal-2022.yml
+      - .github/workflows/s2g1bb-p2b-shanghai-source-contract.yml
+      - docs/plans/ISSUE53_GSHHG_RELEASE_LICENSE_AND_CACHE_20261019.md
+      - data/landcover/glc_fcs30d/v1_2022/shanghai_dongtan/**
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-science-source-policy-tests:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Offline Python metadata and YAML dependencies (no Earth Engine)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            python3-pyproj python3-rasterio python3-numpy python3-yaml
+      - name: Validate original archive pins, source fail-closed and manual-science only
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m py_compile scripts/s2g/gshhg_v237_cache.py scripts/s2g/glc_fcs30d_shanghai_acquire.py
+          /usr/bin/python3 -m unittest -v scripts.s2g.tests.test_p2b_gshhg_shanghai_asset_contract
+          echo 'GSHHG_PROJECT_RELEASE=NOT_PUBLISHED_BY_PR'
+          echo 'SHANGHAI_REAL_GLC_SOURCE=NOT_ACQUIRED_IN_PR'
+          echo 'COASTAL_52_55_REAL_SOURCE_SCIENCE=NOT_RUN'
