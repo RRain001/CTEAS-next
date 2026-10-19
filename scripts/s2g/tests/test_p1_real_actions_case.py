@@ -29,7 +29,12 @@ class RealP1CaseStageTests(unittest.TestCase):
             root=Path(td)/"staged"
             mock_source={"case_window_valid_pixels":10,"case_window_nodata_pixels":0,
                          "mosaic_created":False,"transport":"opentopography_globaldem_api",
-                         "bulk_recovery_used":False}
+                         "bulk_recovery_used":False,
+                         "official_dataset_documentation":{
+                             "provider_product":"SRTM_GL3",
+                             "declared_vertical_datum":"EGM96 geoid",
+                             "evidence_level":"OFFICIAL_COLLECTION_METADATA_ONLY",
+                             "tile_matches_independent_nasa_granule":False}}
             fake_native={"row_count":2500,"grid_sha256":"a"*64,
                          "case_sha256":"b"*64,"time_sha256":"c"*64,
                          "source_manifest_sha256":"d"*64,"selected_tif_sha256":"e"*64,
@@ -42,6 +47,13 @@ class RealP1CaseStageTests(unittest.TestCase):
             self.assertEqual(mocked_native.call_args.kwargs["source_product"],"SRTMGL3")
             self.assertEqual(report["route"],"P1_B_90M_DOWNLOAD")
             self.assertEqual(report["source_product_declaration"],"SRTMGL3")
+            self.assertEqual(
+                report["official_dataset_documentation"]["provider_product"],"SRTM_GL3")
+            self.assertEqual(
+                report["official_dataset_documentation"]["evidence_level"],
+                "OFFICIAL_COLLECTION_METADATA_ONLY")
+            self.assertFalse(report["source_product_version_authenticated"])
+            self.assertFalse(report["height_vertical_datum_authenticated"])
             self.assertEqual(report["science_acceptance"],"NOT_ACCEPTED")
 
 if __name__=="__main__":
