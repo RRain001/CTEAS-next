@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 using namespace cteas::reconstruction::geo;
 namespace {
@@ -89,9 +90,51 @@ int main(){
   auto invalid=before;invalid.diagnostic_mesh.pop_back();
   rejects([&]{(void)recount_glcc_original_coast(invalid,off,nullptr);},
           "incomplete native P2-A mesh trace must fail closed");
+  // D7: exercise the strict BLN/REAL*4 path independently of D2 GEOS.
+  // An exact L1 coastline edge (x=0) must classify as ocean=0 and
+  // switch a category-52 sample to IOCEAN 55.
+  OriginalBlnPolygonR4 land;
+  land.type=1;
+  land.points={{0.f,0.f},{10.f,0.f},{10.f,10.f},
+               {0.f,10.f},{0.f,0.f}};
+  std::vector<OriginalBlnPolygonR4> bln_polygons;
+  bln_polygons.push_back(std::move(land));
+  const OriginalBlnIptypeR4 original_bln(std::move(bln_polygons));
+  auto with_coast_edge=before;
+  with_coast_edge.diagnostic_mesh.push_back({1,1,1,1,52,0.f,5.f,1,1});
+  ++with_coast_edge.included;
+  ++with_coast_edge.cell_samples[0];
+  ++with_coast_edge.counts[idx(52)];
+  const auto bln_counts=recount_glcc_original_coast_bln(
+      with_coast_edge,ctrl,&original_bln);
+  check(original_bln.iptype(0.f,5.f)==0,
+        "original L1 boundary must be classified as ocean");
+  check(bln_counts.included==4&&bln_counts.rejected_coast==1&&
+        bln_counts.outside==1,"real-BLN candidate conservation");
+  check(bln_counts.samples==std::vector<std::uint32_t>({2,2,0}),
+        "BLN integer sample denominators differ");
+  check(bln_counts.counts[idx(52)]==1&&bln_counts.counts[idx(55)]==1,
+        "BLN shoreline split retains distinct 52 and 55 hits");
+  check(bln_counts.counts[38+idx(54)]==1&&
+        bln_counts.counts[38+idx(55)]==1,
+        "BLN coastal 54 exception and marine swap preserved");
+  check(bln_counts.fraction(0,0,idx(52))==.5&&
+        bln_counts.fraction(0,0,idx(55))==.5,
+        "BLN first cell fractions must match hit counts");
+  check(bln_counts.fill_ocean[2]&&bln_counts.samples[2]==0,
+        "BLN fill is output-only and never fabricates a hit");
+  const auto no_coast_bln=recount_glcc_original_coast_bln(
+      before,off,nullptr);
+  check(no_coast_bln.counts==before.counts&&
+        no_coast_bln.samples==before.cell_samples,
+        "original BLN route without LCOAST preserves P2-A exactly");
+  rejects([&]{(void)recount_glcc_original_coast_bln(before,ctrl,nullptr);},
+          "original BLN route must reject missing shoreline classifier");
+
   std::cout<<"ISSUE123_D3_ORIGINAL_RECOUNT_SYNTHETIC_PASS "
              "P2A_BASELINE_COUNTS_PRESERVED=true "
              "ORIGINAL_FORTRAN_HITS_PARITY=NOT_RUN "
+             "D7_ORIGINAL_BLN_R4_RECOUNT=PASS_SYNTHETIC_ONLY "
              "FROZEN_EXACT_AREA=UNCHANGED\n";
   return 0;
 }
