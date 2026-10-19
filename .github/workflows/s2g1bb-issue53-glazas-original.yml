@@ -6,6 +6,8 @@ on:
       - native_cpp/reference/validate_p2_glazas_original.py
       - native_cpp/reference/validate_p2_glazas_hits.py
       - native_cpp/reference/diagnose_glazas_mesh_coordinates.py
+      - native_cpp/reference/exact_glazas_coordinate_lineage.py
+      - native_cpp/reference/tests/test_glazas_exact_lineage.py
       - native_cpp/reference/tests/test_glazas_mesh_coordinates.py
       - native_cpp/reference/tests/test_glazas_direct_candidate.py
       - native_cpp/src/geo/glcc_raw_fractions.cpp
@@ -40,13 +42,18 @@ jobs:
       - name: Original-only comparator and synthetic format tests
         run: |
           set -euo pipefail
-          python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate native_cpp.reference.tests.test_glazas_original_integer_hits native_cpp.reference.tests.test_glazas_mesh_coordinates native_cpp.reference.tests.test_glazas_direct_candidate
+          python3 -m unittest -v native_cpp.reference.tests.test_glazas_original_gate native_cpp.reference.tests.test_glazas_original_integer_hits native_cpp.reference.tests.test_glazas_mesh_coordinates native_cpp.reference.tests.test_glazas_direct_candidate native_cpp.reference.tests.test_glazas_exact_lineage
           echo 'P2_GLAZAS_GATE_SOFTWARE=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
   authentic-source-build-only:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
+      - name: Checkout CTEAS-next independent QA source without GLCC IMG
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
       - name: Checkout frozen original CTEAS source separately, sparse and no LFS
         uses: actions/checkout@v4
         with:
@@ -82,7 +89,21 @@ jobs:
           test -x "${RUNNER_TEMP}/original_ctgproc.x"
           gfortran --version | head -n 1
           sha256sum "${RUNNER_TEMP}/original_ctgproc.x"
-          echo 'ORIGINAL_CTEAS_SOURCE_BUILD=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from native_cpp.reference.exact_glazas_coordinate_lineage import create_pinned_instrumented_source
+          vendor=Path("original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for")
+          out=Path(os.environ["RUNNER_TEMP"])/"index-only-original-qa.for"
+          sha=create_pinned_instrumented_source(vendor,out)
+          print("CTGPROC_DIAGNOSTIC_DERIVATIVE_SHA256=",sha)
+          PY
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -O0 \
+            -I"${RUNNER_TEMP}/ctgproc-include" -I"$vendor" \
+            "${RUNNER_TEMP}/index-only-original-qa.for" -o "${RUNNER_TEMP}/indexed_ctgproc.x"
+          test -x "${RUNNER_TEMP}/indexed_ctgproc.x"
+          echo 'ORIGINAL_CTEAS_SOURCE_AND_INDEXED_DERIVATIVE_BUILD=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
 
   genuine-original-glazas:
     if: github.event_name == 'workflow_dispatch'
@@ -154,6 +175,7 @@ jobs:
           for key,name in (
               ("diagnostic_submesh_csv_sha256","p2_glcc_submesh_diagnostic.csv"),
               ("direct_laea_candidate_hits_csv_sha256","p2_glcc_direct_laea_candidate_hits.csv"),
+              ("direct_laea_candidate_mesh_csv_sha256","p2_glcc_direct_laea_mesh.csv"),
           ):
               f=p/name
               assert f.is_file() and f.stat().st_size>0,name
@@ -179,6 +201,8 @@ jobs:
             --native-d1-manifest "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
             --native-qa-csv "${RUNNER_TEMP}/d1-native/p2_glcc_submesh_diagnostic.csv" \
             --direct-probe-hits-csv "${RUNNER_TEMP}/d1-native/p2_glcc_direct_laea_candidate_hits.csv" \
+            --native-direct-mesh-csv "${RUNNER_TEMP}/d1-native/p2_glcc_direct_laea_mesh.csv" \
+            --original-fortran-include-dir "${RUNNER_TEMP}/ctgproc-include" \
             --out-dir "${RUNNER_TEMP}/glazas-original" --timeout-sec 300
           echo 'P2_ORIGINAL_GLAZAS_SCIENCE=PASS_FRACTION_AND_INTEGER_HITS_IF_TRUE'
       - name: Save manifest and first differences, never vendor/raw-IMG/Fortran binaries
