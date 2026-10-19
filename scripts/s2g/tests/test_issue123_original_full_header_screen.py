@@ -21,13 +21,20 @@ def poly(identifier=0, *, points=3, level=1, area=123,
 
 class TestOriginalFullHeaderScreen(unittest.TestCase):
     def test_realistic_full_header_and_wolsong_candidates(self):
-        b = poly(0) + poly(1, west=80_000_000, east=90_000_000) + poly(
-            2, points=0, area=0) + poly(3, level=2, south=34_000_000, north=35_000_000)
+        b = (poly(0) + poly(1, west=80_000_000, east=90_000_000) +
+             poly(2, points=0, area=0) +
+             poly(3, level=2, south=34_000_000, north=35_000_000) +
+             poly(4, level=5, west=-180_000_000, east=180_000_000,
+                  south=-85_000_000, north=-70_000_000) +
+             poly(5, level=6, west=-180_000_000, east=180_000_000,
+                  south=-85_000_000, north=-70_000_000))
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "gshhs_f.b"
             path.write_bytes(b)
             report = screen.scan_binary(path)
-        self.assertEqual(report["polygon_count"], 4)
+        self.assertEqual(report["polygon_count"], 6)
+        self.assertEqual(report["level_counts"]["5"], 1)
+        self.assertEqual(report["level_counts"]["6"], 1)
         self.assertEqual(report["candidate_bbox_count"], 1)
         self.assertEqual(report["zero_area_count"], 1)
         self.assertEqual(report["candidate_sample"][0]["id"], 0)
@@ -36,7 +43,7 @@ class TestOriginalFullHeaderScreen(unittest.TestCase):
     def test_malformed_or_truncated_records_are_rejected(self):
         bad = [
             b"short", poly()[:-1],
-            poly(level=5), poly(version=3),
+            poly(level=7), poly(version=3),
             poly(points=2), poly(south=40_000_000, north=30_000_000),
             poly() + b"xx",
         ]

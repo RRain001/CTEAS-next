@@ -70,3 +70,19 @@ must not be marked PASS until the actual main Actions run succeeds.
    and 38-class LU.DAT scientific parity all `NOT_RUN`.
 
 No modification to #119, P3 #46, or P6/P7 is permitted in D6-A.
+
+## Authentic v2.3.7 level 5/6 compatibility correction
+
+The original official GMT GSHHG 2.3.7 binary includes level **5** Antarctic
+ice/ocean-front and level **6** grounding-line/ocean boundary polygons in
+addition to the ordinary level 1–4 hierarchy. The first authentic D6-A
+main run [#39262939077](https://github.com/RRain001/CTEAS-next/actions/runs/39262939077)
+correctly failed closed because this source index initially only admitted
+levels 1–4. Bounded second run
+[#39263648936](https://github.com/RRain001/CTEAS-next/actions/runs/39263648936)
+identified first failure at record #4, offset 21,225,312, legitimate
+level 5/version 15. The fix admits levels 5 and 6 **as global source
+header records only** but excludes them from Wolsong geographic candidates;
+the production original `IPTYPE` land-use hierarchy remains 0–4 and the
+frozen #119 method is unchanged. All six levels are counted separately.
+Reference: https://www.soest.hawaii.edu/wessel/gshhg/
