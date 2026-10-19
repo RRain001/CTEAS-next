@@ -46,9 +46,15 @@ class TestShanghaiCandidate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(FileNotFoundError):
                 site.verify(Path(d))
-    def test_no_real_data_claim_is_committed(self):
-        self.assertFalse((site.DEFAULT/site.NAME).exists(),
-            "If genuine Shanghai TIFF is added, update scope to actual test result.")
+    def test_site_source_is_bounded_and_sha_authenticated_if_present(self):
+        self.assertTrue((site.DEFAULT/"README.md").is_file())
+        if (site.DEFAULT/site.NAME).exists():
+            info=site.verify(site.DEFAULT)
+            self.assertEqual(len(info["sha256"]),64)
+            self.assertIn("coastal_area_science",info)
+        else:
+            text=(site.DEFAULT/"README.md").read_text()
+            self.assertIn("NOT YET ACQUIRED",text)
 
 class TestManualOnlyWorkflows(unittest.TestCase):
     def test_both_data_workflows_cannot_start_on_pull_request(self):
