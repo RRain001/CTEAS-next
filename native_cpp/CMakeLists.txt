@@ -81,3 +81,13 @@ if(MSVC)
 else()
   target_compile_options(cteas_p2_glcc_lu_dat PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# Issue #53 P2-B native source-gated GLC35 -> GSHHS Full land 52 / sea 55 -> USGS38 LU.DAT.
+# Never reuse GLCC historical D3 source gate; original MAKEGEO/P6 science remains separate.
+add_executable(cteas_p2_glc_lu_dat src/p2_glc_lu_dat_cli.cpp)
+target_link_libraries(cteas_p2_glc_lu_dat PRIVATE cteas_p2_glc_area GDAL::GDAL OpenSSL::Crypto)
+if(MSVC)
+  target_compile_options(cteas_p2_glc_lu_dat PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_glc_lu_dat PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
