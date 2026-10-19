@@ -19,6 +19,12 @@ import subprocess
 import time
 
 from native_cpp.reference.diagnose_glazas_mesh_coordinates import audit as diagnose_coordinates
+from native_cpp.reference.exact_glazas_coordinate_lineage import (
+    create_pinned_instrumented_source,read_original as read_indexed_original,
+    read_native as read_indexed_native,summarize_lineage,
+    HEADER_GEN,HEADER_DIRECT,
+)
+import tempfile
 
 from native_cpp.reference.validate_p2_glazas_original import (
     CATS, SRC_SHA, SRC_SIZE, CTEAS_ORIGINAL_COMMIT,
@@ -168,6 +174,8 @@ def main(argv=None) -> int:
     p.add_argument("--original-bin-sha256",required=True)
     p.add_argument("--native-qa-csv",type=Path)
     p.add_argument("--direct-probe-hits-csv",type=Path)
+    p.add_argument("--native-direct-mesh-csv",type=Path)
+    p.add_argument("--original-fortran-include-dir",type=Path)
     p.add_argument("--timeout-sec",type=int,default=300)
     a=p.parse_args(argv)
     require(10<=a.timeout_sec<=600,"TIMEOUT_OUT_OF_BOUNDS")
@@ -200,6 +208,19 @@ def main(argv=None) -> int:
                 "DIRECT_PROBE_CSV_MISSING_OR_SYMLINK")
     direct_probe = (read_direct_candidate_hits(a.direct_probe_hits_csv,d1)
                     if a.direct_probe_hits_csv is not None else None)
+    if a.native_direct_mesh_csv is not None:
+        require(a.native_qa_csv is not None
+                and a.original_fortran_include_dir is not None
+                and a.original_fortran_include_dir.is_dir(),
+                "INDEXED_COORD_LINEAGE_INCOMPLETE_ARGS")
+        require(a.native_direct_mesh_csv.is_file()
+                and not a.native_direct_mesh_csv.is_symlink()
+                and d1.get("direct_laea_candidate_mesh_csv_sha256")==
+                    file_sha(a.native_direct_mesh_csv),
+                "INDEXED_COORD_LINEAGE_NATIVE_MESH_SHA")
+    else:
+        require(a.original_fortran_include_dir is None,
+                "INDEXED_COORD_LINEAGE_ORPHAN_INCLUDE_DIR")
     native_hits,native_samples=read_native_hits(a.native_hits_csv,d1)
     native_fractions=parse_lu(a.native_lu)
     for idx,row in enumerate(native_hits):
@@ -281,6 +302,77 @@ def main(argv=None) -> int:
                     report["coordinate_diagnostic"]=diagnose_coordinates(
                         qa_work/"qamesh.dat",a.native_qa_csv)
                     report["coordinate_diagnostic"]["original_debug_qa_control_sha256"]=file_sha(qa_work/"ctgproc.inp")
+                    # The full original qamesh.dat is NOT an index-keyed oracle.
+                    # Compile a separate, SHA-verified, minimally instrumented
+                    # derivative for exact source pixel / submesh (i,j,im,jm)
+                    # lineage. Accept derivative ONLY if its unmodified QA
+                    # qamesh.dat bytes and LFINAL=F LU.DAT exactly agree with
+                    # untouched original in the same control and source.
+                    if a.native_direct_mesh_csv is not None:
+                        try:
+                            with tempfile.TemporaryDirectory(
+                                    prefix="issue53-indexed-original-") as td:
+                                scratch=Path(td)
+                                indexed_src=scratch/"indexed_ctgproc.for"
+                                derived_sha=create_pinned_instrumented_source(
+                                    a.original_source_file,indexed_src)
+                                indexed_exe=scratch/"indexed_ctgproc.x"
+                                vendor=a.original_source_file.parent
+                                build=[ "gfortran","-std=legacy",
+                                    "-ffixed-line-length-72","-fno-automatic",
+                                    "-fno-align-commons",
+                                    "-fallow-argument-mismatch","-O0",
+                                    "-I"+str(a.original_fortran_include_dir.resolve()),
+                                    "-I"+str(vendor.resolve()),
+                                    str(indexed_src),"-o",str(indexed_exe)]
+                                comp=subprocess.run(build,capture_output=True,
+                                           text=True,errors="replace",
+                                           timeout=a.timeout_sec,check=False)
+                                require(comp.returncode==0,
+                                        "INDEXED_ORIGINAL_COMPILE_FAILED:"+comp.stderr[-1000:])
+                                indexed_work=scratch/"indexed_run"
+                                indexed_work.mkdir()
+                                stage_img(a.source_img,indexed_work)
+                                execute_original_existing(indexed_exe,indexed_work,
+                                                         debug_control,a.timeout_sec)
+                                require(read_hits(indexed_work/"lu.dat")==original_hits,
+                                        "INDEXED_INSTRUMENTED_HITS_NOT_IDENTICAL")
+                                require(file_sha(indexed_work/"lu.dat")==
+                                        file_sha(qa_work/"lu.dat"),
+                                        "INDEXED_INSTRUMENTED_LU_BYTES_DRIFT")
+                                require(file_sha(indexed_work/"qamesh.dat")==
+                                        file_sha(qa_work/"qamesh.dat"),
+                                        "INDEXED_INSTRUMENTED_QAMESH_BYTES_DRIFT")
+                                require(parse_original_used(indexed_work/"ctgproc.lst")==
+                                        hits_parent_count,
+                                        "INDEXED_INSTRUMENTED_SOURCE_COUNT_DRIFT")
+                                orig_index=read_indexed_original(
+                                    indexed_work/"qaindexed.dat",
+                                    indexed_work/"qamesh.dat")
+                                native_gen=read_indexed_native(
+                                    a.native_qa_csv,HEADER_GEN,
+                                    d1["diagnostic_submesh_csv_sha256"])
+                                native_direct=read_indexed_native(
+                                    a.native_direct_mesh_csv,HEADER_DIRECT,
+                                    d1["direct_laea_candidate_mesh_csv_sha256"])
+                                lineage=summarize_lineage(
+                                    orig_index["rows"],native_gen,native_direct)
+                                lineage.update({
+                                    "original_source_sha256":file_sha(a.original_source_file),
+                                    "instrumented_source_sha256":derived_sha,
+                                    "instrumented_binary_sha256":file_sha(indexed_exe),
+                                    "indexed_original_raw_points":orig_index["total"],
+                                    "indexed_original_hits_same_as_unmodified":True,
+                                    "indexed_original_lu_bytes_same_as_unmodified_qa":True,
+                                    "indexed_original_qamesh_bytes_same_as_unmodified_qa":True,
+                                })
+                                report["indexed_coordinate_lineage"]=lineage
+                        except Exception as ix_ex:
+                            report["indexed_coordinate_lineage"]={
+                                "status":"DIAGNOSTIC_FAILED_OR_MISSING",
+                                "error":str(ix_ex)}
+                    else:
+                        report["indexed_coordinate_lineage"]="NOT_REQUESTED"
                 except Exception as ex:
                     report["coordinate_diagnostic"]={"status":"DIAGNOSTIC_FAILED_OR_MISSING",
                                                       "error":str(ex)}
