@@ -113,7 +113,9 @@ G land_geometry(const fs::path& shp,const P2Grid& grid,int epsg){
       GDAL_OF_VECTOR|GDAL_OF_READONLY,nullptr,nullptr,nullptr)),GDALClose);
   need(bool(ds)&&ds->GetLayerCount()==1,"P2B_GSHHS_L1_OPEN");
   auto* layer=ds->GetLayer(0);
-  need(layer&&layer->GetGeomType()!=wkbLineString&&layer->GetGeomType()!=wkbMultiLineString,
+  need(bool(layer),"P2B_GSHHS_L1_LAYER_MISSING");
+  const auto layer_type=wkbFlatten(layer->GetGeomType());
+  need(layer_type==wkbPolygon||layer_type==wkbMultiPolygon,
        "P2B_SHORELINE_MUST_BE_POLYGONS");
   OGRSpatialReference geo,dest;
   geo.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -169,14 +171,16 @@ double assign_water(const fs::path& tif,const P2Grid& grid,int epsg,const OGRGeo
   OGRSpatialReference target;target.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
   need(target.importFromEPSG(epsg)==OGRERR_NONE&&srs&&srs->IsSame(&target),"P2B_TIFF_CRS_DRIFT");
   double gt[6]{};
-  need(ds->GetGeoTransform(gt)==CE_None&&gt[1]==30&&gt[5]==-30&&
-       gt[2]==0&&gt[4]==0,"P2B_TIFF_GRID_DRIFT");
+  need(ds->GetGeoTransform(gt)==CE_None&&std::abs(gt[1]-30.)<1e-8&&
+       std::abs(gt[5]+30.)<1e-8&&gt[2]==0&&gt[4]==0,
+       "P2B_TIFF_GRID_DRIFT");
+  const double sx=gt[1],sy=-gt[5];
   const double gx0=grid.x0_m,gy0=grid.y0_m,gx1=gx0+grid.nx*grid.dx_m,gy1=gy0+grid.ny*grid.dx_m;
   const int width=ds->GetRasterXSize(),height=ds->GetRasterYSize();
-  const int c0=std::max(0,int(std::floor((gx0-gt[0])/30.)));
-  const int c1=std::min(width,int(std::ceil((gx1-gt[0])/30.)));
-  const int r0=std::max(0,int(std::floor((gt[3]-gy1)/30.)));
-  const int r1=std::min(height,int(std::ceil((gt[3]-gy0)/30.)));
+  const int c0=std::max(0,int(std::floor((gx0-gt[0])/sx)));
+  const int c1=std::min(width,int(std::ceil((gx1-gt[0])/sx)));
+  const int r0=std::max(0,int(std::floor((gt[3]-gy1)/sy)));
+  const int r1=std::min(height,int(std::ceil((gt[3]-gy0)/sy)));
   need(c1>c0&&r1>r0,"P2B_NO_WATER_COVERAGE");
   std::vector<std::uint8_t> pixels(std::size_t(c1-c0));
   std::vector<double> area(out.size(),0.);
@@ -184,9 +188,9 @@ double assign_water(const fs::path& tif,const P2Grid& grid,int epsg,const OGRGeo
   for(int r=r0;r<r1;++r){
     need(band->RasterIO(GF_Read,c0,r,c1-c0,1,pixels.data(),c1-c0,1,
                        GDT_Byte,0,0,nullptr)==CE_None,"P2B_GLC_WATER_READ");
-    const double py1=gt[3]-r*30.,py0=py1-30.;
+    const double py1=gt[3]-r*sy,py0=py1-sy;
     for(int c=c0;c<c1;++c)if(pixels[std::size_t(c-c0)]==210){
-      const double px0=gt[0]+c*30.,px1=px0+30.;
+      const double px0=gt[0]+c*sx,px1=px0+sx;
       const int i0=std::max(0,int(std::floor((px0-gx0)/grid.dx_m)));
       const int i1=std::min(int(grid.nx),int(std::ceil((px1-gx0)/grid.dx_m)));
       const int j0=std::max(0,int(std::floor((py0-gy0)/grid.dx_m)));
@@ -256,6 +260,8 @@ int main(int argc,char** argv){
          "P2B_GRID_SPACING_NOT_LU_REPRESENTABLE");
     need(nx>0&&ny>0&&std::int64_t(nx)*ny<=250000,"P2B_GRID_BUDGET");
     P2Grid grid{x,y,dk*1000.,std::size_t(nx),std::size_t(ny)};
+    need(grid.dx_m*grid.nx<=50000.&&grid.dx_m*grid.ny<=50000.,
+         "P2B_UNREVIEWED_GT50KM_SHORELINE_WINDOW");
     const auto map=policy_map(policy);
     const auto raw=compute_glc_area_fractions(tif.string(),grid,epsg);
     const auto land=land_geometry(shore,grid,epsg);
