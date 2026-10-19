@@ -1,0 +1,71 @@
+name: Issue84 real NOAA annual source screen (manual, metadata only)
+on:
+  pull_request:
+    paths:
+      - scripts/s2g/issue84_noaa_source_screen.py
+      - .github/workflows/issue84-noaa-source-screen.yml
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Actual NOAA source years to screen; no weather synthesis"
+        type: choice
+        required: true
+        default: "2023,2024"
+        options:
+          - "2023,2024"
+          - "2022,2023"
+          - "2022,2023,2024"
+      max_nearest:
+        description: "Number of nearby out-of-domain candidates to inspect"
+        type: number
+        required: true
+        default: 6
+permissions:
+  contents: read
+concurrency:
+  group: issue84-source-screen-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-entrypoint-contract:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check source screener imports/syntax without NOAA network
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
+          python3 -m py_compile scripts/s2g/issue84_noaa_source_screen.py
+          python3 -m scripts.s2g.issue84_noaa_source_screen --help
+  authentic-noaa-candidate-screen:
+    if: github.event_name == 'workflow_dispatch'
+    needs: offline-entrypoint-contract
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    env:
+      SCREEN_YEARS: ${{ inputs.years }}
+      SCREEN_NEAREST: ${{ inputs.max_nearest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Screen actual original NOAA year/station sources, SHA and UTC hours
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/issue84-metadata"
+          git rev-parse HEAD > "$RUNNER_TEMP/issue84-metadata/source-head.txt"
+          python3 -u -m scripts.s2g.issue84_noaa_source_screen \
+            --years "$SCREEN_YEARS" --max-nearest "$SCREEN_NEAREST" \
+            --out "$RUNNER_TEMP/issue84-metadata/real-noaa-source-screen.json"
+          echo "ISSUE84_SCIENCE_ACCEPTANCE=NOT_RUN"
+      - name: Preserve metadata only (no raw NOAA files or original vendor)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue84-real-noaa-source-screen-${{ github.run_id }}
+          path: ${{ runner.temp }}/issue84-metadata/
+          if-no-files-found: warn
+          retention-days: 14
