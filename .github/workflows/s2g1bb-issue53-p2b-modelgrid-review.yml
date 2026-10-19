@@ -83,6 +83,10 @@ jobs:
           print("P2B_REAL_GRID_AREA_AUDIT=PASS_SOFTWARE_SOURCE_ONLY")
           print("P2B_SCIENCE_MAPPING=P2_MAPPING_REVIEW_REQUIRED; LU_DAT=NOT_AUTHORIZED")
           print("P2B_REVIEW_AREAS=",json.dumps(report["fraction_by_review_tier"],sort_keys=True))
+          classes={k:v for k,v in report["raw_area_by_glc_class_m2"].items() if v>0}
+          print("P2B_REAL_MODELGRID_RAW_CLASS_AREA_M2=",json.dumps(classes,sort_keys=True))
+          print("P2B_MODELGRID_SITE_EVIDENCE_CELLS=",report["cells_requiring_site_evidence"])
+          print("P2B_MODELGRID_BLOCKED_MAPPING_CELLS=",report["cells_containing_blocked_mapping"])
           PY
       - name: Upload only source-bound model-grid-area review; no new landcover assets
         uses: actions/upload-artifact@v4
