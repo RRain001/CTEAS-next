@@ -99,7 +99,7 @@ class RealModelGridCrosswalkReview(unittest.TestCase):
         proposal=copy.deepcopy(self.proposal)
         row=next(x for x in proposal["classes"] if x["code"]==210)
         row["candidate_target_usgs92"]=52
-        with self.assertRaisesRegex(AuditError,"FLOODED_FLAT_OR_WATER"):
+        with self.assertRaisesRegex(AuditError,"INVALID_CANDIDATE_USGS92"):
             self.run_audit(proposal=proposal)
 
     def test_source_method_and_kind_must_remain_true(self):
