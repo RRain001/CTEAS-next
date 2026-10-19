@@ -1,0 +1,111 @@
+name: Issue53 GLCC real original GLAZAS cross-region science (manual)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/reference/validate_p2_glazas_regions.py
+      - native_cpp/reference/tests/test_glazas_regions.py
+      - .github/workflows/s2g1bb-issue53-glazas-cross-region.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue53-glazas-regions-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+env:
+  CTEAS_SOURCE_COMMIT: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+  CTGPROC_SOURCE_SHA256: 719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281
+  GLCC_SOURCE_SHA256: 4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a
+jobs:
+  software-contract-only:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source; never download original 156MB on PR CI
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: false
+      - name: Strict regional cards and parity comparator unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v native_cpp.reference.tests.test_glazas_regions
+          python3 -m py_compile native_cpp/reference/validate_p2_glazas_regions.py
+          echo 'REGIONAL_COMPARATOR_SOFTWARE=PASS'
+          echo 'ORIGINAL_GLAZAS_REGIONAL_SCIENCE=NOT_RUN'
+  genuine-cross-region-original-science:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout pinned CTEAS-next main and authentic GLCC LFS
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          lfs: true
+          persist-credentials: false
+      - name: Checkout original CTGPROC vendor source without redistribution
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Install original and native science build toolchains
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran g++-12 cmake libgdal-dev libssl-dev
+      - name: Authenticate source and independently compile untouched CTGPROC plus native D1-D3
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$(git -C original_cteas rev-parse HEAD)" = "$CTEAS_SOURCE_COMMIT"
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          echo "$CTGPROC_SOURCE_SHA256  $vendor/ctgproc.for" | sha256sum -c -
+          test "$(wc -c < eausgs2_0la.img)" -eq 156000000
+          echo "$GLCC_SOURCE_SHA256  eausgs2_0la.img" | sha256sum -c -
+          mkdir -p "${RUNNER_TEMP}/regional-ctgproc-includes"
+          for f in "$vendor"/*; do
+            test -f "$f" || continue
+            bn="${f##*/}"
+            ln -s "$f" "${RUNNER_TEMP}/regional-ctgproc-includes/${bn,,}"
+          done
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -O0 \
+            -I"${RUNNER_TEMP}/regional-ctgproc-includes" -I"$vendor" \
+            "$vendor/ctgproc.for" -o "${RUNNER_TEMP}/original_ctgproc.x"
+          test -x "${RUNNER_TEMP}/original_ctgproc.x"
+          cmake -S native_cpp -B "${RUNNER_TEMP}/region-native" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "${RUNNER_TEMP}/region-native" --parallel 2 \
+            --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
+      - name: True Japan UTM54N and Sumatra UTM47S original LFINAL T/F science
+        shell: bash
+        run: |
+          set -euo pipefail
+          original_sha="$(sha256sum "${RUNNER_TEMP}/original_ctgproc.x" | awk '{print $1}')"
+          python3 -m native_cpp.reference.validate_p2_glazas_regions \
+            --source-img eausgs2_0la.img \
+            --original-source-file original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --original-ctgproc "${RUNNER_TEMP}/original_ctgproc.x" \
+            --original-bin-sha256 "$original_sha" \
+            --control-template project/cases/hefei5km_2022_reference_case_20261011/geo/ctgproc/ctgproc.inp \
+            --native-d1 "${RUNNER_TEMP}/region-native/cteas_p2_glcc_raw" \
+            --native-d3 "${RUNNER_TEMP}/region-native/cteas_p2_glcc_lu_dat" \
+            --out-dir "${RUNNER_TEMP}/glazas-multi-regions" --timeout-sec 300
+          echo 'ORIGINAL_GLAZAS_TWO_REGION_SCIENCE=PASS_IF_BOTH_REPORTS_PASS'
+      - name: Preserve per-region evidence only; exclude all raw and original vendor outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue53-true-original-multi-utm-science
+          path: |
+            ${{ runner.temp }}/glazas-multi-regions/result.json
+            ${{ runner.temp }}/glazas-multi-regions/*/native-d1/p2_manifest.json
+            ${{ runner.temp }}/glazas-multi-regions/*/native-d3/p2_d3_manifest.json
+          if-no-files-found: warn
