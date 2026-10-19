@@ -1,4 +1,4 @@
-"""#54: genuine source (owner SRTM90m / OpenTopography SRTMGL1) -> native P1.
+"""#54 and #118: genuine source (owner SRTM90m / OpenTopography GL1 or GL3) -> native P1.
 
 Only for manually dispatched GitHub Actions. Real bytes, non-Hefei UTM50
 seam case, B-0 admitted, actual #49 source adapter, actual native binary.
@@ -72,11 +72,11 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
         # A route classification only. Actual official product version is
         # not authenticated by this supplied 3-arcsec TIFF hash.
         product="CGIAR-CSI-SRTM-v4.1"
-    elif route=="P1_B_30M_DOWNLOAD":
+    elif route in ("P1_B_30M_DOWNLOAD","P1_B_90M_DOWNLOAD"):
+        product=("SRTMGL1" if route=="P1_B_30M_DOWNLOAD" else "SRTMGL3")
         source=prepare(case_root/"grid/grid.cmn",src_out,"opentopography",
-                       allow_public_bulk_fallback=True)
+                       dem=product,allow_public_bulk_fallback=True)
         inventory={"status":"P1_B_ACTUAL_REQUEST_SOURCE_ONLY","required_tiles":[]}
-        product="SRTMGL1"
     else:
         raise ValueError("forbidden P1 source route")
     actual=run_case(case_yaml=case_yaml,
@@ -116,7 +116,8 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
 def main(argv=None)->int:
     p=argparse.ArgumentParser()
     p.add_argument("--root",type=Path,required=True)
-    p.add_argument("--route",choices=["P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD"],required=True)
+    p.add_argument("--route",choices=["P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD",
+                                       "P1_B_90M_DOWNLOAD"],required=True)
     p.add_argument("--binary",type=Path,required=True)
     p.add_argument("--tif-dir",type=Path)
     p.add_argument("--report",type=Path,required=True)
