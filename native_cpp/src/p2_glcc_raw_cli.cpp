@@ -114,7 +114,7 @@ int main(int argc,char** argv){
       // WGS84/UTM. This NEVER changes r.counts, r.cell_samples or D3 LU.DAT.
       // Its 95k integer field differences against original Fortran must be
       // reported separately by the independent manual science comparator.
-      std::string direct_probe_sha;
+      std::string direct_probe_sha,direct_probe_mesh_sha;
       if(modes.direct_probe) {
         require(diag&&!r.diagnostic_mesh.empty(),"DIRECT_PROBE_TRACE_MISSING");
         require(r.diagnostic_mesh.size()==r.included+r.outside,
@@ -127,9 +127,21 @@ int main(int argc,char** argv){
         const float x0=static_cast<float>(r.grid.x0_m/1000.);
         const float y0=static_cast<float>(r.grid.y0_m/1000.);
         const float step=static_cast<float>(r.grid.dx_m/1000.);
+        // Trace the candidate BEFORE grid clipping; this provides a
+        // source_i/j + imesh/jmesh join key against an independently
+        // instrumented, exact-source original Fortran diagnostic.
+        std::ofstream mesh_trace(dest/"p2_glcc_direct_laea_mesh.csv");
+        require(bool(mesh_trace),"DIRECT_PROBE_MESH_OPEN_FAILED");
+        mesh_trace<<"source_i,source_j,mesh_i,mesh_j,usgs_category,"
+                    "laea_x_km,laea_y_km,x_km,y_km,assigned_i,assigned_j\n";
+        mesh_trace<<std::setprecision(9);
         for(const auto& p:r.diagnostic_mesh) {
           const auto q=probe.project(p.source_i,p.source_j,p.mesh_i,p.mesh_j,
                                      mesh,x0,y0,step);
+          mesh_trace<<p.source_i<<","<<p.source_j<<","<<p.mesh_i<<","
+                    <<p.mesh_j<<","<<p.category<<","<<q.laea_x_km<<","
+                    <<q.laea_y_km<<","<<q.x_km<<","<<q.y_km<<","
+                    <<q.i<<","<<q.j<<"\n";
           if(q.i<1||q.j<1||q.i>nx||q.j>ny){++candidate_outside;continue;}
           const auto cell=(std::size_t(q.j)-1)*r.grid.nx+std::size_t(q.i-1);
           const auto k=std::find(kGlccUsgs92Classes.begin(),
@@ -140,6 +152,10 @@ int main(int argc,char** argv){
           candidate_samples[cell]++;
           ++candidate_included;
         }
+        require(bool(mesh_trace),"DIRECT_PROBE_MESH_WRITE_FAILED");
+        mesh_trace.close();
+        require(bool(mesh_trace),"DIRECT_PROBE_MESH_CLOSE_FAILED");
+        const auto mesh_trace_sha=sha256(dest/"p2_glcc_direct_laea_mesh.csv");
         require(candidate_included+candidate_outside==r.diagnostic_mesh.size(),
                 "DIRECT_PROBE_INTERNAL_HITS_LOST");
         require(candidate_included>0,"DIRECT_PROBE_ZERO_INCLUDED_SCIENCE_INVALID");
@@ -160,6 +176,9 @@ int main(int argc,char** argv){
         destf.close();
         require(bool(destf),"DIRECT_PROBE_HITS_CSV_CLOSE_FAILED");
         direct_probe_sha=sha256(dest/"p2_glcc_direct_laea_candidate_hits.csv");
+        // SHA is scoped to diagnostic instrumentation and cannot upgrade
+        // either the official production D1 or original-HITS science gate.
+        direct_probe_mesh_sha=mesh_trace_sha;
         std::cout<<"DIRECT_LAEA_SPHERE_CANDIDATE_DIAGNOSTIC_ONLY INCLUDED="
                  <<candidate_included<<" OUTSIDE="<<candidate_outside
                  <<" ORIGINAL_INTEGER_PARITY=NOT_TESTED\n";
@@ -172,6 +191,7 @@ int main(int argc,char** argv){
           <<"  \"source_sha256\": \""<<observed<<"\",\n"
           <<"  \"fractions_csv_sha256\": \""<<csv_sha<<"\",\n"          <<"  \"hits_csv_sha256\": \""<<hits_sha<<"\",\n"          <<(diag?"  \"diagnostic_submesh_csv_sha256\": \""+diag_sha+"\",\n":"")
           <<(modes.direct_probe?"  \"direct_laea_candidate_hits_csv_sha256\": \""+direct_probe_sha+"\",\n":"")
+          <<(modes.direct_probe?"  \"direct_laea_candidate_mesh_csv_sha256\": \""+direct_probe_mesh_sha+"\",\n":"")
 
           <<"  \"source_size_bytes\": 156000000,\n"
           <<"  \"utm_epsg\": "<<epsg<<", \"nx\": "<<nx<<", \"ny\": "<<ny<<",\n"
