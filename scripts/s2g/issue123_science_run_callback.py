@@ -19,6 +19,7 @@ REPO="RRain001/CTEAS-next"
 D6="D6B_GNU_SPLIT_IO_EOF_ADAPTED_ORIGINAL_COASTEXT_GENERATED_BLN_SCOPED"
 D8="D8_REAL_ORIGINAL_BLN_IPTYPE_ZERO_MISMATCH_PASS_SCOPED"
 D9="D9_REAL_ORIGINAL_GLAZAS_HITS_38_ZERO_DIFF_PASS_SCOPED"
+D10="D10_REAL_ORIGINAL_GLAZAS_LFINAL_T_F63_FLAGS_ZERO_DIFF_PASS_SCOPED"
 
 
 def bounded(root: Path,relative:str) -> dict:
@@ -48,6 +49,7 @@ def report_body(root:Path,run_id:int,head_sha:str) -> str:
     d6=bounded(root,"issue123-d6b-original-run/original_coastext_report.json")
     d8=bounded(root,"issue123-d8-oracle/d8_iptype_report.json")
     d9=bounded(root,"issue123-d9-hits-report.json")
+    d10=bounded(root,"issue123-d10-f63-report.json")
     run=f"https://github.com/{REPO}/actions/runs/{run_id}"
     bln=d6.get("original_bln_sha256","")
     if not isinstance(bln,str) or not re.fullmatch(r"[0-9a-f]{64}",bln):
@@ -62,13 +64,14 @@ def report_body(root:Path,run_id:int,head_sha:str) -> str:
        f"- D6 genuine original BLN: {safe_status(d6,D6)}\n"
        f"- D8 genuine BLN original Fortran/C++ IPTYPE: {safe_status(d8,D8)}\n"
        f"- D9 200x200x38 original HITS parity: {safe_status(d9,D9)}\n"
+       f"- D10 200x200x38 original F6.3+flags parity: {safe_status(d10,D10)}\n"
        f"- Original vendor source SHA256: {source}\n"
        f"- Original BLN SHA256: {bln}\n"
        f"- Artifact listing: {run}#artifacts\n\n"
        "Reported JSON presence is not an independently accepted scientific result. "
        "Inspect the completed job logs, source inputs, exact commit and uploaded "
        "D6/D8/D9 audit JSON before declaring any scoped PASS. "
-       "Do not infer D10 LU.DAT fraction parity or close #123.\n"
+       "Do not infer full ORIGINAL_SAMPLING production integration or close #123.\n"
     )
 
 
