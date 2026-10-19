@@ -379,7 +379,8 @@ def main(argv=None)->int:
     p.add_argument("--case-root",required=True,type=Path)
     p.add_argument("--cteas-checkout",required=True,type=Path)
     p.add_argument("--native-binary",required=True,type=Path)
-    p.add_argument("--route",required=True,choices=("P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD"))
+    p.add_argument("--route",required=True,choices=("P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD",
+                                                    "P1_B_90M_DOWNLOAD"))
     p.add_argument("--report",required=True,type=Path)
     args=p.parse_args(argv)
     try:
