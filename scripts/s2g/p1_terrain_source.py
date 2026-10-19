@@ -34,6 +34,31 @@ DEM_PRODUCTS = {
     "SRTMGL1": {"arcsec": 1.0, "max_area_km2": 450_000.0, "filename": "srtmgl1_30m.tif"},
     "SRTMGL3": {"arcsec": 3.0, "max_area_km2": 4_050_000.0, "filename": "srtmgl3_90m.tif"},
 }
+# Official *dataset-level* provenance, not a per-tile cryptographic
+# authentication. EPSG:4326 is horizontal; EPSG:5773 is EGM96 geoid height,
+# NOT WGS84 ellipsoidal height. Source pixels are never vertically converted.
+SRTMGL3_OFFICIAL_DOCUMENTATION = {
+    "provider": "OpenTopography",
+    "provider_product": "SRTM_GL3",
+    "provider_collection_id": "OT.042013.4326.1",
+    "provider_collection_uri":
+        "https://portal.opentopography.org/datasetMetadata?otCollectionID=OT.042013.4326.1",
+    "nasa_product_family": "SRTMGL3.003",
+    "nasa_product_doi": "10.5067/MEASURES/SRTM/SRTMGL3.003",
+    "nasa_product_uri": "https://doi.org/10.5067/MEASURES/SRTM/SRTMGL3.003",
+    "source_horizontal_crs": "EPSG:4326",
+    "declared_vertical_crs": "EPSG:5773",
+    "declared_vertical_datum": "EGM96 geoid",
+    "declared_vertical_units": "m",
+    "vertical_reference_uri":
+        "https://www.usgs.gov/centers/eros/science/usgs-eros-archive-digital-elevation-shuttle-radar-topography-mission-srtm",
+    "evidence_level": "OFFICIAL_COLLECTION_METADATA_ONLY",
+    "tile_matches_independent_nasa_granule": False,
+    "tile_independent_published_checksum_verified": False,
+    "tiff_embedded_vertical_crs_verified": False,
+    "vertical_conversion_applied": False,
+}
+
 SECRET_ENV = "OPENTOPOGRAPHY_API_KEY"
 MAX_AREA_KM2 = 450_000.0  # Legacy 30m contract.
 MAX_RESPONSE_BYTES = 500_000_000
@@ -372,6 +397,12 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
             "p3_geo_dat":"NOT_RUN","p6_p7":"NOT_RUN",
             "ready_for_generic_P1_physics":False,
         }
+        # Source documentation is an explicit scoped assertion, not proof
+        # that public S3 GeoTIFF bytes equal an authenticated NASA granule.
+        if source == "opentopography" and dem == "SRTMGL3":
+            report["official_dataset_documentation"] = dict(SRTMGL3_OFFICIAL_DOCUMENTATION)
+            report["source_product_version_authenticated"] = False
+            report["height_vertical_datum_authenticated"] = False
         (output_dir/"p1_source_manifest.json").write_text(
             json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
         return report
