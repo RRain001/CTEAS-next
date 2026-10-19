@@ -11,8 +11,16 @@ on:
         options:
           - preview
           - apply
+      batch:
+        description: 'standard or pinned reviewed second-pass 2026-10-19'
+        required: true
+        default: standard
+        type: choice
+        options:
+          - standard
+          - second_pass_20261019
       confirmation:
-        description: 'For apply only, type DELETE_REVIEWED_BRANCHES'
+        description: 'For apply, enter the batch-specific confirmation string'
         required: false
         type: string
       max_delete:
@@ -32,9 +40,15 @@ jobs:
     timeout-minutes: 25
     env:
       CLEANUP_MODE: ${{ inputs.mode }}
+      CLEANUP_BATCH: ${{ inputs.batch }}
       CLEANUP_CONFIRMATION: ${{ inputs.confirmation }}
       CLEANUP_MAX: ${{ inputs.max_delete }}
     steps:
+      - name: Checkout reviewed roster and archived sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Inventory, verify, and optionally delete safe branches
         uses: actions/github-script@v7
         with:
@@ -42,23 +56,91 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
+            const crypto = require('crypto');
             const {owner, repo} = context.repo;
             const repoFull = owner + '/' + repo;
             const mode = process.env.CLEANUP_MODE;
+            const batch = process.env.CLEANUP_BATCH || 'standard';
             const confirmation = process.env.CLEANUP_CONFIRMATION;
             const maxDelete = Number(process.env.CLEANUP_MAX);
+            if (context.ref !== 'refs/heads/main') throw new Error('ONLY_MAIN_DISPATCH_ALLOWED');
             if (!['preview', 'apply'].includes(mode)) throw new Error('INVALID_MODE');
+            if (!['standard', 'second_pass_20261019'].includes(batch)) throw new Error('INVALID_BATCH');
             if (!Number.isInteger(maxDelete) || maxDelete < 1 || maxDelete > 200) throw new Error('INVALID_MAX_DELETE');
-            if (mode === 'apply' && confirmation !== 'DELETE_REVIEWED_BRANCHES') {
-              throw new Error('APPLY_REQUIRES_EXACT_CONFIRMATION');
+            const requiredConfirmation = batch === 'second_pass_20261019'
+              ? 'DELETE_SECOND_PASS_20261019' : 'DELETE_REVIEWED_BRANCHES';
+            if (mode === 'apply' && confirmation !== requiredConfirmation) {
+              throw new Error('APPLY_REQUIRES_EXACT_CONFIRMATION_' + requiredConfirmation);
             }
 
-            // Never delete main or work with known unmerged independent commits.
+            // Second-pass deletion uses only reviewed exact SHA; no wildcard matching.
             const alwaysKeep = new Set([
               'main',
+              'codex/issue123-d3-full4-provenance-and-optin-count',
               'codex/issue123-original-sampling-coastal-policy-d0',
-              'maintenance/manual-reviewed-branch-prune-20261019'
+              'codex/issue84-wolsong-real-zero-leap-parity',
+              'feat/issue54-scratch-native-cpp-pixel-lineage'
             ]);
+            if (batch === 'standard') {
+              alwaysKeep.add('maintenance/manual-reviewed-branch-prune-20261019');
+            }
+            const pinned = new Map();
+            let manifestSha256 = null;
+            let archivedSourceCount = 0;
+            let archives = [];
+            if (batch === 'second_pass_20261019') {
+              const text = fs.readFileSync('.github/maintenance/second-pass-20261019.json', 'utf8');
+              manifestSha256 = crypto.createHash('sha256').update(text).digest('hex');
+              const manifest = JSON.parse(text);
+              if (manifest.schema !== 'CTEAS_NEXT_REVIEWED_BRANCH_PRUNE_V2' ||
+                  manifest.repository !== repoFull || manifest.expected_count !== 23 ||
+                  !Array.isArray(manifest.branches) || manifest.branches.length !== 23 ||
+                  !Array.isArray(manifest.source_archives) ||
+                  manifest.source_archives.length !== 6) {
+                throw new Error('REVIEWED_MANIFEST_INVALID');
+              }
+              for (const b of manifest.branches) {
+                if (!b.name || !/^[a-f0-9]{40}$/.test(b.head_sha) || pinned.has(b.name)) {
+                  throw new Error('REVIEWED_MANIFEST_DUPLICATE_OR_INVALID_SHA');
+                }
+                if (alwaysKeep.has(b.name) || b.name === 'main') {
+                  throw new Error('REVIEWED_MANIFEST_INCLUDES_PROTECTED_NAME');
+                }
+                pinned.set(b.name, b.head_sha);
+              }
+              archives = manifest.source_archives;
+              const coverage = new Set();
+              for (const archive of archives) {
+                if (!/^docs\/maintenance\/branch-prune-20261019\/[a-z0-9-]+-sources\.json$/.test(archive)) {
+                  throw new Error('REVIEWED_ARCHIVE_PATH_INVALID');
+                }
+                const source = JSON.parse(fs.readFileSync(archive, 'utf8'));
+                if (source.schema !== 'CTEAS_NEXT_BRANCH_SOURCE_ARCHIVE_V1' ||
+                    !Array.isArray(source.files) || source.files.length === 0) {
+                  throw new Error('REVIEWED_ARCHIVE_MISSING_OR_INVALID');
+                }
+                for (const f of source.files) {
+                  if (pinned.get(f.branch) !== f.head_sha ||
+                      !/^\.github\/(workflows\/|science-triggers\/)/.test(f.path)) {
+                    throw new Error('REVIEWED_ARCHIVE_SOURCE_MISMATCH');
+                  }
+                  const body = Buffer.from(f.source, 'utf8');
+                  const digest = crypto.createHash('sha1')
+                    .update('blob ' + body.length + '\0').update(body).digest('hex');
+                  if (digest !== f.blob_sha) throw new Error('REVIEWED_ARCHIVE_BLOB_MISMATCH');
+                  archivedSourceCount += 1;
+                  coverage.add(f.branch);
+                }
+              }
+              for (const name of pinned.keys()) {
+                if (name.startsWith('automation/') && !coverage.has(name)) {
+                  throw new Error('REVIEWED_ARCHIVE_INCOMPLETE_' + name);
+                }
+              }
+              if (mode === 'apply' && maxDelete < pinned.size) {
+                throw new Error('MAX_DELETE_TOO_LOW_FOR_REVIEWED_BATCH');
+              }
+            }
             // Individually reviewed closed-unmerged PRs whose successors were merged.
             const superseded = new Map([[20, 19], [32, 31]]);
             const branches = await github.paginate(github.rest.repos.listBranches,
@@ -77,16 +159,41 @@ jobs:
               arr.push(p);
               byBranch.set(p.head.ref, arr);
             }
+            // Fail before any deletion if any of the 23 pinned refs changed or acquired a PR.
+            if (batch === 'second_pass_20261019' && mode === 'apply') {
+              const observed = new Map(branches.map(b => [b.name, b]));
+              for (const [name, sha] of pinned) {
+                const live = observed.get(name);
+                const linked = byBranch.get(name) || [];
+                if (!live || live.protected || live.commit.sha !== sha ||
+                    linked.some(p => p.state === 'open') ||
+                    linked.some(p => !p.merged_at)) {
+                  throw new Error('REVIEWED_BATCH_STALE_OR_UNSAFE_' + name);
+                }
+              }
+            }
             const report = [];
             let removed = 0;
             for (const b of branches) {
               const linked = byBranch.get(b.name) || [];
               let reason = '';
               let safe = false;
-              if (b.protected || alwaysKeep.has(b.name)) {
+              const reviewedSha = batch === 'second_pass_20261019' ? pinned.get(b.name) : null;
+              if (batch === 'second_pass_20261019' && !reviewedSha) {
+                reason = 'outside-reviewed-second-pass';
+              } else if (b.protected || alwaysKeep.has(b.name)) {
                 reason = 'protected-or-explicit-keep';
+              } else if (reviewedSha && reviewedSha !== b.commit.sha) {
+                reason = 'reviewed-sha-changed';
               } else if (linked.some(p => p.state === 'open')) {
                 reason = 'open-pr';
+              } else if (batch === 'second_pass_20261019') {
+                if (linked.some(p => !p.merged_at)) {
+                  reason = 'closed-unmerged-pr';
+                } else {
+                  safe = true;
+                  reason = 'reviewed-second-pass-exact-sha';
+                }
               } else if (linked.some(p => !p.merged_at && !(
                 superseded.has(p.number) && successorIsMerged.get(p.number)
               ))) {
@@ -141,14 +248,17 @@ jobs:
               }
               report.push({
                 branch: b.name, head_sha: b.commit.sha,
+                expected_sha: batch === 'second_pass_20261019' ? pinned.get(b.name) || null : null,
                 action, reason, linked_prs: linked.map(p => p.number)
               });
               core.info(action + ' | ' + b.name + ' | ' + reason);
             }
             const output = {
-              schema: 'CTEAS_NEXT_BRANCH_CLEANUP_V1',
+              schema: 'CTEAS_NEXT_BRANCH_CLEANUP_V2',
               repository: repoFull,
-              mode,
+              mode, batch, manifest_sha256: manifestSha256,
+              source_archive_files: archives,
+              archived_source_count: archivedSourceCount,
               main_sha: (await github.rest.repos.getBranch(
                 {owner, repo, branch: 'main'})).data.commit.sha,
               branch_count_before: branches.length,
@@ -160,8 +270,9 @@ jobs:
             const dst = path.join(process.env.RUNNER_TEMP, 'branch-cleanup-report.json');
             fs.writeFileSync(dst, JSON.stringify(output, null, 2) + '\n');
             await core.summary.addHeading('CTEAS-next remote branch cleanup');
-            await core.summary.addRaw('Mode: ' + mode + '; branches: ' +
-              branches.length + '; removed: ' + removed + '\n\n');
+            await core.summary.addRaw('Mode: ' + mode + '; batch: ' + batch +
+              '; branches: ' + branches.length + '; removed: ' + removed +
+              '; archive sources: ' + archivedSourceCount + '\n\n');
             await core.summary.addTable([
               [{data:'Branch',header:true},{data:'Action',header:true},{data:'Reason',header:true}],
               ...report.map(r => [r.branch, r.action, r.reason])
