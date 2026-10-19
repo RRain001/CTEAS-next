@@ -37,7 +37,7 @@ jobs:
           cmake --build "$RUNNER_TEMP/p6-source-only" --parallel 2 \
             --target cteas_p6g_surf_source_preflight cteas_p6g_surface_dynamic_tests
           ctest --test-dir "$RUNNER_TEMP/p6-source-only" --output-on-failure \
-            -R '^p6g_surface_multi_site_multiyear_frozen_143h_parity
+            -R '^p6g_surface_multi_site_multiyear_frozen_143h_parity$'
   authentic-2024-noaa-original-native-raw-parity:
     if: github.event_name == 'workflow_dispatch'
     needs: offline-zero-leap-contract
