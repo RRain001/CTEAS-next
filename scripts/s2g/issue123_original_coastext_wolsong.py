@@ -27,7 +27,7 @@ GLCC_BYTES = 156_000_000
 # Original COASTEXT FORMAT(I7,',',I1,',"',I1,',',I1,',',I6,'"')
 # emits leading spaces *inside the quotes* for the I6 polygon ID.
 # COASTRD reads the quoted record list-directed and accepts that padding.
-BLN_HEADER = re.compile(r'^\s*(\d+)\s*,\s*([01])\s*,\s*"([0-4])\s*,\s*([0-9]+)\s*,\s*(-?[0-9]+)\s*"\s*
+BLN_HEADER = re.compile(r'^\s*(\d+)\s*,\s*([01])\s*,\s*"([0-4])\s*,\s*([0-9]+)\s*,\s*(-?[0-9]+)\s*"\s*$')
 VERTEX = re.compile(r'^\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*$')
 GRID = {"epsg": 32652, "xrefkm": "533.215", "yrefkm": "3942.629",
         "nx": 200, "ny": 200, "dgridkm": "0.100", "meshglaz": 10}
