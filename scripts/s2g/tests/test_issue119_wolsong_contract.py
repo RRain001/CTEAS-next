@@ -68,9 +68,27 @@ class TestWolsongSource(unittest.TestCase):
                 "repeat_download":{"pixels_equal":True}
             }))
             self.assertEqual(site.verify(directory)["sha256"],report["sha256"])
+            meta={**site.BASE,**report,"license":"CC-BY-4.0",
+                  "repeat_download":{"pixels_equal":True}}
+            # PROJ library variants can differ by a few nanodegrees.
+            close_corners=[pair[:] for pair in site.BASE["wgs84_corners"]]
+            close_corners[0][0]+=5e-9
             (directory/"metadata.json").write_text(json.dumps({
-                **site.BASE,**report, "license":"CC-BY-4.0",
-                "repeat_download":{"pixels_equal":True},"x0_m":42.
+                **meta,"wgs84_corners":close_corners}))
+            self.assertEqual(site.verify(directory)["sha256"],report["sha256"])
+            # An actual point shift (~1 m), malformed data, and exact metric
+            # grid drift must still be rejected.
+            close_corners[0][0]+=1e-5
+            (directory/"metadata.json").write_text(json.dumps({
+                **meta,"wgs84_corners":close_corners}))
+            with self.assertRaisesRegex(ValueError,"PROVENANCE_DRIFT:wgs84_corners"):
+                site.verify(directory)
+            (directory/"metadata.json").write_text(json.dumps({
+                **meta,"wgs84_corners":[["not a coordinate",1]]}))
+            with self.assertRaisesRegex(ValueError,"PROVENANCE_DRIFT:wgs84_corners"):
+                site.verify(directory)
+            (directory/"metadata.json").write_text(json.dumps({
+                **meta,"x0_m":42.
             }))
             with self.assertRaisesRegex(ValueError,"PROVENANCE_DRIFT"):
                 site.verify(directory)
