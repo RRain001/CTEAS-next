@@ -187,6 +187,17 @@ endif()
 add_test(NAME cteas_p2_original_sampling_recount_synthetic
          COMMAND cteas_p2_original_sampling_recount_tests)
 
+# Issue #123 D9: isolated real-BLN original GLAZAS LFINAL=F integer HITS candidate.
+# Scientific parity only through an independently SHA-audited real run.
+add_executable(cteas_p2_original_coast_hits_wolsong
+               src/p2_original_coast_hits_wolsong_cli.cpp)
+target_link_libraries(cteas_p2_original_coast_hits_wolsong
+                      PRIVATE cteas_p2_original_sampling_recount)
+if(NOT MSVC)
+  target_compile_options(cteas_p2_original_coast_hits_wolsong PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+
 # Issue #53 D3: SHA-bound historical GLCC 24->38 LU.DAT serializer only.
 # The GLC_FCS30D 35->38 crosswalk remains scientifically unapproved.
 add_executable(cteas_p2_glcc_lu_dat src/p2_glcc_lu_dat_cli.cpp)
