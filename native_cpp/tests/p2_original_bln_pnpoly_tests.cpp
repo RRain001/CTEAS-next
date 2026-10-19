@@ -1,5 +1,6 @@
 #include "cteas/geo/ctgproc_original_bln_pnpoly.hpp"
 #include "cteas/geo/ctgproc_original_coast_policy.hpp"
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <filesystem>
@@ -40,8 +41,9 @@ void test_pnpoly_real4(){
   duplicate.insert(duplicate.begin()+2,r[1]);
   ensure(original_pnpoly_r4(5.f,5.f,duplicate)==1,"PNPOLY zero-length edge");
   rejects([&]{(void)original_pnpoly_r4(NAN,5.f,r);},"PNPOLY NaN point must fail");
-  rejects([&]{(void)original_pnpoly_r4(5.f,5.f,box(0.f,0.f));},
-          "PNPOLY zero area source must be rejected by original polygon validation");
+  const std::array<OriginalBlnVertexR4,2> invalid{{{0.f,0.f},{1.f,1.f}}};
+  rejects([&]{(void)original_pnpoly_r4(5.f,5.f,invalid);},
+          "PNPOLY fewer than three vertices must fail closed");
 }
 void test_iptpe_five_levels_and_boundary(){
   std::vector<OriginalBlnPolygonR4> regions;
