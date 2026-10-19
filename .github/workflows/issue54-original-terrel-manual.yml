@@ -6,6 +6,13 @@ on:
     paths:
       - '.github/workflows/issue54-original-terrel-manual.yml'
       - 'scripts/s2g/p1_original_actions_replay.py'
+      - 'scripts/s2g/p1_real_actions_case.py'
+      - 'scripts/s2g/p1_terrain_source.py'
+      - 'scripts/s2g/p1_opentopo_bulk.py'
+      - 'scripts/s2g/p1_native_case.py'
+      - 'native_cpp/reference/compare_p1_general.py'
+      - 'scripts/s2g/tests/test_p1_native_case.py'
+      - 'scripts/s2g/tests/test_p1_real_actions_case.py'
       - 'scripts/s2g/tests/test_p1_original_actions_replay.py'
       - 'scripts/s2g/tests/test_p1_original_legacy_tiff.py'
       - 'scripts/s2g/p1_original_coord_probe.py'
@@ -23,6 +30,7 @@ on:
         options:
           - P1_A_90M_LOCAL
           - P1_B_30M_DOWNLOAD
+          - P1_B_90M_DOWNLOAD
 
 permissions:
   contents: read
@@ -56,7 +64,13 @@ jobs:
           echo 'ORIGINAL_TERREL_CONTRACT_SOFTWARE=PASS_REAL_ORIGINAL_NOT_RUN'
 
   genuine-original-vs-native:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    # Historical routes remain main-only. New GL3 may be tested manually on the
+    # fixed reviewed PR branch BEFORE merge, by the repo owner alone.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      ((github.ref == 'refs/heads/main' && inputs.route != 'P1_B_90M_DOWNLOAD') ||
+       (github.ref == 'refs/heads/codex/p1-opentopo-srtmgl3-selectable' &&
+        inputs.route == 'P1_B_90M_DOWNLOAD' && github.actor == 'RRain001'))
     runs-on: ubuntu-22.04
     timeout-minutes: 70
     env:
