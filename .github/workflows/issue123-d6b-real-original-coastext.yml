@@ -1,0 +1,113 @@
+name: Issue123 D6B original CTGPROC Wolsong coast.bln
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/issue123_original_coastext_wolsong.py
+      - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
+      - .github/workflows/issue123-d6b-real-original-coastext.yml
+  push:
+    branches: [main]
+    paths:
+      - scripts/s2g/issue123_original_coastext_wolsong.py
+      - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
+      - .github/workflows/issue123-d6b-real-original-coastext.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue123-d6b-original-coastext
+  cancel-in-progress: false
+jobs:
+  offline-original-deck-and-bln-contract:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Synthetic legal control and original BLN tests only
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong
+          echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
+  genuine-unmodified-original-wolsong-coastext:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [offline-original-deck-and-bln-contract]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout CTEAS-next with real GLCC LFS data
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Separately checkout exact original Fortran commit
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Install GNU Fortran
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran
+      - name: SHA-pin original source and build genuine original CTGPROC
+        run: |
+          set -euo pipefail
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          echo "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281  $vendor/ctgproc.for" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/issue123-d6b-includes"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$RUNNER_TEMP/issue123-d6b-includes/$bn"
+          done
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 -I"$RUNNER_TEMP/issue123-d6b-includes" -I"$vendor" "$vendor/ctgproc.for" -o "$RUNNER_TEMP/issue123-original-ctgproc"
+      - name: Verify real GSHHG Full and GLCC source SHA
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_gshhg_binary_full fetch --cache "$RUNNER_TEMP/issue123-d6b-gshhs"
+          test "$(wc -c < eausgs2_0la.img)" -eq 156000000
+          echo "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img" | sha256sum -c -
+      - name: Generate original legal GLAZAS and Wolsong coast control
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_original_coastext_wolsong prepare \
+            --original-source original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --template original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.inp \
+            --glcc eausgs2_0la.img \
+            --cache "$RUNNER_TEMP/issue123-d6b-gshhs" \
+            --out "$RUNNER_TEMP/issue123-d6b-original-run"
+      - name: Execute genuine original Fortran COASTEXT
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/issue123-d6b-original-run"
+          timeout 1800 "$RUNNER_TEMP/issue123-original-ctgproc" > original_run.log 2>&1 || {
+            echo "D6B_ORIGINAL_CTGPROC_RUN_FAILED"
+            tail -n 35 original_run.log
+            exit 1
+          }
+          test -s coast.bln
+      - name: Audit actual original BLN source provenance and contents
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_original_coastext_wolsong audit \
+            --out "$RUNNER_TEMP/issue123-d6b-original-run" \
+            --original-binary "$RUNNER_TEMP/issue123-original-ctgproc"
+          echo "D6B_ORIGINAL_COASTEXT=PASS_IF_AUDIT ORIGINAL_IPTYPE_PARITY=NOT_RUN ORIGINAL_HITS_LU_PARITY=NOT_RUN"
+      - name: Archive only JSON SHA/BLN metadata; no raw vendor BLN or IMG
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue123-d6b-real-original-bln-provenance
+          path: |
+            ${{ runner.temp }}/issue123-d6b-original-run/input_provenance.json
+            ${{ runner.temp }}/issue123-d6b-original-run/original_coastext_report.json
+          if-no-files-found: warn
+          retention-days: 21
