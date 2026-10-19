@@ -40,7 +40,7 @@ int main(int argc,char** argv){
   const auto modes=cteas::reconstruction::geo::glcc_cli_modes(argc,
                                  const_cast<const char* const*>(argv));
   if(!modes.valid){
-    std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--production-direct] [--qa-submesh [--probe-direct]]\n";
+    std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--gen-replay|--production-direct] [--qa-submesh [--probe-direct]]\n";
     return 2;
   }
   try {
@@ -60,9 +60,10 @@ int main(int argc,char** argv){
     require(nx>0&&ny>0,"P2_GLCC_GRID_POSITIVE_DIMENSIONS");
     const bool diag=modes.qa_submesh;
     const P2Grid grid{x,y,d,std::size_t(nx),std::size_t(ny)};
-    // Explicitly selected production D1 method; never relabel a GEN CSV.
-    // Until original exact HITS/FRACTION parity on THIS production path is
-    // recorded, preserve legacy GEN as the CLI default.
+    // Direct-LAEA is the selected default after the authentic original
+    // LFINAL=T/F production science PASS (Run #39188861410).
+    // Historical GEN replay requires explicit --gen-replay. Both algorithms
+    // produce their own authentic counts, never a renamed diagnostic CSV.
     const auto r=modes.production_direct
         ? compute_glcc_direct_laea(source.string(),grid,epsg,mesh,diag)
         : compute_glcc_gen_replay(source.string(),grid,epsg,mesh,diag);

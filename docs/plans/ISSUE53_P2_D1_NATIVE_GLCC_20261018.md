@@ -1,3 +1,39 @@
+# Issue #53 P2-A: direct-LAEA production default; historical GEN comparison only
+
+## Status update (2026-10-19)
+
+The *selected production* direct-LAEA D1→D3 calculation passed the
+unmodified CTGPROC original GLAZAS LFINAL=T/F comparison in
+[manual Run #39188861410](https://github.com/RRain001/CTEAS-next/actions/runs/39188861410)
+on `main@5e6fbb33`: exact **95,000/95,000 integer HITS**, zero fraction
+difference for another 95,000 class fractions, total original/native
+HITS **10,013/10,013**. Scientific verdict is scoped to the official
+Eurasian GLCC original 156MB source, the Hefei UTM50N 50×50 100m
+MESHGLAZ=20 configuration, and explicit original-Fortran comparison.
+A matching computation for any other footprint, UTM zone, mesh or
+fractional grid spacing **does not inherit that scientific verdict**.
+
+The production D1 CLI now defaults to Direct LAEA (formerly explicitly
+`--production-direct`); `--production-direct` remains an accepted alias.
+Only the old, non-parity GEN seven-decimal geographic replay requires
+`--gen-replay`. These options are mutually exclusive.
+
+```bash
+cteas_p2_glcc_raw eausgs2_0la.img out-direct 32650 510.885 3531.269 0.100 50 50 20
+cteas_p2_glcc_raw eausgs2_0la.img out-old-gen 32650 510.885 3531.269 0.100 50 50 20 --gen-replay
+```
+
+Direct outputs: `p2_glcc_usgs92_direct_laea.csv`,
+`p2_glcc_usgs92_hits.csv`, SHA-bound `p2_manifest.json`.
+GEN outputs: `p2_glcc_usgs92_gen_replay.csv` plus its
+independently produced `p2_glcc_usgs92_hits.csv`; manifest method
+unambiguously identifies either method. The manual original GLAZAS
+workflow retains the explicit compatibility alias; the separate
+Python-GEN comparison workflow explicitly invokes `--gen-replay`.
+Real original-source science is deliberately **manual-only**.
+
+## Historical implementation notes
+
 # Issue #53 P2-A D1: native original-layout GLCC IMG — scoped GEN-replay stage
 
 This is a **software implementation and independent comparison**, not automatic certification of original CTGPROC GLAZAS or complete P2 science.
