@@ -48,8 +48,14 @@ def validate_fraction_header(original_lines:list[str],frac_lines:list[str])->Non
             frac_lines[4].strip()=="FRACTION","D10_LFINAL_T_NOT_FRACTION")
     # Titles and timestamps may vary between separate original executions.
     # All physical field definitions/grid/category/unit records must agree.
-    require(original_lines[5:11]==frac_lines[5:11],
+    # Original WRTHEAD intentionally prints land-use IDs with I5 under
+    # LFINAL=F but I6 under LFINAL=T (vendor ctgproc.for:5530-5534).
+    # Compare their categorical integers, never demand identical raw bytes.
+    require(original_lines[5:10]==frac_lines[5:10],
             "D10_ORIGINAL_HITS_VS_FRACTION_GRID_HEADER_DRIFT")
+    require(tuple(map(int,original_lines[10].split()))==
+            tuple(map(int,frac_lines[10].split()))==
+            CATS,"D10_ORIGINAL_HITS_VS_FRACTION_CATEGORY_IDS_DRIFT")
     require(frac_lines[0].split()[:2]==["LU.DAT","2.1"],
             "D10_ORIGINAL_FRACTION_VERSION")
     require(tuple(map(int,frac_lines[10].split()))==CATS,
