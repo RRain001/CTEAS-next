@@ -67,6 +67,23 @@ class OriginalWolsongContract(unittest.TestCase):
             self.assertEqual(report["classes"]["0"], 1)
             self.assertEqual(report["classes"]["1"], 1)
 
+    def test_exact_original_fortran_i7_i1_i6_padding(self):
+        # Source COASTEXT uses FORMAT(I7,',',I1,',"',I1,',',I1,',',I6,'"').
+        # I6 has *leading* blank characters inside the quotes, not
+        # an unpadded category ID. Real D6B3 failed at BLN header 0 here.
+        for polygon_id in (0, 72, -72):
+            header = f'{5:7d},0,"1,2,{polygon_id:6d}"'
+            with self.subTest(header=header):
+                with tempfile.TemporaryDirectory() as root:
+                    p = Path(root) / "coast.bln"
+                    p.write_text(bln(header))
+                    result = parse_bln(p)
+                    self.assertEqual(result["polygons"], 1)
+                    self.assertEqual(result["first_40_polygons"][0]["polygon_id"],
+                                     polygon_id)
+                    self.assertEqual(result["first_40_polygons"][0]["type"], 1)
+                    self.assertTrue(result["first_40_polygons"][0]["first_last_same"])
+
     def test_malformed_unclosed_and_wrong_grid_fail_closed(self):
         for item in (bln(closed=False), bln('5,1,"1,2,72"'),
                      bln().replace("533.216", "200.000"),
