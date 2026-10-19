@@ -152,12 +152,14 @@ add_library(cteas_p2_original_sampling_recount STATIC
 target_include_directories(cteas_p2_original_sampling_recount
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(cteas_p2_original_sampling_recount PUBLIC
-                      cteas_p2_original_iptype cteas_p2_glcc_source)
+                      cteas_p2_original_iptype
+                      cteas_p2_original_bln_pnpoly cteas_p2_glcc_source)
 if(MSVC)
   target_compile_options(cteas_p2_original_sampling_recount PRIVATE /W4 /WX)
 else()
   target_compile_options(cteas_p2_original_sampling_recount
-                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror
+                                 -ffp-contract=off)
 endif()
 add_executable(cteas_p2_original_sampling_recount_tests
                tests/p2_original_sampling_recount_tests.cpp)
