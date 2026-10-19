@@ -64,6 +64,7 @@ def compute(metadata: dict, proposal: dict, manifest: dict,
             manifest.get("raw_category_namespace")=="GLC_FCS30D_35" and
             manifest.get("method")=="exact_north_up_same_utm_pixel_cell_rectangle_intersection" and
             manifest.get("coverage_policy")=="REJECT_ANY_NODATA_OR_INCOMPLETE_CELL" and
+            manifest.get("evidence_status")=="PRODUCED_UNVERIFIED" and
             manifest.get("crosswalk_status")=="P2_MAPPING_REVIEW_REQUIRED" and
             manifest.get("usgs92_lu_dat")=="NOT_RUN" and
             manifest.get("p3_geo_dat")=="NOT_RUN",
