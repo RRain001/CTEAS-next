@@ -1,5 +1,8 @@
 # #54 D4 evidence review and scoped P1 handoff to #46
 
+> **2026-10-19 D4 scoped closeout decision (supersedes the older provisional decision at the end of this historical report).** The owner explicitly confirms that rights/permission to use the existing terrain assets are held; this is an **owner attestation**, not a separately inspected licensing document and does not authorize indiscriminate public release of raw TIFF/vendor binaries. Genuine independent same-source original-vs-C++ numerical equivalence has passed for both A 90m and B 30m, and canonical-grid historical Hefei 90x77 original replay passed; the P1 producer interface and SHA-linked #46 handoff are complete. Classify **Issue #54 D4 = PASS_SCOPED_P1_DUAL_ROUTE_AND_HEFEI** and close the scoped *P1 case-generalization/numerical-equivalence task*. Keep real-run machine fields `NUMERIC_PASS_PROVISIONAL` / `PRODUCED_UNVERIFIED` unchanged; administrative D4 completion must not falsify the existing underlying artifact metadata. Exact vendor/product sub-version and per-file **vertical datum** of user-supplied 90m TIFF are still *unverified*. Treat those as **#46 downstream, data-admission-specific** requirements before converting different DEM products' heights into cross-product/scientific absolute-height claims. #46 must continue refusing unapproved unknown product/datum for such uses. The scope does **not** certify other TERREL branches, P3, or P1–P7 execution. This superseding decision changes no scientific tolerance, input TIFF, code, or model output.
+
+
 Date: 2026-10-19. This report is a **review record**, not proof that all
 provenance fields or all original TERREL branches have been authenticated.
 Numerical evidence and independent source authorization are separate gates.
@@ -157,3 +160,7 @@ P3 `GEO.DAT` or P1-P7 end-to-end PASS.
 - Until that source provenance is independently resolved, avoid
   unconditional `SCIENCE_ACCEPTED` and record `D4_SCOPED_NUMERIC_PASS /
   SOURCE_PROVENANCE_REVIEW_REQUIRED`. #46 remains OPEN.
+
+## 6. 2026-10-19 scoped D4 administrative disposition
+
+Issue #54 may close as `completed` for the user-confirmed scope of P1 two-route case parameterization and same-source original TERREL scientific numerical validation, with the historical Hefei regression passed. Owner permission acknowledged for existing data. Follow-up for data-provenance validation is already handed to [#46](https://github.com/RRain001/CTEAS-next/issues/46), **not** converted to a verified product/datum field. Distinguish D4 acceptance of implemented scoped native P1 from an unqualified assertion of universal DEM scientific authenticity. Existing truth-valued output manifests and failed/untested branch statuses remain unchanged.
