@@ -1,0 +1,31 @@
+{
+  "scope": "Entire delivered raster, including buffer; model-grid area checks in metadata.json",
+  "classes_histogram": {
+    "10": 658,
+    "11": 31336,
+    "20": 1543,
+    "51": 589,
+    "52": 8,
+    "61": 130,
+    "62": 160423,
+    "71": 51,
+    "72": 12184,
+    "81": 17,
+    "82": 524,
+    "91": 2,
+    "120": 1,
+    "150": 3,
+    "181": 31,
+    "182": 24,
+    "183": 76,
+    "187": 640,
+    "190": 15889,
+    "200": 14,
+    "210": 227441
+  },
+  "class_count": 21,
+  "invalid_or_fill_pixels": 0,
+  "invalid_or_fill_fraction": 0.0,
+  "repeat_file_bytes_equal": true,
+  "script_fingerprint_matches": true
+}
