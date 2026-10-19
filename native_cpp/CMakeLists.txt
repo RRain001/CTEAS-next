@@ -67,6 +67,35 @@ endif()
 add_test(NAME cteas_p2_original_full_iptype_synthetic
          COMMAND cteas_p2_original_iptype_tests)
 
+# Issue #123 D3: opt-in coastal RECOUNT from immutable P2-A source mesh trace.
+# This deliberately links no production CLI; baseline GLCC and frozen
+# Wolsong EXACT_AREA_V1 remain unchanged.
+add_library(cteas_p2_original_sampling_recount STATIC
+            src/geo/ctgproc_original_sampling_recount.cpp)
+target_include_directories(cteas_p2_original_sampling_recount
+                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(cteas_p2_original_sampling_recount PUBLIC
+                      cteas_p2_original_iptype cteas_p2_glcc_source)
+if(MSVC)
+  target_compile_options(cteas_p2_original_sampling_recount PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_sampling_recount
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_executable(cteas_p2_original_sampling_recount_tests
+               tests/p2_original_sampling_recount_tests.cpp)
+target_link_libraries(cteas_p2_original_sampling_recount_tests
+                      PRIVATE cteas_p2_original_sampling_recount)
+if(MSVC)
+  target_compile_options(cteas_p2_original_sampling_recount_tests
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_sampling_recount_tests
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME cteas_p2_original_sampling_recount_synthetic
+         COMMAND cteas_p2_original_sampling_recount_tests)
+
 # Enforce case-grid precision independently from data availability.
 add_executable(cteas_grid_origin_precision_tests tests/grid_origin_precision_tests.cpp)
 target_include_directories(cteas_grid_origin_precision_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
