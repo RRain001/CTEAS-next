@@ -5,6 +5,8 @@ on:
     paths:
       - scripts/s2g/issue123_original_coastext_wolsong.py
       - scripts/s2g/issue123_gfortran_stream_io_adapter.py
+      - scripts/s2g/issue123_gfortran_split_io_adapter.py
+      - scripts/s2g/tests/test_issue123_gfortran_split_io_adapter.py
       - scripts/s2g/issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
@@ -15,6 +17,8 @@ on:
     paths:
       - scripts/s2g/issue123_original_coastext_wolsong.py
       - scripts/s2g/issue123_gfortran_stream_io_adapter.py
+      - scripts/s2g/issue123_gfortran_split_io_adapter.py
+      - scripts/s2g/tests/test_issue123_gfortran_split_io_adapter.py
       - scripts/s2g/issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
@@ -38,7 +42,7 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
   genuine-original-wolsong-coastext-io-adapted:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -80,12 +84,18 @@ jobs:
           rm "$stage/ctgproc.for" "$stage/params.ctg"
           cp "$vendor/ctgproc.for" "$stage/ctgproc.for"
           cmp "$vendor/ctgproc.for" "$stage/ctgproc.for"
-          python3 -m scripts.s2g.issue123_gfortran_stream_io_adapter \
-            --original-params "$vendor/params.ctg" --original-source "$vendor/ctgproc.for" \
-            --out "$stage/params.ctg" --manifest "$RUNNER_TEMP/issue123-d6b-io-adapter.json"
+          # GLCC requires DIRECT/RECL=1 because COMP uses READ(IOINP,REC=).
+          cp "$vendor/params.ctg" "$stage/params.ctg"
+          cmp "$vendor/params.ctg" "$stage/params.ctg"
+          echo "28dc5877c6a70d74f7a0e136bdd4aa1777dc9cbab15c184e7f483f772cd266c6  $stage/params.ctg" | sha256sum -c -
           python3 -m scripts.s2g.issue123_gfortran_eof_adapter \
             --original-source "$vendor/ctgproc.for" --staged-source "$stage/ctgproc.for" \
             --manifest "$RUNNER_TEMP/issue123-d6b-eof-adapter.json"
+          # Only the GSHHG COASTEXT OPEN is STREAM; GLCC keeps DIRECT.
+          python3 -m scripts.s2g.issue123_gfortran_split_io_adapter \
+            --original-source "$vendor/ctgproc.for" --original-params "$vendor/params.ctg" \
+            --staged-source "$stage/ctgproc.for" --staged-params "$stage/params.ctg" \
+            --manifest "$RUNNER_TEMP/issue123-d6b-split-io-adapter.json"
           gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 -I"$stage" "$stage/ctgproc.for" -o "$RUNNER_TEMP/issue123-original-ctgproc"
       - name: Verify real GSHHG Full and GLCC source SHA
         run: |
@@ -102,7 +112,7 @@ jobs:
             --glcc eausgs2_0la.img \
             --cache "$RUNNER_TEMP/issue123-d6b-gshhs" \
             --out "$RUNNER_TEMP/issue123-d6b-original-run"
-          cp "$RUNNER_TEMP/issue123-d6b-io-adapter.json" "$RUNNER_TEMP/issue123-d6b-original-run/io_adapter_manifest.json"
+          cp "$RUNNER_TEMP/issue123-d6b-split-io-adapter.json" "$RUNNER_TEMP/issue123-d6b-original-run/split_io_adapter_manifest.json"
           cp "$RUNNER_TEMP/issue123-d6b-eof-adapter.json" "$RUNNER_TEMP/issue123-d6b-original-run/eof_adapter_manifest.json"
       - name: Execute genuine original Fortran COASTEXT
         run: |
@@ -139,7 +149,7 @@ jobs:
           name: issue123-d6b-real-original-bln-provenance
           path: |
             ${{ runner.temp }}/issue123-d6b-original-run/input_provenance.json
-            ${{ runner.temp }}/issue123-d6b-original-run/io_adapter_manifest.json
+            ${{ runner.temp }}/issue123-d6b-original-run/split_io_adapter_manifest.json
             ${{ runner.temp }}/issue123-d6b-original-run/eof_adapter_manifest.json
             ${{ runner.temp }}/issue123-d6b-original-run/original_coastext_report.json
           if-no-files-found: warn
