@@ -1,0 +1,24 @@
+name: CTEAS science dispatcher offline security tests
+on:
+  pull_request:
+    paths:
+      - .github/scripts/cteas-dispatch.cjs
+      - .github/scripts/cteas-dispatch.test.cjs
+      - .github/workflows/cteas-science-dispatcher.yml
+      - .github/workflows/cteas-science-dispatcher-ci.yml
+      - docs/ci/SCIENCE_TRIGGER_POLICY.md
+      - AGENTS.md
+      - README.md
+permissions:
+  contents: read
+jobs:
+  test-dispatch-contract:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Test owner-only workflow selection and command injection guards
+        run: node --test .github/scripts/cteas-dispatch.test.cjs

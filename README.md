@@ -12,7 +12,7 @@ CTEAS-next is a **partial, option-scoped C++20 reconstruction** of selected CALM
 | Native scientific reference and tests | `native_cpp/modules/{p4_read62,p5_smerge,p6_calmet,p7_calpuff}/` | Retain comparator and test source |
 | Frozen reproducibility fixtures | `project/cases/` | Deliberately tracked exception; do not casually delete |
 | Build, smoke checks, asset-restoration | `scripts/`, `scripts/migration/` | Current utilities only |
-| Current CI and science reruns | `.github/workflows/` | Four explicit/manual or validated-request workflows |
+| Current CI and science reruns | `.github/workflows/` | Agent/CI-dispatchable and guarded automatic workflows |
 
 For physics coverage and Fortran provenance, see `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.md`, `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.csv`, `docs/physics/VENDOR_SOURCE_LOCATOR.md` and `AGENTS.md`.
 
@@ -32,7 +32,7 @@ python3 scripts/migration/validate_ubuntu.py --portable --out /tmp/cteas-next-ub
 python3 scripts/migration/validate_python.py --portable --out /tmp/cteas-next-python
 ```
 
-The Ubuntu command requires the documented GCC, GFortran and GDAL toolchain. See `docs/deployment/CONTAINER.md` for the portable Docker verification image. Runs marked `PASS_SOFTWARE` are **not** scientific acceptance. Large workflows do not automatically run for every push or PR.
+The Ubuntu command requires the documented GCC, GFortran and GDAL toolchain. See `docs/deployment/CONTAINER.md` for the portable Docker verification image. Runs marked `PASS_SOFTWARE` are **not** scientific acceptance. Large scientific workflows are not blindly run for every push or PR; authorized agents and CI may dispatch them without the owner clicking Run workflow. See [Science workflow trigger policy](docs/ci/SCIENCE_TRIGGER_POLICY.md).
 
 Original CALMET/CALPUFF vendor sources and restricted terrain must not be distributed in this public tree. An authorized local source checkout may restore and hash-check them using `scripts/migration/configure_external_assets.py`. Follow `docs/migration/THIRD_PARTY_ASSETS.md`.
 
