@@ -19,6 +19,8 @@ on:
       - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
       - scripts/s2g/issue123_science_run_callback.py
       - scripts/s2g/tests/test_issue123_science_run_callback.py
+      - scripts/s2g/issue123_d10_original_f63_lu.py
+      - scripts/s2g/tests/test_issue123_d10_original_f63_lu.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   push:
     branches: [main]
@@ -39,6 +41,8 @@ on:
       - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
       - scripts/s2g/issue123_science_run_callback.py
       - scripts/s2g/tests/test_issue123_science_run_callback.py
+      - scripts/s2g/issue123_d10_original_f63_lu.py
+      - scripts/s2g/tests/test_issue123_d10_original_f63_lu.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   workflow_dispatch:
 permissions:
@@ -58,7 +62,7 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype scripts.s2g.tests.test_issue123_d9_original_coastal_hits scripts.s2g.tests.test_issue123_science_run_callback
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype scripts.s2g.tests.test_issue123_d9_original_coastal_hits scripts.s2g.tests.test_issue123_science_run_callback scripts.s2g.tests.test_issue123_d10_original_f63_lu
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
       - name: D8 source/runtime preflight checkout (compile only, no real scientific claims)
         uses: actions/checkout@v4
@@ -256,6 +260,32 @@ jobs:
             --glcc "$GITHUB_WORKSPACE/eausgs2_0la.img" \
             --out "$RUNNER_TEMP/issue123-d9-hits-report.json"
           echo "D9_REAL_GLAZAS_INTEGER_HITS=PASS_IF_REPORT D10_LU_FRACTIONS=NOT_RUN"
+      - name: D10 prepare identical authentic original GLAZAS with LFINAL-T only
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_d10_original_f63_lu prepare \
+            --original-dir "$RUNNER_TEMP/issue123-d6b-original-run" \
+            --final-dir "$RUNNER_TEMP/issue123-d10-original-fraction" \
+            --glcc "$GITHUB_WORKSPACE/eausgs2_0la.img" \
+            --native "$RUNNER_TEMP/issue123-d9-candidate-hits.csv" \
+            --d9-report "$RUNNER_TEMP/issue123-d9-hits-report.json" \
+            --original-exe "$RUNNER_TEMP/issue123-original-ctgproc"
+      - name: D10 execute independently authentic original LFINAL-T and strict F6.3 field oracle
+        run: |
+          set -euo pipefail
+          (
+            cd "$RUNNER_TEMP/issue123-d10-original-fraction"
+            timeout 1800 "$RUNNER_TEMP/issue123-original-ctgproc" > original_final.log 2>&1 || {
+              tail -n 25 original_final.log
+              exit 1
+            }
+          )
+          python3 -m scripts.s2g.issue123_d10_original_f63_lu compare \
+            --original-dir "$RUNNER_TEMP/issue123-d6b-original-run" \
+            --final-dir "$RUNNER_TEMP/issue123-d10-original-fraction" \
+            --native "$RUNNER_TEMP/issue123-d9-candidate-hits.csv" \
+            --report-out "$RUNNER_TEMP/issue123-d10-f63-report.json"
+          echo "D10_SAME_ORIGINAL_GLAZAS_F63_AND_MISSING_FLAGS=PASS_IF_REPORT OTHER_OPTIONS=NOT_RUN"
       - name: Archive only JSON SHA/BLN metadata; no raw vendor BLN or IMG
         if: always()
         uses: actions/upload-artifact@v4
@@ -269,6 +299,8 @@ jobs:
             ${{ runner.temp }}/issue123-d8-oracle/d8_provenance.json
             ${{ runner.temp }}/issue123-d8-oracle/d8_iptype_report.json
             ${{ runner.temp }}/issue123-d9-hits-report.json
+            ${{ runner.temp }}/issue123-d10-original-fraction/d10_provenance.json
+            ${{ runner.temp }}/issue123-d10-f63-report.json
           if-no-files-found: warn
           retention-days: 21
       - name: Return authentic main science run URL and bounded D6-D9 report to Issue 123
