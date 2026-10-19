@@ -1,0 +1,72 @@
+name: Issue123 D4 original PNPOLY paired oracle harness (synthetic CI only)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/src/p2_original_pnpoly_batch_cli.cpp
+      - native_cpp/CMakeLists.txt
+      - scripts/s2g/issue123_original_pnpoly_oracle.py
+      - .github/workflows/issue123-original-pnpoly-manual.yml
+      - .github/workflows/issue123-original-pnpoly-batch-ci.yml
+      - docs/plans/ISSUE123_ORIGINAL_PNPOLY_SAME_INPUT_GATE_20261019.md
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  batch-software-contract-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install software-only build prerequisites
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++-12 libgdal-dev libssl-dev
+      - name: Build bounded batch classifier
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/issue123-d4-batch" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/issue123-d4-batch" --parallel 2 --target cteas_p2_original_pnpoly_batch cteas_p2_original_bln_pnpoly_tests
+      - name: Test only native batch protocol and offline synthetic fixture builder
+        run: |
+          set -euo pipefail
+          ctest --test-dir "${RUNNER_TEMP}/issue123-d4-batch" -R '^cteas_p2_original_bln_pnpoly_synthetic$' --output-on-failure
+          cat > "${RUNNER_TEMP}/three_cases.txt" <<'EOF'
+          3
+          5 5 5
+          0 0
+          10 0
+          10 10
+          0 10
+          0 0
+          5 0 5
+          0 0
+          10 0
+          10 10
+          0 10
+          0 0
+          5 -1 5
+          0 0
+          10 0
+          10 10
+          0 10
+          0 0
+          EOF
+          "${RUNNER_TEMP}/issue123-d4-batch/cteas_p2_original_pnpoly_batch" < "${RUNNER_TEMP}/three_cases.txt" > "${RUNNER_TEMP}/three_out.txt"
+          printf '1\n0\n-1\n' | diff -u - "${RUNNER_TEMP}/three_out.txt"
+          /usr/bin/python3 - <<'PY'
+          from scripts.s2g.issue123_original_pnpoly_oracle import synthetic_cases,extract_original
+          cases=synthetic_cases()
+          assert len(cases)>500
+          try:
+              extract_original(b"not-a-vendor-source")
+              raise AssertionError("missing ORIGINAL source was incorrectly accepted")
+          except ValueError as e:
+              assert "PNPOLY_SUBROUTINE_MISSING" in str(e)
+          print(f"ORIGINAL_PNPOLY_BATCH_OFFLINE_SOURCE_CONTRACT=PASS cases={len(cases)}")
+          PY
+          echo "ORIGINAL_FORTRAN_VENDOR_SOURCE=NOT_DOWNLOADED ORIGINAL_SAME_INPUT_PARITY=NOT_RUN FULL_CTGPROC_PARITY=NOT_RUN"
