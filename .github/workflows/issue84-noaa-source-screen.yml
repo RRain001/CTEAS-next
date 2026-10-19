@@ -51,6 +51,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Install required Python parser dependencies
+        run: |
+          python3 -m pip install --disable-pip-version-check 'PyYAML>=6,<7'
       - name: Screen actual original NOAA year/station sources, SHA and UTC hours
         shell: bash
         run: |
