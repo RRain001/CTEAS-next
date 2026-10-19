@@ -122,11 +122,7 @@ jobs:
           sha=create_staged_include(source/"COORDLIB.FOR",staged/"coordlib.for")
           print("ORIGINAL_COORDLIB_STAGE_DERIVATIVE_SHA256=",sha)
           PY
-          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons \\
-            -fallow-argument-mismatch -O0 \\
-            -I"${RUNNER_TEMP}/ctgproc-stage-includes" \\
-            -I"${RUNNER_TEMP}/ctgproc-include" -I"$vendor" \\
-            "${RUNNER_TEMP}/index-only-original-qa.for" -o "${RUNNER_TEMP}/staged_ctgproc.x"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 -I"${RUNNER_TEMP}/ctgproc-stage-includes" -I"${RUNNER_TEMP}/ctgproc-include" -I"$vendor" "${RUNNER_TEMP}/index-only-original-qa.for" -o "${RUNNER_TEMP}/staged_ctgproc.x"
           test -x "${RUNNER_TEMP}/staged_ctgproc.x"
           echo 'ORIGINAL_CTEAS_SOURCE_AND_INDEXED_STAGE_DERIVATIVE_BUILD=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
 
