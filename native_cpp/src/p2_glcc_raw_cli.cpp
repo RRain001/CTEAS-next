@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 namespace {
@@ -39,7 +40,7 @@ int main(int argc,char** argv){
   const auto modes=cteas::reconstruction::geo::glcc_cli_modes(argc,
                                  const_cast<const char* const*>(argv));
   if(!modes.valid){
-    std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--qa-submesh [--probe-direct]]\n";
+    std::cerr<<"usage: cteas_p2_glcc_raw RAW_EAUSGS_IMG NEW_OUT_DIR UTM_EPSG XREFKM YREFKM DGRIDKM NX NY MESH [--production-direct] [--qa-submesh [--probe-direct]]\n";
     return 2;
   }
   try {
@@ -58,10 +59,39 @@ int main(int argc,char** argv){
     const int nx=integer(argv[7]),ny=integer(argv[8]),mesh=integer(argv[9]);
     require(nx>0&&ny>0,"P2_GLCC_GRID_POSITIVE_DIMENSIONS");
     const bool diag=modes.qa_submesh;
-    const auto r=compute_glcc_gen_replay(source.string(),{x,y,d,std::size_t(nx),std::size_t(ny)},epsg,mesh,diag);
+    const P2Grid grid{x,y,d,std::size_t(nx),std::size_t(ny)};
+    // Explicitly selected production D1 method; never relabel a GEN CSV.
+    // Until original exact HITS/FRACTION parity on THIS production path is
+    // recorded, preserve legacy GEN as the CLI default.
+    const auto r=modes.production_direct
+        ? compute_glcc_direct_laea(source.string(),grid,epsg,mesh,diag)
+        : compute_glcc_gen_replay(source.string(),grid,epsg,mesh,diag);
+    // For indexed original-lineage QA keep the historical GEN coordinate
+    // stream separate from the production direct-LAEA coordinate stream.
+    // Never execute the old GEN algorithm in an ordinary direct production run.
+    std::optional<GlccRawResult> legacy_qa;
+    if(diag&&modes.production_direct) {
+      legacy_qa.emplace(compute_glcc_gen_replay(source.string(),grid,epsg,mesh,true));
+      require(legacy_qa->raw_pixels==r.raw_pixels&&
+              legacy_qa->diagnostic_mesh.size()==r.diagnostic_mesh.size(),
+              "P2_GLCC_DIRECT_VS_GEN_SOURCE_COVERAGE_DRIFT");
+      for(std::size_t p=0;p<r.diagnostic_mesh.size();++p) {
+        const auto& a=r.diagnostic_mesh[p];
+        const auto& b=legacy_qa->diagnostic_mesh[p];
+        require(a.source_i==b.source_i&&a.source_j==b.source_j&&
+                a.mesh_i==b.mesh_i&&a.mesh_j==b.mesh_j&&a.category==b.category,
+                "P2_GLCC_DIRECT_VS_GEN_SOURCE_KEY_DRIFT");
+      }
+    }
+    const auto& qa_mesh=legacy_qa?legacy_qa->diagnostic_mesh:r.diagnostic_mesh;
+    const char* fraction_file=modes.production_direct
+        ?"p2_glcc_usgs92_direct_laea.csv":"p2_glcc_usgs92_gen_replay.csv";
+    const char* method=modes.production_direct
+        ?"GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"
+        :"GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY";
     fs::create_directory(dest);
     try {
-      std::ofstream f(dest/"p2_glcc_usgs92_gen_replay.csv");
+      std::ofstream f(dest/fraction_file);
       require(bool(f),"P2_GLCC_CSV_OPEN_FAILURE");
       f<<"i,j,samples";for(const int k:kGlccUsgs92Classes)f<<",cat"<<k;f<<"\n";
       f<<std::fixed<<std::setprecision(12);
@@ -77,7 +107,7 @@ int main(int argc,char** argv){
       require(bool(f),"P2_GLCC_CSV_WRITE_FAILED");
       f.close();
       require(bool(f),"P2_GLCC_CSV_CLOSE_FAILED");
-      const auto csv_sha=sha256(dest/"p2_glcc_usgs92_gen_replay.csv");
+      const auto csv_sha=sha256(dest/fraction_file);
       // D1 original GLAZAS science comparison needs integers, not three-decimal LU ratios.
       // Persist exactly the C++ in-memory 38-class hit counts, with per-cell samples.
       std::ofstream hits(dest/"p2_glcc_usgs92_hits.csv");
@@ -100,7 +130,7 @@ int main(int argc,char** argv){
         require(bool(trace),"P2_GLCC_DIAGNOSTIC_OPEN_FAILED");
         trace<<"source_i,source_j,mesh_i,mesh_j,usgs_category,x_km,y_km,assigned_i,assigned_j\n";
         trace<<std::setprecision(9);
-        for(const auto& p:r.diagnostic_mesh)
+        for(const auto& p:qa_mesh)
           trace<<p.source_i<<","<<p.source_j<<","<<p.mesh_i<<","<<p.mesh_j<<","
                <<p.category<<","<<p.x_km<<","<<p.y_km<<","
                <<p.assigned_i<<","<<p.assigned_j<<"\n";
@@ -116,9 +146,12 @@ int main(int argc,char** argv){
       // reported separately by the independent manual science comparator.
       std::string direct_probe_sha,direct_probe_mesh_sha;
       if(modes.direct_probe) {
-        require(diag&&!r.diagnostic_mesh.empty(),"DIRECT_PROBE_TRACE_MISSING");
-        require(r.diagnostic_mesh.size()==r.included+r.outside,
+        require(diag&&!qa_mesh.empty(),"DIRECT_PROBE_TRACE_MISSING");
+        require(qa_mesh.size()==r.diagnostic_mesh.size(),
                 "DIRECT_PROBE_TRACE_COUNT_INCONSISTENT");
+        require(qa_mesh.size()==(legacy_qa?legacy_qa->included+legacy_qa->outside:
+                                            r.included+r.outside),
+                "DIRECT_PROBE_SOURCE_COUNT_INCONSISTENT");
         DirectLaeaProbe probe(epsg);
         const std::size_t nc=r.grid.nx*r.grid.ny;
         std::vector<std::uint32_t> candidate(nc*kGlccUsgs92Classes.size(),0);
@@ -135,7 +168,7 @@ int main(int argc,char** argv){
         mesh_trace<<"source_i,source_j,mesh_i,mesh_j,usgs_category,"
                     "laea_x_km,laea_y_km,x_km,y_km,assigned_i,assigned_j\n";
         mesh_trace<<std::setprecision(9);
-        for(const auto& p:r.diagnostic_mesh) {
+        for(const auto& p:qa_mesh) {
           const auto q=probe.project(p.source_i,p.source_j,p.mesh_i,p.mesh_j,
                                      mesh,x0,y0,step);
           mesh_trace<<p.source_i<<","<<p.source_j<<","<<p.mesh_i<<","
@@ -156,8 +189,12 @@ int main(int argc,char** argv){
         mesh_trace.close();
         require(bool(mesh_trace),"DIRECT_PROBE_MESH_CLOSE_FAILED");
         const auto mesh_trace_sha=sha256(dest/"p2_glcc_direct_laea_mesh.csv");
-        require(candidate_included+candidate_outside==r.diagnostic_mesh.size(),
+        require(candidate_included+candidate_outside==qa_mesh.size(),
                 "DIRECT_PROBE_INTERNAL_HITS_LOST");
+        if(modes.production_direct)
+          require(candidate==r.counts&&candidate_samples==r.cell_samples&&
+                  candidate_included==r.included&&candidate_outside==r.outside,
+                  "P2_GLCC_PRODUCTION_DIRECT_VS_INDEPENDENT_PROBE_DRIFT");
         require(candidate_included>0,"DIRECT_PROBE_ZERO_INCLUDED_SCIENCE_INVALID");
         std::ofstream destf(dest/"p2_glcc_direct_laea_candidate_hits.csv");
         require(bool(destf),"DIRECT_PROBE_HITS_CSV_OPEN_FAILED");
@@ -201,14 +238,15 @@ int main(int argc,char** argv){
           <<"  \"raw_category_pixels_0_to_24\": [";
       for(std::size_t k=0;k<r.raw_pixels.size();++k)meta<<(k?",":"")<<r.raw_pixels[k];
       meta<<"],\n  \"included\": "<<r.included<<", \"outside\": "<<r.outside<<", \"nonempty_cells\": "<<nonempty<<",\n"
-          <<"  \"method\": \"GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY\",\n"
+          <<"  \"method\": \""<<method<<"\",\n"
+          <<"  \"fractions_filename\": \""<<fraction_file<<"\",\n"
           <<"  \"point_counts_are_not_pixel_areas\": true,\n"
           <<"  \"evidence_status\": \"PRODUCED_UNVERIFIED\",\n"
           <<"  \"official_GLAZAS_parity\": \"NOT_RUN\",\n"
           <<"  \"lu_dat\": \"NOT_RUN\", \"p3_geo_dat\": \"NOT_RUN\"\n}\n";
       require(bool(meta),"P2_GLCC_MANIFEST_WRITE_FAILED");
     }catch(...){fs::remove_all(dest);throw;}
-    std::cout<<"P2_GLCC_REAL_SOURCE_SHA=VERIFIED GEN_REPLAY=PRODUCED_UNVERIFIED INCLUDED="<<r.included
+    std::cout<<"P2_GLCC_REAL_SOURCE_SHA=VERIFIED METHOD="<<method<<" PRODUCED_UNVERIFIED INCLUDED="<<r.included
              <<" OUTSIDE="<<r.outside<<" ORIGINAL_GLAZAS_PARITY=NOT_RUN P3=NOT_RUN\n";
     return 0;
   }catch(const std::exception& e){std::cerr<<e.what()<<"\n";return 1;}
