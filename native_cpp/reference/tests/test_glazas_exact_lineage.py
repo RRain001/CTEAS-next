@@ -92,9 +92,9 @@ class ExactLineageContract(unittest.TestCase):
     def test_coordlib_instrument_is_bounded_and_injects_four_hex_stages(self):
         # Synthetic excerpt: assert unique guarded patch sites without
         # embedding or publishing any vendor source.
-        original=("HEADER\\n"+COORD_BEGIN+"\\n"+P11_MARK+"\\n"
-                  +DAT_MARK+"\\n"+P09_MARK+"\\n"+COORD_END+"\\n"
-                  +KM_MARK+"\\nFOOTER")
+        original=("HEADER\n"+COORD_BEGIN+"\n"+P11_MARK+"\n"
+                  +DAT_MARK+"\n"+P09_MARK+"\n"+COORD_END+"\n"
+                  +KM_MARK+"\nFOOTER")
         transformed=instrument_coordlib(original)
         self.assertEqual(transformed.count("write(99,"),4)
         for tag in ("P11","DAT","P09","KM"):
@@ -115,7 +115,7 @@ class ExactLineageContract(unittest.TestCase):
             vals=(float(source_x),float(source_y),float(x),float(y))
             return tag+" "+" ".join(
                 format(struct.unpack(">Q",struct.pack(">d",v))[0],"016X")
-                for v in vals)+"\\n"
+                for v in vals)+"\n"
         stage_file=self.d/"fort.99"
         stage_file.write_text("".join((
             line("P11",117.11,31.9),
