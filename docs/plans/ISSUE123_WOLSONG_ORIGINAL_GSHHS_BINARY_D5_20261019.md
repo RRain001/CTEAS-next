@@ -31,7 +31,9 @@ but original data and transformation provenance must be checked.
 - Neither the original archive nor the binary is committed or
   uploaded. Only source provenance JSON is uploaded as an artifact.
 - PR CI uses only synthetic ZIP/header tests. Authentic download and
-  extraction happen **only upon user workflow_dispatch**.
+  extraction occur through authorized owner/agent/CI workflow_dispatch,
+  including the project-wide issue-comment dispatcher; an owner UI click
+  is no longer required.
 
 Upstream: https://github.com/GenericMappingTools/gshhg-gmt/releases/tag/2.3.7
 Unmodified CTGPROC: https://github.com/RRain001/CTEAS/blob/dfad99a78ed84d655e21411c9d25eb0d2583bf13/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for
@@ -65,5 +67,7 @@ D5_AUTHENTIC_GSHHS_FULL_BINARY_SOURCE_VERIFIED.
 Real COASTEXT / BLN, IPTYPE, 38-class HITS and LU.DAT original
 numerical equivalence remain NOT_RUN. No change to P2-A/P2-B
 production, P3 #46 or P6/P7. GSHHG Full only; no High threshold.
-All further original scientific workflow runs remain user-manual.
+All further original science workflows may be dispatched by authorized
+agents or guarded CI without the owner clicking Run workflow; see
+`docs/ci/SCIENCE_TRIGGER_POLICY.md`. Scientific acceptance gates remain.
 Keep Issue #123 OPEN.

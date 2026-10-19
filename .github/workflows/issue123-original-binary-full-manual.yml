@@ -1,6 +1,13 @@
-name: Issue123 D5 original GSHHS Full binary source verification (manual only)
+name: Issue123 D5 original GSHHS Full binary source verification (agent or automatic)
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/s2g/issue123_gshhg_binary_full.py
+      - scripts/s2g/tests/test_issue123_gshhg_binary_full.py
+      - .github/workflows/issue123-original-binary-full-manual.yml
+      - docs/plans/ISSUE123_WOLSONG_ORIGINAL_GSHHS_BINARY_D5_20261019.md
 permissions:
   contents: read
 concurrency:
@@ -8,6 +15,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   authentic-original-binary-source-only:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
     timeout-minutes: 25
     steps:
