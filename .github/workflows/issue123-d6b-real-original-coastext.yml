@@ -14,6 +14,9 @@ on:
       - scripts/s2g/issue123_d8_real_bln_iptype.py
       - scripts/s2g/tests/test_issue123_d8_real_bln_iptype.py
       - native_cpp/src/p2_original_iptype_bln_batch_cli.cpp
+      - scripts/s2g/issue123_d9_original_coastal_hits.py
+      - scripts/s2g/tests/test_issue123_d9_original_coastal_hits.py
+      - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   push:
     branches: [main]
@@ -29,6 +32,9 @@ on:
       - scripts/s2g/issue123_d8_real_bln_iptype.py
       - scripts/s2g/tests/test_issue123_d8_real_bln_iptype.py
       - native_cpp/src/p2_original_iptype_bln_batch_cli.cpp
+      - scripts/s2g/issue123_d9_original_coastal_hits.py
+      - scripts/s2g/tests/test_issue123_d9_original_coastal_hits.py
+      - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   workflow_dispatch:
 permissions:
@@ -48,7 +54,7 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype scripts.s2g.tests.test_issue123_d9_original_coastal_hits
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
       - name: D8 source/runtime preflight checkout (compile only, no real scientific claims)
         uses: actions/checkout@v4
@@ -89,7 +95,7 @@ jobs:
           cmake -S native_cpp -B "$RUNNER_TEMP/d8-offline-native" \
             -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/d8-offline-native" --parallel 2 \
-            --target cteas_p2_original_iptype_bln_batch cteas_p2_original_bln_pnpoly_tests
+            --target cteas_p2_original_iptype_bln_batch cteas_p2_original_bln_pnpoly_tests cteas_p2_original_coast_hits_wolsong
           ctest --test-dir "$RUNNER_TEMP/d8-offline-native" \
             -R cteas_p2_original_bln_pnpoly_synthetic --output-on-failure
           echo "D8_REAL_BLN_SCIENCE=NOT_RUN COMPILE_PREFLIGHT=PASS"
@@ -225,6 +231,24 @@ jobs:
             < "$work/points.txt" > "$work/cpp_classes.txt"
           python3 -m scripts.s2g.issue123_d8_real_bln_iptype compare --out "$work"
           echo "D8_REAL_BLN_IPTYPE=PASS_SCOPED GLCC_ORIGINAL_MESH_HITS_LU=NOT_RUN"
+      - name: D9 actual original GLAZAS LFINAL-F versus C++ 38-class integer HITS
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/issue123-d8-build" --parallel 2 \
+            --target cteas_p2_original_coast_hits_wolsong
+          sha256sum -c <<'SHA'
+          4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img
+          SHA
+          "$RUNNER_TEMP/issue123-d8-build/cteas_p2_original_coast_hits_wolsong" \
+            "$GITHUB_WORKSPACE/eausgs2_0la.img" \
+            "$RUNNER_TEMP/issue123-d6b-original-run/coast.bln" \
+            "$RUNNER_TEMP/issue123-d9-candidate-hits.csv"
+          python3 -m scripts.s2g.issue123_d9_original_coastal_hits \
+            --original-dir "$RUNNER_TEMP/issue123-d6b-original-run" \
+            --native-hits "$RUNNER_TEMP/issue123-d9-candidate-hits.csv" \
+            --glcc "$GITHUB_WORKSPACE/eausgs2_0la.img" \
+            --out "$RUNNER_TEMP/issue123-d9-hits-report.json"
+          echo "D9_REAL_GLAZAS_INTEGER_HITS=PASS_IF_REPORT D10_LU_FRACTIONS=NOT_RUN"
       - name: Archive only JSON SHA/BLN metadata; no raw vendor BLN or IMG
         if: always()
         uses: actions/upload-artifact@v4
@@ -237,5 +261,6 @@ jobs:
             ${{ runner.temp }}/issue123-d6b-original-run/original_coastext_report.json
             ${{ runner.temp }}/issue123-d8-oracle/d8_provenance.json
             ${{ runner.temp }}/issue123-d8-oracle/d8_iptype_report.json
+            ${{ runner.temp }}/issue123-d9-hits-report.json
           if-no-files-found: warn
           retention-days: 21
