@@ -99,3 +99,6 @@ cmake-build*/
 !/calpuff_terrain_and_landuse_data/china_srtm/srtm_61_06.tif
 !/calpuff_terrain_and_landuse_data/china_srtm/srtm_61_07.tif
 !/calpuff_terrain_and_landuse_data/china_srtm/README.md
+
+# Non-source GSHHG 2.3.7 licensed binary local cache (published via independent Release)
+/.cache/gshhg/

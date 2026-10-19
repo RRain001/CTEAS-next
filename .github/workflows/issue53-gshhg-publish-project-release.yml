@@ -1,0 +1,62 @@
+name: Publish reusable official GSHHG 2.3.7 dataset to project Release (manual only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-p2b-gshhg-v237-release
+  cancel-in-progress: false
+jobs:
+  publish-source-asset-once:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve and verify GMT official GSHHG v2.3.7 archive
+        run: |
+          set -euo pipefail
+          python3 scripts/s2g/gshhg_v237_cache.py fetch --source official --cache "${RUNNER_TEMP}/gshhg-2.3.7"
+          python3 scripts/s2g/gshhg_v237_cache.py verify --cache "${RUNNER_TEMP}/gshhg-2.3.7"
+          echo '8dbbe7e071e77e9e75f2d639239099ebca8d5c16d6a07df8169729d49f15cf41  gshhg-shp-2.3.7.zip' |
+            (cd "${RUNNER_TEMP}/gshhg-2.3.7" && sha256sum -c -)
+      - name: Publish immutable source asset or verify an already published identical archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG=gshhg-data-v2.3.7
+          ZIP="${RUNNER_TEMP}/gshhg-2.3.7/gshhg-shp-2.3.7.zip"
+          mkdir -p "${RUNNER_TEMP}/gshhg-release-check"
+          if gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
+            if gh release download "$TAG" -p gshhg-shp-2.3.7.zip -D "${RUNNER_TEMP}/gshhg-release-check" --repo "$GH_REPO"; then
+              cmp -s "$ZIP" "${RUNNER_TEMP}/gshhg-release-check/gshhg-shp-2.3.7.zip"
+              echo 'PROJECT_RELEASE_GSHHG_2_3_7=ALREADY_PUBLISHED_IDENTICAL'
+            else
+              gh release upload "$TAG" "$ZIP" --repo "$GH_REPO"
+              echo 'PROJECT_RELEASE_GSHHG_2_3_7=UPLOADED'
+            fi
+          else
+            gh release create "$TAG" "$ZIP" \
+              --repo "$GH_REPO" --target "$GITHUB_SHA" \
+              --title 'GSHHG v2.3.7 Full coastline — pinned external data' \
+              --notes-file docs/plans/ISSUE53_GSHHG_RELEASE_LICENSE_AND_CACHE_20261019.md
+            echo 'PROJECT_RELEASE_GSHHG_2_3_7=CREATED'
+          fi
+      - name: Verify downloadable project Release asset is byte-for-byte identical
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/gshhg-final-proof"
+          gh release download gshhg-data-v2.3.7 \
+            -p gshhg-shp-2.3.7.zip -D "${RUNNER_TEMP}/gshhg-final-proof" \
+            --repo "$GH_REPO"
+          cmp -s "${RUNNER_TEMP}/gshhg-final-proof/gshhg-shp-2.3.7.zip" \
+            "${RUNNER_TEMP}/gshhg-2.3.7/gshhg-shp-2.3.7.zip"
+          echo '8dbbe7e071e77e9e75f2d639239099ebca8d5c16d6a07df8169729d49f15cf41  gshhg-shp-2.3.7.zip' |
+            (cd "${RUNNER_TEMP}/gshhg-final-proof" && sha256sum -c -)
+          echo 'PROJECT_RELEASE_PINNED_OFFICIAL_GSHHG_FULL_DATA=VERIFIED'
