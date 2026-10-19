@@ -86,8 +86,16 @@ class RegionalOriginalSoftwareOnly(unittest.TestCase):
         a,b=cases[0],cases[1]
         f=self.root/"fake.dat"
         f.write_text(synthetic_lu(a,hits=True))
-        with self.assertRaisesRegex(GateError,"REGIONAL_LU_CRS"):
+        # Different grid dimensions must reject on row count first.
+        with self.assertRaisesRegex(GateError,"REGIONAL_LU_ROW_COUNT"):
             parse_lu(f,b,hits=True)
+        # Same row geometry with a tampered UTM zone/hemisphere must
+        # fail specifically on the original header CRS, not elsewhere.
+        f.write_text(synthetic_lu(a,hits=True).replace(
+            f"{a.zone}{a.hem}",f"{b.zone}{b.hem}",1))
+        with self.assertRaisesRegex(GateError,"REGIONAL_LU_CRS"):
+            parse_lu(f,a,hits=True)
+        f.write_text(synthetic_lu(a,hits=True))
         with self.assertRaisesRegex(GateError,"REGIONAL_LU_WRONG_MODE"):
             parse_lu(f,a,hits=False)
         f.write_text(synthetic_lu(a,hits=True).replace("WGS-84","NAD-83"))
