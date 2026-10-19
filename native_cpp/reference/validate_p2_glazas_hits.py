@@ -70,7 +70,9 @@ def read_hits(path: Path) -> list[list[int]]:
 def read_native_hits(path: Path, manifest: dict) -> tuple[list[list[int]],list[int]]:
     require(manifest.get("producer")=="cteas_p2_glcc_raw"
             and manifest.get("source_sha256")==SRC_SHA
-            and manifest.get("method")=="GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY",
+            and manifest.get("method") in (
+                "GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY",
+                "GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"),
             "NATIVE_HITS_UNTRUSTED_PRODUCER")
     require(manifest.get("nx")==50 and manifest.get("ny")==50
             and manifest.get("utm_epsg")==32650 and manifest.get("mesh")==20,
@@ -198,7 +200,8 @@ def main(argv=None) -> int:
             and d3.get("source_sha256")==SRC_SHA
             and d3.get("lu_dat_sha256")==file_sha(a.native_lu)
             and d3.get("original_GLAZAS_parity")=="NOT_RUN"
-            and d3.get("total_samples")==d1.get("included"),
+            and d3.get("total_samples")==d1.get("included")
+            and d3.get("input_d1_method")==d1.get("method"),
             "D1_D3_ORIGINAL_BINDING_UNTRUSTED")
     if a.native_qa_csv is not None:
         require(a.native_qa_csv.is_file() and not a.native_qa_csv.is_symlink(),
