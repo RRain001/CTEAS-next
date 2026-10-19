@@ -1,0 +1,93 @@
+{
+  "region": "Shanghai Dongtan coastal-candidate grid, Yangtze Estuary",
+  "epsg": 32651,
+  "nx": 50,
+  "ny": 50,
+  "step_m": 100.0,
+  "x0_m": 400655.0,
+  "y0_m": 3485184.0,
+  "asset_path": "projects/sat-io/open-datasets/GLC-FCS30D/annual",
+  "band": "b23",
+  "year": 2022,
+  "source_version": "v1-community-gee",
+  "wgs84_corners": [
+    [
+      121.9539276437355,
+      31.49723467940623
+    ],
+    [
+      122.00656919574119,
+      31.497654149255663
+    ],
+    [
+      122.00609173710465,
+      31.542759812127564
+    ],
+    [
+      121.95342489570244,
+      31.542339604608493
+    ]
+  ],
+  "buffered_utm_bounds_m": [
+    400595.0,
+    3485124.0,
+    405715.0,
+    3490244.0
+  ],
+  "sha256": "59cdab18cf34d0118ea25696150d21e8d773982dd17f899f66489632768e3111",
+  "size_bytes": 3701,
+  "crs": "EPSG:32651",
+  "bounds_utm_m": [
+    400590.0,
+    3485100.0,
+    405720.0,
+    3490260.0
+  ],
+  "width": 171,
+  "height": 172,
+  "resolution": [
+    30.0,
+    30.0
+  ],
+  "nodata": 0.0,
+  "modelgrid_centers_count": 27722,
+  "modelgrid_nodata_or_fill_centers": 0,
+  "modelgrid_source_coverage_ok": true,
+  "glc210_source_centers_inside_grid": 2655,
+  "glc210_coverage_ok": true,
+  "all_source_class_histogram": {
+    "10": 16,
+    "11": 31,
+    "20": 248,
+    "52": 1,
+    "61": 12,
+    "130": 3,
+    "150": 6,
+    "181": 1,
+    "182": 420,
+    "183": 88,
+    "186": 11518,
+    "187": 13733,
+    "190": 430,
+    "210": 2905
+  },
+  "pixel_sha256": "f23d7a7ceee1f75e57b548949bc476d5e750b848a712d64c2855cc6e242c122a",
+  "sea_side_glc210_status": "NOT_DETERMINED_REQUIRES_REAL_GSHHS_FULL_INTERSECTION",
+  "land_side_glc210_status": "NOT_DETERMINED_REQUIRES_REAL_GSHHS_FULL_INTERSECTION",
+  "coastal_area_science": "NOT_RUN",
+  "image_ids": [
+    "projects/sat-io/open-datasets/GLC-FCS30D/annual/GLC_FCS30D_20002022_E120N35_Annual"
+  ],
+  "mosaic_order": "system:index ascending; last valid pixel wins",
+  "resampling": "nearest neighbour categoricals",
+  "license": "CC-BY-4.0",
+  "source_catalog": "https://gee-community-catalog.org/projects/glc_fcs/",
+  "zenodo_version_note": "community-GEE v1; do not substitute newer v2 without validation",
+  "download_utc": "2026-10-19T07:42:33.040140+00:00",
+  "repeat_download": {
+    "pixels_equal": true,
+    "second_sha256": "59cdab18cf34d0118ea25696150d21e8d773982dd17f899f66489632768e3111"
+  },
+  "script_sha256": "fb8174043d27cc2fd31a83d49233fd6a726f6ac2cca6f90bd9367d37869a097a",
+  "science_status": "SOURCE_ONLY_NO_ORIGINAL_MAKEGEO_NO_COASTAL_PASS"
+}
