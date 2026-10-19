@@ -134,7 +134,7 @@ class TestManualWorkflow(unittest.TestCase):
             self.skipTest("PyYAML unavailable")
         path=ROOT/".github/workflows/issue119-wolsong-p2b-real-coast.yml"
         doc=yaml.safe_load(path.read_text())
-        self.assertEqual(doc.get("on",doc.get(True)).keys(),{"workflow_dispatch"}.keys())
+        self.assertEqual(set(doc.get("on",doc.get(True)).keys()), {"workflow_dispatch"})
         contents=path.read_text()
         self.assertNotIn("ee.Initialize",contents)
         self.assertNotIn("secrets.",contents)
