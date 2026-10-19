@@ -4,6 +4,9 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - scripts/s2g/audit_glc_modelgrid_crosswalk.py
+      - scripts/s2g/audit_p2b_makegeo_38to14.py
+      - scripts/s2g/tests/test_p2b_makegeo_38to14.py
+      - project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp
       - scripts/s2g/tests/test_glc_modelgrid_crosswalk.py
       - scripts/s2g/audit_glc_crosswalk_review.py
       - docs/plans/ISSUE53_GLC35_USGS92_REVIEW_CANDIDATES_20261018.json
@@ -31,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_glc_crosswalk_review scripts.s2g.tests.test_glc_modelgrid_crosswalk
+          python3 -m unittest -v scripts.s2g.tests.test_glc_crosswalk_review scripts.s2g.tests.test_glc_modelgrid_crosswalk scripts.s2g.tests.test_p2b_makegeo_38to14
           python3 -m py_compile scripts/s2g/audit_glc_modelgrid_crosswalk.py
       - name: Install bounded native D2 prerequisites (no remote landcover)
         run: |
@@ -88,6 +91,32 @@ jobs:
           print("P2B_MODELGRID_SITE_EVIDENCE_CELLS=",report["cells_requiring_site_evidence"])
           print("P2B_MODELGRID_BLOCKED_MAPPING_CELLS=",report["cells_containing_blocked_mapping"])
           PY
+      - name: Explain historical USGS38 to original MAKEGEO14 surface-physics grouping
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.audit_p2b_makegeo_38to14 \
+            --makegeo-inp project/cases/hefei5km_2022_reference_case_20261011/geo/makegeo/makegeo.inp \
+            --metadata data/landcover/glc_fcs30d/v1_2022/hefei/metadata.json \
+            --proposal docs/plans/ISSUE53_GLC35_USGS92_REVIEW_CANDIDATES_20261018.json \
+            --real-modelgrid-review "${RUNNER_TEMP}/p2b-modelgrid-review/review.json" \
+            --out "${RUNNER_TEMP}/p2b-modelgrid-review/makegeo_38_to_14_NOT_APPROVED.json"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2b-modelgrid-review/makegeo_38_to_14_NOT_APPROVED.json"
+          a=json.loads(p.read_text())
+          assert a["n_original_input_usgs92"]==38
+          assert a["n_original_output_categories"]==14
+          assert a["freshwater_all_same_six_surface_params_and_output_51"] is True
+          assert a["urban_usgs11_vs_16_different_roughness"] is True
+          assert set(a["review_required_observed_classes"])=={182,183,190,200,210}
+          assert a["lu_dat_38_production"]=="NOT_AUTHORIZED"
+          assert a["p3_makegeo_14_production"]=="NOT_RUN"
+          assert a["model_total_area_m2"]==25_000_000.
+          print("P2B_ORIGINAL_MAKEGEO_38_TO_14=PASS_SOFTWARE_PHYSICS_AUDIT")
+          print("P2B_MODERN_35_TO_38_MAPPING=P2_MAPPING_REVIEW_REQUIRED")
+          PY
       - name: Upload only source-bound model-grid-area review; no new landcover assets
         uses: actions/upload-artifact@v4
         with:
@@ -95,4 +124,5 @@ jobs:
           path: |
             ${{ runner.temp }}/p2b-modelgrid-review/review.json
             ${{ runner.temp }}/p2b-modelgrid-review/p2_usgs92_candidate_only_NOT_APPROVED.csv
+            ${{ runner.temp }}/p2b-modelgrid-review/makegeo_38_to_14_NOT_APPROVED.json
           if-no-files-found: error
