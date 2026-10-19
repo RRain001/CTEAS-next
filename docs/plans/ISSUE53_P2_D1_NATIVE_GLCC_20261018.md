@@ -32,6 +32,48 @@ workflow retains the explicit compatibility alias; the separate
 Python-GEN comparison workflow explicitly invokes `--gen-replay`.
 Real original-source science is deliberately **manual-only**.
 
+## Multi-region WGS84 UTM engineering extension (pending original science)
+
+Direct-LAEA D1 and D3 now accept **WGS84 UTM EPSG:32601–32660 and
+EPSG:32701–32760**, subject to original Eurasian GLCC source coverage,
+source window checks, mesh-point and 50-km footprint budgets, and valid
+coordinate transformation. Other datums/projections, LFS pointers,
+uncovered GLCC locations and output overwrites still fail closed.
+
+For an example northern region (Japan, UTM54N) or southern one (Sumatra,
+UTM47S), the command form is the same as for Hefei, using the site's own
+WGS84 UTM zone, exact three-decimal-km origin, spacing, dimensions,
+and MESH count:
+
+```text
+cteas_p2_glcc_raw eausgs2_0la.img out-japan 32654 XREFKM YREFKM DGRIDKM NX NY MESH
+cteas_p2_glcc_raw eausgs2_0la.img out-sumatra 32747 XREFKM YREFKM DGRIDKM NX NY MESH
+```
+
+For EPSG:32650 direct output the historical 50N method tag is retained
+to keep the frozen Hefei provenance verifiable. For **all other**
+WGS84 UTM zones the D1 and D3 manifests use
+`GLCC_HEADERLESS_LAEA_DIRECT_WGS84_UTM_REAL4_GLOBE_LUGRID`,
+distinct from the science-compared Hefei tag
+`GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID`.
+Every unreviewed output's `evidence_status` remains
+`PRODUCED_UNVERIFIED`, `official_GLAZAS_parity=NOT_RUN` and
+`P3=NOT_RUN`. `original_science_scope` distinguishes a case *eligible*
+for the frozen Hefei manual scientific comparison from other grid
+configurations. It is not an assertion of scientific acceptance.
+
+The independent authentic-original `validate_p2_glazas_hits` comparator
+is now restricted not merely by EPSG/50x50/MESH=20 but also by Hefei
+`XREFKM=510.885`, `YREFKM=3531.269`, `DGRIDKM=0.100` to prevent
+false original-parity inheritance. Additional region/mesh/hemisphere
+smoke tests use **synthetic GLCC-layout bytes**; they establish
+software execution and numeric conservation only. Per-region unmodified
+original CTGPROC `LFINAL=T/F` replays, projection-edge HITS and source
+coverage proofs are still required for original-parity certification.
+No default hidden science test is started. This is **not** validation of
+30m GLC_FCS30D category crosswalk (still
+`P2_MAPPING_REVIEW_REQUIRED`), P3 or G5.
+
 ## Historical implementation notes
 
 # Issue #53 P2-A D1: native original-layout GLCC IMG — scoped GEN-replay stage
