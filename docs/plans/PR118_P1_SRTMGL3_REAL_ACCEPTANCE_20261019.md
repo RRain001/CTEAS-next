@@ -51,10 +51,30 @@ Diagnostic-only remediation on this PR now emits a **bounded** `source_failure_s
 
 **After offline CI passes**, rerun the same manual workflow on the *updated PR branch* with `P1_B_90M_DOWNLOAD`. Inspect sanitized job log and metadata artifact first. Do not claim real download or scientific acceptance merely from a PR CI success. If the stage/reason reports an actual issue, fix only the confirmed transport or source validation bug without replacing the requested DEM.
 
+## Official GL3 S3 object listing and verified north-prefix repair
+
+Owner-provided [immutable PR #118 evidence comment](https://github.com/RRain001/CTEAS-next/pull/118#issuecomment-6264039201) was **appended in place**, with direct S3 ListObjectsV2 links and local real-download proofs. The owner verified that the GL3 public object tree is:
+
+```text
+SRTM_GL3/SRTM_GL3_srtm/North/North_0_29/NxxEyyy.tif
+SRTM_GL3/SRTM_GL3_srtm/North/North_30_60/NxxEyyy.tif
+SRTM_GL3/SRTM_GL3_srtm/South/SxxEyyy.tif
+```
+
+The prior GL3 URL lacked `North/`; [owner-triggered run #39229622789](https://github.com/RRain001/CTEAS-next/actions/runs/39229622789) confirmed the actual failure as `S3_BULK_DOWNLOAD` / `BULK_TILE_HTTP_REJECTED` / HTTP **404**. Verified with owner-side GET (HTTP 200, not a successful full integrated Actions run):
+
+- `N31E114.tif` (2,018,529 bytes), SHA256 `3ca1100a2518b96e72c97871d37f286ca62a285e5ee5d2b2a6ab740c5b3df1f2`.
+- `N31E115.tif` (2,308,252 bytes), SHA256 `6b8d311dabe5d8663de881d9892670d800677f93796982d274ba320db8ad357a`.
+
+Rasterio confirmed in both original downloaded tiles: 1201 × 1201, EPSG:4326, single-band Int16, 3 arcseconds, NoData sentinel -32768, **zero actual NoData**. These SHA256 digests represent the owner's downloaded bytes; they **have not** been matched against independently published official checksums. South was verified by object listing, **not** by downloading a southern tile.
+
+PR implementation now prepends `North/` **only to GL3 northern URLs**, preserving direct `South/`, unchanged GL1 URLs, exact DEM product, 406-only same-product fallback, native scientific code and Fortran numeric gates. Exact URL tests guard the 29°/30° band boundary and the two actually downloaded northern tiles. Real source staging, mosaic and original parity must still be proven on the updated branch by another explicit manual run; **no science PASS is implied by the local download**.
+
 ## Status
 
 - PR software-only CI: pending or PASS depending on latest checks.
-- SRTMGL3 **actual manual API/S3 request**: RUN #39226316981, **BLOCKED_REAL_SOURCE_INPUT** (exact cause unclassified by old v1 reporter); subsequent rerun NOT_RUN.
+- SRTMGL3 **owner-triggered integrated Actions attempts**: #39226316981 BLOCKED (old diagnostic); #39229622789 BLOCKED HTTP 404 on S3 GL3 northern tile URL. Corrected-path integrated rerun NOT_RUN.
+- SRTMGL3 **direct official S3 north-tile downloads outside workflow**: 2/2 HTTP 200 and metadata PASS with hashes above (owner-verified); whole-case source mosaic still NOT_RERUN.
 - SRTMGL3 **authentic original TERREL same-TIFF comparison**: NOT_RUN.
 - All existing #54 historical scientific acceptance remains unchanged.
 
