@@ -1,0 +1,22 @@
+{
+  "gl1": {
+    "repeated_download_sha256_equal": true,
+    "native_all_cell_comparison": true,
+    "repeat_audit_statistics_equal": true,
+    "full_unclipped_boundary_distance_spotchecks": 14,
+    "max_distance_difference_m": 0.0
+  },
+  "gl3": {
+    "repeated_download_sha256_equal": true,
+    "native_all_cell_comparison": true,
+    "repeat_audit_statistics_equal": true,
+    "full_unclipped_boundary_distance_spotchecks": 14,
+    "max_distance_difference_m": 0.0
+  },
+  "synthetic_nodata_denominator_check": "PASS (software only, not real-data evidence)",
+  "existing_native_software_tests": [
+    "p1_cellind_tests PASS",
+    "p1_dynamic_utm_tests PASS",
+    "grid_origin_precision_tests PASS"
+  ]
+}
