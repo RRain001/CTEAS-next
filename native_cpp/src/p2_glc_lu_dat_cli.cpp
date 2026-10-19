@@ -18,6 +18,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -202,7 +203,7 @@ double assign_water(const fs::path& tif,const P2Grid& grid,int epsg,const OGRGeo
           if(land->Intersects(piece.get())){
             G intersect(land->Intersection(piece.get()));
             need(bool(intersect)&&intersect->IsValid(),"P2B_COAST_INTERSECTION_FAILED");
-            terrestrial=intersect->get_Area();
+            terrestrial=OGR_G_Area(OGRGeometry::ToHandle(intersect.get()));
           }
         }
         need(std::isfinite(terrestrial)&&terrestrial>=-1e-7&&terrestrial<=a+1e-7,
