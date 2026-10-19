@@ -88,6 +88,24 @@ class GeneralP1ComparatorTests(unittest.TestCase):
         result=compare(**files)
         self.assertEqual(result["numeric_parity"],"NUMERIC_PASS_PROVISIONAL")
         self.assertEqual(result["route"],"P1_B_30M_DOWNLOAD")
+    def test_srtmgl3_90m_automatic_same_tiff_original_parity(self):
+        files=self.make_fixture(nx=13,ny=2,route="P1_B_90M_DOWNLOAD")
+        result=compare(**files)
+        self.assertEqual(result["numeric_parity"],"NUMERIC_PASS_PROVISIONAL")
+        self.assertEqual(result["route"],"P1_B_90M_DOWNLOAD")
+        self.assertEqual(result["hit_count_mismatches"],0)
+        self.assertEqual(result["raw_mean_bad_cells"],0)
+        self.assertEqual(result["science_acceptance"],
+                         "NOT_ACCEPTED_INDEPENDENT_ORIGINAL_RUN_AUDIT_REQUIRED")
+
+    def test_srtmgl3_original_attestation_cannot_claim_gl1_route(self):
+        files=self.make_fixture(route="P1_B_90M_DOWNLOAD")
+        att=json.loads(files["original_attestation"].read_text())
+        att["route"]="P1_B_30M_DOWNLOAD"
+        files["original_attestation"].write_text(json.dumps(att))
+        with self.assertRaisesRegex(ComparisonError,"route identities"):
+            compare(**files)
+
     def test_changed_dem_sha_rejected(self):
         files=self.make_fixture()
         files["selected_tif"].write_bytes(b"CHANGED_BYTES")
