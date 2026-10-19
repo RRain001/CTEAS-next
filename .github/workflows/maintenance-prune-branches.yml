@@ -12,13 +12,14 @@ on:
           - preview
           - apply
       batch:
-        description: 'standard or pinned reviewed second-pass 2026-10-19'
+        description: 'standard / reviewed second pass / issue54 scratch retirement'
         required: true
         default: standard
         type: choice
         options:
           - standard
           - second_pass_20261019
+          - retire_issue54_20261019
       confirmation:
         description: 'For apply, enter the batch-specific confirmation string'
         required: false
@@ -65,10 +66,13 @@ jobs:
             const maxDelete = Number(process.env.CLEANUP_MAX);
             if (context.ref !== 'refs/heads/main') throw new Error('ONLY_MAIN_DISPATCH_ALLOWED');
             if (!['preview', 'apply'].includes(mode)) throw new Error('INVALID_MODE');
-            if (!['standard', 'second_pass_20261019'].includes(batch)) throw new Error('INVALID_BATCH');
+            if (!['standard', 'second_pass_20261019', 'retire_issue54_20261019'].includes(batch)) throw new Error('INVALID_BATCH');
             if (!Number.isInteger(maxDelete) || maxDelete < 1 || maxDelete > 200) throw new Error('INVALID_MAX_DELETE');
             const requiredConfirmation = batch === 'second_pass_20261019'
-              ? 'DELETE_SECOND_PASS_20261019' : 'DELETE_REVIEWED_BRANCHES';
+              ? 'DELETE_SECOND_PASS_20261019'
+              : batch === 'retire_issue54_20261019'
+                ? 'DELETE_ISSUE54_SCRATCH_3626a057'
+                : 'DELETE_REVIEWED_BRANCHES';
             if (mode === 'apply' && confirmation !== requiredConfirmation) {
               throw new Error('APPLY_REQUIRES_EXACT_CONFIRMATION_' + requiredConfirmation);
             }
@@ -78,9 +82,11 @@ jobs:
               'main',
               'codex/issue123-d3-full4-provenance-and-optin-count',
               'codex/issue123-original-sampling-coastal-policy-d0',
-              'codex/issue84-wolsong-real-zero-leap-parity',
-              'feat/issue54-scratch-native-cpp-pixel-lineage'
+              'codex/issue84-wolsong-real-zero-leap-parity'
             ]);
+            if (batch !== 'retire_issue54_20261019') {
+              alwaysKeep.add('feat/issue54-scratch-native-cpp-pixel-lineage');
+            }
             if (batch === 'standard') {
               alwaysKeep.add('maintenance/manual-reviewed-branch-prune-20261019');
             }
@@ -141,6 +147,40 @@ jobs:
                 throw new Error('MAX_DELETE_TOO_LOW_FOR_REVIEWED_BATCH');
               }
             }
+            if (batch === 'retire_issue54_20261019') {
+              const name = 'feat/issue54-scratch-native-cpp-pixel-lineage';
+              const sha = '3626a05705a8a6d4cad52fe3aa19a723f9c57ecb';
+              const archive = 'docs/maintenance/branch-retirements/issue54-scratch-20261019-sources.json';
+              const raw = fs.readFileSync(archive, 'utf8');
+              const record = JSON.parse(raw);
+              if (record.schema !== 'CTEAS_NEXT_RETIRED_BRANCH_ARCHIVE_V1' ||
+                  record.repository !== repoFull ||
+                  record.branch !== name || record.head_sha !== sha ||
+                  !Array.isArray(record.files) || record.files.length !== 5) {
+                throw new Error('ISSUE54_RETIREMENT_ARCHIVE_INVALID');
+              }
+              const paths = new Set();
+              for (const f of record.files) {
+                if (typeof f.path !== 'string' || typeof f.source !== 'string' ||
+                    !/^[a-f0-9]{40}$/.test(f.blob_sha) || paths.has(f.path)) {
+                  throw new Error('ISSUE54_RETIREMENT_INVALID_SOURCE');
+                }
+                paths.add(f.path);
+                const data = Buffer.from(f.source, 'utf8');
+                const hash = crypto.createHash('sha1')
+                  .update('blob ' + data.length + '\0').update(data).digest('hex');
+                if (hash !== f.blob_sha) throw new Error('ISSUE54_RETIREMENT_BLOB_MISMATCH');
+              }
+              if (!paths.has('scripts/s2g/p1_original_cpp_probe.py') ||
+                  !paths.has('scripts/s2g/tests/test_p1_original_cpp_probe.py') ||
+                  !paths.has('docs/plans/ISSUE54_DIRECT_NATIVE_CPP_PIXEL_LINEAGE_20261018.md')) {
+                throw new Error('ISSUE54_RETIREMENT_SCRATCH_EVIDENCE_MISSING');
+              }
+              manifestSha256 = crypto.createHash('sha256').update(raw).digest('hex');
+              archivedSourceCount = record.files.length;
+              archives = [archive];
+              pinned.set(name, sha);
+            }
             // Individually reviewed closed-unmerged PRs whose successors were merged.
             const superseded = new Map([[20, 19], [32, 31]]);
             const branches = await github.paginate(github.rest.repos.listBranches,
@@ -160,7 +200,7 @@ jobs:
               byBranch.set(p.head.ref, arr);
             }
             // Fail before any deletion if any of the 23 pinned refs changed or acquired a PR.
-            if (batch === 'second_pass_20261019' && mode === 'apply') {
+            if (batch !== 'standard' && mode === 'apply') {
               const observed = new Map(branches.map(b => [b.name, b]));
               for (const [name, sha] of pinned) {
                 const live = observed.get(name);
@@ -178,8 +218,8 @@ jobs:
               const linked = byBranch.get(b.name) || [];
               let reason = '';
               let safe = false;
-              const reviewedSha = batch === 'second_pass_20261019' ? pinned.get(b.name) : null;
-              if (batch === 'second_pass_20261019' && !reviewedSha) {
+              const reviewedSha = batch !== 'standard' ? pinned.get(b.name) : null;
+              if (batch !== 'standard' && !reviewedSha) {
                 reason = 'outside-reviewed-second-pass';
               } else if (b.protected || alwaysKeep.has(b.name)) {
                 reason = 'protected-or-explicit-keep';
@@ -187,7 +227,7 @@ jobs:
                 reason = 'reviewed-sha-changed';
               } else if (linked.some(p => p.state === 'open')) {
                 reason = 'open-pr';
-              } else if (batch === 'second_pass_20261019') {
+              } else if (batch !== 'standard') {
                 if (linked.some(p => !p.merged_at)) {
                   reason = 'closed-unmerged-pr';
                 } else {
@@ -248,7 +288,7 @@ jobs:
               }
               report.push({
                 branch: b.name, head_sha: b.commit.sha,
-                expected_sha: batch === 'second_pass_20261019' ? pinned.get(b.name) || null : null,
+                expected_sha: batch !== 'standard' ? pinned.get(b.name) || null : null,
                 action, reason, linked_prs: linked.map(p => p.number)
               });
               core.info(action + ' | ' + b.name + ' | ' + reason);
