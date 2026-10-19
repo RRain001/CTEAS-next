@@ -93,7 +93,18 @@ jobs:
             tail -n 35 original_run.log
             exit 1
           }
-          test -s coast.bln
+          if test ! -s coast.bln; then
+            echo "D6B_ORIGINAL_CTGPROC_MISSING_COAST_BLN: fail-closed"
+            echo "----- sanitized original stdout tail -----"
+            tail -n 70 original_run.log || true
+            if test -f ctgproc.lst; then
+              echo "----- original CTGPROC.LST tail -----"
+              tail -n 70 ctgproc.lst || true
+            fi
+            echo "----- output basename inventory -----"
+            find . -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+            exit 2
+          fi
       - name: Audit actual original BLN source provenance and contents
         run: |
           set -euo pipefail
