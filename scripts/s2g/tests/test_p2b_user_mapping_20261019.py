@@ -25,7 +25,19 @@ class TestP2BUserMapping(unittest.TestCase):
         water=p["conditional_classes"][0]
         self.assertEqual(water["glc_code"],210)
         self.assertIsNone(water["fallback_usgs"])
-        self.assertEqual({x["usgs_code"] for x in water["outcomes"]},{52,54,55})
+        self.assertEqual({x["usgs_code"] for x in water["outcomes"]},{52,55})
+        self.assertEqual(
+            [x["usgs_code"] for x in water["outcomes"]], [52,55])
+        self.assertEqual(water["policy_status"],
+            "USER_APPROVED_BINARY_RULE_PENDING_GSHHG_SOURCE_AND_IMPLEMENTATION_VALIDATION")
+        self.assertEqual(water["shoreline_cutting_method"].startswith("Exact"),True)
+        self.assertIsNone(water["fallback_usgs"])
+        self.assertEqual(p["source_authentication"]["selected_resolution"],"f")
+        self.assertEqual(p["source_authentication"]["primary_land_sea_polygon"],
+            "GSHHS_shp/f/GSHHS_f_L1.shp")
+        self.assertFalse(p["source_authentication"]["wdbii_required_for_binary_water_split"])
         self.assertFalse(p["source_authentication"]["zip_downloaded_and_verified"])
+        self.assertIn("VERIFY_FULL_VS_HIGH_COASTLINE_CLASS_DIFFERENCE_AND_TRACE_CONFLICTS",p["gates"])
+        self.assertNotIn("REVIEW_54_VS_55_MARINE_DISAMBIGUATION",p["gates"])
 
 if __name__=="__main__": unittest.main()
