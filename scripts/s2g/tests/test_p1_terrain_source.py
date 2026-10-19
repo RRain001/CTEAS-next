@@ -59,6 +59,18 @@ class P1SourcesTest(unittest.TestCase):
     def target(self,suffix):
         return self.root/suffix
 
+    def make_mock_api_tif(self,box,path,dem):
+        arcsec=p1.DEM_PRODUCTS[dem]["arcsec"]
+        px=arcsec/3600.0
+        left=math.floor((box["west"]-0.005)/px)*px
+        top=math.ceil((box["north"]+0.005)/px)*px
+        width=math.ceil((box["east"]+0.005-left)/px)
+        height=math.ceil((top-(box["south"]-0.005))/px)
+        with rasterio.open(path,"w",driver="GTiff",width=width,height=height,
+                           count=1,dtype="int16",crs="EPSG:4326",
+                           transform=from_origin(left,top,px,px),nodata=-32768) as dst:
+            dst.write(np.full((height,width),130,dtype=np.int16),1)
+
     def test_local_single_no_extra_crop_or_copy(self):
         path=self.target("one_source")
         out=p1.prepare(self.grid,path,"local",tifs=[self.all])
@@ -135,20 +147,55 @@ class P1SourcesTest(unittest.TestCase):
     def test_api_uses_env_only_and_never_writes_key(self):
         seen={}
         fakekey="TEST_SECRET_NOT_REAL_KEY"
-        def fake_download(box,path,key,*,max_bytes,timeout=150):
+        def fake_download(box,path,key,*,max_bytes,timeout=150,dem="SRTMGL1"):
             seen["key"]=key
             seen["box"]=box
-            shutil.copyfile(self.all,path)
+            seen["dem"]=dem
+            self.make_mock_api_tif(box,path,dem)
         dest=self.target("api-mock")
         with patch.dict(os.environ,{p1.SECRET_ENV:fakekey}):
             with patch.object(p1,"_download_api",side_effect=fake_download):
                 result=p1.prepare(self.grid,dest,"opentopography")
         self.assertEqual(seen["key"],fakekey)
+        self.assertEqual(seen["dem"],"SRTMGL1")
         self.assertEqual(result["dataset"],"SRTMGL1")
         self.assertEqual(result["mode"],"opentopography")
         self.assertFalse(result["api_key_logged"])
         self.assertNotIn(fakekey,(dest/"p1_source_manifest.json").read_text())
         self.assertTrue((dest/"srtmgl1_30m.tif").exists())
+
+    def test_explicit_srtmgl3_download_routes_real_3arcsec_without_switching(self):
+        seen=[]
+        def fake_download(box,path,key,*,max_bytes,timeout=150,dem="SRTMGL1"):
+            seen.append(dem)
+            self.make_mock_api_tif(box,path,dem)
+        dest=self.target("api-90m-mock")
+        with patch.dict(os.environ,{p1.SECRET_ENV:"FAKE_TEST_KEY"}):
+            with patch.object(p1,"_download_api",side_effect=fake_download):
+                report=p1.prepare(self.grid,dest,"opentopography",dem="SRTMGL3")
+        self.assertEqual(seen,["SRTMGL3"])
+        self.assertEqual(report["dataset"],"SRTMGL3")
+        self.assertEqual(report["requested_resolution_arcsec"],3.0)
+        self.assertEqual(report["selected_tif_properties"]["resolution_degrees"],[3/3600,3/3600])
+        self.assertTrue((dest/"srtmgl3_90m.tif").is_file())
+        self.assertFalse((dest/"srtmgl1_30m.tif").exists())
+        self.assertEqual(report["case_window_nodata_pixels"],0)
+
+    def test_reject_wrong_provider_resolution_and_clean_scratch(self):
+        def wrong_download(box,path,key,*,max_bytes,timeout=150,dem="SRTMGL1"):
+            self.make_mock_api_tif(box,path,"SRTMGL1")
+        dest=self.target("wrong-resolution-output")
+        with patch.dict(os.environ,{p1.SECRET_ENV:"FAKE_TEST_KEY"}):
+            with patch.object(p1,"_download_api",side_effect=wrong_download):
+                with self.assertRaisesRegex(p1.P1SourceError,"resolution inconsistent"):
+                    p1.prepare(self.grid,dest,"opentopography",dem="SRTMGL3")
+        self.assertFalse(dest.exists())
+
+    def test_reject_unknown_product_before_network(self):
+        with self.assertRaisesRegex(p1.P1SourceError,"SRTMGL1 or SRTMGL3"):
+            p1.prepare(self.grid,self.target("unknown-dem"),"opentopography",dem="COP30")
+        with self.assertRaisesRegex(p1.P1SourceError,"only supported for OpenTopography"):
+            p1.prepare(self.grid,self.target("local-with-dem"),"local",tifs=[self.all],dem="SRTMGL3")
 
     def test_api_preflight_rejects_tif_mode_mixing(self):
         with self.assertRaisesRegex(p1.P1SourceError,"must not silently mix"):
@@ -172,8 +219,10 @@ class P1SourcesTest(unittest.TestCase):
         self.assertNotIn("FAKE_SECRET",str(e.exception))
         self.assertIn("HTTP 403",str(e.exception))
 
-    def test_api_provider_is_hardcoded_to_30m_srtm(self):
+    def test_api_provider_defaults_to_30m_but_allows_original_90m(self):
         self.assertEqual(p1.DATASET,"SRTMGL1")
+        self.assertEqual(set(p1.DEM_PRODUCTS),{"SRTMGL1","SRTMGL3"})
+        self.assertEqual(p1.DEM_PRODUCTS["SRTMGL3"]["max_area_km2"],4050000)
         self.assertIn("opentopography.org",p1.BASE)
         self.assertEqual(p1.SECRET_ENV,"OPENTOPOGRAPHY_API_KEY")
 
