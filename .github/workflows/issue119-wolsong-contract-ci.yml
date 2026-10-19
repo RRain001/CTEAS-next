@@ -1,0 +1,34 @@
+name: Issue119 Wolsong P2-B contracts (synthetic software only)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/p2b_wolsong_case.py
+      - scripts/s2g/tests/test_issue119_wolsong_contract.py
+      - .github/workflows/issue119-wolsong-p2b-real-coast.yml
+      - .github/workflows/issue119-wolsong-contract-ci.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue119-wolsong-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline-source-and-synthetic-coast-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install offline GeoTIFF and GDAL tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends python3-rasterio python3-pyproj python3-numpy python3-gdal python3-yaml
+      - name: Run bounded offline synthetic 20km tests (no GEE or official GSHHG)
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest -v scripts.s2g.tests.test_issue119_wolsong_contract
+          echo "WOLSONG_P2B=PASS_SYNTHETIC_SOFTWARE_ONLY GSHHG_REAL=NOT_RUN GLC2022_REAL=NOT_RUN P3=NOT_RUN"
