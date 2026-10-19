@@ -1,0 +1,36 @@
+name: Issue123 D5 original GSHHS Full binary source verification (manual only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue123-d5-original-binary-full
+  cancel-in-progress: false
+jobs:
+  authentic-original-binary-source-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Fetch and SHA-verify official GSHHG 2.3.7 binary Full archive
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue123_gshhg_binary_full fetch --cache "$RUNNER_TEMP/issue123-bin"
+      - name: Independently verify extracted Full gshhs_f.b and manifest
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue123_gshhg_binary_full verify --cache "$RUNNER_TEMP/issue123-bin"
+          mkdir -p issue123-d5-evidence
+          cp "$RUNNER_TEMP/issue123-bin/verified_original_gshhs_f_binary.json" issue123-d5-evidence/
+          echo "ISSUE123_D5_ORIGINAL_GSHHS_FULL_BINARY_SOURCE=VERIFIED ORIGINAL_COASTEXT=NOT_RUN ORIGINAL_IPTYPE=NOT_RUN ORIGINAL_HITS_LU=NOT_RUN"
+      - name: Preserve provenance ONLY, not original source bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue123-d5-gshhs-full-binary-manifest
+          path: issue123-d5-evidence/verified_original_gshhs_f_binary.json
+          retention-days: 21
+          if-no-files-found: warn
