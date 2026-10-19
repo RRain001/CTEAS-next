@@ -1,0 +1,63 @@
+name: Issue123 D6A genuine GSHHG Full binary Wolsong header screen
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/issue123_original_full_header_screen.py
+      - scripts/s2g/tests/test_issue123_original_full_header_screen.py
+      - .github/workflows/issue123-original-full-header-screen.yml
+      - docs/plans/ISSUE123_D6A_FULL_BINARY_HEADER_SCREEN_20261019.md
+  push:
+    branches: [main]
+    paths:
+      - scripts/s2g/issue123_original_full_header_screen.py
+      - scripts/s2g/tests/test_issue123_original_full_header_screen.py
+      - .github/workflows/issue123-original-full-header-screen.yml
+      - docs/plans/ISSUE123_D6A_FULL_BINARY_HEADER_SCREEN_20261019.md
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue123-d6a-full-header-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-binary-header-contract:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Offline synthetic binary/header/record negative tests
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest -v scripts.s2g.tests.test_issue123_original_full_header_screen scripts.s2g.tests.test_issue123_gshhg_binary_full
+          echo "D6A_SOFTWARE_ONLY=PASS AUTHENTIC_GSHHG=NOT_DOWNLOADED ORIGINAL_COASTEXT=NOT_RUN"
+  authentic-binary-full-header-screen:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [offline-binary-header-contract]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Authenticate full official GSHHG v2.3.7 binary source via D5
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue123_gshhg_binary_full fetch --cache "$RUNNER_TEMP/issue123-d6a-source"
+      - name: Independently screen every binary polygon header in file order
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue123_original_full_header_screen --cache "$RUNNER_TEMP/issue123-d6a-source" --out "$RUNNER_TEMP/issue123-d6a-report.json"
+          echo "D6A_REAL_BINARY_HEADER_SCREEN=PASS_OR_BLOCK ORIGINAL_COASTEXT_BLN=NOT_RUN ORIGINAL_IPTYPE_PARITY=NOT_RUN ORIGINAL_HITS_LU_PARITY=NOT_RUN"
+      - name: Upload bounded SHA and candidate-index summary only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue123-d6a-authentic-full-header-screen-report
+          path: ${{ runner.temp }}/issue123-d6a-report.json
+          if-no-files-found: warn
+          retention-days: 21
