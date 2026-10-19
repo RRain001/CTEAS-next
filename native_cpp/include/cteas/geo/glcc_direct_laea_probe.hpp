@@ -16,6 +16,15 @@ struct DirectLaeaPoint {
   int i=0,j=0;
   float laea_x_km=0.f,laea_y_km=0.f;
 };
+// CTGPROC COORDLIB 1.99: XMULTO is implicitly REAL*4 and receives 0.001,
+// then COORDS computes XYZIO = CRDIO * DBLE(XMULTO) in REAL*8.
+// GLOBE finally stores SNGL(XYZIO) in its REAL*4 kilometre output.
+// Multiplication by double(0.001f) is intentionally NOT metres / 1000.0.
+// Diagnostic only: the production GLCC GEN-replay already stages XMULTO.
+[[nodiscard]] inline float coordlib_real4_km_from_metres(double metres) {
+  const float xmulto=0.001f;
+  return static_cast<float>(metres*static_cast<double>(xmulto));
+}
 class DirectLaeaProbe {
 public:
   explicit DirectLaeaProbe(int utm_epsg) :
@@ -56,9 +65,10 @@ public:
     if(!transform_->Transform(1,&east,&north)||
        !std::isfinite(east)||!std::isfinite(north))
       throw std::runtime_error("DIRECT_LAEA_PROBE_PROJECT_FAILED");
-    // GLOBE assigns DOUBLE precision COORDS result to REAL*4 xgrid/ygrid.
-    const float x=static_cast<float>(east/1000.);
-    const float y=static_cast<float>(north/1000.);
+    // Respect COORDS REAL*4 XMULTO staging before GLOBE REAL*4 output.
+    // Keep GDAL projection itself unchanged: source-parity remains diagnostic.
+    const float x=coordlib_real4_km_from_metres(east);
+    const float y=coordlib_real4_km_from_metres(north);
     const float delta_x=x-x0;
     const float delta_y=y-y0;
     const int i=static_cast<int>(delta_x/step)+(delta_x>=0.f?1:0);

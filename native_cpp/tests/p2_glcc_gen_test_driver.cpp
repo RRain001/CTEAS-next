@@ -3,6 +3,8 @@
 #include "cteas/geo/glcc_raw_fractions.hpp"
 #include "cteas/geo/glcc_direct_laea_probe.hpp"
 #include "cteas/geo/glcc_cli_modes.hpp"
+#include <bit>
+#include <cstdint>
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -35,6 +37,31 @@ int main(int argc,char** argv){
     const double x=std::stod(argv[3]),y=std::stod(argv[4]),dx=std::stod(argv[5]);
     const auto nx=std::size_t(std::stoul(argv[6])),ny=std::size_t(std::stoul(argv[7]));
     const int mesh=std::stoi(argv[8]);
+    // Issue #53: actual COORDLIB has implicitly REAL*4 XMULTO=0.001.
+    // PR #96 methodology: assert the exact staged REAL*4 bit pattern,
+    // not a nearby floating-point value or just a successful projection.
+    // ULP-sensitive inputs intentionally distinguish multiply-by-REAL*4
+    // from the previous /1000.0 diagnostic shortcut (both metre lanes).
+    {
+      const float east=coordlib_real4_km_from_metres(511085.175);
+      const float north=coordlib_real4_km_from_metres(3534540.04);
+      if(std::bit_cast<std::uint32_t>(east)!=0x43ff8ae8u ||
+         std::bit_cast<std::uint32_t>(north)!=0x455ce8a5u)
+        throw std::runtime_error("GLCC_COORDLIB_REAL4_XMULTO_BITS_MISMATCH");
+      if(east==static_cast<float>(511085.175/1000.) ||
+         north==static_cast<float>(3534540.04/1000.))
+        throw std::runtime_error("GLCC_REAL4_XMULTO_REGRESSION_NONDISCRIMINATING");
+      const double near_edge_m=510984.9765;
+      const float old_shortcut=static_cast<float>(near_edge_m/1000.);
+      const float original_stage=coordlib_real4_km_from_metres(near_edge_m);
+      const float x0=510.885f, step=0.100f;
+      const auto legacy_cell_x=[x0,step](float km) {
+        const float delta=km-x0;
+        return static_cast<int>(delta/step)+(delta>=0.f?1:0);
+      };
+      if(legacy_cell_x(original_stage)!=2 || legacy_cell_x(old_shortcut)!=1)
+        throw std::runtime_error("GLCC_REAL4_XMULTO_GRID_BOUNDARY_REGRESSION");
+    }
     // Synthetic-only projection test. This candidate does not replace native D1.
     {
       DirectLaeaProbe direct(32650);
