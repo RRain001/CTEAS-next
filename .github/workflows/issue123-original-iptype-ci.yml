@@ -1,0 +1,37 @@
+name: Issue123 D2 GSHHG Full L1-L4 original IPTYPE software-only
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/include/cteas/geo/ctgproc_original_iptype.hpp
+      - native_cpp/src/geo/ctgproc_original_iptype.cpp
+      - native_cpp/tests/p2_original_iptype_tests.cpp
+      - native_cpp/CMakeLists.txt
+      - docs/plans/ISSUE123_ORIGINAL_SAMPLING_D2_20261019.md
+      - .github/workflows/issue123-original-iptype-ci.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  only-synthetic-four-layer-point-classifier:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install GDAL and C++ build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgdal-dev libgeos-dev cmake g++-12
+      - name: Build scoped original IPTYPE tests
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "${RUNNER_TEMP}/original-iptype" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/original-iptype" --parallel 2 --target cteas_p2_original_iptype_tests
+      - name: Test synthetic hierarchy and source-format rejection (never real science)
+        run: |
+          set -euo pipefail
+          ctest --test-dir "${RUNNER_TEMP}/original-iptype" -R '^cteas_p2_original_(full_iptype|coast_policy)_synthetic$' --output-on-failure
+          echo "ISSUE123_D2=PASS_SYNTHETIC_ONLY FORTRAN_PNPOLY=NOT_RUN FULL_ARCHIVE_SOURCE=NOT_RUN FROZEN_EXACT_AREA_V1=UNCHANGED"
