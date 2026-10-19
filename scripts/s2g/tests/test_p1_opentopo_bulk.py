@@ -111,6 +111,7 @@ class BulkFallbackAdmissionTests(unittest.TestCase):
                         fallback.assert_called_once()
             self.assertEqual(data["mode"],"opentopography")
             self.assertEqual(data["dataset"],"SRTMGL1")
+            self.assertNotIn("official_dataset_documentation",data)
             self.assertEqual(data["transport"],"opentopography_official_public_s3_bulk")
             self.assertTrue(data["bulk_recovery_used"])
             self.assertEqual(data["case_window_nodata_pixels"],0)
@@ -150,6 +151,19 @@ class BulkFallbackAdmissionTests(unittest.TestCase):
             self.assertEqual(data["selected_tif_properties"]["resolution_degrees"][0],3/3600)
             self.assertTrue((out/"srtmgl3_90m.tif").is_file())
             self.assertFalse((out/"srtmgl1_30m.tif").exists())
+            evidence=data["official_dataset_documentation"]
+            self.assertEqual(evidence["provider_product"],"SRTM_GL3")
+            self.assertEqual(evidence["nasa_product_family"],"SRTMGL3.003")
+            self.assertEqual(evidence["declared_vertical_crs"],"EPSG:5773")
+            self.assertEqual(evidence["declared_vertical_datum"],"EGM96 geoid")
+            self.assertEqual(evidence["declared_vertical_units"],"m")
+            self.assertEqual(evidence["evidence_level"],"OFFICIAL_COLLECTION_METADATA_ONLY")
+            self.assertFalse(evidence["tile_matches_independent_nasa_granule"])
+            self.assertFalse(evidence["tile_independent_published_checksum_verified"])
+            self.assertFalse(evidence["tiff_embedded_vertical_crs_verified"])
+            self.assertFalse(evidence["vertical_conversion_applied"])
+            self.assertFalse(data["source_product_version_authenticated"])
+            self.assertFalse(data["height_vertical_datum_authenticated"])
 
 if __name__=="__main__":
     unittest.main()
