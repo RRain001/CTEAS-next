@@ -27,7 +27,8 @@ retrieves authentic NOAA **full Global Hourly ISD CSV** and independent
 
 - Uses the repository's original station history and existing P5
   `station_in_utm_grid` / `covers_interval` logic. Screens **all**
-  catalogued in-grid stations and six closest out-of-grid catalogued
+  catalogued in-grid stations eligible in **any** requested year (annual
+  opening/closure retained) and six closest out-of-grid catalogued
   candidates (configurable, maximum 12).
 - Counts **original, unfilled, unique UTC hours** for each data product
   separately. It records actual 2024-02-29 raw hourly presence and
@@ -47,7 +48,7 @@ retrieves authentic NOAA **full Global Hourly ISD CSV** and independent
 
 There is **no** software-modeled meteorological data in this D0 step,
 and neither vendor nor C++ SMERGE is executed. GitHub PR events only
-run a small offline syntax/import contract check. NOAA downloads are
+run a small offline syntax/import/2024 calendar/annual history-eligibility contract check. NOAA downloads are
 **manual workflow_dispatch only**; run from merged `main` to retain
 provenance. If network fetches fail, preserve the partial report and
 record BLOCKED, not a synthetic replacement.
