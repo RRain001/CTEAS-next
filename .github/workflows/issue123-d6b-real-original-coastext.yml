@@ -44,7 +44,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: issue123-d6b-original-coastext
+  group: issue123-d6b-original-coastext-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'authentic-main' }}
   cancel-in-progress: false
 jobs:
   offline-original-deck-and-bln-contract:
