@@ -7,6 +7,7 @@ on:
       - native_cpp/reference/validate_p2_glazas_hits.py
       - native_cpp/reference/diagnose_glazas_mesh_coordinates.py
       - native_cpp/reference/exact_glazas_coordinate_lineage.py
+      - native_cpp/reference/coordlib_stage_trace.py
       - native_cpp/reference/tests/test_glazas_exact_lineage.py
       - native_cpp/reference/tests/test_glazas_mesh_coordinates.py
       - native_cpp/reference/tests/test_glazas_direct_candidate.py
@@ -103,7 +104,31 @@ jobs:
             -I"${RUNNER_TEMP}/ctgproc-include" -I"$vendor" \
             "${RUNNER_TEMP}/index-only-original-qa.for" -o "${RUNNER_TEMP}/indexed_ctgproc.x"
           test -x "${RUNNER_TEMP}/indexed_ctgproc.x"
-          echo 'ORIGINAL_CTEAS_SOURCE_AND_INDEXED_DERIVATIVE_BUILD=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
+          # Build a *separate* stage instrumented COORDLIB include on the
+          # frozen original, to detect syntax/Fortran width errors in PR CI.
+          # No real IMG or original science is run in PR CI.
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from native_cpp.reference.coordlib_stage_trace import create_staged_include
+          temp=Path(os.environ["RUNNER_TEMP"])
+          source=Path("original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211")
+          original_includes=temp/"ctgproc-include"
+          staged=temp/"ctgproc-stage-includes"
+          staged.mkdir()
+          for alias in original_includes.iterdir():
+              if alias.name.lower()=="coordlib.for":continue
+              if alias.is_file():(staged/alias.name).symlink_to(alias.resolve())
+          sha=create_staged_include(source/"COORDLIB.FOR",staged/"coordlib.for")
+          print("ORIGINAL_COORDLIB_STAGE_DERIVATIVE_SHA256=",sha)
+          PY
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons \\
+            -fallow-argument-mismatch -O0 \\
+            -I"${RUNNER_TEMP}/ctgproc-stage-includes" \\
+            -I"${RUNNER_TEMP}/ctgproc-include" -I"$vendor" \\
+            "${RUNNER_TEMP}/index-only-original-qa.for" -o "${RUNNER_TEMP}/staged_ctgproc.x"
+          test -x "${RUNNER_TEMP}/staged_ctgproc.x"
+          echo 'ORIGINAL_CTEAS_SOURCE_AND_INDEXED_STAGE_DERIVATIVE_BUILD=PASS ORIGINAL_GLAZAS_SCIENCE=NOT_RUN'
 
   genuine-original-glazas:
     if: github.event_name == 'workflow_dispatch'
