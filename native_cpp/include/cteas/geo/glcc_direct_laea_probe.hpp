@@ -14,6 +14,7 @@ namespace cteas::reconstruction::geo {
 struct DirectLaeaPoint {
   float x_km=0.f,y_km=0.f;
   int i=0,j=0;
+  float laea_x_km=0.f,laea_y_km=0.f;
 };
 class DirectLaeaProbe {
 public:
@@ -62,7 +63,7 @@ public:
     const float delta_y=y-y0;
     const int i=static_cast<int>(delta_x/step)+(delta_x>=0.f?1:0);
     const int j=static_cast<int>(delta_y/step)+(delta_y>=0.f?1:0);
-    return {x,y,i,j};
+    return {x,y,i,j,xmesh,ymesh};
   }
 private:
   OGRSpatialReference source_,target_;
