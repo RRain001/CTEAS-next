@@ -330,6 +330,10 @@ def prepare(grid: Path, output_dir: Path, source: str, *, tifs: list[Path] | Non
             selected = output_dir / "p1_local_mosaic.tif"
             _build_local_mosaic(paths, bbox, selected, max_pixels=max_pixels)
         derived = check_raster(selected)
+        if source == "opentopography":
+            expected_degrees = product["arcsec"] / 3600.0
+            if any(abs(v - expected_degrees) > 1e-9 for v in derived["resolution_degrees"]):
+                raise P1SourceError("OpenTopography returned resolution inconsistent with requested DEM")
         with rasterio.open(selected) as ds:
             if not _covers_box(ds,bbox):
                 raise P1SourceError("P1 source mosaic/DEM does not cover buffered case bbox")
