@@ -51,7 +51,7 @@ def source_subroutine(source: str, start: str) -> str:
                  if re.fullmatch(r"\s*end\s*", lines[j], re.IGNORECASE)), None)
     if stop is None:
         raise ValueError("D8_ORIGINAL_ROUTINE_NO_END")
-    return "".join(lines[starts[0]:stop+1]) + "\n"
+    return "".join(lines[starts[0]:stop+1]).rstrip("\r\n") + "\n"
 
 
 def extract_original(source_path: Path, out: Path) -> None:
