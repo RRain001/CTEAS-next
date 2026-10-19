@@ -129,9 +129,14 @@ def run(years: list[int], max_nearest: int) -> dict:
         make_frozen_grid(grid_file)
         grid = load_strict_utm_grid(grid_file, context="Issue84 Wolsong frozen source screen")
         stations = full.parse_history_txt(history_file)
-        first = datetime(min(years), 1, 1)
-        last = datetime(max(years), 12, 31, 23)
-        catalog = [s for s in stations if full.covers_interval(s.begin, s.end, first, last)]
+        def eligible_years(station) -> list[int]:
+            return [year for year in years if full.covers_interval(
+                station.begin, station.end,
+                datetime(year, 1, 1), datetime(year, 12, 31, 23)
+            )]
+        # Union, not intersection: a station may legitimately open/close
+        # between calendar years and that may explain a natural primary switch.
+        catalog = [s for s in stations if eligible_years(s)]
         inside = sorted((s for s in catalog if full.station_in_utm_grid(s, grid)),
                         key=lambda s: s.sid)
         outside = sorted((s for s in catalog if not full.station_in_utm_grid(s, grid)),
@@ -150,12 +155,24 @@ def run(years: list[int], max_nearest: int) -> dict:
                 "sid": station.sid, "name": station.name, "country": station.country,
                 "source_lat": station.lat, "source_lon": station.lon,
                 "inside_frozen_utm_grid": station in inside,
+                "catalog_eligible_years": eligible_years(station),
                 "distance_to_representative_km": round(full.haversine_km(
                     WOLSONG["lat"], WOLSONG["lon"], station.lat, station.lon), 3),
                 "yearly_originals": [],
             }
             for year in years:
-                station_rec["yearly_originals"].append(inspect_one(station, year, source))
+                if year in station_rec["catalog_eligible_years"]:
+                    result = inspect_one(station, year, source)
+                    result["catalog_eligible"] = True
+                else:
+                    result = {
+                        "year": year, "station_id": station.sid,
+                        "catalog_eligible": False, "status": "NO_FULL_YEAR_HISTORY",
+                        "calendar_hours": full.expected_hours_in_year(year),
+                        "original_full_hours": None, "original_lite_hours": None,
+                        "full_sha256": None, "lite_sha256": None,
+                    }
+                station_rec["yearly_originals"].append(result)
             records.append(station_rec)
         ranking = {}
         for year in years:
@@ -171,7 +188,8 @@ def run(years: list[int], max_nearest: int) -> dict:
             ranking[str(year)] = eligible[0][0]["sid"] if eligible else None
         failures = [f"{s['sid']}/{y['year']}" for s in records
                     for y in s["yearly_originals"]
-                    if not y["full_download_ok"] or not y["lite_download_ok"]]
+                    if y["catalog_eligible"]
+                    and (not y["full_download_ok"] or not y["lite_download_ok"])]
         return {
             "schema": "ISSUE84_REAL_NOAA_SOURCE_SCREEN_V1",
             "status": ("SOURCE_SCREEN_NO_CANDIDATES" if not records else
@@ -184,8 +202,15 @@ def run(years: list[int], max_nearest: int) -> dict:
             "site": WOLSONG, "grid_cmn_sha256": sha256(grid_file),
             "isd_history_sha256": sha256(history_file), "years": years,
             "calendar_hours_by_year": {str(y): full.expected_hours_in_year(y) for y in years},
-            "catalog_in_domain_count": len(inside),
-            "catalog_in_domain_sids": [s.sid for s in inside],
+            "catalog_in_domain_union_count": len(inside),
+            "catalog_in_domain_sids_by_year": {
+                str(year): [s.sid for s in inside if year in eligible_years(s)]
+                for year in years
+            },
+            "catalog_in_domain_count_by_year": {
+                str(year): sum(year in eligible_years(s) for s in inside)
+                for year in years
+            },
             "nearest_offdomain_candidates_screened": max_nearest,
             "note": (
                 "Catalog screening is not authoritative station selection. "
