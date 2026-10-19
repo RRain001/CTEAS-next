@@ -150,7 +150,7 @@ def classify_source_failure(exc:P1SourceError)->dict:
     """Map only recognized safe strings to structured reason/stage; fail closed."""
     detail=str(exc)
     api=re.fullmatch(
-        r"OpenTopography HTTP ([1-5]\d{2}) \[([A-Z_]+)\]; key, URL and provider body withheld",
+        r"OpenTopography HTTP ([1-5]\d{2}) \[([A-Z_]+)\]; key, URL and (?:provider )?body withheld",
         detail)
     allowed={"API_KEY_REJECTED","QUOTA_OR_RATE_LIMIT","REQUEST_BBOX_REJECTED",
              "DATASET_UNAVAILABLE","UNCLASSIFIED_PROVIDER_REJECTION"}
