@@ -91,7 +91,7 @@ class D3GlccLuContract(unittest.TestCase):
                          "NOT_APPLICABLE_DIRECT_LAEA_METHOD")
         self.assertEqual(report["original_GLAZAS_parity"],"NOT_RUN")
 
-    def test_direct_laea_unreviewed_utm_zone_rejected(self):
+    def test_hefei_scoped_method_rejected_in_different_utm_zone(self):
         input_files(self.d,3,2,epsg=32651)
         p=self.d/"p2_manifest.json"
         m=json.loads(p.read_text())
@@ -100,6 +100,37 @@ class D3GlccLuContract(unittest.TestCase):
         r=self.invoke()
         self.assertNotEqual(r.returncode,0)
         self.assertIn("DIRECT_SCOPE_UTM50N_ONLY",r.stderr)
+        self.assertFalse((self.d/"out").exists())
+
+    def test_new_direct_multi_utm_provenance_remains_unverified(self):
+        # This is D3 *software only*: non-Hefei regions may be calculated
+        # but cannot be described as CTGPROC original-parity-certified.
+        method="GLCC_HEADERLESS_LAEA_DIRECT_WGS84_UTM_REAL4_GLOBE_LUGRID"
+        for epsg in (32654,32747):
+            with self.subTest(epsg=epsg):
+                with tempfile.TemporaryDirectory(prefix="glcc-d3-other-utm-") as d:
+                    work=Path(d)
+                    csv_path,manifest=input_files(work,3,2,epsg=epsg)
+                    m=json.loads(manifest.read_text())
+                    m["method"]=method
+                    manifest.write_text(json.dumps(m))
+                    output=work/"out"
+                    run=self.invoke(manifest,csv_path,output)
+                    self.assertEqual(run.returncode,0,run.stderr)
+                    report=json.loads((output/"p2_d3_manifest.json").read_text())
+                    self.assertEqual(report["input_d1_method"],method)
+                    self.assertEqual(report["original_GLAZAS_parity"],"NOT_RUN")
+                    self.assertEqual(report["p3_geo_dat"],"NOT_RUN")
+
+    def test_non_hefei_method_cannot_disguise_hefei_zone(self):
+        input_files(self.d,3,2,epsg=32650)
+        p=self.d/"p2_manifest.json"
+        m=json.loads(p.read_text())
+        m["method"]="GLCC_HEADERLESS_LAEA_DIRECT_WGS84_UTM_REAL4_GLOBE_LUGRID"
+        p.write_text(json.dumps(m))
+        r=self.invoke()
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn("CANNOT_CLAIM_HEFEI_SCOPE",r.stderr)
         self.assertFalse((self.d/"out").exists())
 
     def test_generic_grid_and_southern_utm(self):

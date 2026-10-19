@@ -10,6 +10,9 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
+
+from rasterio.warp import transform as crs_transform
 
 from engine.preprocess.ctgproc.auto_select_landuse_to_ctgproc import parse_grid_cmn
 from scripts.s2g.real_glcc_landuse_from_grid import grid_window, prepare
@@ -91,6 +94,63 @@ class NativeGlccD1(unittest.TestCase):
             self.assertGreater(total_native,0)
             self.assertEqual(total_native,total_ref)
             print(f"P2_GLCC_D1_SYNTHETIC_GEN_EQUIVALENCE=PASS cells=2500 points={total_native} max_abs_diff={max_delta:.9g}")
+
+    def test_direct_multi_zone_and_southern_engineering_only(self):
+        """Independent synthetic source windows in Japan and Indonesia.
+
+        These tests prove bounded WGS84-UTM program execution, source-pixel
+        provenance and exact in-code direct/probe category conservation, not
+        original CTGPROC parity outside the frozen Hefei science case.
+        """
+        cases = (
+            ("japan-utm54n", 139.70, 35.70, 32654, 40, 60, 200, 10),
+            ("sumatra-utm47s", 98.67, -2.99, 32747, 30, 40, 150, 20),
+        )
+        with tempfile.TemporaryDirectory(prefix="glcc-cross-utm-") as tmp:
+            root=Path(tmp)
+            for label,lon,lat,epsg,nx,ny,spacing_m,mesh in cases:
+                with self.subTest(location=label,epsg=epsg,mesh=mesh):
+                    projected_x,projected_y=crs_transform(
+                        "EPSG:4326",f"EPSG:{epsg}",[lon],[lat])
+                    x0=round(projected_x[0]-nx*spacing_m/2)
+                    y0=round(projected_y[0]-ny*spacing_m/2)
+                    grid=SimpleNamespace(imap="UTM",
+                        lsohem="N" if epsg<32700 else "S",
+                        iutmzn=epsg%100,datum="WGS-84",
+                        nx=nx,ny=ny,dgridkm=spacing_m/1000.,
+                        xrefkm=x0/1000.,yrefkm=y0/1000.)
+                    win,_,_=grid_window(grid,1.5)
+                    source=root/f"{label}.img"
+                    with source.open("wb") as stream:
+                        stream.truncate(SIZE)
+                    # The true 13,000x12,000 north-to-south raw file layout
+                    # is independently populated for each geographic region.
+                    with source.open("r+b") as stream:
+                        for j in range(win["j0"],win["j1"]+1):
+                            stream.seek((NY-j)*NX+(win["i0"]-1))
+                            stream.write(bytes(
+                                1+((i+2*j)%24)
+                                for i in range(win["i0"],win["i1"]+1)))
+                    output=root/f"{label}.csv"
+                    cmd=[str(self.raw_driver),str(source),str(epsg),
+                         str(x0),str(y0),str(spacing_m),
+                         str(nx),str(ny),str(mesh),str(output)]
+                    run=subprocess.run(cmd,capture_output=True,
+                                       text=True,timeout=120)
+                    self.assertEqual(run.returncode,0,run.stderr)
+                    self.assertIn("TEST_SYNTHETIC_ONLY INCLUDED=",run.stdout)
+                    rows=output_rows(output)
+                    self.assertEqual(len(rows),nx*ny)
+                    included=sum(int(row["samples"]) for row in rows)
+                    self.assertGreater(included,0,(label,win))
+                    self.assertTrue(all(
+                        row["cat11"]=="MISSING" if int(row["samples"])==0
+                        else row["cat11"]!="MISSING"
+                        for row in rows))
+                    print(f"GLCC_MULTI_UTM_SOFTWARE_ONLY=PASS {label} "
+                          f"epsg={epsg} grid={nx}x{ny} step_m={spacing_m} "
+                          f"mesh={mesh} synthetic_included={included} "
+                          "ORIGINAL_GLAZAS=NOT_RUN")
 
     def test_bad_input_rejected(self):
         with tempfile.TemporaryDirectory(prefix="glcc-d1-bad-") as d:

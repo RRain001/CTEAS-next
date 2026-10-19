@@ -103,8 +103,9 @@ double GlccRawResult::fraction(std::size_t i,std::size_t j,std::size_t k) const 
 namespace {
 GlccRawResult compute_glcc_raw_selected(const std::string& path,P2Grid grid,int epsg,int mesh,
                                         bool diagnostic_mesh,bool direct_laea) {
-  if(direct_laea)
-    require(epsg==32650,"P2_GLCC_DIRECT_LAEA_SCOPE_UTM50N_ONLY");
+  // All WGS84 UTM zones are permitted by the existing bounded source
+  // window and grid validator. Exact original science is evidenced only
+  // for the pinned Hefei UTM50N configuration, never inferred here.
   validate_grid(grid,epsg,mesh);
   const std::filesystem::path source(path);
   require(!std::filesystem::is_symlink(std::filesystem::symlink_status(source))&&
