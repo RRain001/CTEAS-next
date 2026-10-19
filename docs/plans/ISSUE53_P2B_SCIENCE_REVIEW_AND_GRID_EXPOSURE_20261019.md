@@ -34,6 +34,59 @@ Buffered-TIFF counts here are **not** model-grid weighted coverage.
 
 The other 23 legal GLC classes retain their current candidates and `blocked` status, even if absent in the buffered source raster. If a new research area contains any class without an approved policy, reject formal mapping rather than silently making it land/water/0.
 
+## Measured 2022 Hefei *actual-model-grid* 25 km² impact
+
+The fully offline real-GeoTIFF review run
+[#39195597645](https://github.com/RRain001/CTEAS-next/actions/runs/39195597645)
+completed `SUCCESS` using the committed SHA-verified 6168B dataset and
+native C++ exact-area D2 source; 13 software/negative tests and real
+2,500-cell audit passed. Genuine SHA-bound evidence:
+[artifact #12162011795](https://github.com/RRain001/CTEAS-next/actions/runs/39195597645/artifacts/12162011795).
+
+The review percentages below refer strictly to the **25,000,000 m² model
+domain**, NOT the 172×172 buffered TIFF pixel counts:
+
+| Review tier | Grid area (m²) | Fraction | Affected model cells |
+| --- | ---: | ---: | ---: |
+| Candidate-only, still not approved | 22,050,905 | 88.20362% | not a stand-alone sign-off |
+| Needs independent site evidence | 2,593,655 | 10.37462% | 990 |
+| Scientifically blocked with no USGS Level-II subtype | 355,440 | 1.42176% | 211 |
+| Total | 25,000,000 | 100% | 2,500 cells total |
+
+**Exact per-source-class intersected areas** (m²), full raw fraction
+preserved (no reclassification or rounding away):
+
+| GLC code | Model-grid m² | Mapping tier | Proposed USGS Level-II |
+| --- | ---: | --- | --- |
+| 10 | 2,873,205 | candidate | 21 |
+| 11 | 313,230 | candidate | 21 |
+| 20 | 18,451,190 | candidate | 21 |
+| 52 | 228,480 | candidate | 42 |
+| 62 | 61,350 | candidate | 41 |
+| 72 | 900 | candidate | 42 |
+| 130 | 122,550 | candidate | 31 |
+| 182 | 196,350 | site_evidence | 62 (conditional) |
+| 183 | 15,300 | blocked | NONE |
+| 190 | 2,389,205 | site_evidence | 16 (conditional) |
+| 200 | 8,100 | site_evidence | 77 (conditional) |
+| 210 | 340,140 | blocked | NONE |
+
+The critical source-coverage result is not that the ambiguous classes
+are “small”: **211/2,500 grid cells contain blocked categories**,
+and **990/2,500 require site evidence**, not necessarily disjoint.
+USGS51 streams, 52 lakes, 53 reservoirs, 54 estuaries cannot be assigned
+from GLC210 without verified local hydrography. GLC183 covers 15,300m²
+of non-vegetated flooded flat; choosing USGS62 or a water class as an
+universal fallback is physically unjustified. GLC190 occupies 9.557%
+of domain; treating all as USGS16 mixed urban may significantly change
+#46 surface roughness/energy terms and needs site/parameter sensitivity
+checks before approval.
+
+**Scientific status remains P2_MAPPING_REVIEW_REQUIRED.** Any
+`p2_usgs92_candidate_only_NOT_APPROVED.csv` is a partial audit view
+that does not sum to 1 in affected cells; must not feed P3 or masquerade
+as approved `LU.DAT`.
+
 ## Deliverable and stop-line in this PR
 
 The **already existing C++ D2** computes exact 30m→model-cell rectangle-overlap areas; it writes `p2_raw_fractions.csv`, `p2_raw_class_area_m2.csv`, and `p2_manifest.json` with unapproved source status. D2 is **not** rewritten here.
