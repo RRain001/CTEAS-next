@@ -21,3 +21,35 @@ Compiles **unmodified original** `CTGPROC` Fortran with proven existing include 
 1. Feed the same real original BLN (not reconstructed geometry) and matched REAL*4 sample points to original Fortran `IPTYPE` and C++ `OriginalBlnIptypeR4`. Require exact integer agreement for every original sample including shoreline edge and surrounding cases. This must have a separate actual scientific run.
 2. Finally compare authentic `LFINAL=F` 200×200×38 original integer HITS and `LFINAL=T` displayed fractions against C++ identical original-source sampling; preserve 52/55/54 and marine swap/fill cases. No `EXACT_AREA_V1` rewriting, #119 remains frozen.
 3. Issue #123 remains OPEN; passing software CI or even original output generation never implies full original vs C++ parity.
+
+## GNU Fortran raw binary compatibility correction (D6-B1)
+
+The real original-source [run #39267968482](https://github.com/RRain001/CTEAS-next/actions/runs/39267968482)
+verified both source SHAs and reached the unmodified CTGPROC `SETUP/COASTEXT`
+call, but `BREADH` rejected the *first* record with
+`GSHHS file not found or invalid`; original `coast.bln` was not written.
+This is NOT a missing or corrupt source file: the official extracted
+Full binary SHA and file existed, and the original grid/control fields
+in the LST were correctly read. The original GNU `params.ctg` uses
+`access='direct',recl=1`, while CTGPROC's raw 44-byte `BREADH` and
+8-byte `BREADP` calls have no Fortran `REC=` specifier. A minimal
+independent GNU Fortran execution confirmed that this direct-record
+layout rejects the input; `access='stream'` allows the same raw
+unformatted sequential reads.
+
+D6-B1 therefore uses an **explicit I/O-only compatibility adapter**.
+Its inputs are original source from pinned CTEAS, with SHA preserved;
+it copies `ctgproc.for` *unchanged* to ephemeral runner scratch,
+and changes exactly one ACTIVE `params.ctg` parameter:
+`caccess='direct'` -> `caccess='stream'`. All other original
+Fortran algorithm/body bytes, GSHHS source data and GLCC IMG remain
+unchanged. The two SHA-locked original/adapted params hashes and
+compiler choice are recorded in a separate JSON audit. Neither
+the patched params include nor vendor/executable/BLN is uploaded.
+
+**Important verdict limit**: This adapted program must be described as
+`D6B_GNU_STREAM_IO_ADAPTED_ORIGINAL_COASTEXT`, NOT as
+`UNMODIFIED_ALL_VENDOR_SOURCES`. Even a successful original BLN
+does not establish independent C++ equivalence or all-compiler portability.
+Further original Fortran/C++ real same-BLN IPTYPE and 38-class HITS/LU
+checks remain mandatory. No Antarctica science/validation is added.
