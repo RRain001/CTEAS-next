@@ -93,6 +93,18 @@ endif()
 add_test(NAME cteas_p2_original_bln_pnpoly_synthetic
          COMMAND cteas_p2_original_bln_pnpoly_tests)
 # D4 manual same-input oracle driver, no production CLI integration.
+# Issue #123 D8: isolated native classifier for SHA-gated authentic BLN
+# and identical REAL*4 points compared against original Fortran IPTYPE.
+# No production/original-mode integration or GLCC output parity is implied.
+add_executable(cteas_p2_original_iptype_bln_batch
+               src/p2_original_iptype_bln_batch_cli.cpp)
+target_link_libraries(cteas_p2_original_iptype_bln_batch
+                      PRIVATE cteas_p2_original_bln_pnpoly)
+if(NOT MSVC)
+  target_compile_options(cteas_p2_original_iptype_bln_batch PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+
 add_executable(cteas_p2_original_pnpoly_batch
                src/p2_original_pnpoly_batch_cli.cpp)
 target_link_libraries(cteas_p2_original_pnpoly_batch

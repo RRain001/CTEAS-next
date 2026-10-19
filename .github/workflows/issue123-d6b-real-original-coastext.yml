@@ -11,6 +11,9 @@ on:
       - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
       - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
+      - scripts/s2g/issue123_d8_real_bln_iptype.py
+      - scripts/s2g/tests/test_issue123_d8_real_bln_iptype.py
+      - native_cpp/src/p2_original_iptype_bln_batch_cli.cpp
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   push:
     branches: [main]
@@ -23,6 +26,9 @@ on:
       - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
       - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
       - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
+      - scripts/s2g/issue123_d8_real_bln_iptype.py
+      - scripts/s2g/tests/test_issue123_d8_real_bln_iptype.py
+      - native_cpp/src/p2_original_iptype_bln_batch_cli.cpp
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   workflow_dispatch:
 permissions:
@@ -42,8 +48,51 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
+      - name: D8 source/runtime preflight checkout (compile only, no real scientific claims)
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: D8 compile original Fortran and native classifier without genuine source data
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran g++-12 cmake libgdal-dev libssl-dev
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          mkdir -p "$RUNNER_TEMP/d8-offline-include" "$RUNNER_TEMP/d8-offline-extracted"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$RUNNER_TEMP/d8-offline-include/$bn"
+          done
+          python3 - "$vendor/ctgproc.for" "$RUNNER_TEMP/d8-offline-extracted" <<'PY'
+          from pathlib import Path
+          import sys
+          from scripts.s2g.issue123_d8_real_bln_iptype import extract_original, FORTRAN_DRIVER
+          out=Path(sys.argv[2])
+          extract_original(Path(sys.argv[1]),out)
+          (out/'d8_driver.for').write_text(FORTRAN_DRIVER)
+          PY
+          work="$RUNNER_TEMP/d8-offline-extracted"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -ffp-contract=off \
+            -O0 -I"$RUNNER_TEMP/d8-offline-include" \
+            "$work/original_d8_routines.for" "$work/d8_driver.for" \
+            -o "$work/original_iptype"
+          cmake -S native_cpp -B "$RUNNER_TEMP/d8-offline-native" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/d8-offline-native" --parallel 2 \
+            --target cteas_p2_original_iptype_bln_batch cteas_p2_original_bln_pnpoly_tests
+          ctest --test-dir "$RUNNER_TEMP/d8-offline-native" \
+            -R cteas_p2_original_bln_pnpoly_synthetic --output-on-failure
+          echo "D8_REAL_BLN_SCIENCE=NOT_RUN COMPILE_PREFLIGHT=PASS"
   genuine-original-wolsong-coastext-io-adapted:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [offline-original-deck-and-bln-contract]
@@ -68,7 +117,7 @@ jobs:
       - name: Install GNU Fortran
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends gfortran
+          sudo apt-get install -y -qq --no-install-recommends gfortran g++-12 cmake libgdal-dev libssl-dev
       - name: SHA-pin original source and build original algorithms with audited GNU IO adapters
         run: |
           set -euo pipefail
@@ -142,6 +191,40 @@ jobs:
             --out "$RUNNER_TEMP/issue123-d6b-original-run" \
             --original-binary "$RUNNER_TEMP/issue123-original-ctgproc"
           echo "D6B_ORIGINAL_COASTEXT=PASS_IF_AUDIT ORIGINAL_IPTYPE_PARITY=NOT_RUN ORIGINAL_HITS_LU_PARITY=NOT_RUN"
+      - name: D8 construct same authentic BLN and REAL4 point oracle input
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_d8_real_bln_iptype prepare \
+            --out "$RUNNER_TEMP/issue123-d8-oracle" \
+            --original-source original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --bln "$RUNNER_TEMP/issue123-d6b-original-run/coast.bln"
+      - name: D8 compile extracted original COASTRD IPTYPE PNPOLY and native C++
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/issue123-d6b-includes"
+          work="$RUNNER_TEMP/issue123-d8-oracle"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -ffp-contract=off \
+            -O0 -I"$stage" "$work/original_d8_routines.for" \
+            "$work/d8_driver.for" -o "$work/original_iptype"
+          cmake -S "$GITHUB_WORKSPACE/native_cpp" \
+            -B "$RUNNER_TEMP/issue123-d8-build" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/issue123-d8-build" --parallel 2 \
+            --target cteas_p2_original_iptype_bln_batch
+      - name: D8 original-vs-native authentic BLN point-class scientific gate
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/issue123-d8-oracle"
+          (
+            cd "$RUNNER_TEMP/issue123-d6b-original-run"
+            "$work/original_iptype" < "$work/points.txt" > "$work/fortran_classes.txt"
+          )
+          "$RUNNER_TEMP/issue123-d8-build/cteas_p2_original_iptype_bln_batch" \
+            "$RUNNER_TEMP/issue123-d6b-original-run/coast.bln" \
+            < "$work/points.txt" > "$work/cpp_classes.txt"
+          python3 -m scripts.s2g.issue123_d8_real_bln_iptype compare --out "$work"
+          echo "D8_REAL_BLN_IPTYPE=PASS_SCOPED GLCC_ORIGINAL_MESH_HITS_LU=NOT_RUN"
       - name: Archive only JSON SHA/BLN metadata; no raw vendor BLN or IMG
         if: always()
         uses: actions/upload-artifact@v4
@@ -152,5 +235,7 @@ jobs:
             ${{ runner.temp }}/issue123-d6b-original-run/split_io_adapter_manifest.json
             ${{ runner.temp }}/issue123-d6b-original-run/eof_adapter_manifest.json
             ${{ runner.temp }}/issue123-d6b-original-run/original_coastext_report.json
+            ${{ runner.temp }}/issue123-d8-oracle/d8_provenance.json
+            ${{ runner.temp }}/issue123-d8-oracle/d8_iptype_report.json
           if-no-files-found: warn
           retention-days: 21
