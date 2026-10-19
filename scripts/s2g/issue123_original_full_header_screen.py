@@ -39,7 +39,7 @@ def parse_header(raw: bytes) -> dict:
     # degenerate zero/short-point records; do not reject genuine source.
     bad = (ident < 0 or not 0 <= npts <= MAX_POINTS_PER_POLYGON or
            (area != 0 and npts < 3) or
-           level not in (1, 2, 3, 4) or not 10 <= version <= 30 or
+           level not in (1, 2, 3, 4, 5, 6) or not 10 <= version <= 30 or
            not -360_000_000 <= west <= 360_000_000 or
            not -360_000_000 <= east <= 360_000_000 or
            not -90_000_000 <= south <= north <= 90_000_000)
@@ -57,6 +57,10 @@ def parse_header(raw: bytes) -> dict:
 
 
 def overlaps_diagnostic_box(h: dict) -> bool:
+    # GSHHG 2.3.x reserves levels 5/6 for alternative Antarctic
+    # ice-front/grounding-line polygons; neither is a Wolsong land class.
+    if h["level"] in (5, 6):
+        return False
     if h["north"] < WOLSONG_LAT[0] or h["south"] > WOLSONG_LAT[1]:
         return False
     w, e = h["west"], h["east"]
