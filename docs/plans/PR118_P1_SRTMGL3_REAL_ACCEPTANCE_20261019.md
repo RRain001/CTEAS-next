@@ -43,10 +43,18 @@ A separate optional source-only real check is available via `.github/workflows/s
 6. Inspect scientific artifact metadata independently (result `NUMERIC_PASS_PROVISIONAL` alone does not establish authentication of the original execution and source vertical datum). Record real status in PR, including whether it passed, failed or was blocked; preserve source-provenance caveats.
 7. Do not merge PR #118 until positive real download plus scientific comparison and independent metadata review are evidenced. #54 remains closed.
 
+## Real run #39226316981 failure / remediation
+
+The owner's true `workflow_dispatch` run [#39226316981](https://github.com/RRain001/CTEAS-next/actions/runs/39226316981) on PR head `57515f9` was **FAILURE**: pinned old CTEAS source checkout and native C++ compilation/3 CTests passed, but `p1_real_actions_case` returned `BLOCKED_REAL_SOURCE_INPUT`, `http_status=null`, `category=SOURCE_CHECK_BLOCKED`. The Fortran-vs-native numerical step was skipped. The old v1 evidence redacted the exact source error, so an actual provider or TIFF issue cannot be identified from this run alone.
+
+Diagnostic-only remediation on this PR now emits a **bounded** `source_failure_stage`, `source_failure_reason_code`, optional numeric `source_provider_http_code` and existing `provider_failure_category`. Stage distinguishes OpenTopography API request, public S3 bulk transport, source precheck, GeoTIFF metadata validation and case-window admission. Unrecognized values intentionally remain `UNCLASSIFIED_SOURCE_FAILURE`; do not print exception text or include untrusted provider bodies, API keys or URLs. The 30m/90m product choice, S3 fallback condition, native physics, Fortran original, and comparison tolerances remain unchanged.
+
+**After offline CI passes**, rerun the same manual workflow on the *updated PR branch* with `P1_B_90M_DOWNLOAD`. Inspect sanitized job log and metadata artifact first. Do not claim real download or scientific acceptance merely from a PR CI success. If the stage/reason reports an actual issue, fix only the confirmed transport or source validation bug without replacing the requested DEM.
+
 ## Status
 
 - PR software-only CI: pending or PASS depending on latest checks.
-- SRTMGL3 **actual manual API/S3 request**: NOT_RUN as of this document.
+- SRTMGL3 **actual manual API/S3 request**: RUN #39226316981, **BLOCKED_REAL_SOURCE_INPUT** (exact cause unclassified by old v1 reporter); subsequent rerun NOT_RUN.
 - SRTMGL3 **authentic original TERREL same-TIFF comparison**: NOT_RUN.
 - All existing #54 historical scientific acceptance remains unchanged.
 
