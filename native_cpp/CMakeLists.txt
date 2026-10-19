@@ -47,6 +47,26 @@ endif()
 add_test(NAME cteas_p2_original_coast_policy_synthetic
          COMMAND cteas_p2_original_coast_policy_tests)
 
+# Issue #123 D2: isolated GSHHG Full L1-L4 IPTYPE software adapter.
+# No production pipeline is linked to this non-Fortran-parity code.
+add_library(cteas_p2_original_iptype STATIC src/geo/ctgproc_original_iptype.cpp)
+target_include_directories(cteas_p2_original_iptype PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(cteas_p2_original_iptype PUBLIC GDAL::GDAL)
+if(MSVC)
+  target_compile_options(cteas_p2_original_iptype PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_iptype PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_executable(cteas_p2_original_iptype_tests tests/p2_original_iptype_tests.cpp)
+target_link_libraries(cteas_p2_original_iptype_tests PRIVATE cteas_p2_original_iptype)
+if(MSVC)
+  target_compile_options(cteas_p2_original_iptype_tests PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_iptype_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME cteas_p2_original_full_iptype_synthetic
+         COMMAND cteas_p2_original_iptype_tests)
+
 # Enforce case-grid precision independently from data availability.
 add_executable(cteas_grid_origin_precision_tests tests/grid_origin_precision_tests.cpp)
 target_include_directories(cteas_grid_origin_precision_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
