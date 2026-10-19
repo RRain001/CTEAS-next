@@ -4,12 +4,16 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - scripts/s2g/issue123_original_coastext_wolsong.py
+      - scripts/s2g/issue123_gfortran_stream_io_adapter.py
+      - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
       - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   push:
     branches: [main]
     paths:
       - scripts/s2g/issue123_original_coastext_wolsong.py
+      - scripts/s2g/issue123_gfortran_stream_io_adapter.py
+      - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
       - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   workflow_dispatch:
@@ -30,7 +34,7 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
   genuine-unmodified-original-wolsong-coastext:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -68,7 +72,14 @@ jobs:
             bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
             ln -s "$file" "$RUNNER_TEMP/issue123-d6b-includes/$bn"
           done
-          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 -I"$RUNNER_TEMP/issue123-d6b-includes" -I"$vendor" "$vendor/ctgproc.for" -o "$RUNNER_TEMP/issue123-original-ctgproc"
+          stage="$RUNNER_TEMP/issue123-d6b-includes"
+          rm "$stage/ctgproc.for" "$stage/params.ctg"
+          cp "$vendor/ctgproc.for" "$stage/ctgproc.for"
+          cmp "$vendor/ctgproc.for" "$stage/ctgproc.for"
+          python3 -m scripts.s2g.issue123_gfortran_stream_io_adapter \
+            --original-params "$vendor/params.ctg" --original-source "$vendor/ctgproc.for" \
+            --out "$stage/params.ctg" --manifest "$RUNNER_TEMP/issue123-d6b-io-adapter.json"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 -I"$stage" "$stage/ctgproc.for" -o "$RUNNER_TEMP/issue123-original-ctgproc"
       - name: Verify real GSHHG Full and GLCC source SHA
         run: |
           set -euo pipefail
@@ -84,6 +95,7 @@ jobs:
             --glcc eausgs2_0la.img \
             --cache "$RUNNER_TEMP/issue123-d6b-gshhs" \
             --out "$RUNNER_TEMP/issue123-d6b-original-run"
+          cp "$RUNNER_TEMP/issue123-d6b-io-adapter.json" "$RUNNER_TEMP/issue123-d6b-original-run/io_adapter_manifest.json"
       - name: Execute genuine original Fortran COASTEXT
         run: |
           set -euo pipefail
@@ -119,6 +131,7 @@ jobs:
           name: issue123-d6b-real-original-bln-provenance
           path: |
             ${{ runner.temp }}/issue123-d6b-original-run/input_provenance.json
+            ${{ runner.temp }}/issue123-d6b-original-run/io_adapter_manifest.json
             ${{ runner.temp }}/issue123-d6b-original-run/original_coastext_report.json
           if-no-files-found: warn
           retention-days: 21
