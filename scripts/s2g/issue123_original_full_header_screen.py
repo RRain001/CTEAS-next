@@ -37,13 +37,19 @@ def parse_header(raw: bytes) -> dict:
     source = (flag >> 24) & 1
     # Original COASTEXT skips zero-area river/border records, including
     # degenerate zero/short-point records; do not reject genuine source.
-    if (ident < 0 or not 0 <= npts <= MAX_POINTS_PER_POLYGON or
-            (area != 0 and npts < 3) or
-            level not in (1, 2, 3, 4) or not 10 <= version <= 30 or
-            not -360_000_000 <= west <= 360_000_000 or
-            not -360_000_000 <= east <= 360_000_000 or
-            not -90_000_000 <= south <= north <= 90_000_000):
-        raise ValueError("D6A_INVALID_OR_INCOMPATIBLE_POLYGON_HEADER")
+    bad = (ident < 0 or not 0 <= npts <= MAX_POINTS_PER_POLYGON or
+           (area != 0 and npts < 3) or
+           level not in (1, 2, 3, 4) or not 10 <= version <= 30 or
+           not -360_000_000 <= west <= 360_000_000 or
+           not -360_000_000 <= east <= 360_000_000 or
+           not -90_000_000 <= south <= north <= 90_000_000)
+    if bad:
+        # Numeric HEADER words only, capped; never log coordinates/vertices
+        # from the body, original files, proprietary source or credentials.
+        raise ValueError(
+            "D6A_INVALID_OR_INCOMPATIBLE_POLYGON_HEADER:"
+            f"id={ident},npts={npts},flag={flag},level={level},"
+            f"version={version},bbox={west}:{east}:{south}:{north},area={area}")
     return {"id": ident, "points": npts, "level": level,
             "version": version, "source_bit": source,
             "area": area, "west": west / 1e6, "east": east / 1e6,
@@ -76,7 +82,13 @@ def scan_binary(path: Path) -> dict:
         while source.tell() < size:
             if count >= MAX_POLYGONS:
                 raise ValueError("D6A_POLYGON_COUNT_BUDGET_EXCEEDED")
-            h = parse_header(source.read(HEADER.size))
+            offset = source.tell()
+            try:
+                h = parse_header(source.read(HEADER.size))
+            except ValueError as exc:
+                raise ValueError(
+                    f"D6A_BINARY_HEADER_AT_INDEX={count},BYTE_OFFSET={offset}:"
+                    f"{exc}") from exc
             end = source.tell() + h["points"] * 8
             if end > size:
                 raise ValueError("D6A_TRUNCATED_POLYGON_POINTS")
