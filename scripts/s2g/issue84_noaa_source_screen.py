@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -61,7 +61,12 @@ def feb29_hours_full(path: Path, year: int, sid: str) -> int | None:
             if (row.get("STATION") or "").strip() != sid:
                 raise ValueError("full ISD station identity changed")
             date = row.get("DATE", "").replace("Z", "+00:00")
-            moment = datetime.fromisoformat(date)
+            try:
+                moment = datetime.fromisoformat(date)
+            except ValueError:
+                continue
+            if moment.tzinfo is not None:
+                moment = moment.astimezone(timezone.utc)
             if (moment.year, moment.month, moment.day) == (2024, 2, 29):
                 found.add(moment.hour)
     return len(found)
@@ -169,7 +174,9 @@ def run(years: list[int], max_nearest: int) -> dict:
                     if not y["full_download_ok"] or not y["lite_download_ok"]]
         return {
             "schema": "ISSUE84_REAL_NOAA_SOURCE_SCREEN_V1",
-            "status": "SOURCE_SCREEN_PARTIAL" if failures else "SOURCE_SCREEN_COMPLETE_METADATA_ONLY",
+            "status": ("SOURCE_SCREEN_NO_CANDIDATES" if not records else
+                       "SOURCE_SCREEN_PARTIAL" if failures else
+                       "SOURCE_SCREEN_COMPLETE_METADATA_ONLY"),
             "science_acceptance": False,
             "original_smerge_executed": False, "native_cpp_smerge_executed": False,
             "station_selector_executed": False, "p5_original_parity": "NOT_RUN",
@@ -205,7 +212,7 @@ def main() -> int:
     print("ISSUE84_NOAA_SCREEN=" + evidence["status"])
     print("ISSUE84_P5_SCIENCE=NOT_RUN")
     print("ISSUE84_METADATA=" + str(args.out))
-    return 0 if not evidence["download_or_validation_failures"] else 2
+    return 0 if evidence["status"] == "SOURCE_SCREEN_COMPLETE_METADATA_ONLY" else 2
 
 
 if __name__ == "__main__":
