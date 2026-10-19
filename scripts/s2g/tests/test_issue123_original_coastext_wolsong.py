@@ -8,7 +8,6 @@ from scripts.s2g.issue123_original_coastext_wolsong import (
 )
 
 BASE = """INPUT GROUP: 0
-NDBF= ! NDBF = 1 !
 1 !GLAZAS = ignored.img !    !END!
 """
 VALUES = {
