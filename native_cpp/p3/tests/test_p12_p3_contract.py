@@ -202,7 +202,7 @@ class P12ToP3Contract(unittest.TestCase):
         """Replace only existing original MAKEGEO control values, not formulas."""
         for key, value in values.items():
             source, count = re.subn(
-                rf"(!\\s*{key}\\s*=\\s*)([^!]*)(!)",
+                rf"(!\s*{key}\s*=\s*)([^!]*)(!)",
                 lambda match: match.group(1) + str(value) + " " + match.group(3),
                 source, count=1,
             )
