@@ -93,7 +93,7 @@ jobs:
           echo '4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img' | sha256sum -c -
           grid=project/cases/hefei5km_2022_reference_case_20261011/grid/grid.cmn
           build="${RUNNER_TEMP}/issue53-d1-real-build"
-          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20
+          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20 --gen-replay
           python3 -m scripts.s2g.real_glcc_landuse_from_grid --grid "$grid" --landuse-file eausgs2_0la.img --out-dir "${RUNNER_TEMP}/d1-python-gen" --mesh-cells 20 > "${RUNNER_TEMP}/source.json"
           "$build/cteas_p2_gen_fraction" "${RUNNER_TEMP}/d1-python-gen/glcc.generic.txt" 510.885 3531.269 "${RUNNER_TEMP}/d1-gen-reference.csv"
           python3 - <<'PY'
@@ -118,6 +118,11 @@ jobs:
                       assert d<=.0005,(k,r["i"],r["j"],d)
           p=json.loads((root/"d1-native/p2_manifest.json").read_text())
           assert p["source_sha256"]=="4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a"
+          # This workflow intentionally tests ONLY explicitly selected
+          # historical GEN against Python GEN. It must not silently switch
+          # to the direct-LAEA production default.
+          assert p["method"]=="GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY"
+          assert p["fractions_filename"]=="p2_glcc_usgs92_gen_replay.csv"
           assert p["official_GLAZAS_parity"]=="NOT_RUN" and p["lu_dat"]=="NOT_RUN"
           print("REAL_GLCC_LFS_SOURCE_AND_GEN_SCOPED=PASS; ORIGINAL_GLAZAS=NOT_RUN; max_fraction_delta=",maxdiff)
           PY
