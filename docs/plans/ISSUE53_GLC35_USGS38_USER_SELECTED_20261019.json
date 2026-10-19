@@ -1,11 +1,11 @@
 {
   "schema": "cteas.p2b.glc35_usgs38_user_selected_mapping.v1",
   "decision_date": "2026-10-19",
-  "decision": "USER_SELECTED_34_FIXED_CLASSES_WITH_GLC210_CONDITIONAL_UNRESOLVED",
+  "decision": "USER_SELECTED_34_FIXED_CLASSES_AND_GLC210_L1_LAND_TO_52_SEA_TO_55",
   "source_legend": "GLC_FCS30D_35_CLASSES",
   "output_contract": "USGS92_38_CLASS_LU_DAT_V2_1",
   "reference_hefei_glc_2022_sha256": "340d224d961c88637363be9616302bdf6b955b4921144edc814b875ef9798473",
-  "basis": "User-provided 35-row table; GLC 183 and 184 explicitly overridden to USGS 77 on 2026-10-19. All other user-selected codes retained.",
+  "basis": "User-provided 35-row GLC35→USGS38 table; GLC183 and GLC184 both explicitly revised to USGS77. On 2026-10-19 user explicitly selected GSHHG land/sea partition for GLC210: inside land coastline → USGS52; seaward → USGS55, including bays and estuaries. All other selected codes unchanged.",
   "production_authorized": false,
   "p3_makegeo_modified": false,
   "legacy_p2a_modified": false,
@@ -187,36 +187,47 @@
       "glc_label": "Water body",
       "outcomes": [
         {
-          "condition": "INLAND_FRESHWATER_CONFIRMED",
+          "condition": "GLC210_VALID_AREA_ON_GSHHS_FULL_L1_TERRESTRIAL_SIDE_INCLUDING_INLAND_LAKES_RIVERS",
           "usgs_code": 52
         },
         {
-          "condition": "BAY_OR_ESTUARY_CONFIRMED_BY_ADDITIONAL_DATA",
-          "usgs_code": 54
-        },
-        {
-          "condition": "LARGE_WATER_BODY_55_PROVEN_AND_PROFILE_APPROVED",
+          "condition": "GLC210_VALID_AREA_ON_GSHHS_FULL_L1_SEAWARD_SIDE_INCLUDING_BAYS_ESTUARIES",
           "usgs_code": 55
         }
       ],
-      "policy_status": "BLOCKED_PENDING_WATER_CLASSIFIER_EVIDENCE_AND_VALIDATION",
+      "policy_status": "USER_APPROVED_BINARY_RULE_PENDING_GSHHG_SOURCE_AND_IMPLEMENTATION_VALIDATION",
       "fallback_usgs": null,
-      "notes": "GSHHG L1/L2 polygons distinguish terrestrial-side versus ocean-side and lakes, but do not reliably classify marine waters as bay/estuary versus open sea. GLC210 in L1 land but not GSHHG L2 may be small freshwater. NoData is never water."
+      "shoreline_cutting_method": "Exact (within case projected plane) polygon intersection: split original valid GLC210 polygon area into USGS52 terrestrial portion and USGS55 marine portion; no centre-point pixel vote.",
+      "inland_levels": "GSHHS_f_L2/L3/L4 for QA of nested lakes/islands/ponds; GLC210 enclosed by L1 remains USGS52 even where absent from L2 polygons.",
+      "antartica_policy": "L5/L6 require separately approved ice-front/grounding-line choice; unsupported coverage fails closed.",
+      "ocean_nodata_policy": "NoData 0/250, uncovered offshore GLC raster cells and geometry errors MUST NOT be auto-populated as USGS55.",
+      "notes": "This is a USER-APPROVED modelling convention, not a claim that all ocean-side water physically meets a distinct USGS55 definition. Historical P2-A unchanged; both shoreline sides have the same six source surface parameters in selected MAKEGEO but different output water-category codes."
     }
   ],
   "source_authentication": {
     "external_gshhg_version": "2.3.7",
-    "distribution": "GSHHG_SHAPEFILE_FULL",
+    "distribution": "GSHHG_2_3_7_ESRI_SHAPEFILE_GSHHS_SHORELINE_FULL_ONLY",
     "release": "https://github.com/GenericMappingTools/gshhg-gmt/releases/download/2.3.7/gshhg-shp-2.3.7.zip",
     "published_zip_sha256": "8dbbe7e071e77e9e75f2d639239099ebca8d5c16d6a07df8169729d49f15cf41",
-    "zip_downloaded_and_verified": false
+    "zip_downloaded_and_verified": false,
+    "selected_resolution": "f",
+    "primary_land_sea_polygon": "GSHHS_shp/f/GSHHS_f_L1.shp",
+    "secondary_inland_topology_polygons": [
+      "GSHHS_shp/f/GSHHS_f_L2.shp",
+      "GSHHS_shp/f/GSHHS_f_L3.shp",
+      "GSHHS_shp/f/GSHHS_f_L4.shp"
+    ],
+    "wdbii_required_for_binary_water_split": false,
+    "wdbii_shp_usage": "Optional river/border line diagnostics only; never the land-sea polygon classifier.",
+    "high_resolution_role": "High (h) is optional sensitivity comparison only; Full (f) is the primary baseline for 30 m raster"
   },
   "gates": [
-    "VERIFY_GSHHG_ARCHIVE_SHA256",
-    "VERIFY_FULL_LEVEL_POLYGONS_AND_REPROJECTION",
-    "REVIEW_54_VS_55_MARINE_DISAMBIGUATION",
-    "REVIEW_GLC210_OCEAN_COVERAGE_AND_NODATA",
-    "VERIFY_CROSSWALK_AREA_CONSERVATION",
+    "VERIFY_GSHHG_V2_3_7_ARCHIVE_SHA256_AND_LICENSE",
+    "VERIFY_GSHHS_FULL_L1_L4_POLYGON_FILES_AND_WGS84_TO_GRID_REPROJECTION",
+    "VERIFY_BINARY_L1_LAND_SEA_SPLIT_WITH_SYNTHETIC_SHORE_AND_LAKES",
+    "VERIFY_REAL_2022_GLC_COASTAL_SOURCE_COVERAGE_AND_0_250_NODATA",
+    "VERIFY_FULL_VS_HIGH_COASTLINE_CLASS_DIFFERENCE_AND_TRACE_CONFLICTS",
+    "VERIFY_CROSSWALK_AREA_CONSERVATION_35_TO_38_USGS",
     "VERIFY_38_CLASS_LU_DAT_AND_ORIGINAL_P3_PARITY"
   ]
 }
