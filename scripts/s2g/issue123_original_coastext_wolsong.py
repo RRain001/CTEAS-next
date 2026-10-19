@@ -22,7 +22,7 @@ from scripts.s2g import issue123_gshhg_binary_full as binary
 SOURCE_SHA = "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281"
 GLCC_SHA = "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a"
 GLCC_BYTES = 156_000_000
-BLN_HEADER = re.compile(r'^\s*(\d+)\s*,\s*([01])\s*,\s*"([0-4]),([0-9]+),(-?[0-9]+)"\s*)
+BLN_HEADER = re.compile(r'^\s*(\d+)\s*,\s*([01])\s*,\s*"([0-4]),([0-9]+),(-?[0-9]+)"\s*$')
 VERTEX = re.compile(r'^\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*$')
 GRID = {"epsg": 32652, "xrefkm": "533.215", "yrefkm": "3942.629",
         "nx": 200, "ny": 200, "dgridkm": "0.100", "meshglaz": 10}
