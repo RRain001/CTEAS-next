@@ -56,6 +56,7 @@ class IntegerHitsSoftware(unittest.TestCase):
             "source_sha256":SRC_SHA,
             "method":"GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY",
             "nx":50,"ny":50,"utm_epsg":32650,"mesh":20,
+            "xrefkm":"510.885","yrefkm":"3531.269","dgridkm":0.1,
             "included":10000,
             "hits_csv_sha256":hashlib.sha256(fn.read_bytes()).hexdigest()
         }
@@ -114,6 +115,17 @@ class IntegerHitsSoftware(unittest.TestCase):
         invalid=dict(m,hits_csv_sha256="0"*64)
         with self.assertRaisesRegex(GateError,"SHA_MISMATCH"):
             read_native_hits(n,invalid)
+
+    def test_original_oracle_rejects_other_grid_origin_or_spacing(self):
+        _,native,manifest,_,_=self.make_inputs()
+        for drift in ({"xrefkm":"510.886"}, {"yrefkm":"3531.270"},
+                      {"dgridkm":0.2}, {"utm_epsg":32654},
+                      {"mesh":10}):
+            with self.subTest(drift=drift):
+                changed=dict(manifest,**drift)
+                with self.assertRaisesRegex(GateError,
+                                             "UNTRUSTED_HEFEI_REFERENCE_GRID"):
+                    read_native_hits(native,changed)
 
     def test_mode_is_required_not_fraction_as_fake_hits(self):
         h,n,m,oh,nh=self.make_inputs()
