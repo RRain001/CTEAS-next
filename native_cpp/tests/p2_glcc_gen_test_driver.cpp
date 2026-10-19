@@ -26,9 +26,9 @@ int main(int argc,char** argv){
     const auto base=glcc_cli_modes(10,names);
     const auto qa=glcc_cli_modes(11,names);
     const auto full=glcc_cli_modes(12,names);
-    if(!base.valid||base.qa_submesh||base.direct_probe||
-       !qa.valid||!qa.qa_submesh||qa.direct_probe||
-       !full.valid||!full.qa_submesh||!full.direct_probe)
+    if(!base.valid||base.qa_submesh||base.direct_probe||!base.production_direct||
+       !qa.valid||!qa.qa_submesh||qa.direct_probe||!qa.production_direct||
+       !full.valid||!full.qa_submesh||!full.direct_probe||!full.production_direct)
       throw std::runtime_error("GLCC_TWO_OPTION_MODES_REGRESSION");
     names[11]="--unrecognized";
     if(glcc_cli_modes(12,names).valid)
@@ -36,6 +36,20 @@ int main(int argc,char** argv){
     names[11]="--probe-direct";names[10]="--probe-direct";
     if(glcc_cli_modes(11,names).valid||glcc_cli_modes(12,names).valid)
       throw std::runtime_error("GLCC_DIRECT_PROBE_WITHOUT_QA_ACCEPTED");
+    // The old GEN path stays available ONLY through an explicit flag.
+    names[10]="--gen-replay";names[11]="--qa-submesh";
+    names[12]="--probe-direct";
+    const auto gen=glcc_cli_modes(11,names);
+    const auto gen_qa=glcc_cli_modes(12,names);
+    const auto gen_full=glcc_cli_modes(13,names);
+    if(!gen.valid||gen.production_direct||gen.qa_submesh||
+       !gen_qa.valid||gen_qa.production_direct||!gen_qa.qa_submesh||
+       gen_qa.direct_probe||!gen_full.valid||gen_full.production_direct||
+       !gen_full.qa_submesh||!gen_full.direct_probe)
+      throw std::runtime_error("GLCC_LEGACY_GEN_OPT_IN_REGRESSION");
+    names[11]="--production-direct";
+    if(glcc_cli_modes(12,names).valid)
+      throw std::runtime_error("GLCC_CONFLICTING_MODE_FLAGS_ACCEPTED");
     names[10]="--production-direct";names[11]="--qa-submesh";
     names[12]="--probe-direct";
     const auto prod=glcc_cli_modes(11,names);
@@ -79,7 +93,8 @@ int main(int argc,char** argv){
       if(legacy_cell_x(original_stage)!=2 || legacy_cell_x(old_shortcut)!=1)
         throw std::runtime_error("GLCC_REAL4_XMULTO_GRID_BOUNDARY_REGRESSION");
     }
-    // Synthetic-only projection test. This candidate does not replace native D1.
+    // Synthetic-only projection test for the selected direct-production
+    // coordinate arithmetic; original-source science is manual only.
     {
       DirectLaeaProbe direct(32650);
       const auto projected=direct.project(9614,4210,18,17,20,
