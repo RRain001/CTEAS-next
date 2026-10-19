@@ -195,7 +195,7 @@ def compare(*,native_manifest:Path,original_attestation:Path,native_terrain:Path
     grid=native.get("grid")
     if (not isinstance(grid,dict) or native.get("producer_issue")!=54 or
         native.get("status")!="PRODUCED_UNVERIFIED" or
-        native.get("route") not in ("P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD")):
+        native.get("route") not in ("P1_A_90M_LOCAL","P1_B_30M_DOWNLOAD","P1_B_90M_DOWNLOAD")):
         raise ComparisonError("native P1 manifest not admitted")
     nx,ny=grid.get("nx"),grid.get("ny")
     if (type(nx) is not int or type(ny) is not int or nx<1 or ny<1 or nx*ny>MAX_CELLS):
