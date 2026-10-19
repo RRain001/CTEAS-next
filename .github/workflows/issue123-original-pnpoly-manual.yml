@@ -1,0 +1,53 @@
+name: Issue123 D4 original Fortran PNPOLY exact point oracle (manual only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue123-d4-original-pnpoly-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  unmodified-original-fortran-same-input:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install compilers for original and native source
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran g++-12 cmake libgdal-dev libssl-dev
+      - name: SHA-pin and extract UNMODIFIED original CTGPROC PNPOLY at runtime
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue123_original_pnpoly_oracle prepare --out "${RUNNER_TEMP}/issue123-d4-oracle"
+          echo "ORIGINAL_SOURCE_SHA_PIN=PASS ORIGINAL_FORTRAN_VENDOR_SOURCE=UNMODIFIED_NOT_REDISTRIBUTED"
+      - name: Compile Fortran original PNPOLY and independently built C++ candidate
+        run: |
+          set -euo pipefail
+          cd "${RUNNER_TEMP}/issue123-d4-oracle"
+          gfortran -O0 -ffp-contract=off -fno-fast-math -ffixed-line-length-none -c original_pnpoly.for -o original_pnpoly.o
+          gfortran -O0 -ffp-contract=off -fno-fast-math driver.f90 original_pnpoly.o -o original_oracle
+          cmake -S "${GITHUB_WORKSPACE}/native_cpp" -B "${RUNNER_TEMP}/issue123-d4-build" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${RUNNER_TEMP}/issue123-d4-build" --parallel 2 --target cteas_p2_original_pnpoly_batch
+      - name: Compare exact original-vs-native integer PNPOLY codes for same REAL4 cases
+        run: |
+          set -euo pipefail
+          work="${RUNNER_TEMP}/issue123-d4-oracle"
+          "${work}/original_oracle" < "${work}/cases.txt" > "${work}/fortran_results.txt"
+          "${RUNNER_TEMP}/issue123-d4-build/cteas_p2_original_pnpoly_batch" < "${work}/cases.txt" > "${work}/cpp_results.txt"
+          /usr/bin/python3 -m scripts.s2g.issue123_original_pnpoly_oracle compare --out "${work}"
+          echo "ISSUE123_D4_ORIGINAL_PNPOLY_SAME_INPUT=PASS_SYNTHETIC_ONLY REAL_GSHHG_COASTEXT_PARITY=NOT_RUN FULL_CTGPROC_PARITY=NOT_RUN"
+      - name: Preserve only the bounded original source SHA and summary (no vendor files)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue123-d4-original-pnpoly-same-input-report
+          path: |
+            ${{ runner.temp }}/issue123-d4-oracle/provenance.json
+            ${{ runner.temp }}/issue123-d4-oracle/oracle_report.json
+          retention-days: 21
+          if-no-files-found: warn

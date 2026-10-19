@@ -92,6 +92,17 @@ else()
 endif()
 add_test(NAME cteas_p2_original_bln_pnpoly_synthetic
          COMMAND cteas_p2_original_bln_pnpoly_tests)
+# D4 manual same-input oracle driver, no production CLI integration.
+add_executable(cteas_p2_original_pnpoly_batch
+               src/p2_original_pnpoly_batch_cli.cpp)
+target_link_libraries(cteas_p2_original_pnpoly_batch
+                      PRIVATE cteas_p2_original_bln_pnpoly)
+if(MSVC)
+  target_compile_options(cteas_p2_original_pnpoly_batch PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_pnpoly_batch
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
 
 # Enforce case-grid precision independently from data availability.
 add_executable(cteas_grid_origin_precision_tests tests/grid_origin_precision_tests.cpp)
