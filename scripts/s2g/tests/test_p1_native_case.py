@@ -119,12 +119,12 @@ preprocess:
         with patch.dict(os.environ,{source.SECRET_ENV:"SYNTHETIC_KEY_NOT_REAL"}):
             with patch.object(source,"_download_api",side_effect=fake_download):
                 source.prepare(self.grid,stage,"opentopography",dem="SRTMGL3")
-        report=self.run_terrain(stage/"p1_source_manifest.json","SRTMGL3",name="p1_native_90m")
+        report=self.run_terrain(stage/"p1_source_manifest.json","SRTMGL3",name="p1_native_test")
         self.assertEqual(report["route"],"P1_B_90M_DOWNLOAD")
         self.assertEqual(report["science_acceptance"],"NOT_RUN")
         self.assertEqual(report["row_count"],2500)
         with self.assertRaisesRegex(ContractError,"matching cached SRTMGL1/SRTMGL3"):
-            self.run_terrain(stage/"p1_source_manifest.json","SRTMGL1",name="mismatched_product")
+            self.run_terrain(stage/"p1_source_manifest.json","SRTMGL1",name="p1_native_test")
 
     def test_refuse_wrong_route_and_sha_and_no_output(self):
         tiff=self.fixture("srtm_3arcsec.tif",3)
