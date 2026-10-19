@@ -127,7 +127,11 @@ class P12ToP3Contract(unittest.TestCase):
                 capture_output=True, text=True, timeout=35,
             )
             self.assertNotEqual(process.returncode, 0)
-            self.assertIn("GRID_ORIGIN_", process.stderr)
+            # Non-three-decimal origins fail immediately; a different valid
+            # three-decimal origin must disagree with the old Hefei input files.
+            self.assertTrue("GRID_ORIGIN_" in process.stderr or
+                            "grid shape/origin/spacing mismatch" in process.stderr,
+                            process.stderr)
             self.assertFalse(result_csv.exists())
             self.assertFalse(result_geo.exists())
 
@@ -191,6 +195,108 @@ class P12ToP3Contract(unittest.TestCase):
     def test_missing_native_csv_fails_closed(self):
         self.assertNotEqual(self.run_writer("terrain",self.tmp/"missing.csv",self.terrel).returncode,0)
         self.assertFalse(self.terrel.exists())
+
+
+    @staticmethod
+    def make_dynamic_control(source, values):
+        """Replace only existing original MAKEGEO control values, not formulas."""
+        for key, value in values.items():
+            source, count = re.subn(
+                rf"(!\\s*{key}\\s*=\\s*)([^!]*)(!)",
+                lambda match: match.group(1) + str(value) + " " + match.group(3),
+                source, count=1,
+            )
+            if count != 1:
+                raise AssertionError(f"missing original MAKEGEO option: {key}")
+        return source
+
+    def create_newsite_inputs(self, *, nx=4, ny=3, zone=52, hemisphere="N",
+                              xref="401.123", yref="3790.456", dgrid="0.200"):
+        """Small real-format synthetic P3 inputs; NOT a real-source science replay."""
+        grid = {
+            "NX": nx, "NY": ny, "IUTMZN": zone, "UTMHEM": hemisphere,
+            "XREFKM": xref, "YREFKM": yref, "DGRIDKM": dgrid
+        }
+        inp = self.tmp / "newsite-makegeo.inp"
+        inp.write_text(self.make_dynamic_control(self.control.read_text(), grid))
+        x, y, d = float(xref), float(yref), float(dgrid)
+        header = f"{nx:8d}{ny:8d}{x:12.3f}{y:12.3f}{d:12.3f}{d:12.3f}"
+        old_lu = self.lu_ref.read_text().splitlines()
+        lu = old_lu[:11]
+        lu[6] = f"  {zone}{hemisphere}"
+        lu[8] = header + f"{38:6d}"
+        fractions = ["0.000"]*38
+        fractions[CATS.index(52)] = "1.000"
+        for n in range(nx*ny):
+            lu.append(f"{n%nx+1:5d}{n//nx+1:5d} " + " ".join(fractions) + "   .")
+        lu_file = self.tmp / "newsite-lu.dat"
+        lu_file.write_text("\n".join(lu)+"\n")
+        old_terr = self.terrain_ref.read_text().splitlines()
+        terr = old_terr[:10]
+        terr[5] = f"  {zone}{hemisphere}"
+        terr[7] = header
+        elevations = [float(40+n) for n in range(nx*ny)]
+        for j in reversed(range(ny)):
+            terr.append("".join(f"{elevations[j*nx+i]:8.1f}" for i in range(nx)))
+        terr_file = self.tmp / "newsite-terrel.dat"
+        terr_file.write_text("\n".join(terr)+"\n")
+        return inp, lu_file, terr_file, elevations
+
+    def test_dynamic_nonhefei_grid_and_geodat(self):
+        inp, lu, terr, elevations = self.create_newsite_inputs()
+        csv_file, geo_file = self.tmp/"dynamic.csv", self.tmp/"dynamic-geo.dat"
+        p = subprocess.run(
+            [str(P3), str(inp), str(lu), str(terr), str(csv_file), str(geo_file)],
+            capture_output=True, text=True, timeout=30)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertIn("P3_SCOPED_CELLS=12", p.stdout)
+        rows = list(csv.DictReader(csv_file.open()))
+        self.assertEqual(len(rows), 12)
+        for n, row in enumerate(rows):
+            self.assertEqual((int(row["i"]), int(row["j"])), (n%4+1, n//4+1))
+            self.assertEqual(int(row["category"]), 51)  # USGS52 -> MAKEGEO51
+            self.assertEqual(float(row["elevation_m"]), elevations[n])
+            self.assertAlmostEqual(float(row["z0_m"]), 0.001, delta=1e-6)
+        lines = geo_file.read_text().splitlines()
+        self.assertEqual(lines[5].strip(), "52N")
+        self.assertEqual(
+            lines[7].split(),
+            ["4", "3", "401.123", "3790.456", "0.200", "0.200"])
+
+    def test_dynamic_rejects_wrong_input_geometry(self):
+        inp, lu, terr, _ = self.create_newsite_inputs()
+        # Independent input header must match controls: never silently rescale LU.
+        lines = lu.read_text().splitlines()
+        lines[8] = lines[8].replace("401.123", "401.124")
+        lu.write_text("\n".join(lines)+"\n")
+        p = subprocess.run([str(P3), str(inp), str(lu), str(terr),
+                            str(self.tmp/"bad.csv"), str(self.tmp/"bad.dat")],
+                           capture_output=True, text=True, timeout=30)
+        self.assertNotEqual(p.returncode, 0)
+        self.assertIn("grid shape/origin/spacing mismatch", p.stderr)
+        self.assertFalse((self.tmp/"bad.dat").exists())
+
+    def test_dynamic_rejects_incomplete_lu(self):
+        inp, lu, terr, _ = self.create_newsite_inputs()
+        lu.write_text("\n".join(lu.read_text().splitlines()[:-1])+"\n")
+        p = subprocess.run([str(P3), str(inp), str(lu), str(terr),
+                            str(self.tmp/"partial.csv"), str(self.tmp/"partial.dat")],
+                           capture_output=True, text=True, timeout=30)
+        self.assertNotEqual(p.returncode, 0)
+        self.assertIn("LU.DAT missing grid cell", p.stderr)
+
+    def test_dynamic_rejects_invalid_zone_and_fractional_grid_spacing(self):
+        for name, value in (("IUTMZN", "61"), ("DGRIDKM", "0.0005"),
+                            ("XREFKM", "401.12345")):
+            inp, lu, terr, _ = self.create_newsite_inputs()
+            contents = inp.read_text()
+            contents = self.make_dynamic_control(contents, {name: value})
+            inp.write_text(contents)
+            out = self.tmp/f"invalid-{name}.csv"
+            p = subprocess.run([str(P3), str(inp), str(lu), str(terr), str(out)],
+                               capture_output=True, text=True, timeout=30)
+            self.assertNotEqual(p.returncode, 0, p.stdout+p.stderr)
+            self.assertFalse(out.exists())
 
 
 if __name__=="__main__":
