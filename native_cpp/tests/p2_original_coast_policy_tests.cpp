@@ -89,6 +89,8 @@ int main() {
   bad=original;bad.iocean=100;
   rejects([&]{validate_original_coast_controls(bad,water);},
           "IOCEAN outside 1..92 should fail");
+  // Validation of point IPTYPE occurs only when the original swap branch is active.
+  original.lmarswap=true;
   rejects([&]{(void)original_lugrid_coastal_category(original,52,5);},
           "unknown IPTYPE must fail closed");
   rejects([&]{(void)original_svgrid_empty_cell_action(original,false,-1);},
