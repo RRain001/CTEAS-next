@@ -102,13 +102,16 @@ int main(int argc,char** argv){
     require(required(m,"source_sha256")==kGlccSha,"D3_SOURCE_SHA_NOT_OFFICIAL");
     require(positive_integer(m,"source_size_bytes")==156000000,"D3_NOT_ORIGINAL_156MB");
     const auto method=required(m,"method");
-    require(method=="GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY"||
-            method=="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID",
-            "D3_UNEXPECTED_METHOD");
-    // This original-GLAZAS-matched production method was validated only
-    // for the specified UTM50N transform; refuse unreviewed zones.
-    if(method=="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID")
-      require(positive_integer(m,"utm_epsg")==32650,"D3_DIRECT_SCOPE_UTM50N_ONLY");
+    const bool legacy=method=="GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY";
+    const bool direct50=method=="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID";
+    const bool direct_multi=method=="GLCC_HEADERLESS_LAEA_DIRECT_WGS84_UTM_REAL4_GLOBE_LUGRID";
+    require(legacy||direct50||direct_multi,"D3_UNEXPECTED_METHOD");
+    // Preserve the science-proven method identifier ONLY for UTM50N;
+    // multi-zone output has a separate engineering-only provenance tag.
+    const int method_epsg=positive_integer(m,"utm_epsg");
+    if(direct50)require(method_epsg==32650,"D3_DIRECT_SCOPE_UTM50N_ONLY");
+    if(direct_multi)require(method_epsg!=32650,
+                           "D3_MULTI_UTM_METHOD_CANNOT_CLAIM_HEFEI_SCOPE");
     require(required(m,"evidence_status")=="PRODUCED_UNVERIFIED","D3_MANIFEST_STATUS_INCONSISTENT");
     require(required(m,"official_GLAZAS_parity")=="NOT_RUN","D3_SCIENCE_STATUS_NOT_INFERRED");
     require(required(m,"lu_dat")=="NOT_RUN"&&required(m,"p3_geo_dat")=="NOT_RUN",
