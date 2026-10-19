@@ -11,6 +11,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 import tempfile
@@ -101,10 +102,33 @@ def inspect(tif: Path) -> dict:
             "source_only_status": "REAL_GLC_SOURCE_NOT_COASTAL_SCIENCE",
         }
 
+def _same_wgs84_corners(actual, expected) -> bool:
+    """Allow only projection roundoff across PROJ versions (1e-7 degree, ~1 cm).
+
+    The metric UTM grid and source identifiers remain exact. Never relax
+    geographic coordinate ordering, numeric validity, or actual location drift.
+    """
+    return (
+        isinstance(actual, list) and len(actual) == len(expected) == 4
+        and all(
+            isinstance(pair, list) and len(pair) == len(reference) == 2
+            and all(
+                type(found) in (int, float)
+                and math.isfinite(found)
+                and abs(found - original) <= 1e-7
+                for found, original in zip(pair, reference)
+            )
+            for pair, reference in zip(actual, expected)
+        )
+    )
+
 def verify(directory: Path) -> dict:
     meta = json.loads((directory/"metadata.json").read_text(encoding="utf-8"))
     for key, value in BASE.items():
-        if meta.get(key) != value:
+        if key == "wgs84_corners":
+            if not _same_wgs84_corners(meta.get(key), value):
+                raise ValueError("WOLSONG_GRID_OR_SOURCE_PROVENANCE_DRIFT:" + key)
+        elif meta.get(key) != value:
             raise ValueError("WOLSONG_GRID_OR_SOURCE_PROVENANCE_DRIFT:" + key)
     info = inspect(directory/NAME)
     for key, value in info.items():
