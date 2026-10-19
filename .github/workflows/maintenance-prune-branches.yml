@@ -1,0 +1,180 @@
+name: Manually review and prune obsolete branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "preview (no deletions) or apply"
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - apply
+      confirmation:
+        description: 'For apply only, type DELETE_REVIEWED_BRANCHES'
+        required: false
+        type: string
+      max_delete:
+        description: 'Maximum branches deleted per run (1-200)'
+        required: true
+        default: "200"
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  prune:
+    name: Audited branch cleanup (manual only)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      CLEANUP_MODE: ${{ inputs.mode }}
+      CLEANUP_CONFIRMATION: ${{ inputs.confirmation }}
+      CLEANUP_MAX: ${{ inputs.max_delete }}
+    steps:
+      - name: Inventory, verify, and optionally delete safe branches
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const {owner, repo} = context.repo;
+            const repoFull = owner + '/' + repo;
+            const mode = process.env.CLEANUP_MODE;
+            const confirmation = process.env.CLEANUP_CONFIRMATION;
+            const maxDelete = Number(process.env.CLEANUP_MAX);
+            if (!['preview', 'apply'].includes(mode)) throw new Error('INVALID_MODE');
+            if (!Number.isInteger(maxDelete) || maxDelete < 1 || maxDelete > 200) throw new Error('INVALID_MAX_DELETE');
+            if (mode === 'apply' && confirmation !== 'DELETE_REVIEWED_BRANCHES') {
+              throw new Error('APPLY_REQUIRES_EXACT_CONFIRMATION');
+            }
+
+            // Never delete main or work with known unmerged independent commits.
+            const alwaysKeep = new Set([
+              'main',
+              'codex/issue123-original-sampling-coastal-policy-d0',
+              'maintenance/manual-reviewed-branch-prune-20261019'
+            ]);
+            // Individually reviewed closed-unmerged PRs whose successors were merged.
+            const superseded = new Map([[20, 19], [32, 31]]);
+            const branches = await github.paginate(github.rest.repos.listBranches,
+              {owner, repo, per_page: 100});
+            const pulls = await github.paginate(github.rest.pulls.list,
+              {owner, repo, state: 'all', per_page: 100});
+            const successorIsMerged = new Map();
+            for (const [oldNumber, newNumber] of superseded) {
+              const successor = pulls.find(p => p.number === newNumber);
+              successorIsMerged.set(oldNumber, !!(successor && successor.merged_at));
+            }
+            const byBranch = new Map();
+            for (const p of pulls) {
+              if (!p.head || !p.head.repo || p.head.repo.full_name !== repoFull) continue;
+              const arr = byBranch.get(p.head.ref) || [];
+              arr.push(p);
+              byBranch.set(p.head.ref, arr);
+            }
+            const report = [];
+            let removed = 0;
+            for (const b of branches) {
+              const linked = byBranch.get(b.name) || [];
+              let reason = '';
+              let safe = false;
+              if (b.protected || alwaysKeep.has(b.name)) {
+                reason = 'protected-or-explicit-keep';
+              } else if (linked.some(p => p.state === 'open')) {
+                reason = 'open-pr';
+              } else if (linked.some(p => !p.merged_at && !(
+                superseded.has(p.number) && successorIsMerged.get(p.number)
+              ))) {
+                reason = 'closed-unmerged-pr-without-reviewed-successor';
+              } else {
+                const mergedExact = linked.some(p => !!p.merged_at &&
+                  p.head.sha === b.commit.sha);
+                const supersededExact = linked.some(p => !p.merged_at &&
+                  superseded.has(p.number) && successorIsMerged.get(p.number) &&
+                  p.head.sha === b.commit.sha);
+                if (mergedExact) {
+                  safe = true;
+                  reason = 'exact-tip-of-merged-pr';
+                } else if (supersededExact) {
+                  safe = true;
+                  reason = 'reviewed-superseded-pr';
+                } else {
+                  try {
+                    const compare = await github.rest.repos.compareCommitsWithBasehead(
+                      {owner, repo, basehead: 'main...' + b.name});
+                    if (compare.data.ahead_by === 0) {
+                      safe = true;
+                      reason = 'branch-tip-already-ancestor-of-main';
+                    } else {
+                      reason = 'unmerged-commits-ahead-' + compare.data.ahead_by;
+                    }
+                  } catch (error) {
+                    reason = 'comparison-failed-' + (error.status || 'unknown');
+                  }
+                }
+              }
+              let action = safe ? 'CANDIDATE' : 'KEEP';
+              if (safe && mode === 'apply') {
+                if (removed >= maxDelete) {
+                  action = 'SKIP_LIMIT';
+                } else {
+                  try {
+                    const current = await github.rest.repos.getBranch(
+                      {owner, repo, branch: b.name});
+                    if (current.data.commit.sha !== b.commit.sha || current.data.protected) {
+                      action = 'SKIP_MOVED_OR_PROTECTED';
+                    } else {
+                      await github.rest.git.deleteRef(
+                        {owner, repo, ref: 'heads/' + b.name});
+                      action = 'DELETED';
+                      removed += 1;
+                    }
+                  } catch (error) {
+                    action = 'FAILED_' + (error.status || 'unknown');
+                  }
+                }
+              }
+              report.push({
+                branch: b.name, head_sha: b.commit.sha,
+                action, reason, linked_prs: linked.map(p => p.number)
+              });
+              core.info(action + ' | ' + b.name + ' | ' + reason);
+            }
+            const output = {
+              schema: 'CTEAS_NEXT_BRANCH_CLEANUP_V1',
+              repository: repoFull,
+              mode,
+              main_sha: (await github.rest.repos.getBranch(
+                {owner, repo, branch: 'main'})).data.commit.sha,
+              branch_count_before: branches.length,
+              safe_candidate_count: report.filter(x =>
+                x.action === 'CANDIDATE' || x.action === 'DELETED' ||
+                x.action === 'SKIP_LIMIT').length,
+              deleted_count: removed, entries: report
+            };
+            const dst = path.join(process.env.RUNNER_TEMP, 'branch-cleanup-report.json');
+            fs.writeFileSync(dst, JSON.stringify(output, null, 2) + '\n');
+            await core.summary.addHeading('CTEAS-next remote branch cleanup');
+            await core.summary.addRaw('Mode: ' + mode + '; branches: ' +
+              branches.length + '; removed: ' + removed + '\n\n');
+            await core.summary.addTable([
+              [{data:'Branch',header:true},{data:'Action',header:true},{data:'Reason',header:true}],
+              ...report.map(r => [r.branch, r.action, r.reason])
+            ]);
+            await core.summary.write();
+            if (report.some(x => x.action.startsWith('FAILED_'))) {
+              core.setFailed('One or more branch deletions failed; inspect artifact');
+            }
+      - name: Upload independently inspectable branch report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-cleanup-report
+          retention-days: 30
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/branch-cleanup-report.json
