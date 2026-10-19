@@ -11,9 +11,9 @@
 
 int main(int argc,char** argv) {
     try {
-        if(argc<5)
+        if(argc<4)
             throw std::invalid_argument(
-                "usage: cteas_p6g_surf_source_preflight <SURF.DAT> <HOURS> <IFSTN1> <IFSTN2> [IFSTN3 ...]");
+                "usage: cteas_p6g_surf_source_preflight <SURF.DAT> <HOURS> <IFSTN1> [IFSTN2 ...]");
         const auto hours=std::stoi(argv[2]);
         if(hours<1||hours>48)
             throw std::invalid_argument("source-only acceptance must be 1-48h");
