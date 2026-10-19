@@ -15,3 +15,20 @@ Status: PASS_SCOPED_REAL_COASTAL_ENGINEERING, not proof that historic GSHHG shor
 
 ## Next module (deferred)
 [Issue #123](https://github.com/RRain001/CTEAS-next/issues/123): ORIGINAL_SAMPLING faithful CTGPROC native Fortran comparison and coast options. Reuse current P2-A native implementation rather than creating a parallel duplicate. P3 Wolsong original-vs-C++ parity remains #46. Nothing in this PR modifies P2-A, the area kernel, P1, P3, P6 or P7.
+
+## User-approved final decision — 2026-10-19 (supersedes provisional freeze gates above)
+
+The user explicitly accepts the existing Wolsong EXACT_AREA implementation and its scientific scope, **chooses only official GSHHG v2.3.7 Full f L1** for subsequent production processing, and **waives Full-vs-High sensitivity as an acceptance criterion**. Full/High output is retained in [Run #39241482533](https://github.com/RRain001/CTEAS-next/actions/runs/39241482533) as historical transparency, not a failure and not a future blocker. No source geometry is silently substituted by High. The choice is a modelling policy, **not** an observational proof that Full is the 2022 ground-truth shoreline.
+
+**Frozen acceptance verdict:** `P2B_EXACT_AREA_V1_FROZEN_PASS_SCOPED_WOLSONG_2022`.
+
+- Frozen grid: Wolsong, EPSG32652, `XREFKM=533.215`, `YREFKM=3942.629`, `DGRIDKM=0.100`, `NX=NY=200` (40,000 cells).
+- Frozen GLC_FCS30D 2022 b23 TIFF SHA256: `2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711`.
+- Frozen GSHHG Full f L1 SHP SHA256: `121435427911ea80624802e0f352d777eaf6ba6966ca5f07e687650e95329fd9`; official v2.3.7 ZIP SHA256: `8dbbe7e071e77e9e75f2d639239099ebca8d5c16d6a07df8169729d49f15cf41`.
+- Frozen C++ `LU.DAT` SHA256: `3bccf3af99681dce1f31bf25c2085f19bef2e0c2b750c451f6fcf36cd11301b7`.
+- Source water area 201,504,180 m² = USGS52 1,512,532.7412982835 m² + USGS55 199,991,647.2587017 m² (floating tolerance); 222 cells with simultaneously printed f52 and f55 positive.
+- [Run #39236968133](https://github.com/RRain001/CTEAS-next/actions/runs/39236968133) original end-to-end real P2-B engineering PASS. User manually triggered [Run #39241482533](https://github.com/RRain001/CTEAS-next/actions/runs/39241482533) confirms independent geometry recomputation for all 222 mixed cells, PASS; old Full/High sensitivity statistics archived, intentionally **not used to fail acceptance**.
+- Interpretation boundary: `USGS52` = GLC210 water **landward under the selected GSHHG L1 geometry**, not an independently certified freshwater body. `USGS55` = GLC210 water seaward under Full L1; this does not verify real 2022 shoreline accuracy or all spatial regions.
+- **Not in this acceptance**: Wolsong original/native P3 MAKEGEO same-input GEO.DAT numerical parity (owned by #46), P1–P7 integrated scientific completion, or original CTGPROC alternative coast/sampling options (separate #123).
+
+Acceptance/freeze is **scoped** to the named sources, bounded grid and documented algorithm, not a claim of universal scientific equivalence or observational coastline truth. Current P2-B area algorithm, data, land/water policy and output file are preserved without modification. #119 can be closed as complete within this scope. This approval explicitly enables the next stage [#123](https://github.com/RRain001/CTEAS-next/issues/123) `ORIGINAL_SAMPLING` development, with no automatic full scientific test dispatch.
