@@ -74,9 +74,15 @@ def read_native_hits(path: Path, manifest: dict) -> tuple[list[list[int]],list[i
                 "GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY",
                 "GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"),
             "NATIVE_HITS_UNTRUSTED_PRODUCER")
+    # This authentic original oracle is for EXACTLY the frozen Hefei
+    # origin, spacing, UTM50N, 50x50, MESH=20 setup. Successful execution
+    # of another WGS84 UTM zone must never inherit its science verdict.
     require(manifest.get("nx")==50 and manifest.get("ny")==50
-            and manifest.get("utm_epsg")==32650 and manifest.get("mesh")==20,
-            "NATIVE_HITS_UNTRUSTED_GRID")
+            and manifest.get("utm_epsg")==32650 and manifest.get("mesh")==20
+            and manifest.get("xrefkm")=="510.885"
+            and manifest.get("yrefkm")=="3531.269"
+            and manifest.get("dgridkm")==0.1,
+            "NATIVE_HITS_UNTRUSTED_HEFEI_REFERENCE_GRID")
     require(manifest.get("hits_csv_sha256")==file_sha(path),
             "NATIVE_HITS_CSV_SHA_MISMATCH")
     rows=[];samples=[]
