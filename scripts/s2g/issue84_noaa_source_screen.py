@@ -117,6 +117,14 @@ def inspect_one(station, year: int, raw_root: Path) -> dict:
     return outcome
 
 
+def eligible_years(station, years: list[int]) -> list[int]:
+    """Original full-year station-history eligibility, independently each year."""
+    return [year for year in years if full.covers_interval(
+        station.begin, station.end,
+        datetime(year, 1, 1), datetime(year, 12, 31, 23)
+    )]
+
+
 def run(years: list[int], max_nearest: int) -> dict:
     if len(set(years)) != len(years) or not years or any(y not in (2022, 2023, 2024) for y in years):
         raise ValueError("year list must be unique and within 2022,2023,2024")
@@ -129,14 +137,9 @@ def run(years: list[int], max_nearest: int) -> dict:
         make_frozen_grid(grid_file)
         grid = load_strict_utm_grid(grid_file, context="Issue84 Wolsong frozen source screen")
         stations = full.parse_history_txt(history_file)
-        def eligible_years(station) -> list[int]:
-            return [year for year in years if full.covers_interval(
-                station.begin, station.end,
-                datetime(year, 1, 1), datetime(year, 12, 31, 23)
-            )]
         # Union, not intersection: a station may legitimately open/close
         # between calendar years and that may explain a natural primary switch.
-        catalog = [s for s in stations if eligible_years(s)]
+        catalog = [s for s in stations if eligible_years(s, years)]
         inside = sorted((s for s in catalog if full.station_in_utm_grid(s, grid)),
                         key=lambda s: s.sid)
         outside = sorted((s for s in catalog if not full.station_in_utm_grid(s, grid)),
@@ -155,7 +158,7 @@ def run(years: list[int], max_nearest: int) -> dict:
                 "sid": station.sid, "name": station.name, "country": station.country,
                 "source_lat": station.lat, "source_lon": station.lon,
                 "inside_frozen_utm_grid": station in inside,
-                "catalog_eligible_years": eligible_years(station),
+                "catalog_eligible_years": eligible_years(station, years),
                 "distance_to_representative_km": round(full.haversine_km(
                     WOLSONG["lat"], WOLSONG["lon"], station.lat, station.lon), 3),
                 "yearly_originals": [],
@@ -204,11 +207,11 @@ def run(years: list[int], max_nearest: int) -> dict:
             "calendar_hours_by_year": {str(y): full.expected_hours_in_year(y) for y in years},
             "catalog_in_domain_union_count": len(inside),
             "catalog_in_domain_sids_by_year": {
-                str(year): [s.sid for s in inside if year in eligible_years(s)]
+                str(year): [s.sid for s in inside if year in eligible_years(s, years)]
                 for year in years
             },
             "catalog_in_domain_count_by_year": {
-                str(year): sum(year in eligible_years(s) for s in inside)
+                str(year): sum(year in eligible_years(s, years) for s in inside)
                 for year in years
             },
             "nearest_offdomain_candidates_screened": max_nearest,
