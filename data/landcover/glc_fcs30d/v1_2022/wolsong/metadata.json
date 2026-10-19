@@ -1,0 +1,90 @@
+{
+  "region": "Wolsong coastal-candidate 20km grid, South Korea",
+  "epsg": 32652,
+  "x0_m": 533215.0,
+  "y0_m": 3942629.0,
+  "nx": 200,
+  "ny": 200,
+  "step_m": 100.0,
+  "year": 2022,
+  "band": "b23",
+  "asset_path": "projects/sat-io/open-datasets/GLC-FCS30D/annual",
+  "source_version": "v1-community-gee",
+  "representative_site_wgs84_lat_lon": [
+    35.71667,
+    129.47778
+  ],
+  "stack_location_status": "UNVERIFIED_REPRESENTATIVE_SITE_NOT_EXACT_STACK",
+  "wgs84_corners": [
+    [
+      129.36681213097629,
+      35.62689611012089
+    ],
+    [
+      129.58767506019657,
+      35.626021174819265
+    ],
+    [
+      129.58900050943166,
+      35.80633906028565
+    ],
+    [
+      129.36763947890506,
+      35.80721978921403
+    ]
+  ],
+  "buffered_utm_bounds_m": [
+    533155.0,
+    3942569.0,
+    553275.0,
+    3962689.0
+  ],
+  "sha256": "2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711",
+  "size_bytes": 31033,
+  "crs": "EPSG:32652",
+  "width": 672,
+  "height": 672,
+  "bounds_utm_m": [
+    533130.0,
+    3942540.0,
+    553290.0,
+    3962700.0
+  ],
+  "transform": [
+    30.0,
+    0.0,
+    533130.0,
+    0.0,
+    -30.0,
+    3962700.0
+  ],
+  "pixel_resolution": [
+    30.0,
+    30.0
+  ],
+  "dtype": "uint8",
+  "nodata": 0.0,
+  "modelgrid_valid_source_area_m2": 400000000.0,
+  "modelgrid_invalid_source_area_m2": 0.0,
+  "modelgrid_intersecting_pixels": 446224,
+  "modelgrid_glc210_source_area_m2": 201504180.0,
+  "modelgrid_coverage_ok": true,
+  "glc210_coverage_ok": true,
+  "pixel_sha256": "a65af836735284af87ddfcc6f36bb6253eca4971411a5d912f1436f2c3900c31",
+  "source_only_status": "REAL_GLC_SOURCE_NOT_COASTAL_SCIENCE",
+  "image_ids": [
+    "projects/sat-io/open-datasets/GLC-FCS30D/annual/GLC_FCS30D_20002022_E125N40_Annual"
+  ],
+  "mosaic_order": "system:index ascending; last valid pixel wins",
+  "resampling": "nearest neighbour; categorical, no class replacement",
+  "license": "CC-BY-4.0",
+  "source_catalog": "https://gee-community-catalog.org/projects/glc_fcs/",
+  "doi": "10.5281/zenodo.8239305",
+  "repeat_download": {
+    "pixels_equal": true,
+    "second_sha256": "2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711"
+  },
+  "download_utc": "2026-10-19T10:03:26.990705+00:00",
+  "script_sha256_at_download": "71c0a8de6e8cbc5f788b2c7967b4d561cb5b06b2886ab60340dae96c68ad758e",
+  "coastal_science": "NOT_RUN"
+}
