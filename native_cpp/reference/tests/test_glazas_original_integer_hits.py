@@ -102,6 +102,19 @@ class IntegerHitsSoftware(unittest.TestCase):
         with self.assertRaisesRegex(GateError,"UNTRUSTED_PRODUCER"):
             read_native_hits(n,altered)
 
+    def test_production_direct_scientific_comparator_requires_source_sha(self):
+        h,n,m,oh,nh=self.make_inputs()
+        m["method"]="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"
+        direct,samples=read_native_hits(n,m)
+        self.assertEqual(direct,nh)
+        self.assertEqual(sum(samples),10000)
+        invalid=dict(m,method="GLCC_DIRECT_UNREVIEWED_FAKE")
+        with self.assertRaisesRegex(GateError,"UNTRUSTED_PRODUCER"):
+            read_native_hits(n,invalid)
+        invalid=dict(m,hits_csv_sha256="0"*64)
+        with self.assertRaisesRegex(GateError,"SHA_MISMATCH"):
+            read_native_hits(n,invalid)
+
     def test_mode_is_required_not_fraction_as_fake_hits(self):
         h,n,m,oh,nh=self.make_inputs()
         s=h.read_text().replace("\nHITS    \n","\nFRACTION\n")

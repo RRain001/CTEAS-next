@@ -101,7 +101,14 @@ int main(int argc,char** argv){
     require(required(m,"producer")=="cteas_p2_glcc_raw","D3_REJECT_UNAPPROVED_GLC_OR_PRODUCER");
     require(required(m,"source_sha256")==kGlccSha,"D3_SOURCE_SHA_NOT_OFFICIAL");
     require(positive_integer(m,"source_size_bytes")==156000000,"D3_NOT_ORIGINAL_156MB");
-    require(required(m,"method")=="GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY","D3_UNEXPECTED_METHOD");
+    const auto method=required(m,"method");
+    require(method=="GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY"||
+            method=="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID",
+            "D3_UNEXPECTED_METHOD");
+    // This original-GLAZAS-matched production method was validated only
+    // for the specified UTM50N transform; refuse unreviewed zones.
+    if(method=="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID")
+      require(positive_integer(m,"utm_epsg")==32650,"D3_DIRECT_SCOPE_UTM50N_ONLY");
     require(required(m,"evidence_status")=="PRODUCED_UNVERIFIED","D3_MANIFEST_STATUS_INCONSISTENT");
     require(required(m,"official_GLAZAS_parity")=="NOT_RUN","D3_SCIENCE_STATUS_NOT_INFERRED");
     require(required(m,"lu_dat")=="NOT_RUN"&&required(m,"p3_geo_dat")=="NOT_RUN",
@@ -167,12 +174,16 @@ int main(int argc,char** argv){
             <<"  \"source_kind\": \"P2_A_GLCC_HISTORICAL_24_TO_USGS92_38\",\n"
             <<"  \"source_sha256\": \""<<kGlccSha<<"\",\n"
             <<"  \"input_d1_csv_sha256\": \""<<expected<<"\",\n"
+            <<"  \"input_d1_method\": \""<<method<<"\",\n"
             <<"  \"lu_dat_sha256\": \""<<lu_sha<<"\",\n"
             <<"  \"rows\": "<<std::int64_t(nx)*ny<<", \"classes\": 38,\n"
             <<"  \"total_samples\": "<<total_samples<<",\n"
             <<"  \"max_raw_fraction_sum_error\": "<<std::setprecision(17)<<largest_sum_error<<",\n"
             <<"  \"evidence_status\": \"PRODUCED_UNVERIFIED\",\n"
-            <<"  \"real_source_gen_replay_ci\": \"SEE_MANUAL_ACTIONS_RUN_39115417375\",\n"
+            <<"  \"real_source_gen_replay_ci\": \""
+            <<(method=="GLCC_HEADERLESS_ROW_DIRECT_GEN_7DP_REAL4_REPLAY"
+                ?"SEE_MANUAL_ACTIONS_RUN_39115417375"
+                :"NOT_APPLICABLE_DIRECT_LAEA_METHOD")<<"\",\n"
             <<"  \"original_GLAZAS_parity\": \"NOT_RUN\",\n"
             <<"  \"glc_fcs30d_crosswalk\": \"P2_MAPPING_REVIEW_REQUIRED\",\n"
             <<"  \"p3_geo_dat\": \"NOT_RUN\",\n"

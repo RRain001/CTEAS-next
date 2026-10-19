@@ -29,6 +29,12 @@ struct GlccRawResult {
     [[nodiscard]] double fraction(std::size_t i,std::size_t j,std::size_t k) const;
 };
 // Read the ORIGINAL 13,000x12,000 headerless IMG north-to-south row layout.
+// Do not silently substitute the GEN 7-digit geographic replay for the
+// explicitly selected direct-LAEA production algorithm. Present original
+// parity is scoped to the documented Hefei UTM50N, 50x50, 100m, MESH=20 case.
+[[nodiscard]] GlccRawResult compute_glcc_direct_laea(
+    const std::string& img_path, P2Grid grid, int utm_epsg, int mesh=20,
+    bool diagnostic_mesh=false);
 // Explicit GEN seven-decimal lon/lat and REAL*4 replay is a comparison path,
 // NOT a claim of original direct GLAZAS parity.
 [[nodiscard]] GlccRawResult compute_glcc_gen_replay(

@@ -185,7 +185,9 @@ jobs:
         run: |
           set -euo pipefail
           build="${RUNNER_TEMP}/issue53-glazas-build"
-          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20 --qa-submesh --probe-direct
+          # Explicit production selection under test; does not promote the
+          # old diagnostic candidate to a false original-science PASS.
+          "$build/cteas_p2_glcc_raw" eausgs2_0la.img "${RUNNER_TEMP}/d1-native" 32650 510.885 3531.269 0.100 50 50 20 --production-direct --qa-submesh --probe-direct
           # Prevent another full science attempt when the diagnostic trace
           # was silently disabled (observed manual #39178123151).
           python3 - <<'PY'
@@ -193,6 +195,8 @@ jobs:
           from pathlib import Path
           p=Path(os.environ["RUNNER_TEMP"])/"d1-native"
           manifest=json.loads((p/"p2_manifest.json").read_text())
+          assert manifest["method"]=="GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID"
+          assert manifest["fractions_filename"]=="p2_glcc_usgs92_direct_laea.csv"
           for key,name in (
               ("diagnostic_submesh_csv_sha256","p2_glcc_submesh_diagnostic.csv"),
               ("direct_laea_candidate_hits_csv_sha256","p2_glcc_direct_laea_candidate_hits.csv"),
@@ -206,10 +210,17 @@ jobs:
           assert len(rows)==2500
           total=sum(int(r["samples"]) for r in rows)
           assert total>0, "DIRECT_LAEA_CANDIDATE_ZERO_HITS"
-          print("DIRECT_LAEA_CANDIDATE_SCIENCE_INPUT_GATE=PASS candidate_hits=",total)
+          # Before touching original Fortran, assert the selected production
+          # HITS are precisely the previously verified candidate HITS in all
+          # 2,500x38 fields, not a diagnostic CSV substituted for production.
+          prod=p/"p2_glcc_usgs92_hits.csv"
+          candidate=p/"p2_glcc_direct_laea_candidate_hits.csv"
+          assert hashlib.sha256(prod.read_bytes()).hexdigest()==manifest["hits_csv_sha256"]
+          assert prod.read_bytes()==candidate.read_bytes(), "PRODUCTION_VS_CANDIDATE_INTEGER_HITS_DIFFER"
+          print("DIRECT_LAEA_SELECTED_PRODUCTION_CANDIDATE_CROSSCHECK=PASS hits=",total)
           PY
           "$build/cteas_p2_glcc_lu_dat" "${RUNNER_TEMP}/d1-native/p2_manifest.json" \
-            "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_gen_replay.csv" "${RUNNER_TEMP}/d3-glcc"
+            "${RUNNER_TEMP}/d1-native/p2_glcc_usgs92_direct_laea.csv" "${RUNNER_TEMP}/d3-glcc"
           original_sha="$(sha256sum "${RUNNER_TEMP}/original_ctgproc.x" | awk '{print $1}')"
           python3 -m native_cpp.reference.validate_p2_glazas_hits \
             --source-img eausgs2_0la.img \
