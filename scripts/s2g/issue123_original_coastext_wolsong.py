@@ -18,7 +18,7 @@ import sys
 
 from native_cpp.reference.validate_p2_glazas_original import _edit_card
 from scripts.s2g import issue123_gshhg_binary_full as binary
-from scripts.s2g.issue123_gfortran_stream_io_adapter import STATUS as IO_STATUS
+from scripts.s2g.issue123_gfortran_split_io_adapter import STATUS as IO_STATUS
 from scripts.s2g.issue123_gfortran_eof_adapter import STATUS as EOF_STATUS
 
 SOURCE_SHA = "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281"
@@ -96,7 +96,7 @@ def prepare(template: Path, source: Path, glcc: Path,
         (out / "gshhs_f.b").symlink_to((cache / "gshhs_f.b").resolve())
         (out / "glcc.img").symlink_to(glcc.resolve())
         (out / "ctgproc.inp").write_text(deck, encoding="utf-8")
-        result = {"status": "D6B_READY_TO_RUN_GNU_STREAM_IO_ADAPTED_ORIGINAL",
+        result = {"status": "D6B_READY_TO_RUN_GNU_SPLIT_IO_ADAPTED_ORIGINAL",
                   "grid": GRID, "coast_processing": "ORIGINAL_COASTEXT",
                   "landuse_original_input": "GLAZAS", "control_sha256": sha(out / "ctgproc.inp"),
                   "original_source_sha256": SOURCE_SHA,
@@ -181,18 +181,24 @@ def audit(out: Path, original_binary: Path) -> dict:
             not (out / "input_provenance.json").is_file()):
         raise ValueError("D6B_MISSING_INPUT_PROVENANCE")
     provenance = json.loads((out / "input_provenance.json").read_text())
-    if (provenance.get("status") != "D6B_READY_TO_RUN_GNU_STREAM_IO_ADAPTED_ORIGINAL" or
+    if (provenance.get("status") != "D6B_READY_TO_RUN_GNU_SPLIT_IO_ADAPTED_ORIGINAL" or
             provenance.get("control_sha256") != sha(out / "ctgproc.inp")):
         raise ValueError("D6B_CONTROL_PROVENANCE_DRIFT")
-    adapter_file = out / "io_adapter_manifest.json"
+    adapter_file = out / "split_io_adapter_manifest.json"
     if adapter_file.is_symlink() or not adapter_file.is_file():
-        raise ValueError("D6B_MISSING_GNU_STREAM_ADAPTER_AUDIT")
+        raise ValueError("D6B_MISSING_GNU_SPLIT_IO_ADAPTER_AUDIT")
     adapter = json.loads(adapter_file.read_text())
     if (adapter.get("status") != IO_STATUS or
             adapter.get("original_ctgproc_sha256") != SOURCE_SHA or
-            adapter.get("original_fortran_compiler") != "gfortran -std=legacy" or
-            adapter.get("original_ctgproc_fortran_body_changed") is not False):
-        raise ValueError("D6B_ORIGINAL_GNU_IO_ADAPTER_PROVENANCE_DRIFT")
+            adapter.get("original_params_sha256") !=
+                "28dc5877c6a70d74f7a0e136bdd4aa1777dc9cbab15c184e7f483f772cd266c6" or
+            adapter.get("glcc_direct_access_preserved") is not True or
+            adapter.get("gshhg_stream_only") is not True or
+            adapter.get("glcc_access") != "direct-unformatted-recl-1" or
+            adapter.get("gshhg_access") != "stream-unformatted-no-recl" or
+            adapter.get("modified_original_gshhg_open_only") is not True or
+            adapter.get("computational_physics_changes") is not False):
+        raise ValueError("D6B_ORIGINAL_GNU_SPLIT_IO_ADAPTER_PROVENANCE_DRIFT")
     eof_file = out / "eof_adapter_manifest.json"
     if eof_file.is_symlink() or not eof_file.is_file():
         raise ValueError("D6B_MISSING_BREADH_EOF_ADAPTER_AUDIT")
@@ -209,9 +215,9 @@ def audit(out: Path, original_binary: Path) -> dict:
     if original_binary.is_symlink() or not original_binary.is_file():
         raise ValueError("D6B_ORIGINAL_BINARY_MISSING")
     summary = {**provenance, **result,
-               "gnu_stream_io_adapter": adapter,
+               "gnu_split_io_adapter": adapter,
                "gnu_breadh_eof_adapter": eof_adapter,
-               "status": "D6B_GNU_STREAM_EOF_ADAPTED_ORIGINAL_COASTEXT_GENERATED_BLN_SCOPED",
+               "status": "D6B_GNU_SPLIT_IO_EOF_ADAPTED_ORIGINAL_COASTEXT_GENERATED_BLN_SCOPED",
                "original_executable_sha256": sha(original_binary),
                "original_ctgproc_lst_sha256": sha(lst),
                "original_coastext_bln": "PASS_ORIGINAL_OUTPUT_PRESENT",
