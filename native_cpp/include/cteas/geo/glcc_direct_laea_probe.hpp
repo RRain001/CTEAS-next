@@ -1,11 +1,9 @@
 #pragma once
-// Issue53 science DIAGNOSTIC ONLY. This candidate deliberately skips the
-// production GEN 7-decimal longitude/latitude and makes one direct
-// spherical-LAEA -> WGS84-UTM transformation per genuine source mesh point.
-//
-// It is NOT an approved replacement for original CTGPROC GLOBE/COORDS.
-// Independently compare its integer hits with untouched Fortran LFINAL=F;
-// do not promote this candidate into the production path without proof.
+// Shared exact-source Direct LAEA projector for selected P2-A D1 production
+// and its separately recomputed forensic sidecar. The UTM50N Hefei case
+// passed authentic unmodified original GLAZAS integer/fraction science in
+// Run #39188861410. Other WGS84 UTM zones are an engineering extension,
+// NOT covered by that science verdict; retain provenance and no false PASS.
 #include <ogr_spatialref.h>
 #include <cmath>
 #include <memory>
@@ -29,8 +27,11 @@ class DirectLaeaProbe {
 public:
   explicit DirectLaeaProbe(int utm_epsg) :
     transform_(nullptr,OCTDestroyCoordinateTransformation) {
-    if(utm_epsg!=32650)
-      throw std::invalid_argument("DIRECT_LAEA_PROBE_SCOPE_UTM50N_ONLY");
+    // WGS84 UTM north/south only. The genuine original parity verdict
+    // remains scoped to the pinned Hefei zone-50N case.
+    if(!((utm_epsg>=32601 && utm_epsg<=32660) ||
+         (utm_epsg>=32701 && utm_epsg<=32760)))
+      throw std::invalid_argument("DIRECT_LAEA_PROBE_WGS84_UTM_ONLY");
     source_.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     target_.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if(source_.importFromProj4("+proj=laea +lat_0=45 +lon_0=100 "
