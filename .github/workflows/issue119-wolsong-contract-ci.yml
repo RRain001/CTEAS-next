@@ -1,10 +1,12 @@
-name: Issue119 Wolsong P2-B contracts (synthetic software only)
+name: Issue119 Wolsong GLC2022 source and synthetic software contracts (no science)
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - scripts/s2g/p2b_wolsong_case.py
       - scripts/s2g/tests/test_issue119_wolsong_contract.py
+      - scripts/s2g/tests/test_wolsong_real_delivery.py
+      - data/landcover/glc_fcs30d/v1_2022/wolsong/**
       - .github/workflows/issue119-wolsong-p2b-real-coast.yml
       - .github/workflows/issue119-wolsong-contract-ci.yml
   workflow_dispatch:
@@ -31,4 +33,10 @@ jobs:
         run: |
           set -euo pipefail
           /usr/bin/python3 -m unittest -v scripts.s2g.tests.test_issue119_wolsong_contract
-          echo "WOLSONG_P2B=PASS_SYNTHETIC_SOFTWARE_ONLY GSHHG_REAL=NOT_RUN GLC2022_REAL=NOT_RUN P3=NOT_RUN"
+          echo "WOLSONG_P2B=PASS_SYNTHETIC_SOFTWARE_ONLY GSHHG_REAL=NOT_RUN P3=NOT_RUN"
+      - name: Independently verify committed real 2022 GLC TIFF on Ubuntu
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.p2b_wolsong_case verify
+          /usr/bin/python3 -m unittest -v scripts.s2g.tests.test_wolsong_real_delivery
+          echo "WOLSONG_GLC2022_SOURCE=PASS_SCOPED; P2B_52_55=NOT_RUN; P3=NOT_RUN"
