@@ -22,7 +22,10 @@ struct LU {
     float z0 = 0, albedo = 0, bowen = 0, soil = 0, qf = 0, lai = 0;
 };
 struct Setup {
-    int nx=50,ny=50,nincat=38,noutcat=14,numwat=5,imiss=55;
+    int nx=50,ny=50,zone=50,nincat=38,noutcat=14,numwat=5,imiss=55;
+    std::string hem="N";
+    double xref_km=510.885,yref_km=3531.269;
+    float dgrid_km=0.1f;
     float cfract=0.5f,flumin=0.96f;
     std::string title;
     std::map<std::string,std::string> opts;
@@ -105,15 +108,24 @@ Setup parse_controls(const std::string& path) {
     require(str_opt(c,"LSNOW")=="F","snow processing unsupported");
     require(numopt(c,"NSPLIT")==0,"category split unsupported");
     require(str_opt(c,"PMAP")=="UTM","only UTM coordinates supported");
-    require(numopt(c,"IUTMZN")==50,"only zone 50 supported");
-    require(str_opt(c,"UTMHEM")=="N","only Northern UTM supported");
+    c.zone=numopt(c,"IUTMZN");
+    c.hem=str_opt(c,"UTMHEM");
+    require(c.zone>=1&&c.zone<=60,"UTM zone must be 1..60");
+    require(c.hem=="N"||c.hem=="S","UTM hemisphere must be N or S");
     require(str_opt(c,"DATUM")=="WGS-84","only WGS84 supported");
-    // No P3 header rounding that conceals a finer P1/P2 sample origin.
-    cteas::reconstruction::geo::require_frozen_hefei_origin_km(
-        str_opt(c,"XREFKM"),str_opt(c,"YREFKM"));
+    // Same literal 3-decimal-km authority as P1 and the shared B-0 grid.
+    c.xref_km=cteas::reconstruction::geo::three_decimal_origin_km(str_opt(c,"XREFKM"));
+    c.yref_km=cteas::reconstruction::geo::three_decimal_origin_km(str_opt(c,"YREFKM"));
     c.nx=numopt(c,"NX");c.ny=numopt(c,"NY");
-    require(c.nx==50&&c.ny==50&&std::fabs(floatopt(c,"DGRIDKM")-0.1f)<1e-6,
-            "only Hefei 50x50 at 100m supported");
+    c.dgrid_km=floatopt(c,"DGRIDKM");
+    require(c.nx>=1&&c.ny>=1&&c.nx<=500&&c.ny<=500,
+            "grid shape outside bounded P3 domain");
+    require(c.dgrid_km>=0.001f&&c.dgrid_km<=100.0f&&
+            std::fabs(static_cast<double>(c.dgrid_km)*1000.0-
+                      std::round(static_cast<double>(c.dgrid_km)*1000.0))<0.0001,
+            "DGRIDKM must be positive, bounded and representable to 0.001km");
+    require(c.xref_km>=100.0&&c.xref_km<=900.0&&c.yref_km>=0.0&&c.yref_km<=10000.0,
+            "grid origin outside valid UTM numeric limits");
     c.nincat=numopt(c,"NINCAT");
     c.noutcat=numopt(c,"NOUTCAT");
     c.numwat=numopt(c,"NUMWAT");
@@ -151,11 +163,17 @@ std::vector<Cell> read_landuse(const std::string& path,const Setup& cfg) {
     require(head[0].find("LU.DAT")!=std::string::npos&&head[0].find("2.1")!=std::string::npos,
             "expected LU.DAT v2.1");
     require(strip(head[4])=="FRACTION"&&strip(head[5])=="UTM"&&
-            head[6].find("50N")!=std::string::npos&&
+            strip(head[6])==std::to_string(cfg.zone)+cfg.hem&&
             head[7].find("WGS-84")!=std::string::npos,
             "LU.DAT CRS/type mismatch");
-    {std::istringstream shape(head[8]);int x=0,y=0;
-     shape>>x>>y;require(x==50&&y==50,"LU.DAT grid shape mismatch");}
+    {std::istringstream shape(head[8]);int x=0,y=0;double xref=0,yref=0,dx=0,dy=0;
+     require(bool(shape>>x>>y>>xref>>yref>>dx>>dy),"LU.DAT grid header incomplete");
+     require(x==cfg.nx&&y==cfg.ny&&
+             std::fabs(xref-cfg.xref_km)<0.0001&&
+             std::fabs(yref-cfg.yref_km)<0.0001&&
+             std::fabs(dx-static_cast<double>(cfg.dgrid_km))<0.0001&&
+             std::fabs(dy-static_cast<double>(cfg.dgrid_km))<0.0001,
+             "LU.DAT grid shape/origin/spacing mismatch");}
     {std::istringstream classes(head[10]);int id=0;
      for(int k=0;k<cfg.nincat;k++){
         require(bool(classes>>id),"LU.DAT category header truncated");
@@ -163,12 +181,13 @@ std::vector<Cell> read_landuse(const std::string& path,const Setup& cfg) {
      }
      require(!(classes>>id),"LU.DAT category count mismatch");
     }
-    std::vector<Cell> out(2500);
+    std::vector<Cell> out(static_cast<std::size_t>(cfg.nx)*static_cast<std::size_t>(cfg.ny));
     for(std::size_t n=0;n<out.size();n++) {
         require(bool(std::getline(in,s)),"LU.DAT missing grid cell");
         std::istringstream stream(s);int i=0,j=0;
         require(bool(stream>>i>>j),"LU.DAT bad cell index");
-        require(i==static_cast<int>(n%50+1)&&j==static_cast<int>(n/50+1),
+        require(i==static_cast<int>(n%static_cast<std::size_t>(cfg.nx)+1)&&
+                j==static_cast<int>(n/static_cast<std::size_t>(cfg.nx)+1),
                 "LU.DAT row order mismatch");
         for(float& f:out[n].fractions) {
             require(bool(stream>>f),"LU.DAT fraction missing");
@@ -180,24 +199,31 @@ std::vector<Cell> read_landuse(const std::string& path,const Setup& cfg) {
     require(!std::getline(in,s)||strip(s).empty(),"LU.DAT unexpected extra rows");
     return out;
 }
-void read_terrain(const std::string& path,std::vector<Cell>& cells) {
+void read_terrain(const std::string& path,std::vector<Cell>& cells,const Setup& cfg) {
     std::ifstream in(path);
     require(bool(in),"cannot open TERREL.DAT");
     std::string s;std::array<std::string,10> head;
     for(auto& h:head)require(bool(std::getline(in,h)),"TERREL header incomplete");
     require(head[0].find("TERREL.DAT")!=std::string::npos&&
             head[0].find("2.0")!=std::string::npos,"TERREL source identity mismatch");
-    require(strip(head[4])=="UTM"&&head[5].find("50N")!=std::string::npos&&
+    require(strip(head[4])=="UTM"&&
+            strip(head[5])==std::to_string(cfg.zone)+cfg.hem&&
             head[6].find("WGS-84")!=std::string::npos&&
             head[9].find("W_E N_S")!=std::string::npos,"TERREL source CRS/axis mismatch");
-    {std::istringstream dims(head[7]);int nx=0,ny=0;
-     dims>>nx>>ny;require(nx==50&&ny==50,"TERREL grid shape mismatch");}
+    {std::istringstream dims(head[7]);int nx=0,ny=0;double xref=0,yref=0,dx=0,dy=0;
+     require(bool(dims>>nx>>ny>>xref>>yref>>dx>>dy),"TERREL grid header incomplete");
+     require(nx==cfg.nx&&ny==cfg.ny&&
+             std::fabs(xref-cfg.xref_km)<0.0001&&
+             std::fabs(yref-cfg.yref_km)<0.0001&&
+             std::fabs(dx-static_cast<double>(cfg.dgrid_km))<0.0001&&
+             std::fabs(dy-static_cast<double>(cfg.dgrid_km))<0.0001,
+             "TERREL grid shape/origin/spacing mismatch");}
     // Original terrain prints north-to-south; landuse is indexed south-to-north.
-    for(int j=49;j>=0;j--)for(int i=0;i<50;i++) {
+    for(int j=cfg.ny-1;j>=0;j--)for(int i=0;i<cfg.nx;i++) {
         float z=0;
         require(bool(in>>z),"TERREL height file truncated");
         require(std::isfinite(z)&&z>=-998,"terrain missing; no fill allowed");
-        cells[static_cast<std::size_t>(j*50+i)].elev=z;
+        cells[static_cast<std::size_t>(j*cfg.nx+i)].elev=z;
     }
     float extra=0;
     require(!(in>>extra),"TERREL file has extra numeric fields");
@@ -247,13 +273,14 @@ void compute(std::vector<Cell>& cells,const Setup& cfg) {
         cell.params=weights(cell,cfg);
     }
 }
-void csv(const std::string& file,const std::vector<Cell>& cells) {
+void csv(const std::string& file,const std::vector<Cell>& cells,const Setup& cfg) {
     std::ofstream out(file);require(bool(out),"cannot write P3 CSV");
     out<<"i,j,category,elevation_m,z0_m,albedo,bowen,soil_heat,anthropogenic_heat,lai\n";
     out<<std::fixed<<std::setprecision(9);
     for(std::size_t i=0;i<cells.size();i++) {
         const auto& c=cells[i];
-        out<<i%50+1<<","<<i/50+1<<","<<c.dominant<<","<<c.elev;
+        out<<i%static_cast<std::size_t>(cfg.nx)+1<<","<<
+             i/static_cast<std::size_t>(cfg.nx)+1<<","<<c.dominant<<","<<c.elev;
         for(float p:c.params)out<<","<<p;
         out<<"\n";
     }
@@ -270,13 +297,13 @@ void geo(const std::string& file,const std::vector<Cell>& cells,const Setup& cfg
        <<std::setw(80)<<"Produced by CTEAS MAKEGEO C++20 (P3 minimal reconstruction)"<<"\n"
        <<std::setw(80)<<"GEO.DAT file"<<"\n"
        <<std::setw(8)<<"UTM"<<"\n"
-       <<std::right<<std::setw(4)<<50<<std::left<<std::setw(4)<<"N"<<"\n"
+       <<std::right<<std::setw(4)<<cfg.zone<<std::left<<std::setw(4)<<cfg.hem<<"\n"
        <<std::setw(8)<<"WGS-84"<<std::setw(12)<<"02-21-2003"<<"\n"
-       <<std::right<<std::setw(8)<<50<<std::setw(8)<<50
+       <<std::right<<std::setw(8)<<cfg.nx<<std::setw(8)<<cfg.ny
        <<std::fixed<<std::setprecision(3)
-       <<std::setw(12)<<floatopt(cfg,"XREFKM")
-       <<std::setw(12)<<floatopt(cfg,"YREFKM")
-       <<std::setw(12)<<0.1<<std::setw(12)<<0.1<<"\n"
+       <<std::setw(12)<<cfg.xref_km
+       <<std::setw(12)<<cfg.yref_km
+       <<std::setw(12)<<cfg.dgrid_km<<std::setw(12)<<cfg.dgrid_km<<"\n"
        <<"KM  M   \n";
     out<<" 1          - LAND USE DATA - (1=new categories)\n";
     out<<std::right<<" "<<std::setw(4)<<cfg.noutcat
@@ -286,11 +313,11 @@ void geo(const std::string& file,const std::vector<Cell>& cells,const Setup& cfg
     out<<" ";
     for(int code:cfg.output_categories)out<<" "<<std::setw(3)<<code;
     out<<"  - new LU categories\n";
-    for(int j=49;j>=0;j--) {
-        for(int i=0;i<50;i++) {
-            out<<"    "<<std::setw(3)<<cells[static_cast<std::size_t>(j*50+i)].dominant;
-            if(i<49)out<<",";
-            if((i+1)%10==0)out<<"\n";
+    for(int j=cfg.ny-1;j>=0;j--) {
+        for(int i=0;i<cfg.nx;i++) {
+            out<<"    "<<std::setw(3)<<cells[static_cast<std::size_t>(j*cfg.nx+i)].dominant;
+            if(i<cfg.nx-1)out<<",";
+            if((i+1)%10==0||i==cfg.nx-1)out<<"\n";
         }
     }
     const std::array<std::pair<std::string,int>,7> fields={{
@@ -308,9 +335,9 @@ void geo(const std::string& file,const std::vector<Cell>& cells,const Setup& cfg
             out<<" 2    - "<<std::left<<std::setw(70)<<field.first<<"\n";
         out<<std::right;
         const int precision=(field.second==0)?4:2;
-        for(int j=49;j>=0;j--) {
-            for(int i=0;i<50;i++) {
-                const auto& c=cells[static_cast<std::size_t>(j*50+i)];
+        for(int j=cfg.ny-1;j>=0;j--) {
+            for(int i=0;i<cfg.nx;i++) {
+                const auto& c=cells[static_cast<std::size_t>(j*cfg.nx+i)];
                 const float value=field.second<0 ? c.elev :
                     c.params[static_cast<std::size_t>(field.second)];
                 require(std::isfinite(value),"nonfinite GEO.DAT field");
@@ -318,7 +345,7 @@ void geo(const std::string& file,const std::vector<Cell>& cells,const Setup& cfg
                 token<<std::fixed<<std::setprecision(precision)<<std::setw(7)<<value;
                 require(token.str().size()==7,"GEO.DAT F7 fixed field overflow");
                 out<<token.str();
-                if(i<49)out<<",";
+                if(i<cfg.nx-1)out<<",";
             }
             out<<"\n";
         }
@@ -331,9 +358,9 @@ int main(int argc,char** argv) {
     try {
         auto c=parse_controls(argv[1]);
         auto cells=read_landuse(argv[2],c);
-        read_terrain(argv[3],cells);
+        read_terrain(argv[3],cells,c);
         compute(cells,c);
-        csv(argv[4],cells);
+        csv(argv[4],cells,c);
         if(argc==6)geo(argv[5],cells,c);
         std::cout<<"P3_SCOPED_CELLS="<<cells.size()<<" FIELDS=8\n";
         return 0;
