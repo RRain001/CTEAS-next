@@ -106,6 +106,7 @@ def run(*,root:Path,route:str,binary:Path,tif_dir:Path|None)->dict:
       "official_bulk_recovery_used":source["bulk_recovery_used"],
       "owner_90m_input_byte_gate":inventory["status"],
       "source_product_declaration":product,
+      "official_dataset_documentation":source.get("official_dataset_documentation"),
       "source_product_version_authenticated":False,
       "height_vertical_datum_authenticated":False,
       "original_terrel_executed":False,
