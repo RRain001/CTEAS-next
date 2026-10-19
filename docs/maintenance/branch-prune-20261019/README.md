@@ -7,12 +7,12 @@ This is a **manual, one-time, exact-SHA cleanup cohort**. It does not change phy
 - Original first-pass cleanup: [Actions #39246331535](https://github.com/RRain001/CTEAS-next/actions/runs/39246331535) — **97 deleted**, 27 remained at that instant.
 - The second-pass roster contains **23 named refs**, pinned to the 40-character Git SHA reviewed on 2026-10-19.
 - All **29 one-off .github/workflows and .github/science-triggers sources** (from 21 historical `automation/` branches) are retained as raw UTF-8 strings with Git blob SHA in these **nonexecuting JSON archives**:
-  - [`science-sources.json`](maintenance/branch-prune-20261019/science-sources.json)
-  - [`pr13-sources.json`](maintenance/branch-prune-20261019/pr13-sources.json)
-  - [`s2a-sources.json`](maintenance/branch-prune-20261019/s2a-sources.json)
-  - [`s2b-sources.json`](maintenance/branch-prune-20261019/s2b-sources.json)
-  - [`s2c-sources.json`](maintenance/branch-prune-20261019/s2c-sources.json)
-  - [`s2d-sources.json`](maintenance/branch-prune-20261019/s2d-sources.json)
+  - [`science-sources.json`](science-sources.json)
+  - [`pr13-sources.json`](pr13-sources.json)
+  - [`s2a-sources.json`](s2a-sources.json)
+  - [`s2b-sources.json`](s2b-sources.json)
+  - [`s2c-sources.json`](s2c-sources.json)
+  - [`s2d-sources.json`](s2d-sources.json)
 - The persistent, machine-readable deletion roster is [`.github/maintenance/second-pass-20261019.json`](../../../.github/maintenance/second-pass-20261019.json).
 - Key core files from S2-A/P3/P6/P7 and 3-decimal UTM GEO were independently compared by Git blob SHA against `main`. Their current versions are already on `main`; some historical branch-side tests are superseded by newer main-side tests. See [PR #21](https://github.com/RRain001/CTEAS-next/pull/21), [PR #23](https://github.com/RRain001/CTEAS-next/pull/23), [PR #27](https://github.com/RRain001/CTEAS-next/pull/27), [PR #28](https://github.com/RRain001/CTEAS-next/pull/28) and [PR #13](https://github.com/RRain001/CTEAS-next/pull/13).
 - The Shanghai Dongtan `data/landcover/glc_fcs30d/v1_2022/shanghai_dongtan/` four entries, including TIFF Git blob `7f56845be612a2cb46d5b8badcebce3fc6d6eca5`, matched `main`. The previous maintenance workflow `maintenance-prune-branches.yml` matched `main` at Git blob `826e764f3e00b53b215829d7bb745e49020fcee0`.
