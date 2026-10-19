@@ -50,6 +50,49 @@ jobs:
           set -euo pipefail
           python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
+      - name: D8 source/runtime preflight checkout (compile only, no real scientific claims)
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: D8 compile original Fortran and native classifier without genuine source data
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran g++-12 cmake libgdal-dev libssl-dev
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          mkdir -p "$RUNNER_TEMP/d8-offline-include" "$RUNNER_TEMP/d8-offline-extracted"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$RUNNER_TEMP/d8-offline-include/$bn"
+          done
+          python3 - "$vendor/ctgproc.for" "$RUNNER_TEMP/d8-offline-extracted" <<'PY'
+          from pathlib import Path
+          import sys
+          from scripts.s2g.issue123_d8_real_bln_iptype import extract_original, FORTRAN_DRIVER
+          out=Path(sys.argv[2])
+          extract_original(Path(sys.argv[1]),out)
+          (out/'d8_driver.for').write_text(FORTRAN_DRIVER)
+          PY
+          work="$RUNNER_TEMP/d8-offline-extracted"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -ffp-contract=off \
+            -O0 -I"$RUNNER_TEMP/d8-offline-include" \
+            "$work/original_d8_routines.for" "$work/d8_driver.for" \
+            -o "$work/original_iptype"
+          cmake -S native_cpp -B "$RUNNER_TEMP/d8-offline-native" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/d8-offline-native" --parallel 2 \
+            --target cteas_p2_original_iptype_bln_batch cteas_p2_original_bln_pnpoly_tests
+          ctest --test-dir "$RUNNER_TEMP/d8-offline-native" \
+            -R cteas_p2_original_bln_pnpoly_synthetic --output-on-failure
+          echo "D8_REAL_BLN_SCIENCE=NOT_RUN COMPILE_PREFLIGHT=PASS"
   genuine-original-wolsong-coastext-io-adapted:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [offline-original-deck-and-bln-contract]
