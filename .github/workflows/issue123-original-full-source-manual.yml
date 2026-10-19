@@ -1,0 +1,38 @@
+name: Issue123 D3 authentic GSHHG Full L1-L4 source verification (manual only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue123-d3-full-source-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  authentic-source-full-only:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Restore official v2.3.7 archive and existing accepted Full L1 cache
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.gshhg_v237_cache fetch --source project-release --cache "${RUNNER_TEMP}/gshhg/2.3.7"
+          /usr/bin/python3 -m scripts.s2g.gshhg_v237_cache verify --cache "${RUNNER_TEMP}/gshhg/2.3.7"
+      - name: Verify all four original Full L1-L4 layers and all 16 sidecars
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.gshhg_full_hierarchy unpack --cache "${RUNNER_TEMP}/gshhg/2.3.7"
+          /usr/bin/python3 -m scripts.s2g.gshhg_full_hierarchy verify --cache "${RUNNER_TEMP}/gshhg/2.3.7"
+          mkdir -p "${RUNNER_TEMP}/issue123-evidence"
+          cp "${RUNNER_TEMP}/gshhg/2.3.7/verified_gshhs_full_l1_l4.json" "${RUNNER_TEMP}/issue123-evidence/"
+          echo "ISSUE123_D3_GSHHG_FULL_L1_L4_SOURCE=VERIFIED ORIGINAL_CTGPROC_PARITY=NOT_RUN ORIGINAL_HIERARCHY_SCIENCE=NOT_RUN"
+      - name: Preserve source metadata only (never redistribute shape data)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue123-d3-gshhg-full-l1-l4-manifest
+          path: ${{ runner.temp }}/issue123-evidence/verified_gshhs_full_l1_l4.json
+          retention-days: 14
+          if-no-files-found: warn
