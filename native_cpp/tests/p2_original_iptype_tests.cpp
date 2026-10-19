@@ -31,7 +31,7 @@ template<class F> void rejects(F fun,const char* cause){
 std::vector<OriginalCoastPolygon> nested_rectangles(double size){
   std::vector<OriginalCoastPolygon> p;
   for(int k=1;k<=4;++k){
-    const double inset=double(k-1)*.10*size;
+    const double inset=double(k-1)*(size/10.); // integer-aligned synthetic edge
     p.push_back({k,box(inset,inset,size-inset,size-inset)});
   }
   return p;
