@@ -23,9 +23,14 @@ double OriginalSamplingRecount::fraction(std::size_t i,std::size_t j,std::size_t
   if(fill_ocean.at(cell))return kGlccUsgs92Classes[k]==iocean?1.:0.;
   throw std::domain_error("ORIGINAL_RECOUNT_MISSING_NOT_OCEAN_FILLED");
 }
-OriginalSamplingRecount recount_glcc_original_coast(
+namespace {
+// Shared original LUGRID/SVGRID integer bookkeeping. The classifier is
+// injectable so the D2 GEOS diagnostic stays separate from the authentic
+// original-BLN/PNPOLY candidate. Neither route mutates the source counts.
+template <class Classifier>
+OriginalSamplingRecount recount_with_classifier(
     const GlccRawResult& source, const OriginalCoastControl& controls,
-    const OriginalGshhsPointClassifier* classifier) {
+    bool has_classifier, const Classifier& classify) {
   validate_original_coast_controls(controls, std::span<const int>(kGlccUsgs92Classes));
   const auto grid=source.grid;
   require(grid.nx>0&&grid.ny>0&&grid.nx<=250000/grid.ny,
@@ -37,7 +42,7 @@ OriginalSamplingRecount recount_glcc_original_coast(
           source.included+source.outside==source.diagnostic_mesh.size(),
           "ORIGINAL_RECOUNT_REQUIRES_COMPLETE_P2A_MESH_TRACE");
   if(controls.lcoast && (controls.lmarswap||controls.lmarfill))
-    require(classifier!=nullptr,"ORIGINAL_RECOUNT_REQUIRES_VERIFIED_FULL_IPTYPE");
+    require(has_classifier,"ORIGINAL_RECOUNT_REQUIRES_COAST_CLASSIFIER");
   OriginalSamplingRecount out{grid,
      std::vector<std::uint32_t>(source.counts.size(),0),
      std::vector<std::uint32_t>(nc,0),
@@ -58,7 +63,7 @@ OriginalSamplingRecount recount_glcc_original_coast(
     // class after original LUGRID coast option. 54 is special on ocean.
     int coast_type=1;
     if(controls.lcoast&&controls.lmarswap)
-      coast_type=classifier->iptype_model_km(sample.x_km,sample.y_km);
+      coast_type=classify(sample.x_km,sample.y_km);
     const auto mapped=original_lugrid_coastal_category(controls,sample.category,coast_type);
     if(!mapped){++out.rejected_coast;continue;}
     const auto k=class_index(*mapped);
@@ -82,12 +87,33 @@ OriginalSamplingRecount recount_glcc_original_coast(
       if(out.samples[cell])continue;
       const float x=static_cast<float>((grid.x0_m+(double(i)+.5)*grid.dx_m)/1000.);
       const float y=static_cast<float>((grid.y0_m+(double(j)+.5)*grid.dx_m)/1000.);
-      const auto type=classifier->iptype_model_km(x,y);
+      const auto type=classify(x,y);
       const auto action=original_svgrid_empty_cell_action(controls,false,type);
       if(action==OriginalFinalCellAction::FillOcean)out.fill_ocean[cell]=1;
       // No fabricated integer hit is inserted for SVGRID display fill.
     }
   }
   return out;
+}
+} // namespace
+
+OriginalSamplingRecount recount_glcc_original_coast(
+    const GlccRawResult& source, const OriginalCoastControl& controls,
+    const OriginalGshhsPointClassifier* classifier) {
+  // D2 compatibility route: GEOS is NOT the original Fortran point oracle.
+  return recount_with_classifier(source,controls,classifier!=nullptr,
+      [classifier](float x,float y) {
+        return classifier ? classifier->iptype_model_km(x,y) : 1;
+      });
+}
+
+OriginalSamplingRecount recount_glcc_original_coast_bln(
+    const GlccRawResult& source, const OriginalCoastControl& controls,
+    const OriginalBlnIptypeR4* classifier) {
+  // D4 source-faithful point decision on the caller-admitted original BLN.
+  return recount_with_classifier(source,controls,classifier!=nullptr,
+      [classifier](float x,float y) {
+        return classifier ? classifier->iptype(x,y) : 1;
+      });
 }
 } // namespace cteas::reconstruction::geo

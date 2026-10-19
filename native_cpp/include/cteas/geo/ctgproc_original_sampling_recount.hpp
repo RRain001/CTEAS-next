@@ -2,6 +2,7 @@
 // Issue #123 D3: opted-in recount of EXISTING P2-A GLCC source-mesh traces.
 // Never modifies P2-A producer hits or P2-B EXACT_AREA_V1.
 #include "cteas/geo/ctgproc_original_coast_policy.hpp"
+#include "cteas/geo/ctgproc_original_bln_pnpoly.hpp"
 #include "cteas/geo/ctgproc_original_iptype.hpp"
 #include "cteas/geo/glcc_raw_fractions.hpp"
 #include <array>
@@ -27,4 +28,13 @@ struct OriginalSamplingRecount {
 [[nodiscard]] OriginalSamplingRecount recount_glcc_original_coast(
     const GlccRawResult& original_p2a, const OriginalCoastControl& controls,
     const OriginalGshhsPointClassifier* classified_full);
+
+// Strict ORIGINAL_SAMPLING candidate: consume exactly the original COASTRD
+// BLN polygon ordering/REAL*4 coordinates through D4 PNPOLY, not D2 GEOS.
+// Caller must independently SHA-admit the authentic BLN and GLAZAS source
+// and perform original Fortran same-BLN IPTYPE/HITS parity before production.
+// Passing nullptr is permitted only if coastal processing is disabled.
+[[nodiscard]] OriginalSamplingRecount recount_glcc_original_coast_bln(
+    const GlccRawResult& original_p2a, const OriginalCoastControl& controls,
+    const OriginalBlnIptypeR4* classified_original_bln);
 } // namespace cteas::reconstruction::geo
