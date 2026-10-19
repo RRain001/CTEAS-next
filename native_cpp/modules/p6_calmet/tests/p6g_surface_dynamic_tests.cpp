@@ -88,6 +88,16 @@ int main() {
             equal_observation(dynamic.hourly[n].by_station[0],
                               original.hourly[n].obs);
         }
+        // #84: 2024 genuine-data case needs a single virtual station and
+        // correct (2024-02-28 00, 2024-03-01 00] hour-ending chronology.
+        const auto single_leap_begin=sys_days{year{2024}/February/28};
+        fixture(file,single_leap_begin,48,{471520});
+        const auto single_leap=read_surface_dynamic(file,{471520},48,1,48);
+        check(single_leap.hourly.size()==48&&single_leap.station_ids.size()==1,
+              "single virtual-station 48h preflight cardinality");
+        check(single_leap.hourly[24].start==sys_days{year{2024}/February/29}&&
+              single_leap.hourly[47].end==sys_days{year{2024}/March/1},
+              "2024 Feb29 single-station hour-ending chronology");
         const auto cross_begin=sys_days{year{2023}/December/31}+hours{22};
         fixture(file,cross_begin,5,{58321,58322,58323});
         const auto cross=read_surface_dynamic(file,{58321,58322,58323});

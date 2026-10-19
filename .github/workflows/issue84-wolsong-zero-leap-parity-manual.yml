@@ -5,6 +5,8 @@ on:
       - scripts/s2g/issue84_real_noaa_p5_zero_leap.py
       - scripts/s2g/tests/test_issue84_real_noaa_p5_zero_leap.py
       - .github/workflows/issue84-wolsong-zero-leap-parity-manual.yml
+      - native_cpp/modules/p6_calmet/src/p6g_surf_source_preflight_main.cpp
+      - native_cpp/modules/p6_calmet/tests/p6g_surface_dynamic_tests.cpp
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,6 +29,15 @@ jobs:
           python3 -m py_compile scripts/s2g/issue84_real_noaa_p5_zero_leap.py
           python3 -m scripts.s2g.issue84_real_noaa_p5_zero_leap --help
           python3 -m unittest -v scripts.s2g.tests.test_issue84_real_noaa_p5_zero_leap
+      - name: Build single-station P6 source preflight and verify 2024 leap-hour reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-source-only" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p6-source-only" --parallel 2 \
+            --target cteas_p6g_surf_source_preflight cteas_p6g_surface_dynamic_tests
+          ctest --test-dir "$RUNNER_TEMP/p6-source-only" --output-on-failure \
+            -R '^p6g_surface_multi_site_multiyear_frozen_143h_parity$'
   authentic-2024-noaa-original-native-raw-parity:
     if: github.event_name == 'workflow_dispatch'
     needs: offline-zero-leap-contract
