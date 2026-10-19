@@ -51,7 +51,8 @@ void test_hierarchy(){
   need(p.iptype_model_km(0.f,5.f)==0,"L1 outer coastline edge -> ocean0");
   need(p.iptype_model_km(1.f,5.f)==2,"L2 lake edge -> 2");
   need(p.iptype_model_km(2.f,5.f)==2,"L3 island edge -> 2");
-  need(p.iptype_model_km(3.f,5.f)==4,"L4 pond edge -> 4");
+  const auto observed_edge4=p.iptype_model_km(3.f,5.f);
+  need(observed_edge4==4,("L4 pond edge ->4, got "+std::to_string(observed_edge4)).c_str());
   need(p.iptype_model_km(-1.f,-1.f,false)==1,"LCOAST false -> land1");
   rejects([&]{(void)p.iptype_model_km(NAN,1.f);},"nonfinite point must reject");
   // Native source LUGRID policy connected in-memory, without changing P2-A.
