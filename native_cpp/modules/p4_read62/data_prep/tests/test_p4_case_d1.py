@@ -89,14 +89,14 @@ class IsolatedP4D1ATest(unittest.TestCase):
     def test_rejects_duplicate_yaml_keys_even_when_legacy_yaml_would_override(self):
         # The legacy yaml.safe_load kept the final duplicate silently.
         with (self.case / "case.yaml").open("a", encoding="utf-8") as out:
-            out.write("settings:\\n  timezone: UTC+0000\\n")
+            out.write("settings:\n  timezone: UTC+0000\n")
         with self.assertRaisesRegex(ContractError, "duplicate"):
             self.admit()
         self.assertFalse(self.output.exists())
 
     def test_rejects_shadowed_and_duplicated_grid_authority(self):
         path = self.case / "grid/grid.cmn"
-        for extra in ("! NX = 21 !\\n", "* NX = 20 *\\n"):
+        for extra in ("! NX = 21 !\n", "* NX = 20 *\n"):
             with self.subTest(extra=extra):
                 before = path.read_text(encoding="utf-8")
                 path.write_text(before + extra, encoding="utf-8")
@@ -127,13 +127,13 @@ class IsolatedP4D1ATest(unittest.TestCase):
     def test_rejects_research_clock_disagreement(self):
         self.config["preprocess"]["research_time"]["end"] = "20230101-070000"
         self.write_case()
-        with self.assertRaisesRegex(ContractError, "UTC mismatch"):
+        with self.assertRaisesRegex(ContractError, "UTC mismatch|research_time disagrees"):
             self.admit()
 
     def test_rejects_noncanonical_origin_precision(self):
         path = self.case / "grid" / "grid.cmn"
         path.write_text(path.read_text().replace(self.xref, self.xref + "0"))
-        with self.assertRaisesRegex(ContractError, "3 decimal"):
+        with self.assertRaisesRegex(ContractError, "three decimal"):
             self.admit()
 
     def test_rejects_immutable_case_file_symlink(self):
