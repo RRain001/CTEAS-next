@@ -1,0 +1,184 @@
+name: Issue169 S2-E true original GLCC GLAZAS UTM52N second-grid parity
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/issue169_s2e_original_glcc_utm52.py
+      - .github/workflows/issue169-s2e-p2a-original-utm52.yml
+      - native_cpp/orchestration/p2a_case_producer.py
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue169-original-glcc-utm52-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  p2a-true-original-second-utm-zone-400x38:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout pinned 156MB real historical GLCC input
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Checkout exact independently pinned original CTGPROC
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Install GNU original/native compilers plus B0 coordinate requirements
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            cmake g++-12 gfortran libgdal-dev libssl-dev python3-pyproj python3-yaml
+      - name: Verify authentic GLCC 156MB and exact original source provenance
+        run: |
+          set -euo pipefail
+          test "$(wc -c < eausgs2_0la.img)" -eq 156000000
+          echo '4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img' | sha256sum -c -
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          echo "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281  $vendor/ctgproc.for" | sha256sum -c -
+          echo "28dc5877c6a70d74f7a0e136bdd4aa1777dc9cbab15c184e7f483f772cd266c6  $vendor/params.ctg" | sha256sum -c -
+      - name: Build original Fortran independently with frozen GNU input/output-only adapters
+        run: |
+          set -euo pipefail
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          stage="$RUNNER_TEMP/s2e-utm52-original"
+          mkdir -p "$stage"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$stage/$bn"
+          done
+          rm "$stage/ctgproc.for" "$stage/params.ctg"
+          cp "$vendor/ctgproc.for" "$stage/ctgproc.for"
+          cp "$vendor/params.ctg" "$stage/params.ctg"
+          python3 -m scripts.s2g.issue123_gfortran_eof_adapter \
+            --original-source "$vendor/ctgproc.for" \
+            --staged-source "$stage/ctgproc.for" \
+            --manifest "$RUNNER_TEMP/s2e-eof.json"
+          python3 -m scripts.s2g.issue123_gfortran_split_io_adapter \
+            --original-source "$vendor/ctgproc.for" \
+            --original-params "$vendor/params.ctg" \
+            --staged-source "$stage/ctgproc.for" \
+            --staged-params "$stage/params.ctg" \
+            --manifest "$RUNNER_TEMP/s2e-split.json"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$stage" "$stage/ctgproc.for" -o "$RUNNER_TEMP/ctgproc-original"
+          sha256sum "$RUNNER_TEMP/ctgproc-original"
+      - name: Build actual dynamic P2-A GLCC D1/D3 native C++ binaries
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/p2a-native" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p2a-native" --parallel 2 \
+            --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
+          python3 -m py_compile scripts/s2g/issue169_s2e_original_glcc_utm52.py
+      - name: Stage actual independent B0 UTM52 20x20 grid, common 2022/2023 time
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from pyproj import Transformer
+          root=Path(os.environ["RUNNER_TEMP"])/"s2e_utm52_original"
+          (root/"grid").mkdir(parents=True)
+          x0,y0,nx,ny,dx=533.215,3942.629,20,20,.2
+          x=(x0+nx*dx/2)*1000
+          y=(y0+ny*dx/2)*1000
+          lon,lat=Transformer.from_crs(32652,4326,always_xy=True).transform(x,y)
+          (root/"case.yaml").write_text(
+              f"case_name: {root.name}\nsettings:\n  timezone: UTC+0000\n"
+              "preprocess:\n  grid:\n    utm_zone: 52\n    hemisphere: N\n    nz: 1\n"
+              "    resolution_km: 0.2\n"
+              "    domain:\n      length_km: 4.0\n      width_km: 4.0\n"
+              f"    center:\n      latitude: {lat:.12f}\n      longitude: {lon:.12f}\n"
+              "  research_time:\n    begin: 20221231-230000\n"
+              "    end: 20230101-020000\n"
+          )
+          (root/"grid/grid.cmn").write_text(
+              "! IMAP = UTM !\n! DATUM = WGS-84 !\n"
+              "! IUTMZN = 52 !\n! LSOHEM = N !\n"
+              "! XREFKM = 533.215 !\n! YREFKM = 3942.629 !\n"
+              "! DGRIDKM = 0.200 !\n! NX = 20 !\n! NY = 20 !\n"
+              "! NZ = 1 !\n! ZFACE = 0 !\n! ZFACE = 100 !\n"
+          )
+          (root/"grid/research_time").write_text(
+              "BEGIN:20221231-230000\nEND:20230101-020000\n"
+          )
+          PY
+      - name: Run true same-source B0 native P2-A on verified historical GLCC
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.p2a_case_producer \
+            --case-yaml "$RUNNER_TEMP/s2e_utm52_original/case.yaml" \
+            --glcc-img "$PWD/eausgs2_0la.img" \
+            --raw-bin "$RUNNER_TEMP/p2a-native/cteas_p2_glcc_raw" \
+            --lu-bin "$RUNNER_TEMP/p2a-native/cteas_p2_glcc_lu_dat"
+      - name: Generate legal original 52N GLAZAS controls differing only LFINAL
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue169_s2e_original_glcc_utm52 prepare \
+            --template original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.inp \
+            --glcc "$PWD/eausgs2_0la.img" \
+            --source original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --out "$RUNNER_TEMP/s2e-original-controls"
+      - name: Independently execute authentic original Fortran CTGPROC twice with same GLCC
+        run: |
+          set -euo pipefail
+          for what in original_hits original_fractions; do
+            (
+              cd "$RUNNER_TEMP/s2e-original-controls/$what"
+              timeout 1200 "$RUNNER_TEMP/ctgproc-original" > original.log 2>&1 || {
+                tail -n 80 original.log
+                test ! -f ctgproc.lst || tail -n 60 ctgproc.lst
+                exit 1
+              }
+              test -s lu.dat || { tail -n 80 original.log; exit 1; }
+              sha256sum lu.dat
+            )
+          done
+      - name: Compare actual 400x38 original Fortran integer and fractional fields with dynamic native P2-A
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue169_s2e_original_glcc_utm52 compare \
+            --case "$RUNNER_TEMP/s2e-original-controls" \
+            --glcc "$PWD/eausgs2_0la.img" \
+            --source original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --b0 "$RUNNER_TEMP/s2e_utm52_original" \
+            --out "$RUNNER_TEMP/s2e-original-utm52-science.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"s2e-original-utm52-science.json"
+          j=json.loads(p.read_text())
+          assert j["status"]=="P2A_TRUE_ORIGINAL_GLAZAS_UTM52_20X20_PASS_SCOPED"
+          assert j["integer_fields_compared"]==j["F6_3_fields_compared"]==15200
+          assert j["integer_mismatches"]==j["F6_3_mismatches"]==j["missing_flag_mismatches"]==0
+          assert j["grid"]["utm_epsg"]==32652
+          print("S2E_GENUINE_HISTORICAL_GLCC_UTM52_ORIGINAL_FORTRAN_30400_VALUES=PASS")
+          print("S2E_COASTAL_GSHHG_AND_MODERN_30M=NOT_COVERED")
+          PY
+      - name: Publish only audit JSON, no vendor, original binaries, 156MB GLCC or LU bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue169-s2e-real-p2a-original-utm52-glcc-science
+          path: |
+            ${{ runner.temp }}/s2e-original-utm52-science.json
+            ${{ runner.temp }}/s2e_utm52_original/evidence/p2.json
+            ${{ runner.temp }}/s2e_utm52_original/geo/ctgproc/p2a_case/raw/p2_manifest.json
+            ${{ runner.temp }}/s2e_utm52_original/geo/ctgproc/p2a_case/lu/p2_d3_manifest.json
+            ${{ runner.temp }}/s2e-original-controls/prepare.json
+            ${{ runner.temp }}/s2e-eof.json
+            ${{ runner.temp }}/s2e-split.json
+          retention-days: 21
+          if-no-files-found: warn
