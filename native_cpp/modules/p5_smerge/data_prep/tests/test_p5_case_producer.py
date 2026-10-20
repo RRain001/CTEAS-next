@@ -71,7 +71,10 @@ class P5ProducerContractTests(unittest.TestCase):
             self.assertEqual(p5_case_paths.case_root(), self.root)
             self.assertEqual(p5_case_paths.history_file(), self.fixture.history)
         other = Path(self.fixture.tmp.name) / "missing"
-        with patch.dict(os.environ, {p5_case_paths.ROOT_ENV: str(other)}):
+        with patch.dict(os.environ, {
+            p5_case_paths.ROOT_ENV: str(other),
+            p5_case_paths.HISTORY_ENV: str(self.fixture.history),
+        }):
             with self.assertRaisesRegex(ValueError, "independent case"):
                 p5_case_paths.case_root()
 
