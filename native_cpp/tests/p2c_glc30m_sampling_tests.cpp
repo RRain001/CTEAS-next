@@ -23,7 +23,7 @@ std::size_t category(int cls){
   for(std::size_t n=0;n<38;++n)if(kGlccUsgs92Classes[n]==cls)return n;
   throw std::runtime_error("unknown test class");
 }
-void make_tiff(const fs::path& path,std::uint8_t injected) {
+void make_tiff(const fs::path& path,std::uint8_t injected,int epsg=32650) {
   GDALAllRegister();
   auto* driver=GetGDALDriverManager()->GetDriverByName("GTiff");
   check(driver!=nullptr,"GDAL_GTiff_MISSING");
@@ -33,7 +33,7 @@ void make_tiff(const fs::path& path,std::uint8_t injected) {
   check(ds->SetGeoTransform(const_cast<double*>(gt))==CE_None,"SOURCE_AFFINE");
   OGRSpatialReference ref;
   ref.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-  check(ref.importFromEPSG(32650)==OGRERR_NONE,"TEST_EPSG");
+  check(ref.importFromEPSG(epsg)==OGRERR_NONE,"TEST_EPSG");
   char* wkt=nullptr;
   check(ref.exportToWkt(&wkt)==OGRERR_NONE,"TEST_WKT");
   check(ds->SetProjection(wkt)==CE_None,"TEST_PROJECTION");
@@ -92,6 +92,22 @@ int main(int argc,char** argv){
     rejects([&]{(void)sample_p2c_glc30m(tif,
                   P2Grid{0,0,100,2,1},32650,policy,nullptr,10);},
             "P2C_NO_CROPPED_INPUT_COVERAGE");
+    // Alternate WGS84 UTM zone, spacing and grid: 1x1 60m, same
+    // independent 4x4 raster with 4 source pixels * 100 subpoints = 400.
+    const auto alternate=dir/"synthetic-49.tif";
+    make_tiff(alternate,0,32649);
+    const auto different=sample_p2c_glc30m(
+        alternate,P2Grid{0.,0.,60.,1,1},32649,policy,nullptr,10);
+    check(different.hits.included==400&&different.hits.samples[0]==400&&
+          different.hits.counts[category(42)]==400&&
+          different.water_sea_hits==0,"P2C_NONREFERENCE_UTM49_60M_INTEGER_HITS");
+    rejects([&]{(void)sample_p2c_glc30m(
+       alternate,P2Grid{0.,0.,60.,1,1},32650,policy,nullptr,10);},
+       "P2C_REJECT_SOURCE_ZONE_DISAGREEMENT");
+    rejects([&]{(void)sample_p2c_glc30m(
+       alternate,P2Grid{0.,0.,60.5,1,1},32649,policy,nullptr,10);},
+       "P2C_REJECT_GRID_SPACING_SUBMETER");
+
     // A different class code must never be silently mapped by number.
     make_tiff(tif,99);
     rejects([&]{(void)sample_p2c_glc30m(tif,g,32650,policy,nullptr,10);},
