@@ -284,14 +284,15 @@ static void check_one_us_two_ss_source_case(const std::string& original) {
 // G1B cardinality-generic original-format INPUT CONTRACT. Source observations
 // here are synthetic original-compatible test records; no native P6 physics.
 static void source_cardinality_surface_file(
-    const std::string& path,sys_seconds begin,int hours_count,int nss) {
+    const std::string& path,sys_seconds begin,int hours_count,int nss,
+    int id_offset=0) {
     std::ofstream out(path);
     check(bool(out),"G1B cardinality SURF source file");
     out<<"SURF.DAT        2.1             Hour Start and End Times with Seconds\n";
     out<<"1\nG1B cardinality original-format synthetic SURF\nNONE\nUTC+0000\n";
     stamp(out,begin);out<<" ";stamp(out,begin+hours{hours_count},true);
     out<<" "<<nss<<"\n";
-    for(int i=0;i<nss;++i)out<<583210+10*i<<"\n";
+    for(int i=0;i<nss;++i)out<<583210+10*i+id_offset+id_offset<<"\n";
     for(int k=0;k<hours_count;++k) {
         stamp(out,begin+hours{k});out<<" ";
         stamp(out,begin+hours{k+1},true);out<<"\n";
@@ -304,9 +305,28 @@ static void source_cardinality_surface_file(
     }
 }
 
+static std::string shift_original_site_one_id(
+    const std::string& deck,const std::string& kind,int id) {
+    // One source-metadata replacement, never a physics or observation edit.
+    const std::regex re("(!\\s*"+kind+"1\\s*=\\s*'[^']+'\\s*)([0-9]+)");
+    std::smatch m;
+    if(!std::regex_search(deck,m,re))
+        throw std::invalid_argument("S4-C original source SS1/US1 declaration not unique");
+    const auto tail=deck.substr(static_cast<std::size_t>(m.position()+m.length()));
+    if(std::regex_search(tail,re))
+        throw std::invalid_argument("S4-C repeated original SS1/US1 station declaration");
+    auto result=deck;
+    result.replace(static_cast<std::size_t>(m.position(2)),
+                   static_cast<std::size_t>(m.length(2)),std::to_string(id));
+    return result;
+}
 static std::string source_cardinality_deck(
-    const std::string& original,int nss,int nus) {
+    const std::string& original,int nss,int nus,int id_offset=0) {
     std::string result=original;
+    if(id_offset!=0) {
+        result=shift_original_site_one_id(result,"SS",583210+id_offset);
+        result=shift_original_site_one_id(result,"US",58424+id_offset);
+    }
     for(const auto& [key,value]:std::vector<std::pair<std::string,std::string>>{
             {"NSSTA",std::to_string(nss)},{"NUSTA",std::to_string(nus)},
             {"NX","12"},{"NY","12"},{"DGRIDKM","10"}})
@@ -318,7 +338,7 @@ static std::string source_cardinality_deck(
            <<" "<<513.385+10*i<<" "<<3533.769+10*i
            <<" 0 10.0 !\n";
     for(int i=1;i<nus;++i)
-        out<<"! US"<<i+1<<" = 'US"<<i+1<<"' "<<58424+i
+        out<<"! US"<<i+1<<" = 'US"<<i+1<<"' "<<58424+i+id_offset
            <<" "<<513.384+10*i<<" "<<3533.772+10*i<<" 0 !\n";
     return result+out.str();
 }
@@ -426,18 +446,25 @@ static void check_unbounded_original_source_cardinality(
 }
 
 int main(int argc,char** argv){
-    if(argc>=4&&argc<=11&&std::string(argv[1])=="--export-case") {
+    if(argc>=4&&argc<=13&&std::string(argv[1])=="--export-case") {
         try {
             const auto original=read(argv[2]);
             bool steep=false,daylight=false;
             int export_hours=6;
             bool hours_option=false;
             int export_ss=2,export_us=2;
-            bool stations_option=false;
+            int export_id_offset=0;
+            bool stations_option=false,ids_option=false;
             for(int i=4;i<argc;++i) {
                 const std::string arg=argv[i];
                 if(arg=="--fradj-stress"&&!steep)steep=true;
                 else if(arg=="--daylight-first-hour"&&!daylight)daylight=true;
+                else if(arg=="--station-id-offset"&&!ids_option&&i+1<argc) {
+                    export_id_offset=std::stoi(argv[++i]);
+                    if(export_id_offset<0||export_id_offset>5000)
+                        throw std::invalid_argument("S4C source station ID offset out of bounds");
+                    ids_option=true;
+                }
                 else if(arg=="--stations"&&!stations_option&&i+2<argc) {
                     export_ss=std::stoi(argv[++i]);
                     export_us=std::stoi(argv[++i]);
@@ -456,12 +483,13 @@ int main(int argc,char** argv){
                     "G35 duplicate or unknown original-format case option");
             }
             auto two=make_two_station_crossyear_deck(original);
-            const bool multi_site_science=(export_ss>=3||export_us>=3);
+            const bool multi_site_science=
+                (export_ss>=3||export_us>=3||export_id_offset!=0);
             if(multi_site_science) {
                 // Independently sourced G19 test generator: honest 3rd
                 // station has its own site ID, observations and UP file.
                 // This is controlled synthetic input, never actual NOAA.
-                two=source_cardinality_deck(original,export_ss,export_us);
+                two=source_cardinality_deck(original,export_ss,export_us,export_id_offset);
             }
             // Asymmetric cases are only a SUBSET of the existing C2
             // original-format controlled source, never duplicate/fake SS/US.
@@ -504,12 +532,14 @@ int main(int argc,char** argv){
             if(export_ss==2&&!multi_site_science)
                 surface_file(paths.surf_dat,begin,export_hours);
             else source_cardinality_surface_file(
-                paths.surf_dat,begin,export_hours,export_ss);
+                paths.surf_dat,begin,export_hours,export_ss,export_id_offset);
             const auto day=sys_days{year{2023}/December/31};
-            upper_file(paths.ordered_up_dat[0],58424,day,export_hours,daylight?26:22);
+            upper_file(paths.ordered_up_dat[0],58424+export_id_offset,
+                       day,export_hours,daylight?26:22);
             for(int upper=1;upper<export_us;++upper)
                 upper_file(paths.ordered_up_dat[static_cast<std::size_t>(upper)],
-                           58424+upper,day,export_hours,daylight?26:22);
+                           58424+upper+export_id_offset,
+                           day,export_hours,daylight?26:22);
             const auto g19=p6g::g19_load_original_source_case(paths);
             check(g19.make_scheduler().planned_hours()==static_cast<std::size_t>(export_hours)&&
                   g19.stations.surface.size()==static_cast<std::size_t>(export_ss)&&
