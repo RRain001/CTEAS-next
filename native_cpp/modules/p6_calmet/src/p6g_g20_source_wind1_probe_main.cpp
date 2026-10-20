@@ -17,8 +17,9 @@ int main(int argc,char** argv) {
     if(argc==2 && std::string(argv[1])=="--help") {
         std::cout<<"Usage: cteas_p6g_g20_source_wind1_probe "
                     "<met.inp> <GEO.DAT> <SURF.DAT> "
-                    "<US1_UP.DAT> <US2_UP.DAT> [US3_UP.DAT ...] "
+                    "<US1_UP.DAT> [US2_UP.DAT ...] "
                     "--output <original-WIND1-candidate.csv> [--wind1-profiles <profiles.dat>]\n"
+                    "One real 1SS/1US requires --real-one-ss-one-us-test-only. "
                     "Output: first-hour native WIND1 U/V for every (k,j,i), "
                     "source-ordered original 2-6 SS/US and actual "
                     "READCF/READGE/SURF/RDUPN files. "
@@ -27,17 +28,22 @@ int main(int argc,char** argv) {
         return 0;
     }
     try {
-        if(argc<8)
+        if(argc<7)
             throw std::invalid_argument(
-                "G20 needs 2+ ordered UP.DAT files and --output CSV");
+                "G20 needs original UP.DAT file(s) and --output CSV");
         cteas::calmet::p6g::G19SourceFilePaths paths;
         paths.met_inp=argv[1];
         paths.geo_dat=argv[2];
         paths.surf_dat=argv[3];
         std::string output_file,profile_file;
+        bool real_one_one_test_only=false;
         for(int i=4;i<argc;++i) {
             const std::string arg=argv[i];
-            if(arg=="--output"||arg=="--wind1-profiles") {
+            if(arg=="--real-one-ss-one-us-test-only") {
+                if(real_one_one_test_only)
+                    throw std::invalid_argument("G20 duplicated test-only 1SS/1US flag");
+                real_one_one_test_only=true;
+            } else if(arg=="--output"||arg=="--wind1-profiles") {
                 if(i+1==argc||std::string(argv[i+1]).empty())
                     throw std::invalid_argument("G20 requires a path after output option");
                 auto& destination=arg=="--output"?output_file:profile_file;
@@ -50,10 +56,17 @@ int main(int argc,char** argv) {
                 paths.ordered_up_dat.push_back(arg);
             }
         }
-        if(output_file.empty()||paths.ordered_up_dat.size()<2||
+        if(output_file.empty()||paths.ordered_up_dat.empty()||
+           (paths.ordered_up_dat.size()<2&&!real_one_one_test_only)||
            (!profile_file.empty()&&output_file==profile_file))
             throw std::invalid_argument("G20 source UP count/output path invalid");
         const auto source=cteas::calmet::p6g::g19_load_original_source_case(paths);
+        const bool single=(source.stations.surface.size()==1&&
+                           source.stations.upper.size()==1);
+        if(single!=real_one_one_test_only)
+            throw std::invalid_argument(
+                "G20 actual 1SS/1US requires explicit test-only flag; "
+                "2SS/2US original scoped path forbids that flag");
         auto scheduler=source.make_scheduler();
         auto frame=scheduler.preview_next_hour();
         auto profiles=cteas::calmet::p6g::g20_file_backed_source_wind1_profiles(
@@ -132,12 +145,15 @@ int main(int argc,char** argv) {
                 }
         csv.flush();
         if(!csv)throw std::runtime_error("G20 WIND1 CSV write failed");
-        std::cout<<"PASS_P6G_G20_FIRST_HOUR_FILE_BACKED_NATIVE_WIND1\n"
+        std::cout<<(single
+                ? "PASS_P6G_G20_REAL_1SS1US_TEST_ONLY_NATIVE_WIND1\n"
+                : "PASS_P6G_G20_FIRST_HOUR_FILE_BACKED_NATIVE_WIND1\n")
                  <<"HOUR_END_UTC_SECONDS="
                  <<frame.input.end.time_since_epoch().count()
                  <<" CELLS="<<cells<<" VERTICAL_LAYERS=9"
                  <<" ROWS="<<rows
                  <<" NATIVE_ORIGINAL_FORTRAN_WHOLE_HOUR_PARITY=NOT_ACCEPTED\n"
+                 <<(single ? "G20_REAL_1SS1US_ORIGINAL_WIND1_PARITY=NOT_EVALUATED\n" : "")
                  <<"P6D_P6E_COMP_P6F_PRODUCTION=NOT_ACCEPTED\n";
         return 0;
     } catch(const std::exception& e) {

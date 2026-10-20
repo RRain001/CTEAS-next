@@ -30,13 +30,14 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
                       static_cast<std::size_t>(grid.ny);
     if(!explicitly_test_only||!frame.source_controls||
        grid.hemisphere!='N'||grid.nx<2||grid.ny<2||
-       ns<2||nu<2||ns>6||nu>6||
+       ns<1||nu<1||ns>6||nu>6||
+       !((ns==1&&nu==1)||(ns==2&&nu==2))||
        surface.by_station.size()!=ns||in.upper.size()!=nu||
        frame.upper.size()!=nu||surface.end!=in.end||
        surface.end-surface.start!=std::chrono::hours{1}||
        grid.z0_m.size()!=cells||grid.landuse.size()!=cells)
         throw std::invalid_argument(
-            "G20 requires source-file G14 2SS/2US original wind input");
+            "G20 accepts only source-file original 2SS/2US or test-only 1SS/1US WIND1");
     const auto& readcf=*frame.source_controls;
     if(readcf.iextrp!=-4||readcf.noobs!=0||readcf.iprog!=0)
         throw std::invalid_argument("G20 original IEXTRP WIND1 scope");
@@ -147,6 +148,17 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
     // This is selected G19 forensic science only: the generic original
     // CALMET UP/PREPDI missing-layer policy remains unimplemented and
     // must be source-validated before production multi-site admission.
+    // P6-B1 new-site 1SS/1US: permit only the uncommitted WIND1
+    // first-guess based on REAL SURF and UP. Original 1US first-layer
+    // INTER2/DIAGI missingness has NOT been independently verified:
+    // fail-closed on all INTER2 profiles; never upgrade this to G26.
+    // The previously accepted 2SS/2US synthetic G32E path is unchanged.
+    if(ns==1&&nu==1) {
+        profiles.inter2_present.assign(9*total,0U);
+        profiles.inter2_u_mps.assign(9*total,999.f);
+        profiles.inter2_v_mps.assign(9*total,999.f);
+        return profiles;
+    }
     if(ns!=2||nu!=2||
        stations.upper[0].id!=58424||stations.upper[1].id!=58425||
        zface.front()!=0.f||!(zface[1]>0.f))
