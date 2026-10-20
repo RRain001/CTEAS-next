@@ -1,4 +1,4 @@
-name: Issue160 C4 real Wolsong 30m point-sampling candidate (not oracle)
+name: Issue160 C4 genuine Wolsong 30m independent all-integer point oracle
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
@@ -7,6 +7,7 @@ on:
       - native_cpp/include/cteas/geo/glc30m_point_sampling.hpp
       - native_cpp/src/p2_glc30m_point_lu_cli.cpp
       - native_cpp/CMakeLists.txt
+      - scripts/s2g/issue160_glc30m_independent_oracle.py
       - .github/workflows/issue160-c4-wolsong-real-point.yml
 permissions:
   contents: read
@@ -78,12 +79,25 @@ jobs:
                           'water52_hits','water55_hits','missing_cells']}))
           print('P2C_30M_INDEPENDENT_INTEGER_HITS_AND_P3_FORMAT=NOT_RUN')
           PY
-      - name: Archive only candidate hashed evidence (not source TIFF/GSHHG)
+      - name: Independent rasterized Full L1 vs C++ 40,000x38 integer HITS and P3 LU format
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m py_compile scripts/s2g/issue160_glc30m_independent_oracle.py
+          timeout 1200 /usr/bin/python3 -m scripts.s2g.issue160_glc30m_independent_oracle \
+            --tif data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif \
+            --full-l1 "$RUNNER_TEMP/gshhg/2.3.7/GSHHS_f_L1/GSHHS_f_L1.shp" \
+            --policy docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            --native "$RUNNER_TEMP/wolsong-p2c30m" \
+            --report "$RUNNER_TEMP/issue160-c4-wolsong-independent-oracle.json"
+          echo 'P2C_C4_30M_WOLSONG_INDEPENDENT_40K_X_38_ORACLE=PASS_IF_ZERO_MISMATCH'
+          echo 'P3_FORMAT_ONLY=PASS_IF_ORACLE_PARSER P3_PHYSICS=ISSUE46_NOT_RUN'
+      - name: Archive only hashed evidence (not source TIFF/GSHHG)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: issue160-c4-wolsong-real-candidate
           path: |
             ${{ runner.temp }}/wolsong-p2c30m/sampling_manifest.json
+            ${{ runner.temp }}/issue160-c4-wolsong-independent-oracle.json
           retention-days: 21
           if-no-files-found: warn
