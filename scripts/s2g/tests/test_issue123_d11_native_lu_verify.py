@@ -60,7 +60,7 @@ class D11ProductionParityTests(unittest.TestCase):
              patch.object(d11,"N",2), \
              patch("scripts.s2g.issue123_d10_original_f63_lu.N",2):
             a=Path(td)/"original";b=Path(td)/"native"
-            a.write_text(lu_rows().replace("\\nUTM\\n","\\nUTM     \\n",1))
+            a.write_text(lu_rows().replace("\nUTM\n","\nUTM     \n",1))
             b.write_text(lu_rows())
             m=d11.compare(a,b,{"scope":"SYNTHETIC_ONLY"})
             self.assertEqual(m["fraction_3dp_differences"],0)
