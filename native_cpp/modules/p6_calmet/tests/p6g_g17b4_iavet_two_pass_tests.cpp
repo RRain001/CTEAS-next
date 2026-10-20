@@ -720,6 +720,111 @@ static void verify_source_staged_iavet(
           diagi[0].upper_id==58424&&diagi[1].surface_id==58322&&
           diagi[1].upper_id==58425,
           "G17C3 multi-station source ordinal provenance wrong");
+    // B2C: original CALMET NOOBS=0 requires 1SS + 1US, not 2+2.
+    // Execute real selected physics kernels on an independently assembled
+    // 1SS/1US subset of this case. This remains synthetic-input UNIT
+    // science, NOT the NOAA P6 newsite 45-field acceptance.
+    auto one_f=f;
+    one_f.station_set=all;
+    one_f.station_set.surface.resize(1);
+    one_f.station_set.upper.resize(1);
+    one_f.series.station_ids.resize(1);
+    one_f.series.hourly.front().by_station.resize(1);
+    auto one_frame=frame;
+    one_frame.stations=one_f.station_set;
+    one_frame.surface=one_f.series.hourly.front();
+    one_frame.upper.resize(1);
+    one_frame.input.upper.resize(1);
+    auto one_surface=one_f.make();
+    const auto& initial_first=stages.wind_stages().first_guess;
+    one_surface.after_wind1_before_fradj(
+        one_frame.input.end,initial_first.u_mps,initial_first.v_mps);
+    one_surface.after_fradj_before_heatfx(
+        one_frame.input.end,fr.u,fr.v);
+    const auto one_heat=p6g::selected_iavet1_heat_after_fradj(
+        one_f.grid,one_f.station_set,one_frame.surface,one_surface,ancillary);
+    auto one_sc=sc;
+    one_sc.upper_ordinal_for_surface={0};
+    const auto single_diagi=p6g::selected_station_diagi_from_previous_comp(
+        one_frame,one_surface,one_heat,one_sc);
+    check(single_diagi.size()==1 &&
+          single_diagi[0].surface_id==58321 &&
+          single_diagi[0].upper_id==58424 &&
+          single_diagi[0].levels_filled>=1 &&
+          single_diagi[0].levels_filled<=9 &&
+          std::isfinite(single_diagi[0].station_flux.sensible_wm2) &&
+          std::isfinite(single_diagi[0].station_mixing.zii_to_similt_m) &&
+          one_frame.previous.zi_m==prior.zi_m &&
+          one_frame.previous.ziconv_m==prior.ziconv_m &&
+          one_frame.previous.dptt_k==prior.dptt_k,
+          "G17C3 actual-count 1SS1US selected STHEOR/MIXHTST/DIAGI failed");
+    auto bad_one_frame=one_frame;
+    bad_one_frame.stations.surface.clear();
+    rejects([&]{
+        (void)p6g::selected_station_diagi_from_previous_comp(
+            bad_one_frame,one_surface,one_heat,one_sc);
+    },"G17C3 admitted zero source surface stations");
+    bad_one_frame=one_frame;
+    bad_one_frame.stations.upper.clear();
+    rejects([&]{
+        (void)p6g::selected_station_diagi_from_previous_comp(
+            bad_one_frame,one_surface,one_heat,one_sc);
+    },"G17C3 admitted zero source upper stations");
+    auto wrong_one_sc=one_sc;
+    wrong_one_sc.upper_ordinal_for_surface={1};
+    rejects([&]{
+        (void)p6g::selected_station_diagi_from_previous_comp(
+            one_frame,one_surface,one_heat,wrong_one_sc);
+    },"G17C3 invented nonexistent single upper ordinal");
+    bad_one_frame=one_frame;
+    bad_one_frame.upper[0].soundings.front().end=one_frame.input.end+hours{2};
+    rejects([&]{
+        (void)p6g::selected_station_diagi_from_previous_comp(
+            bad_one_frame,one_surface,one_heat,one_sc);
+    },"G17C3 used future-only upper sounding for 1SS1US STHEOR");
+    bad_one_frame=one_frame;
+    bad_one_frame.surface.by_station[0].wind_valid=false;
+    rejects([&]{
+        (void)p6g::selected_station_diagi_from_previous_comp(
+            bad_one_frame,one_surface,one_heat,one_sc);
+    },"G17C3 invented invalid single surface wind observation");
+    p6g::G16ObservedProfiles single_columns;
+    single_columns.end=initial_profiles.end;
+    single_columns.station_ids={58321,58424};
+    for(std::size_t k=0;k<9;++k) {
+        const auto s0=k*4, u0=s0+2;
+        single_columns.wind1_u_mps.insert(
+            single_columns.wind1_u_mps.end(),
+            {initial_profiles.wind1_u_mps[s0],initial_profiles.wind1_u_mps[u0]});
+        single_columns.wind1_v_mps.insert(
+            single_columns.wind1_v_mps.end(),
+            {initial_profiles.wind1_v_mps[s0],initial_profiles.wind1_v_mps[u0]});
+        single_columns.wind1_present.insert(single_columns.wind1_present.end(),
+            {initial_profiles.wind1_present[s0],initial_profiles.wind1_present[u0]});
+        // This upper PREPDI INTER2 source is deliberately NOT validated.
+        single_columns.inter2_u_mps.insert(
+            single_columns.inter2_u_mps.end(),{999.f,999.f});
+        single_columns.inter2_v_mps.insert(
+            single_columns.inter2_v_mps.end(),{999.f,999.f});
+        single_columns.inter2_present.insert(
+            single_columns.inter2_present.end(),{0U,0U});
+    }
+    const auto merged_one=p6g::merge_g17c3_surface_diagi(
+        single_columns,one_f.station_set,single_diagi);
+    check(merged_one.wind1_u_mps==single_columns.wind1_u_mps &&
+          merged_one.wind1_v_mps==single_columns.wind1_v_mps,
+          "G17C3 single station DIAGI mutated validated neutral WIND1");
+    for(std::size_t k=0;k<9;++k) {
+        const auto idx=k*2+1;
+        check(merged_one.inter2_present[idx]==0U &&
+              merged_one.inter2_u_mps[idx]==999.f &&
+              merged_one.inter2_v_mps[idx]==999.f,
+              "G17C3 single station DIAGI forged unvalidated PREPDI upper INTER2");
+    }
+    std::cout<<"PASS_G17C3_1SS1US_STHEOR_MIXHTST_DIAGI_UNIT_ONLY"
+             <<" PREPDI_UPPER_INTER2=NOT_ACCEPTED"
+             <<" ORIGINAL_VENDOR_SINGLE_STATION=NOT_RUN"
+             <<" P6_MET45=NOT_RUN\\n";
     for(std::size_t i=0;i<diagi.size();++i) {
         const auto& state=diagi[i];
         const auto& station=all.surface[i];
