@@ -1,5 +1,5 @@
 #pragma once
-// G17C3: 2SS/2US source-ordered STHEOR/ELUSTR2 -> MIXHTST -> DIAGI SIMILT.
+// G17C3: >=1SS/>=1US selected source-ordered STHEOR/ELUSTR2 -> MIXHTST -> DIAGI SIMILT.
 // Reuses the frozen PR #53 kernels. External SS->US association and
 // meteorological numerical controls are TEST-SCOPED until original multi-site
 // SETCOM/STHEOR station selection and full COMP state pass independent parity.
@@ -69,7 +69,11 @@ inline std::vector<G17C3StationDiagi> selected_station_diagi_from_previous_comp(
        !std::isfinite(ctrl.fcori_s)||ctrl.fcori_s<=0.f||
        !std::isfinite(ctrl.cmech)||ctrl.cmech<=0.f)
         throw std::invalid_argument("G17C3 STHEOR/COMP source scope missing");
-    if(deck.surface.size()<2||deck.upper.size()<2||
+    // CALMET 6.5.0 READCF L26359/L26368 requires >=1 SS and >=1 US
+    // for selected NOOBS=0. DIAGI L5099/L5125/L5137 loops actual counts;
+    // STHEOR L31111 operates on one station ordinal. Keep all observed
+    // bracket/validity/identity/terrain checks below unchanged.
+    if(deck.surface.empty()||deck.upper.empty()||
        frame.upper.size()!=deck.upper.size()||
        frame.input.upper.size()!=deck.upper.size()||
        frame.surface.by_station.size()!=deck.surface.size()||
