@@ -1,0 +1,26 @@
+name: Issue160 C5 P3-format-only 38-class LU.DAT independent consumer
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/issue160_p3_lu_format_contract.py
+      - scripts/s2g/tests/test_issue160_p3_lu_format_contract.py
+      - .github/workflows/issue160-c5-p3-format-only.yml
+permissions:
+  contents: read
+jobs:
+  independent-lu-v21-interface:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Python independent header/row/grid/flag reader tests
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/s2g/issue160_p3_lu_format_contract.py
+          python3 -m unittest -v scripts.s2g.tests.test_issue160_p3_lu_format_contract
+          echo 'ISSUE160_P3_FORMAT_CONSUMER=PASS_SYNTHETIC_ONLY'
+          echo 'P3_MAKEGEO_38_TO_14_AND_GEO_DAT=OUT_OF_SCOPE_ISSUE46'
