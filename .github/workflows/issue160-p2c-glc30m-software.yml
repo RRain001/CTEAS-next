@@ -36,6 +36,7 @@ jobs:
           cmake -S native_cpp -B "$RUNNER_TEMP/issue160-c4" -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/issue160-c4" --parallel 3 --target \
             cteas_p2c_glc30m_sampling \
+            cteas_p2c_glc30m_sampling_tests \
             cteas_p2_original_sampling_hefei \
             cteas_p2_original_sampling_wolsong \
             cteas_p2_original_sampling_lu_tests \
