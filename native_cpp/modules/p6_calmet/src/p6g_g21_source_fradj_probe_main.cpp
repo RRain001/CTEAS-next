@@ -162,7 +162,7 @@ int main(int argc,char** argv) {
            !inter2_output_file.empty()||
             !diagi_similt_prefix.empty()||!wind_tail_stage.empty()||
             !comp_original_prefix.empty()||!p6f_candidate_file.empty()||
-            !station_flux_prefix.empty()||!original_nearu_prefix.empty())))
+            !station_flux_prefix.empty()||!original_nearu_prefix.empty()))
 
             throw std::invalid_argument(
                 "G21 1SS1US G22 requires separate opt-in and only "
