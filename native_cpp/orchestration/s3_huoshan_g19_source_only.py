@@ -36,10 +36,11 @@ def digest(path: Path) -> str:
 def run(case_yaml: Path, native_binary: Path) -> dict:
     admission = admit_case(case_yaml)
     root = admission.case_path.parent
-    if (admission.research_begin, admission.research_end) != (
-        "20220601-010000", "20220601-070000"
-    ):
-        raise ValueError("S3-B6 requires original NOAA 00/12-bracketed six-hour Huoshan case")
+    if (admission.research_begin, admission.research_end) not in {
+        ("20220601-010000", "20220601-070000"),
+        ("20220601-020000", "20220601-080000"),
+    }:
+        raise ValueError("S3 requires one of two independently authenticated six-hour June NOAA UTC cases")
     join = root / "evidence/s3-b0-five-source-preflight.json"
     if join.is_symlink() or not join.is_file():
         raise ValueError("S3-B6 original five-source SHA admission not run")
