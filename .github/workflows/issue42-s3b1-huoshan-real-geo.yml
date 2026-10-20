@@ -10,6 +10,7 @@ on:
       - docs/plans/ISSUE42_S3_B1_HUOSHAN_REAL_SOURCE_20261020.md
       - scripts/s2g/issue42_s3_b1_true_srtm_window.py
       - native_cpp/reference/compare_p3_makegeo_dynamic.py
+      - scripts/s2g/issue42_s3b4_real_noaa_station_probe.py
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -357,6 +358,29 @@ jobs:
           print("S3_HUOSHAN_TRUE_ORIGINAL_MAKEGEO_80000_DISPLAYED_VALUES_ZERO_DIFF=PASS_SCOPED")
           print("S3_P4_P5_G19=NOT_RUN")
           PY
+      - name: S3-B4 genuinely screen original NOAA station catalogs against the actual June Huoshan grid
+        if: matrix.period == 'jun_24h'
+        shell: bash
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue42_s3b4_real_noaa_station_probe \
+            --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
+            --destination "$RUNNER_TEMP/s3_huoshan_2022/evidence/s3-b4-real-noaa-candidate-screen.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
+          evidence=json.loads((root/"evidence/s3-b4-real-noaa-candidate-screen.json").read_text())
+          p3=json.loads((root/"evidence/p3.json").read_text())
+          assert evidence["status"]=="S3_B4_TRUE_CATALOG_GEOMETRY_ACCEPTED_NO_NOAA_OBSERVATION_QA"
+          assert all(evidence["b0"][key]==p3[key] for key in (
+            "case_yaml_sha256","grid_cmn_sha256","research_time_sha256"))
+          assert evidence["p4"]["next_candidates_original_selector_order_first10"]
+          assert evidence["p5"]["next_candidates_original_selector_order_first10"]
+          assert evidence["p4"]["actual_selected_stations"]=="NOT_ESTABLISHED"
+          assert evidence["p5"]["actual_selected_stations"]=="NOT_ESTABLISHED"
+          print("S3_B4_REAL_NOAA_CATALOG_GEOMETRY_CASE_SHA_PASS_NO_OBSERVATIONS")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -368,6 +392,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/inputs/p1_srtm90_source_window.json
             ${{ runner.temp }}/s3-huoshan-original-geo-80k.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-original-p3-science.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b4-real-noaa-candidate-screen.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/lu/p2_d3_manifest.json
