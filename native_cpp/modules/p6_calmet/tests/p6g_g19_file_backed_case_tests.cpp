@@ -415,16 +415,27 @@ static void check_unbounded_original_source_cardinality(
 }
 
 int main(int argc,char** argv){
-    if(argc>=4&&argc<=8&&std::string(argv[1])=="--export-case") {
+    if(argc>=4&&argc<=11&&std::string(argv[1])=="--export-case") {
         try {
             const auto original=read(argv[2]);
             bool steep=false,daylight=false;
             int export_hours=6;
             bool hours_option=false;
+            int export_ss=2,export_us=2;
+            bool stations_option=false;
             for(int i=4;i<argc;++i) {
                 const std::string arg=argv[i];
                 if(arg=="--fradj-stress"&&!steep)steep=true;
                 else if(arg=="--daylight-first-hour"&&!daylight)daylight=true;
+                else if(arg=="--stations"&&!stations_option&&i+2<argc) {
+                    export_ss=std::stoi(argv[++i]);
+                    export_us=std::stoi(argv[++i]);
+                    if((export_ss!=1&&export_ss!=2)||
+                       (export_us!=1&&export_us!=2))
+                        throw std::invalid_argument(
+                            "S4C controlled source subset only supports 1 or 2 real-format SS/US");
+                    stations_option=true;
+                }
                 else if(arg=="--hours"&&!hours_option&&i+1<argc) {
                     export_hours=std::stoi(argv[++i]);
                     if(export_hours!=6&&export_hours!=143)
@@ -435,6 +446,19 @@ int main(int argc,char** argv){
                     "G35 duplicate or unknown original-format case option");
             }
             auto two=make_two_station_crossyear_deck(original);
+            // Asymmetric cases are only a SUBSET of the existing C2
+            // original-format controlled source, never duplicate/fake SS/US.
+            two=replace_one(two,"NSSTA",std::to_string(export_ss));
+            two=replace_one(two,"NUSTA",std::to_string(export_us));
+            for(const auto& [count,line]:std::vector<std::pair<int,std::string>>{
+                   {export_ss,"! SS2 = 'S002' 583220 543.385 3563.769 0 10.0 !\n"},
+                   {export_us,"! US2 = 'U002' 58425 553.384 3573.772 0 !\n"}}) {
+                if(count!=1)continue;
+                auto pos=two.find(line);
+                if(pos==std::string::npos||two.find(line,pos+line.size())!=std::string::npos)
+                    throw std::logic_error("S4C original site subset not unique");
+                two.erase(pos,line.size());
+            }
             if(steep) {
                 // Stress case is a genuine LEGAL original READCF parameter
                 // choice, not a fabricated native lapse or wind correction.
@@ -443,10 +467,11 @@ int main(int argc,char** argv){
             }
             const auto root=std::filesystem::path(argv[3]);
             std::filesystem::create_directories(root);
-            const p6g::G19SourceFilePaths paths{
+            p6g::G19SourceFilePaths paths{
                 (root/"met.inp").string(),(root/"GEO.DAT").string(),
-                (root/"SURF.DAT").string(),
-                {(root/"UP1.DAT").string(),(root/"UP2.DAT").string()}};
+                (root/"SURF.DAT").string(),{(root/"UP1.DAT").string()}};
+            if(export_us==2)
+                paths.ordered_up_dat.push_back((root/"UP2.DAT").string());
             save(paths.met_inp,two);
             geo_file(paths.geo_dat,false,steep);
             // Observed original-format synthetic source hour at 02:00
@@ -454,14 +479,20 @@ int main(int argc,char** argv){
             // UP 00/12 UTC bracket remains source-valid at the new hour.
             const auto begin=sys_days{year{2023}/December/31}+
                 hours{daylight?26:22};
-            surface_file(paths.surf_dat,begin,export_hours);
+            if(export_ss==2)surface_file(paths.surf_dat,begin,export_hours);
+            else source_cardinality_surface_file(
+                paths.surf_dat,begin,export_hours,1);
             const auto day=sys_days{year{2023}/December/31};
             upper_file(paths.ordered_up_dat[0],58424,day,export_hours,daylight?26:22);
-            upper_file(paths.ordered_up_dat[1],58425,day,export_hours,daylight?26:22);
+            if(export_us==2)
+                upper_file(paths.ordered_up_dat[1],58425,day,export_hours,daylight?26:22);
             const auto g19=p6g::g19_load_original_source_case(paths);
-            check(g19.make_scheduler().planned_hours()==static_cast<std::size_t>(export_hours),
-                  "G35 exported source case time axis does not match original input");
-            std::cout<<"PASS_G20_EXPORTED_ORIGINAL_FORMAT_SYNTHETIC_2SS_2US "
+            check(g19.make_scheduler().planned_hours()==static_cast<std::size_t>(export_hours)&&
+                  g19.stations.surface.size()==static_cast<std::size_t>(export_ss)&&
+                  g19.stations.upper.size()==static_cast<std::size_t>(export_us),
+                  "S4C exported asymmetric source input/cardinality mismatch");
+            std::cout<<"PASS_G20_EXPORTED_ORIGINAL_FORMAT_SYNTHETIC_SOURCE_SUBSET "
+                     <<"SS="<<export_ss<<" US="<<export_us<<" "
                      <<"FRADJ_STEEP_TERRAIN="<<steep<<" "
                      <<"DAYLIGHT_SOURCE_HOUR="<<daylight<<" "
                      <<"HOURS="<<export_hours<<" "
