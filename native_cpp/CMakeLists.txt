@@ -163,8 +163,9 @@ add_library(cteas_p2_original_sampling_recount STATIC
             src/geo/ctgproc_original_sampling_recount.cpp)
 target_include_directories(cteas_p2_original_sampling_recount
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# The original Fortran-faithful Wolsong/Hefei numerical chain MUST NOT
+# transitively link the synthetic GEOS D2 surrogate.
 target_link_libraries(cteas_p2_original_sampling_recount PUBLIC
-                      cteas_p2_original_iptype
                       cteas_p2_original_bln_pnpoly cteas_p2_glcc_source)
 if(MSVC)
   target_compile_options(cteas_p2_original_sampling_recount PRIVATE /W4 /WX)
@@ -173,10 +174,31 @@ else()
                          PRIVATE -Wall -Wextra -Wpedantic -Werror
                                  -ffp-contract=off)
 endif()
+# Issue #160 C2: D2 GEOS classifier remains test-only for public API
+# regression, but is not linked by actual source-faithful C++ production.
+# Both variants compile the SAME integer bookkeeping template. Exactly one
+# overload/fraction implementation is emitted by the build definition.
+add_library(cteas_p2_original_sampling_d2_surrogate STATIC
+            src/geo/ctgproc_original_sampling_recount.cpp)
+target_include_directories(cteas_p2_original_sampling_d2_surrogate
+                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(cteas_p2_original_sampling_d2_surrogate
+                           PRIVATE CTEAS_P2_D2_GEOS_DIAGNOSTIC_ONLY=1)
+target_link_libraries(cteas_p2_original_sampling_d2_surrogate PUBLIC
+                      cteas_p2_original_sampling_recount
+                      cteas_p2_original_iptype)
+if(MSVC)
+  target_compile_options(cteas_p2_original_sampling_d2_surrogate PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_sampling_d2_surrogate PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+
 add_executable(cteas_p2_original_sampling_recount_tests
                tests/p2_original_sampling_recount_tests.cpp)
+# Synthetic compatibility tests exercise BOTH D2 and BLN code paths.
 target_link_libraries(cteas_p2_original_sampling_recount_tests
-                      PRIVATE cteas_p2_original_sampling_recount)
+                      PRIVATE cteas_p2_original_sampling_d2_surrogate)
 if(MSVC)
   target_compile_options(cteas_p2_original_sampling_recount_tests
                          PRIVATE /W4 /WX)
