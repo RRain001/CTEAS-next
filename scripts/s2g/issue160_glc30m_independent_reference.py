@@ -213,15 +213,21 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None,
                      "water52_hits":landwater,"water55_hits":seawater}
 
 def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file:Path,
-            raster:Path,data_sha:str,coast:Path|None,out:Path):
+            raster:Path,data_sha:str,coast:Path|None,out:Path,
+            grid:tuple|None=None):
+    epsg,x0,y0,nx,ny,dx_km=(grid if grid is not None else (*GRIDS[site],200,200,.1))
+    require(counts.shape==(nx*ny,38),"INDEPENDENT_GRID_SHAPE")
     manifest=json.loads((produced/"p2c_glc30m_manifest.json").read_text())
     require(manifest.get("method")==METHOD and
             manifest.get("mapping_policy_sha256")==POLICY_SHA and
             manifest.get("site")==site and
             manifest.get("data_sha256")==data_sha and
-            manifest.get("utm_epsg")==GRIDS[site][0] and
-            manifest.get("classes")==38 and manifest.get("nx")==200 and
-            manifest.get("ny")==200 and manifest.get("mesh")==10,
+            manifest.get("utm_epsg")==epsg and
+            manifest.get("classes")==38 and manifest.get("nx")==nx and
+            manifest.get("ny")==ny and manifest.get("mesh")==10 and
+            abs(float(manifest.get("xrefkm",-1))-x0/1000.)<1e-8 and
+            abs(float(manifest.get("yrefkm",-1))-y0/1000.)<1e-8 and
+            abs(float(manifest.get("dgridkm",-1))-dx_km)<1e-9,
             "PRODUCER_MANIFEST_SCOPE")
     require(regular(produced/"hits.csv") and
             regular(produced/"lu.dat") and
@@ -249,14 +255,14 @@ def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file
             require(row is not None and len(row)==41 and
                     all(re.fullmatch(r"\d+",v) for v in row),"HITS_NONINTEGER_ROW")
             values=list(map(int,row))
-            require(values[:2]==[idx%200+1,idx//200+1] and
+            require(values[:2]==[idx%nx+1,idx//nx+1] and
                     sum(values[3:])==values[2],"HITS_GRID_ORDER_CONSERVATION")
             native=np.array(values[3:],dtype=np.uint32)
             unequal=np.flatnonzero(expected!=native)
             if len(unequal):
                 errors+=len(unequal);different_cells+=1
                 for k in unequal[:max(0,20-len(first))]:
-                    first.append({"i":idx%200+1,"j":idx//200+1,
+                    first.append({"i":idx%nx+1,"j":idx//nx+1,
                                   "category":CLASS_IDS[k],
                                   "reference":int(expected[k]),
                                   "native":int(native[k])})
@@ -268,20 +274,20 @@ def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file
         lines=[f.readline().rstrip("\r\n") for _ in range(11)]
         require(lines[0].split()[:2]==["LU.DAT","2.1"] and
                 lines[4:6]==["FRACTION","UTM"] and
-                lines[6].strip()==str(GRIDS[site][0]%100)+"N" and
+                lines[6].strip()==str(epsg%100)+"N" and
                 lines[7].startswith("WGS-84"),
                 "LU_HEADER_VERSION_PROJECTION")
         meta=lines[8].split()
-        require(len(meta)==7 and int(meta[0])==int(meta[1])==200 and
-                float(meta[2])==GRIDS[site][1]/1000. and
-                float(meta[3])==GRIDS[site][2]/1000. and
-                float(meta[4])==float(meta[5])==.1 and
+        require(len(meta)==7 and int(meta[0])==nx and int(meta[1])==ny and
+                abs(float(meta[2])-x0/1000.)<1e-8 and
+                abs(float(meta[3])-y0/1000.)<1e-8 and
+                abs(float(meta[4])-dx_km)<1e-9 and abs(float(meta[5])-dx_km)<1e-9 and
                 int(meta[6])==38,"LU_HEADER_GRID_AND_UNITS")
         require(tuple(map(int,lines[10].split()))==CLASS_IDS,"LU_HEADER_USGS38_ORDER")
         for idx,n in enumerate(counts):
             line=f.readline().rstrip("\r\n")
             require(len(line)>=238 and
-                    int(line[:5])==idx%200+1 and int(line[5:10])==idx//200+1,
+                    int(line[:5])==idx%nx+1 and int(line[5:10])==idx//nx+1,
                     "LU_ROW_FIXED_POSITION")
             total=int(n.sum())
             expected_flag="Missing" if total==0 else "."
@@ -295,16 +301,19 @@ def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file
         require(f.readline()=="","LU_EXTRA_ROWS")
     require(not out.exists() and not out.is_symlink(),"REPORT_ALREADY_EXISTS")
     accepted=(errors==different_cells==f6_err==missing_err==0)
-    report={"status":("P2C_30M_SAME_SOURCE_INDEPENDENT_40000X38_HITS_PASS_SCOPED"
+    report={"status":(f"P2C_30M_SAME_SOURCE_INDEPENDENT_{nx*ny}X38_HITS_PASS_SCOPED"
                       if accepted else "P2C_30M_INDEPENDENT_INTEGER_OR_F63_MISMATCH"),
-            "site":site,"method":METHOD,"native_file_sha256":hashfile(produced/"lu.dat"),
+            "site":site,"grid":{"utm_epsg":epsg,"nx":nx,"ny":ny,
+                                  "xrefkm":x0/1000.,"yrefkm":y0/1000.,
+                                  "dgridkm":dx_km},
+             "method":METHOD,"native_file_sha256":hashfile(produced/"lu.dat"),
             "native_hits_sha256":hashfile(produced/"hits.csv"),
             "source_sha256":hashfile(raster),"mapping_policy_sha256":hashfile(policy_file),
             "original_full_l1_bln_sha256":hashfile(coast) if coast else None,
             "independent_oracle":"PYTHON_NUMPY_BROADCAST_AND_GEOS_POINT_CONTAINS",
-            "integer_fields_compared":1520000,"integer_mismatches":errors,
+            "integer_fields_compared":nx*ny*38,"integer_mismatches":errors,
             "cells_with_mismatches":different_cells,
-            "F6_3_fields_compared":1520000,"F6_3_mismatches":f6_err,
+            "F6_3_fields_compared":nx*ny*38,"F6_3_mismatches":f6_err,
             "missing_flag_mismatches":missing_err,
             "included_hits":statistics["included_hits"],
             "nonempty_cells":int(np.count_nonzero(counts.sum(axis=1))),
