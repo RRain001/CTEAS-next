@@ -50,7 +50,12 @@ def compare(original:Path,native:Path,metadata:dict)->dict:
         # informational and may differ from a standalone native producer.
         # Require the actual physical field definition, UTM zone, grid
         # geometry and original 38-class IDs to be identical.
-        require(ah[4:7]==bh[4:7] and ah[8:11]==bh[8:11] and
+        # Original WRTHEAD uses fixed-width (A8) map/projection fields,
+        # while a native serializer can have fewer trailing blanks.
+        # Compare actual physics metadata/IDs (already individually parsed
+        # and SHA-admitted), not legal differences in trailing whitespace.
+        require(all(ah[i].strip()==bh[i].strip()
+                    for i in (4,5,6,8,9,10)) and
                 ah[7][:8]==bh[7][:8],
                 "D11_ORIGINAL_NATIVE_PHYSICAL_HEADER_DRIFT")
         for index in range(N*N):
