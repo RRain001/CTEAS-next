@@ -84,7 +84,7 @@ preprocess:
                          ("510.885", "3531.269"))
         verify_immutable(admitted)
         self.replace(self.grid, "DGRIDKM = 0.200", "DGRIDKM = 0.100")
-        self.deny("disagreement")
+        self.deny("mismatch with published numeric authority")
 
     def test_origin_precision_and_duplicate(self):
         self.replace(self.grid, "510.885", "510.885000")
