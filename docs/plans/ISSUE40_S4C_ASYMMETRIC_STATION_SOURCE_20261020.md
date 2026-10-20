@@ -1,0 +1,12 @@
+# Issue #40 | S4-C asymmetrical independent station cardinality experiments
+
+Date: 2026-10-20; follows [PR #208](https://github.com/RRain001/CTEAS-next/pull/208) and genuine new-site Huoshan original CALMET 1SS+1US 100×100 six-hour scientific PASS. This is **not** a new independently verified original-CALMET science result until the original is freshly run against these asymmetrical source subsets.
+
+## Bounded first investigation
+
+1. Extend the existing G19 original-format **controlled-synthetic** source exporter, not the P1–P5 real NOAA producer, with `--stations NS NU` for the fixed subset of the already defined two surface and two upper stations. Cases tested: 1/1, 1/2, 2/1, 2/2. The discarded SS2/US2 is physically omitted from its original met.inp declaration and SURF or UP station list. No station is duplicated to reach a count or filled from CALMET output. This is synthetic C2 controlled source, **not independently observed NOAA**.
+2. Reuse EXACT same shared G14 physical stage actor and genuine source G19 read / 17-step chronology for each combination. G20 WIND1/INTER2 uses genuine source PREPDI soundings; the original `IEXTRP=-4` policy marks upper k=1 missing and uses available k>=2. The C2 original 2SS2US branch stays unchanged, and the previously original-accepted C1 1SS1US branch stays unchanged.
+3. Admit asymmetric cardinalities only with explicit experimental flags in G18A COMP, G18C3 TEMP3D and G18C5/C6 output. These flags default to false and do not alter any MIXHT, TEMP3D, STHEOR, DIAGI, wind, P6F field formula, REAL4 operation or public production gate.
+4. Actions require a first hour and six causal hours from the same executable for each combination; the C2 old/new byte-exact comparison protects accepted 2/2. Any unexpected missing/invalid station or chronology must fail closed. Execution success gives **PRODUCED_UNVERIFIED**, not original numerical PASS.
+
+After authentic outputs, compare each asymmetrical candidate with separately executed **unchanged original CALMET 6.5.0 using the same controlled synthetic source**, starting first-hour then six-hour all 45 fields and original metric. If asymmetric physics does not match, preserve field/time/cell residual and adjust only an independently identified original control/numerical cause. Multi-site observed (not synthetic) scenario and more than two stations remain separate. Real Huoshan C1/C2 previous PASS remain frozen. No normal G26 production admission, P7 newsite, Docker, wet deposition or S5 memory capacity changes.
