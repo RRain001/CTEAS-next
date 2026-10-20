@@ -17,6 +17,8 @@ namespace cteas::calmet::p6g {
 struct G18C3Temp3dControls {
     int irad=0,itprog=-1;
     bool lcalgrd=false;
+    // Defaults false. Only exact 1SS/1US selected source COMP may opt in.
+    bool allow_one_one_source_audit=false;
 };
 inline G18C3Temp3dControls g18c3_parse_original_temp3d_controls(
     const std::string& source_metinp) {
@@ -56,7 +58,9 @@ inline G18C3SelectedTemperature g18c3_selected_native_temp3d(
        frame.input.end!=original_upper.end||
        frame.input.end!=original_faces.end||
        frame.input.end!=heat.end||frame.input.end!=comp.end||
-       nu<2||frame.upper.size()!=nu||
+       (nu<2 && !(control.allow_one_one_source_audit && nu==1 &&
+                  frame.stations.surface.size()==1))||
+       frame.upper.size()!=nu||
        original_upper.station_ids.size()!=nu||
        original_faces.station_ids!=original_upper.station_ids||
        original_faces.justa!=original_upper.justa||
