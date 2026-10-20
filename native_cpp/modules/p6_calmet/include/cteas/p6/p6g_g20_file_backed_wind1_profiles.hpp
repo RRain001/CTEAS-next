@@ -30,7 +30,7 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
                       static_cast<std::size_t>(grid.ny);
     if(!explicitly_test_only||!frame.source_controls||
        grid.hemisphere!='N'||grid.nx<2||grid.ny<2||
-       ns<1||nu<1||ns>3||nu>3||
+       ns<1||nu<1||ns>4||nu>4||
        surface.by_station.size()!=ns||in.upper.size()!=nu||
        frame.upper.size()!=nu||surface.end!=in.end||
        surface.end-surface.start!=std::chrono::hours{1}||
@@ -168,7 +168,7 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
         }
         return profiles;
     }
-    if(ns<1||ns>3||nu<1||nu>3||
+    if(ns<1||ns>4||nu<1||nu>4||
        ((ns<=2&&nu<=2)&&
          (stations.upper[0].id!=58424||
           (nu==2&&stations.upper[1].id!=58425)))||
