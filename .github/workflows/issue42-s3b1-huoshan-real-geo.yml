@@ -20,6 +20,8 @@ on:
       - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp
       - native_cpp/modules/p6_calmet/src/p6g_g20_source_wind1_probe_main.cpp
       - docs/plans/ISSUE40_S4_P6B1_REAL_1SS1US_WIND1_20261020.md
+      - native_cpp/modules/p6_calmet/reference/compare_g20_real_huoshan_1ss1us_original_wind1.py
+      - docs/plans/ISSUE40_S4_P6B1_ORIGINAL_VENDOR_180K_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -51,7 +53,9 @@ jobs:
           repository: RRain001/CTEAS
           ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
           path: original_cteas
-          sparse-checkout: engine/vendor/src/MAKEGEO_V3.2_L110401
+          sparse-checkout: |
+            engine/vendor/src/MAKEGEO_V3.2_L110401
+            engine/vendor/src/CALMET_v6.5.0_L150223
           sparse-checkout-cone-mode: true
           lfs: false
           persist-credentials: false
@@ -633,6 +637,26 @@ jobs:
           print("S4_P6B1_TRUE_NOAA_1SS1US_FIRST_HOUR_WIND1_NONZERO_TEST_ONLY=PRODUCED_UNVERIFIED",
                 "rows=",count,"nonzero=",nonzero)
           PY
+      - name: S4 P6-B1 independent original CALMET WIND1 kernel vs actual 180000 Huoshan U V
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          /usr/bin/python3 native_cpp/modules/p6_calmet/reference/compare_g20_real_huoshan_1ss1us_original_wind1.py \
+            --vendor-calmet-for "$PWD/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --source-columns "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b1-original-wind1-station-profiles.txt" \
+            --candidate "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b1-real-1ss1us-first-hour-wind1.csv" \
+            --out "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b1-original-vendor-wind1-comparison.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          j=json.loads((Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022/evidence/s4-p6b1-original-vendor-wind1-comparison.json").read_text())
+          assert j["status"]=="P6B1_REAL_HUOSHAN_ORIGINAL_WIND1_KERNEL_PASS_SCOPED"
+          assert j["compared_uv_fields"]==180000 and j["differences_exceeding_tolerance"]==0
+          assert j["independent_original_PREPDI_SIMILT"] is False
+          assert j["original_full_CALMET_45_fields"] is False
+          print("S4_P6B1_ORIGINAL_VENDOR_180000_TRUE_NOAA_FIRST_HOUR_UV=PASS_KERNEL_SCOPED_NOT_45_FIELDS")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -652,6 +676,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b6-g19-source-only.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b7-alt-clock-negative-evidence.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-real-wind1-evidence.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-original-vendor-wind1-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
