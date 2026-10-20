@@ -148,15 +148,25 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
     // This is selected G19 forensic science only: the generic original
     // CALMET UP/PREPDI missing-layer policy remains unimplemented and
     // must be source-validated before production multi-site admission.
-    // P6-B1 new-site 1SS/1US: permit only the uncommitted WIND1
-    // first-guess based on REAL SURF and UP. Original 1US first-layer
-    // INTER2/DIAGI missingness has NOT been independently verified:
-    // fail-closed on all INTER2 profiles; never upgrade this to G26.
-    // The previously accepted 2SS/2US synthetic G32E path is unchanged.
+    // S4-B4: the previous 1SS/1US exploratory gate incorrectly set ALL
+    // INTER2 station/height samples missing (999), even the authentic
+    // PREPDI US k=2..9 soundings. That excludes the real upper stations
+    // from the INTER2 blend and corrupts U/V above the surface. The old C1
+    // accepted single-site P6D source uses exactly the opposite rule:
+    // original IEXTRP<=0 makes only US k=1 missing; US k>=2 is the true
+    // PREPDI interpolated profile. SS DIAGI must separately replace SS
+    // observations after MIXHTST; none is inherited from neutral WIND1.
+    // No synthetic profile or copied original MET is introduced here.
     if(ns==1&&nu==1) {
         profiles.inter2_present.assign(9*total,0U);
         profiles.inter2_u_mps.assign(9*total,999.f);
         profiles.inter2_v_mps.assign(9*total,999.f);
+        for(std::size_t k=1;k<9;++k) {
+            const auto idx=k*total+ns;
+            profiles.inter2_present[idx]=1U;
+            profiles.inter2_u_mps[idx]=profiles.wind1_u_mps[idx];
+            profiles.inter2_v_mps[idx]=profiles.wind1_v_mps[idx];
+        }
         return profiles;
     }
     if(ns!=2||nu!=2||
