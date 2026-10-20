@@ -11,6 +11,7 @@ on:
       - scripts/s2g/issue42_s3_b1_true_srtm_window.py
       - native_cpp/reference/compare_p3_makegeo_dynamic.py
       - scripts/s2g/issue42_s3b4_real_noaa_station_probe.py
+      - docs/plans/ISSUE42_S3_B5_REAL_NOAA_PRODUCERS_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -51,7 +52,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
-            g++-12 gfortran cmake libgdal-dev libssl-dev python3-gdal python3-rasterio python3-numpy python3-yaml python3-pyproj
+            g++-12 gfortran cmake libgdal-dev libssl-dev python3-gdal python3-rasterio python3-numpy python3-yaml python3-pyproj python3-pandas
       - name: Admit genuine SHA-verified already tracked SRTM90 and 156MB GLCC
         run: |
           set -euo pipefail
@@ -110,7 +111,10 @@ jobs:
               "    nz: 9\n    resolution_km: 0.1\n"
               "    domain:\n      length_km: 10.0\n      width_km: 10.0\n"
               f"    center:\n      longitude: {lon:.12f}\n      latitude: {lat:.12f}\n"
-              f"  research_time:\n    begin: {begin}\n    end: {end}\n",
+              f"  research_time:\n    begin: {begin}\n    end: {end}\n"
+              "  upperair:\n    station_id: auto\n    pstop_hpa: 500.0\n"
+              "  surface:\n    auto_select_all: true\n"
+              f"puff:\n  point_sources:\n    - latitude: {lat:.12f}\n      longitude: {lon:.12f}\n",
               encoding="utf-8")
           (root/"grid/grid.cmn").write_text(
               "! IMAP = UTM !\n! DATUM = WGS-84 !\n"
@@ -119,6 +123,8 @@ jobs:
               "! DGRIDKM = 0.100 !\n! NX = 100 !\n! NY = 100 !\n! NZ = 9 !\n"
               + "".join(f"! ZFACE = {value} !\n" for value in
                         (0,20,40,80,160,320,640,1200,2000,3000)),encoding="utf-8")
+          (root/"grid/center_location").write_text(
+              f"latitude: {lat:.12f}\nlongitude: {lon:.12f}\n", encoding="utf-8")
           (root/"grid/research_time").write_text(
               f"BEGIN:{begin}\nEND:{end}\n",encoding="utf-8")
           from native_cpp.orchestration.case_admission import admit_case
@@ -381,6 +387,97 @@ jobs:
           assert evidence["p5"]["actual_selected_stations"]=="NOT_ESTABLISHED"
           print("S3_B4_REAL_NOAA_CATALOG_GEOMETRY_CASE_SHA_PASS_NO_OBSERVATIONS")
           PY
+      - name: S3-B5 build unchanged native P4 and P5 selected-source executables
+        if: matrix.period == 'jun_24h'
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p4_read62 -B "$RUNNER_TEMP/s3-p4" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s3-p4" --parallel 2 --target cteas_p4_read62
+          cmake -S native_cpp/modules/p5_smerge -B "$RUNNER_TEMP/s3-p5" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s3-p5" --parallel 2 --target cteas_p5_smerge
+      - name: S3-B5 stage authentic archived NOAA original POR and ISD+Lite source under same June case
+        if: matrix.period == 'jun_24h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import hashlib,json,os,shutil
+          from pathlib import Path
+          from scripts.s2g.real_noaa_native_p4_up import ORIGINAL_NOAA
+          from scripts.s3f.verify_real_noaa_2022_2023_station_selection import HEFEI
+          from native_cpp.modules.p5_smerge.data_prep.isd_lite_wind import filename,lite_time_coverage
+          from native_cpp.modules.p5_smerge.data_prep.download_isd_by_grid import original_coverage
+          from native_cpp.orchestration.case_admission import admit_case,verify_immutable
+          case=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
+          b0=admit_case(case/"case.yaml")
+          assert (b0.research_begin,b0.research_end)==("20220601-000000","20220602-000000")
+          archive=Path(os.environ["RUNNER_TEMP"])/"s3-genuine-igra"
+          archive.mkdir(exist_ok=False)
+          sources={
+            "p4_original_igra_anqing_2022":(ORIGINAL_NOAA,archive/ORIGINAL_NOAA.name),
+            "p5_original_full_isd_luogang_2022":(
+              HEFEI/"met/surface/isd_raw/58321099999-2022.csv",
+              case/"met/surface/isd_raw/58321099999-2022.csv"),
+            "p5_original_isd_lite_luogang_2022":(
+              HEFEI/"met/surface/isd_raw/isd_lite"/filename("58321099999",2022),
+              case/"met/surface/isd_raw/isd_lite"/filename("58321099999",2022)),
+          }
+          def digest(path):
+            h=hashlib.sha256()
+            with path.open("rb") as f:
+              for block in iter(lambda:f.read(1<<20),b""): h.update(block)
+            return h.hexdigest()
+          entries={}
+          for role,(src,dst) in sources.items():
+            assert src.is_file() and not src.is_symlink() and src.stat().st_size>10000,(role,str(src))
+            dst.parent.mkdir(parents=True,exist_ok=True)
+            assert not dst.exists()
+            shutil.copyfile(src,dst)
+            assert digest(src)==digest(dst),role
+            entries[role]={"source_path_in_repo":str(src.relative_to(HEFEI.parents[2])),
+                           "sha256":digest(dst),"original_bytes":src.stat().st_size}
+          full,expected=original_coverage(sources["p5_original_full_isd_luogang_2022"][1],2022,"58321099999")
+          lite,le=lite_time_coverage(sources["p5_original_isd_lite_luogang_2022"][1],2022,"58321099999")
+          assert expected==le==8760 and full*10>expected*9 and lite*10>expected*9
+          entries["p5_luogang_original_2022_annual_hours"]={"full":full,"lite":lite,"denominator":expected}
+          entries["b0"]={"case_yaml_sha256":b0.case_sha256,"grid_cmn_sha256":b0.grid_sha256,
+                         "research_time_sha256":b0.time_sha256}
+          verify_immutable(b0)
+          out=case/"evidence/s3-b5-original-noaa-source-custody.json"
+          assert not out.exists()
+          out.write_text(json.dumps(entries,sort_keys=True,indent=2)+"\n")
+          print("S3_B5_GENUINE_NOAA_ORIGINAL_SOURCE_SHA_AND_ANNUAL_RAW_COVERAGE=PASS_SCOPED")
+          PY
+      - name: S3-B5 run original-select NOAA P4 00-12 and native READ62 on genuine June B0
+        if: matrix.period == 'jun_24h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.modules.p4_read62.data_prep.run_cpp_pipeline \
+            --case-root "$RUNNER_TEMP/s3_huoshan_2022" \
+            --upperair-root "$RUNNER_TEMP/s3_huoshan_2022/met/upperair" \
+            --offline-archive-root "$RUNNER_TEMP/s3-genuine-igra" \
+            --cpp-bin "$RUNNER_TEMP/s3-p4/cteas_p4_read62" \
+            --candidate-final --execute
+          test -s "$RUNNER_TEMP/s3_huoshan_2022/met/upperair/p4_d1a_annual_manifest.json"
+          echo 'S3_B5_REAL_SAME_B0_P4_UP=PRODUCED_UNVERIFIED'
+      - name: S3-B5 run authentic offline NOAA selection and unchanged native P5 SMERGE
+        if: matrix.period == 'jun_24h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.p5_case_producer \
+            --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
+            --history-file "$GITHUB_WORKSPACE/engine/resources/isd/isd-history.txt" \
+            --native-cpp-bin "$RUNNER_TEMP/s3-p5/cteas_p5_smerge" \
+            --offline-reselect
+          test -s "$RUNNER_TEMP/s3_huoshan_2022/met/surface/final/surf.dat"
+          echo 'S3_B5_REAL_SAME_B0_P5_PUBLISHED_SURF=PRODUCED_UNVERIFIED'
+      - name: S3-B5 jointly SHA-admit all five actual newsite P1-P5 source products without G19
+        if: matrix.period == 'jun_24h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.s3_five_source_preflight \
+            --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
+            --destination "$RUNNER_TEMP/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json"
+          echo 'S3_B5_FIVE_TRUE_SOURCE_PRODUCTS=SHA_JOIN_ONLY_G19_NOT_RUN'
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -393,6 +490,11 @@ jobs:
             ${{ runner.temp }}/s3-huoshan-original-geo-80k.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-original-p3-science.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b4-real-noaa-candidate-screen.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b5-original-noaa-source-custody.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/p5.json
+            ${{ runner.temp }}/s3_huoshan_2022/met/upperair/p4_d1a_annual_manifest.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json
+            ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/lu/p2_d3_manifest.json
