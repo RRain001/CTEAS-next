@@ -9,6 +9,9 @@ on:
       - scripts/s2g/issue160_glc30m_independent_reference.py
       - .github/workflows/issue160-c4-wolsong-real-30m.yml
   workflow_dispatch:
+concurrency:
+  group: issue160-c4-wolsong-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
