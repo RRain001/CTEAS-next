@@ -64,6 +64,28 @@ preprocess:
         with self.assertRaisesRegex(ContractError, "changed"):
             verify_immutable(record)
 
+    def test_second_legal_grid_and_crossyear_clock(self):
+        """Second independent B-0 geometry/time tuple; not model science."""
+        self.replace(self.grid, "NX = 50", "NX = 60")
+        self.replace(self.grid, "NY = 50", "NY = 40")
+        self.replace(self.grid, "DGRIDKM = 0.100", "DGRIDKM = 0.200")
+        self.replace(self.case, "resolution_km: 0.1", "resolution_km: 0.2")
+        self.replace(self.case, "length_km: 5", "length_km: 12")
+        self.replace(self.case, "width_km: 5", "width_km: 8")
+        self.replace(self.time, "20220101-000000", "20221231-230000")
+        self.replace(self.time, "20220101-030000", "20230101-020000")
+        self.replace(self.case, "20220101-000000", "20221231-230000")
+        self.replace(self.case, "20220101-030000", "20230101-020000")
+        admitted = admit_case(self.case)
+        self.assertEqual((admitted.nx, admitted.ny, admitted.dgridkm), (60, 40, 0.2))
+        self.assertEqual((admitted.research_begin, admitted.research_end),
+                         ("20221231-230000", "20230101-020000"))
+        self.assertEqual((admitted.xrefkm_text, admitted.yrefkm_text),
+                         ("510.885", "3531.269"))
+        verify_immutable(admitted)
+        self.replace(self.grid, "DGRIDKM = 0.200", "DGRIDKM = 0.100")
+        self.deny("disagreement")
+
     def test_origin_precision_and_duplicate(self):
         self.replace(self.grid, "510.885", "510.885000")
         self.deny("three decimal")

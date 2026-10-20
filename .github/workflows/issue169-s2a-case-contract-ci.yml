@@ -1,0 +1,31 @@
+name: Issue169 S2-A immutable two-case admission (software only)
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/orchestration/case_admission.py'
+      - 'native_cpp/orchestration/site_plan.py'
+      - 'native_cpp/orchestration/tests/test_case_admission.py'
+      - 'docs/plans/ISSUE169_S2A_CONTRACT_INVENTORY_20261020.md'
+      - '.github/workflows/issue169-s2a-case-contract-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  s2a-b0-immutable-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install Python scientific coordinate runtime (no model/vendor/large data)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends python3-yaml python3-pyproj
+      - name: Two distinct grid and UTC clock B-0 admission plus fail-closed negatives
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest native_cpp.orchestration.tests.test_case_admission -v
+          echo 'S2_A_B0_TWO_CASE_SOFTWARE=PASS ORIGINAL_NUMERICS=NOT_RUN P1_P5_GENERIC=NOT_ACCEPTED DOCKER=DEFERRED'
