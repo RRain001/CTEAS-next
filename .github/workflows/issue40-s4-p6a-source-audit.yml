@@ -1,0 +1,69 @@
+name: "Issue40 S4 P6-A hardcode source inventory (no physics)"
+on:
+  pull_request:
+    paths:
+      - "scripts/s4/p6a_hardcode_source_inventory.py"
+      - "docs/plans/ISSUE40_S4_P6A_HARDCODING_20261020.md"
+      - ".github/workflows/issue40-s4-p6a-source-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-scoped-inventory:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout actual scoped HEAD
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify actual fixed-case boundaries in P6 source and record SHA
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s4.p6a_hardcode_source_inventory \
+            --repo "$GITHUB_WORKSPACE" \
+            --out "$RUNNER_TEMP/issue40_p6a_actual_source_inventory.json"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"issue40_p6a_actual_source_inventory.json"
+          r=json.loads(p.read_text())
+          assert r["status"]=="P6A_SOURCE_HARDCODE_INVENTORY_PASS_NO_P6_PHYSICS_ACCEPTANCE"
+          assert len(r["findings"])==20 and len(r["source_files"])==8
+          assert r["S4_P6_SCIENCE"]=="NOT_ACCEPTED"
+          assert r["P6_FIRST_HOUR_NEW_SITE_NATIVE_FIELD"]=="NOT_RUN"
+          print("ISSUE40_P6A_ACTUAL_SOURCE_20_FINDINGS_EIGHT_FILES_PASS_NO_P6_SCIENCE")
+          PY
+      - name: Negative gate that missing audited code cannot silently be marked passed
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import shutil,tempfile
+          from pathlib import Path
+          from scripts.s4.p6a_hardcode_source_inventory import SPECS,audit
+          with tempfile.TemporaryDirectory(prefix="issue40-p6a-") as d:
+            root=Path(d)
+            for rel in SPECS:
+              dest=root/rel
+              dest.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copyfile(Path(rel),dest)
+            changed=root/"native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp"
+            contents=changed.read_text()
+            anchor="ns<2||nu<2||ns>6||nu>6||"
+            assert contents.count(anchor)==1
+            changed.write_text(contents.replace(anchor,"ns<1||nu<1||ns>6||nu>6||"))
+            try:
+              audit(root)
+            except ValueError as exc:
+              assert "G20_PHYSICS_MIN_2SS_2US" in str(exc)
+              print("P6A_SOURCE_ANCHOR_NEGATIVE_CHANGED_G20_SELECTION_REJECTED")
+            else:
+              raise AssertionError("P6A code drift was not rejected")
+          PY
+      - name: Upload bounded source and blocker metadata only
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4p6a-current-source-blocker-inventory
+          path: ${{ runner.temp }}/issue40_p6a_actual_source_inventory.json
+          retention-days: 21
+          if-no-files-found: error
