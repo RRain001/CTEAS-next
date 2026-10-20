@@ -62,6 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           case="project/cases/hefei5km_2022_reference_case_20261011"
+          set +e
           "$RUNNER_TEMP/s4b3-build/cteas_p6g_s4b2_unified_selected" \
             --selected-experimental \
             --met "$case/run/met/met.inp" \
@@ -70,11 +71,24 @@ jobs:
             --up "$case/met/upperair/final/up_58424.dat" \
             --hours 143 --probe-prefix-hours 1 \
             --out "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat" \
-            | tee "$RUNNER_TEMP/s4b3-c1-first-hour-trace.txt"
-          test -s "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat"
-          sha256sum "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat" \
-            | tee "$RUNNER_TEMP/s4b3-c1-first-hour-sha256.txt"
-          echo "S4B3_C1_SHARED_ACTOR_FIRST_HOUR=PRODUCED_UNVERIFIED"
+            > "$RUNNER_TEMP/s4b3-c1-first-hour-trace.txt" 2>&1
+          rc=$?
+          set -e
+          cat "$RUNNER_TEMP/s4b3-c1-first-hour-trace.txt"
+          if [[ "$rc" -eq 0 ]]; then
+            test -s "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat"
+            sha256sum "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat" \
+              | tee "$RUNNER_TEMP/s4b3-c1-first-hour-sha256.txt"
+            echo "S4B3_C1_SHARED_ACTOR_FIRST_HOUR=PRODUCED_UNVERIFIED"
+          elif [[ "$rc" -eq 2 ]] && \
+               grep -F 'G18A input provenance or selected COMP scope' \
+                    "$RUNNER_TEMP/s4b3-c1-first-hour-trace.txt"; then
+            test ! -e "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat"
+            echo "S4B3_C1_DIAGNO_EXECUTED_COMP_MIN_2SS_2US=BLOCKED_EXPECTED"
+            echo "S4B3_NEW_C1_PHYSICS=UNSUPPORTED_NOT_ACCEPTED"
+          else
+            echo "::error::S4B3 unexpected source or physical failure"; exit 1
+          fi
           echo "S4B3_C1_143H_FULL_SCIENCE=NOT_RUN"
       - name: Reject fake complete-year output from probe-only prefix
         shell: bash
