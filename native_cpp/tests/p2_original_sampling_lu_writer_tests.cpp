@@ -36,6 +36,33 @@ int main() {
           "D11_F6_3_REAL4_FORMAT");
   require(result.find("Missing")!=std::string::npos,
           "D11_MISSING_FLAG");
+  // Original MAKEGEO uses list-directed READ of i,j plus 38 floating
+  // fields. A terminal "0.000." is not a valid Fortran real and previously
+  // failed at numeric item 40 despite passing native C++ token extraction.
+  // Assert the *lexical* original LU.DAT contract, including missing rows.
+  {
+    std::istringstream rows(result);
+    std::string line;
+    for(int i=0;i<11;++i)require(bool(std::getline(rows,line)),
+                                  "D11_EXPECTED_11_LU_HEADER_LINES");
+    for(int j=0;j<2;++j) {
+      require(bool(std::getline(rows,line)),"D11_LU_ROW_MISSING");
+      std::istringstream row(line);
+      std::vector<std::string> tokens;
+      std::string word;
+      while(row>>word)tokens.push_back(word);
+      require(tokens.size()==41,
+              "D11_FORTRAN_LIST_DIRECTED_2_INDICES_38_REAL_1_MARKER");
+      require(tokens[40]==(j==0?".":"Missing"),
+              "D11_MISSING_MARKER_MUST_BE_SEPARATE_TOKEN");
+      for(int k=2;k<40;++k) {
+        std::size_t consumed=0;
+        (void)std::stod(tokens[static_cast<std::size_t>(k)],&consumed);
+        require(consumed==tokens[static_cast<std::size_t>(k)].size(),
+                "D11_FORTRAN_REAL_TOKEN_MALFORMED");
+      }
+    }
+  }
   // #160 C1: inland mode may only change UTM header, site comment and
   // grid. The existing 52N Wolsong default must remain byte-equivalent.
   require(result.find("  52N   ")!=std::string::npos &&
