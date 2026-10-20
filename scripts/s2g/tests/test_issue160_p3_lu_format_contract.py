@@ -41,7 +41,7 @@ class FormatGate(unittest.TestCase):
         elif bad=="wrong_zone":
             full=full.replace("52N","50N")
         elif bad=="truncated":
-            full=full[:-20]
+            full=full[:-40]  # remove required F6.3 fields, not just trailing A20 spaces
         return full
     def parse(self,kind):
         with tempfile.TemporaryDirectory() as d:
