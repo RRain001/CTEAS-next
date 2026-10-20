@@ -18,6 +18,7 @@ C2_WORKFLOW = ".github/workflows/science-c2-143h.yml"
 C1_DRIVER = "native_cpp/modules/p6_calmet/src/native_hourly_driver_main.cpp"
 C1_WIND = "native_cpp/modules/p6_calmet/src/realcase_wind_field_main.cpp"
 C2_RUNNER = "native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp"
+C2_SELECTED = "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp"
 C2_DIAGNO = "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
 C2_COMP = "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
 TERRAIN = "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_terrain_hour.hpp"
@@ -39,11 +40,11 @@ ANCHORS = (
     ("c2_fortran_native_45field", C2_WORKFLOW, r'--out "\$RUNNER_TEMP/p7-c2/original-vs-native-45field\.json"'),
     ("c2_fixed_two_two", C2_RUNNER, r'source\.stations\.surface\.size\(\)!=2\|\|source\.stations\.upper\.size\(\)!=2'),
     ("c2_fixed_grid", C2_RUNNER, r'source\.grid\.nx!=12\|\|source\.grid\.ny!=12'),
-    ("c2_g14_17stages", C2_RUNNER, r'if\(cursor_<12\) diagno_\.run_selected'),
-    ("c2_g14_comp", C2_RUNNER, r'else if\(cursor_<16\) comp_\.run_selected'),
-    ("c2_p6f", C2_RUNNER, r'const auto records=p6g::g18c5_selected_p6f_fields'),
-    ("c2_g26_diag", C2_RUNNER, r'p6g::G26SourceFileBackedG14DiagnoBridge diagno_'),
-    ("c2_g26b_comp", C2_RUNNER, r'p6g::G26BSourceFileBackedCompBridge comp_'),
+    ("c2_g14_17stages", C2_SELECTED, r'if\(cursor_<12\) diagno_\.run_selected'),
+    ("c2_g14_comp", C2_SELECTED, r'else if\(cursor_<16\) comp_\.run_selected'),
+    ("c2_p6f", C2_SELECTED, r'const auto records=p6g::g18c5_selected_p6f_fields'),
+    ("c2_g26_diag", C2_SELECTED, r'p6g::G26SourceFileBackedG14DiagnoBridge diagno_'),
+    ("c2_g26b_comp", C2_SELECTED, r'p6g::G26BSourceFileBackedCompBridge comp_'),
     ("c2_diag_production_disabled", C2_DIAGNO, r'return \{p6::NativeHourSource::Unknown,false\};'),
     ("c2_selected_wind1", C2_DIAGNO, r'g20_file_backed_source_wind1_profiles\(frame,true\)'),
     ("c2_selected_fradj", C2_DIAGNO, r'g21_selected_original_file_fradj\('),
