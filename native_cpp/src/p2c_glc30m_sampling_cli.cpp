@@ -2,8 +2,11 @@
 #include "cteas/geo/p2c_glc30m_sampling.hpp"
 #include "cteas/geo/ctgproc_original_sampling_lu_writer.hpp"
 #include "cteas/geo/glcc_raw_fractions.hpp"
+#include "cteas/geo/grid_origin.hpp"
 #include <openssl/evp.h>
 #include <array>
+#include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -37,6 +40,21 @@ std::string hash(const fs::path& p){
   for(unsigned i=0;i<32;++i){out+=hex[digest[i]>>4];out+=hex[digest[i]&15];}
   return out;
 }
+std::size_t positive_int(const char* raw,const char* label) {
+  const std::string s=raw;
+  std::size_t v=0;
+  const auto [end,ec]=std::from_chars(s.data(),s.data()+s.size(),v);
+  need(ec==std::errc{}&&end==s.data()+s.size()&&v>0,label);
+  return v;
+}
+double spacing_metres(const char* raw) {
+  const std::string s=raw;
+  std::size_t consumed=0;
+  const double d=std::stod(s,&consumed)*1000.;
+  need(consumed==s.size()&&std::isfinite(d)&&d>=1.&&d<=50000.&&
+       std::abs(d-std::round(d))<1e-7,"P2C_DYNAMIC_SPACING_MUST_BE_INTEGER_METRES");
+  return d;
+}
 void source(const fs::path& p,const std::string& expected) {
   need(!fs::is_symlink(fs::symlink_status(p))&&fs::is_regular_file(p),
        "P2C_INPUT_SYMLINK_OR_MISSING");
@@ -47,41 +65,65 @@ void source(const fs::path& p,const std::string& expected) {
 }
 }
 int main(int argc,char** argv){
-  if(argc!=7){
-    std::cerr<<"usage: cteas_p2c_glc30m_sampling inland|wolsong "
-                 "SOURCE_2022_30M.TIF SOURCE_SHA256 USER_POLICY_JSON "
-                 "ORIGINAL_FULL_L1_BLN_OR_DASH NEW_OUTPUT_DIRECTORY\n";
+  const bool dynamic=argc==15&&std::string(argv[1])=="--case-grid";
+  if(argc!=7&&!dynamic){
+    std::cerr<<"usage (frozen): cteas_p2c_glc30m_sampling inland|wolsong SOURCE_30M.TIF SOURCE_SHA256 USER_POLICY_JSON ORIGINAL_FULL_L1_BLN_OR_DASH NEW_OUTPUT_DIRECTORY\n"
+                "usage (case): cteas_p2c_glc30m_sampling --case-grid inland|coastal SOURCE_30M.TIF SOURCE_SHA256 USER_POLICY_JSON UTM_EPSG XREFKM YREFKM NX NY DGRIDKM BLN_OR_DASH BLN_SHA_OR_DASH NEW_OUTPUT_DIRECTORY\n";
     return 2;
   }
   try{
-    const std::string site=argv[1];
-    need(site=="inland"||site=="wolsong","P2C_ONLY_FROZEN_TWO_SITES");
-    const fs::path tif=argv[2],policy_file=argv[4],output=argv[6];
-    const std::string data_sha=argv[3],bln_name=argv[5];
-    const bool coastal=site=="wolsong";
+    const std::string site=dynamic?argv[2]:argv[1];
+    need(dynamic?(site=="inland"||site=="coastal"):
+                 (site=="inland"||site=="wolsong"),
+         "P2C_UNSUPPORTED_SITE_OR_MODE");
+    const fs::path tif=dynamic?argv[3]:argv[2];
+    const fs::path policy_file=dynamic?argv[5]:argv[4];
+    const fs::path output=dynamic?argv[14]:argv[6];
+    const std::string data_sha=dynamic?argv[4]:argv[3];
+    const std::string bln_name=dynamic?argv[12]:argv[5];
+    const bool coastal=site=="wolsong"||site=="coastal";
+    const std::string bln_sha=dynamic?argv[13]:
+       (coastal?std::string(kOriginalBlnSha):std::string("-"));
     need(!fs::exists(output)&&!fs::is_symlink(fs::symlink_status(output)),
          "P2C_OUTPUT_ALREADY_EXISTS");
     source(tif,data_sha);
     source(policy_file,kP2cMappingPolicySha256);
     const auto policy=load_p2c_glc30m_policy(policy_file);
-    const P2Grid grid=coastal ?
-        P2Grid{533215.,3942629.,100.,200,200} :
-        P2Grid{503385.,3523769.,100.,200,200};
-    const int epsg=coastal?32652:32650;
+    const int epsg=dynamic?static_cast<int>(positive_int(argv[6],"P2C_BAD_EPSG")):
+                           (coastal?32652:32650);
+    need((epsg>=32601&&epsg<=32660)||(epsg>=32701&&epsg<=32760),
+         "P2C_WGS84_UTM_ONLY");
+    const P2Grid grid=dynamic?
+        P2Grid{three_decimal_origin_km(argv[7])*1000.,
+               three_decimal_origin_km(argv[8])*1000.,
+               spacing_metres(argv[11]),
+               positive_int(argv[9],"P2C_BAD_NX"),
+               positive_int(argv[10],"P2C_BAD_NY")} :
+        (coastal?P2Grid{533215.,3942629.,100.,200,200}:
+                 P2Grid{503385.,3523769.,100.,200,200});
+    need(grid.nx>0&&grid.ny>0&&grid.nx<=250000/grid.ny,
+         "P2C_CURRENT_250K_CELL_BUDGET");
     std::unique_ptr<OriginalBlnIptypeR4> coastline;
     if(coastal){
-      need(data_sha==kWolsongSha,"P2C_WOLSONG_FROZEN_TIFF_SHA_DRIFT");
-      source(fs::path(bln_name),kOriginalBlnSha);
+      if(!dynamic)need(data_sha==kWolsongSha,
+                       "P2C_WOLSONG_FROZEN_TIFF_SHA_DRIFT");
+      source(fs::path(bln_name),dynamic?bln_sha:std::string(kOriginalBlnSha));
       coastline=std::make_unique<OriginalBlnIptypeR4>(
         OriginalBlnIptypeR4::load_coastrd_bln(
-          fs::path(bln_name),533.215f,3942.629f,553.215f,3962.629f));
+          fs::path(bln_name),
+          static_cast<float>(grid.x0_m/1000.),
+          static_cast<float>(grid.y0_m/1000.),
+          static_cast<float>((grid.x0_m+grid.dx_m*grid.nx)/1000.),
+          static_cast<float>((grid.y0_m+grid.dx_m*grid.ny)/1000.)));
     } else {
-      need(bln_name=="-","P2C_HEFEI_LCOAST_FALSE_REQUIRES_NO_BLN");
+      need(bln_name=="-"&&bln_sha=="-",
+           "P2C_INLAND_FORBIDS_COAST_BLN_OR_SHA");
     }
     const auto counted=sample_p2c_glc30m(
          tif,grid,epsg,policy,coastline.get(),10);
-    need(counted.hits.counts.size()==1520000&&counted.hits.samples.size()==40000,
-         "P2C_GRID_SHAPE_NOT_FROZEN");
+    const auto cells=grid.nx*grid.ny;
+    need(counted.hits.counts.size()==cells*38&&counted.hits.samples.size()==cells,
+         "P2C_GRID_SHAPE_INCONSISTENT");
     fs::create_directory(output);
     try{
       std::ofstream lu(output/"lu.dat",std::ios::binary);
@@ -89,10 +131,11 @@ int main(int argc,char** argv){
       const auto stats=write_original_sampling_lu(
          lu,counted.hits,false,epsg%100,
          "Produced by CTEAS P2-C 2022 30m ORIGINAL_STYLE_POINT_HITS",
-         "User-selected frozen 35-class policy; independent science NOT_RUN");
+         "User-selected frozen 35-class policy; independent science NOT_RUN",
+         epsg>=32701?'S':'N');
       lu.close();need(bool(lu),"P2C_LU_CLOSE");
-      need(stats.fraction_fields==1520000&&stats.total_hits==counted.hits.included&&
-           stats.nonempty_cells+stats.missing_cells==40000,
+      need(stats.fraction_fields==cells*38&&stats.total_hits==counted.hits.included&&
+           stats.nonempty_cells+stats.missing_cells==cells,
            "P2C_LU_SAMPLE_CONSERVATION");
       std::ofstream csv(output/"hits.csv",std::ios::binary);
       need(bool(csv),"P2C_HITS_OPEN");
@@ -121,13 +164,13 @@ int main(int argc,char** argv){
         <<"  \"mapping_policy_sha256\": \""<<kP2cMappingPolicySha256<<"\",\n"
         <<"  \"data_sha256\": \""<<data_sha<<"\",\n"
         <<"  \"full_l1_original_bln_sha256\": \""
-        <<(coastal?kOriginalBlnSha:"NOT_APPLICABLE_LCOAST_FALSE")<<"\",\n"
+        <<(coastal?bln_sha:"NOT_APPLICABLE_LCOAST_FALSE")<<"\",\n"
         <<"  \"hits_csv_sha256\": \""<<hash(output/"hits.csv")<<"\",\n"
         <<"  \"lu_dat_sha256\": \""<<hash(output/"lu.dat")<<"\",\n"
-        <<"  \"utm_epsg\": "<<epsg<<", \"nx\": 200, \"ny\": 200,\n"
+        <<"  \"utm_epsg\": "<<epsg<<", \"nx\": "<<grid.nx<<", \"ny\": "<<grid.ny<<",\n"
         <<"  \"xrefkm\": \""<<std::fixed<<std::setprecision(3)<<grid.x0_m/1000.
         <<"\", \"yrefkm\": \""<<grid.y0_m/1000.<<"\",\n"
-        <<"  \"dgridkm\": 0.100, \"classes\": 38, \"mesh\": 10,\n"
+        <<"  \"dgridkm\": "<<grid.dx_m/1000.<<", \"classes\": 38, \"mesh\": 10,\n"
         <<"  \"lcoast\": "<<(coastal?"true":"false")
         <<", \"lmarswap\": "<<(coastal?"true":"false")
         <<", \"lmarfill\": false, \"iocean\": 55,\n"
