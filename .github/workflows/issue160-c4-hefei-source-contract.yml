@@ -1,0 +1,55 @@
+name: Issue160 C4 Hefei 20km GLC source acquisition offline contract
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/issue160_hefei20km_glc_acquire.py
+      - .github/workflows/issue160-c4-hefei-source-contract.yml
+permissions:
+  contents: read
+jobs:
+  offline-source-contract:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install offline Python geometry libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends python3-numpy python3-pyproj python3-rasterio
+      - name: Syntax, exact center and 20km grid geometry
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m py_compile scripts/s2g/issue160_hefei20km_glc_acquire.py
+          /usr/bin/python3 -m scripts.s2g.issue160_hefei20km_glc_acquire geometry
+          /usr/bin/python3 - <<'PY'
+          from scripts.s2g.issue160_hefei20km_glc_acquire import geometry
+          g=geometry()
+          assert g['utm_epsg']==32650
+          assert (g['xrefkm'],g['yrefkm'])==('503.385','3523.769')
+          assert g['model_bounds_utm_m']==[503385.0,3523769.0,523385.0,3543769.0]
+          assert len(g['buffer_corners_wgs84'])==5
+          assert abs(g['center_offset_east_m'])<=.5
+          assert abs(g['center_offset_north_m'])<=.5
+          print('P2C_HEFEI20KM_GEOMETRY=PASS_OFFLINE_ONLY')
+          PY
+      - name: Old five-km data must fail as false 20km evidence
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          from pathlib import Path
+          from scripts.s2g.issue160_hefei20km_glc_acquire import geometry,inspect
+          old=Path('data/landcover/glc_fcs30d/v1_2022/hefei/hefei_2022_30m.tif')
+          try:
+              inspect(old,geometry())
+          except ValueError as e:
+              assert 'FULL_20KM_PLUS_BUFFER_COVERAGE' in str(e)
+          else:
+              raise SystemExit('P2C_WRONGLY_ADMITTED_5KM_AS_20KM')
+          print('P2C_HEFEI20KM_5KM_NEGATIVE=PASS')
+          PY
+          echo 'GEE_FULL_20KM_ACTUAL_2022_SOURCE=NOT_ACQUIRED'
+          echo 'P2C_MODERN_HEFEI_ORIGINAL_STYLE_30M_HITS=NOT_RUN'
