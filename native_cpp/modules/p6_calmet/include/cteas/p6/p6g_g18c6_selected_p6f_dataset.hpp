@@ -34,14 +34,13 @@ inline cteas::p6f::Calmet21File g18c6_selected_one_hour_dataset(
        frame.input.end!=selected.end||
        frame.surface.end!=selected.end||
        frame.surface.end-frame.surface.start!=hours{1}||
-       ((frame.stations.surface.size()<2||frame.stations.surface.size()>6||
-         frame.stations.upper.size()<2||frame.stations.upper.size()>6)&&
+       ((frame.stations.surface.size()<2||frame.stations.upper.size()<2)&&
         !((allow_one_one_source_audit&&frame.stations.surface.size()==1&&
            frame.stations.upper.size()==1)||
           (allow_asymmetric_source_audit&&
            ((frame.stations.surface.size()==1&&frame.stations.upper.size()>=2&&
-             frame.stations.upper.size()<=4)||
-            (frame.stations.surface.size()>=2&&frame.stations.surface.size()<=4&&
+             frame.stations.upper.size()>=2)||
+            (frame.stations.surface.size()>=2&&frame.stations.surface.size()>=2&&
              frame.stations.upper.size()==1)))))||
        frame.grid.nlu<=0||frame.grid.nlu>200||
        frame.grid.valid_categories.size()!=

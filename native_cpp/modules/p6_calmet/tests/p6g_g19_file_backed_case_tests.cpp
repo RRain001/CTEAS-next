@@ -129,11 +129,12 @@ static void upper_sounding(std::ostream& out,int station,sys_seconds at){
            <<"/"<<std::setw(5)<<temp<<"/"<<std::setw(3)<<wd
            <<"/"<<std::setw(3)<<ws;
     };
-    if(station==58427) {
-        // Fourth original-format source station has distinct observed winds.
-        // Never duplicate another station's synthetic sounding to inflate NU.
-        row(1000,120,280.f,125,62);
-        row(500,5500,259.8f,225,38);
+    if(station>=58427&&station<=58431) {
+        // US4+ have distinct controlled wind levels; source ID offset
+        // variant is separately checked by independent original Fortran.
+        const int ordinal=station-58427;
+        row(1000,120,280.f,125+ordinal*11,62-ordinal*3);
+        row(500,5500,259.8f,225+ordinal*8,38+ordinal*2);
     } else {
         row(1000,120,280.f,90,50);
         row(500,5500,259.8f,180,45);
@@ -299,8 +300,13 @@ static void source_cardinality_surface_file(
         for(int i=0;i<nss;++i) {
             // Distinct fourth-station measurements expose accidental
             // positional aliasing while retaining the existing 1..3 baseline.
-            if(i==3)out<<"6.0 215.0 722 5 285 70 1008.1 0\n";
-            else out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
+            if(i>=3) {
+                // SS4+ are not duplicated: each has a unique hourly
+                // wind speed and direction, including former SS4 baseline.
+                out<<std::fixed<<std::setprecision(1)
+                   <<6.0+0.5*(i-3)<<" "<<215.0+12.0*(i-3)
+                   <<" 722 5 285 70 1008.1 0\n";
+            } else out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
         }
     }
 }
@@ -468,9 +474,9 @@ int main(int argc,char** argv){
                 else if(arg=="--stations"&&!stations_option&&i+2<argc) {
                     export_ss=std::stoi(argv[++i]);
                     export_us=std::stoi(argv[++i]);
-                    if(export_ss<1||export_ss>4||export_us<1||export_us>4)
+                    if(export_ss<1||export_ss>8||export_us<1||export_us>8)
                         throw std::invalid_argument(
-                            "S4C science exporter bounded 1..4 independent SS/US");
+                            "S4C bounded 12x12 original-vendor TEST SOURCE permits 1..8 SS/US");
                     stations_option=true;
                 }
                 else if(arg=="--hours"&&!hours_option&&i+1<argc) {
@@ -486,8 +492,8 @@ int main(int argc,char** argv){
             const bool multi_site_science=
                 (export_ss>=3||export_us>=3||export_id_offset!=0);
             if(multi_site_science) {
-                // Independently sourced G19 test generator: honest 3rd
-                // station has its own site ID, observations and UP file.
+                // Independently sourced original-format synthetic source; every
+                // station has its own ID/position and station-specific data.
                 // This is controlled synthetic input, never actual NOAA.
                 two=source_cardinality_deck(original,export_ss,export_us,export_id_offset);
             }

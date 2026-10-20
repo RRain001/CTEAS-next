@@ -30,13 +30,13 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
                       static_cast<std::size_t>(grid.ny);
     if(!explicitly_test_only||!frame.source_controls||
        grid.hemisphere!='N'||grid.nx<2||grid.ny<2||
-       ns<1||nu<1||ns>4||nu>4||
+       ns<1||nu<1||
        surface.by_station.size()!=ns||in.upper.size()!=nu||
        frame.upper.size()!=nu||surface.end!=in.end||
        surface.end-surface.start!=std::chrono::hours{1}||
        grid.z0_m.size()!=cells||grid.landuse.size()!=cells)
         throw std::invalid_argument(
-            "G20 requires audited original-format source 1/1 1/2 2/1 or 2/2 WIND1");
+            "G20 requires nonempty, independently source-backed SS/US WIND1");
     const auto& readcf=*frame.source_controls;
     if(readcf.iextrp!=-4||readcf.noobs!=0||readcf.iprog!=0)
         throw std::invalid_argument("G20 original IEXTRP WIND1 scope");
@@ -171,7 +171,7 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
     // Station identity is validated against the actual original G19
     // deck and UP file for every station above. A literal 58424/58425
     // check here was fixture-only and incorrectly rejected legal IDs.
-    if(ns<1||ns>4||nu<1||nu>4||
+    if(ns<1||nu<1||
        zface.front()!=0.f||!(zface[1]>0.f))
         throw std::invalid_argument(
             "G32E original G19 synthetic upper profile scope changed");
