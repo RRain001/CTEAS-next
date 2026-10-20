@@ -29,11 +29,14 @@ public:
         else {
             const auto& candidate=comp_.selected_p6f_candidate(frame);
             const auto& heat=comp_.source_comp_heat_for_p6f(frame);
+            const bool single_site_source_audit=
+                frame.stations.surface.size()==1&&frame.stations.upper.size()==1;
             const auto records=p6g::g18c5_selected_p6f_fields(
-                frame,heat,candidate,source_.original_metinp,true);
+                frame,heat,candidate,source_.original_metinp,true,
+                single_site_source_audit);
             const auto dataset=p6g::g18c6_selected_one_hour_dataset(
                 frame,records,p6g::source_setcom_nears(frame.grid,frame.stations),
-                source_.original_metinp,true);
+                source_.original_metinp,true,single_site_source_audit);
             const auto bytes=p6g::g18d1_validate_p6f_precommit(frame,dataset);
             if(bytes.empty()||dataset.hourly.size()!=45)
                 throw std::logic_error("G34B native P6F candidate incomplete");
