@@ -75,6 +75,7 @@ jobs:
         env:
           NS: ${{ matrix.station_counts.ss }}
           NU: ${{ matrix.station_counts.us }}
+          ID_OFFSET: ${{ matrix.station_counts.offset }}
         run: |
           set -euo pipefail
           src="$RUNNER_TEMP/case"
@@ -112,6 +113,7 @@ jobs:
         env:
           NS: ${{ matrix.station_counts.ss }}
           NU: ${{ matrix.station_counts.us }}
+          ID_OFFSET: ${{ matrix.station_counts.offset }}
         run: |
           set -euo pipefail
           test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
@@ -131,6 +133,7 @@ jobs:
         env:
           NS: ${{ matrix.station_counts.ss }}
           NU: ${{ matrix.station_counts.us }}
+          ID_OFFSET: ${{ matrix.station_counts.offset }}
         run: |
           set -euo pipefail
           cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/s4c-p6e" -DCMAKE_BUILD_TYPE=Release
