@@ -39,8 +39,10 @@ inline cteas::p6f::Calmet21File g18c6_selected_one_hour_dataset(
         !((allow_one_one_source_audit&&frame.stations.surface.size()==1&&
            frame.stations.upper.size()==1)||
           (allow_asymmetric_source_audit&&
-           ((frame.stations.surface.size()==1&&frame.stations.upper.size()==2)||
-            (frame.stations.surface.size()==2&&frame.stations.upper.size()==1)))))||
+           ((frame.stations.surface.size()==1&&frame.stations.upper.size()>=2&&
+             frame.stations.upper.size()<=3)||
+            (frame.stations.surface.size()>=2&&frame.stations.surface.size()<=3&&
+             frame.stations.upper.size()==1)))))||
        frame.grid.nlu<=0||frame.grid.nlu>200||
        frame.grid.valid_categories.size()!=
            static_cast<std::size_t>(frame.grid.nlu)||
