@@ -259,6 +259,31 @@ else()
                          -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
 endif()
 
+# #160 C4: 30m modern source-pixel/GLAZAS integer HITS, separate from
+# historical GLCC and P2-B EXACT_AREA_V1 and test-only GEOS surrogate.
+add_library(cteas_p2c_glc30m_sampling STATIC
+            src/geo/p2c_glc30m_sampling.cpp)
+target_include_directories(cteas_p2c_glc30m_sampling
+                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(cteas_p2c_glc30m_sampling PUBLIC
+                      cteas_p2_original_sampling_recount GDAL::GDAL)
+if(MSVC)
+  target_compile_options(cteas_p2c_glc30m_sampling PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2c_glc30m_sampling PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_executable(cteas_p2c_glc30m_sampling
+               src/p2c_glc30m_sampling_cli.cpp)
+target_link_libraries(cteas_p2c_glc30m_sampling PRIVATE
+                      cteas_p2c_glc30m_sampling OpenSSL::Crypto)
+if(MSVC)
+  target_compile_options(cteas_p2c_glc30m_sampling PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2c_glc30m_sampling PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+
 # Issue #53 D3: SHA-bound historical GLCC 24->38 LU.DAT serializer only.
 # The GLC_FCS30D 35->38 crosswalk remains scientifically unapproved.
 add_executable(cteas_p2_glcc_lu_dat src/p2_glcc_lu_dat_cli.cpp)
