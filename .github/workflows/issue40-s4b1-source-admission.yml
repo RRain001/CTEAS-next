@@ -1,0 +1,40 @@
+name: "Issue40 S4B1 unified source admission software gate"
+on:
+  pull_request:
+    paths:
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b1_admission.hpp"
+      - "native_cpp/modules/p6_calmet/src/p6g_s4b1_source_admission_main.cpp"
+      - "native_cpp/modules/p6_calmet/tests/p6g_s4b1_admission_tests.cpp"
+      - "native_cpp/modules/p6_calmet/CMakeLists.txt"
+      - "docs/plans/ISSUE40_S4B1_UNIFIED_NATIVE_ADMISSION_20261020.md"
+      - ".github/workflows/issue40-s4b1-source-admission.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-admission-software:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout audited PR code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Configure isolated P6 C++20 contract build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-s4b1" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build "$RUNNER_TEMP/p6-s4b1" --parallel 2 --target \
+            cteas_p6g_s4b1_admission_tests cteas_p6g_s4b1_source_admission
+      - name: Verify independent station cardinality and production rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --test-dir "$RUNNER_TEMP/p6-s4b1" --output-on-failure \
+            -R "^p6g_s4b1_"
+          "$RUNNER_TEMP/p6-s4b1/cteas_p6g_s4b1_admission_tests"
+          echo "S4B1_SOURCE_ADMISSION_TESTS=PASS_SOFTWARE_ONLY"
+          echo "S4B1_FULL_G14_DIAGNO_COMP_P6F=NOT_IMPLEMENTED"
+          echo "S4B1_C1_C2_SHARED_RUNNER_NUMERIC=NOT_RUN"
+          echo "S4B1_NEW_SITE_ORIGINAL_45FIELD=NOT_RUN"
