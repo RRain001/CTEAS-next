@@ -22,6 +22,9 @@ on:
       - docs/plans/ISSUE40_S4_P6B1_REAL_1SS1US_WIND1_20261020.md
       - native_cpp/modules/p6_calmet/reference/compare_g20_real_huoshan_1ss1us_original_wind1.py
       - docs/plans/ISSUE40_S4_P6B1_ORIGINAL_VENDOR_180K_20261020.md
+      - native_cpp/modules/p6_calmet/src/p6g_g21_source_fradj_probe_main.cpp
+      - native_cpp/modules/p6_calmet/reference/compare_g21_real_huoshan_original_fradj.py
+      - docs/plans/ISSUE40_S4_P6B2_G21_REAL_FRADJ_180K_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -657,6 +660,58 @@ jobs:
           assert j["original_full_CALMET_45_fields"] is False
           print("S4_P6B1_ORIGINAL_VENDOR_180000_TRUE_NOAA_FIRST_HOUR_UV=PASS_KERNEL_SCOPED_NOT_45_FIELDS")
           PY
+      - name: S4 P6-B2 compile existing native G21 FRADJ source diagnostic
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/s3-g19" --parallel 2 --target cteas_p6g_g21_source_fradj_probe
+      - name: S4 P6-B2 true NOAA Huoshan G21 first-hour FRADJ original vendor 180k numerical gate
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import hashlib,json,os,subprocess
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
+          receipt=json.loads((root/"evidence/s4-p6b1-original-vendor-wind1-comparison.json").read_text())
+          assert receipt["status"]=="P6B1_REAL_HUOSHAN_ORIGINAL_WIND1_KERNEL_PASS_SCOPED"
+          assert receipt["compared_uv_fields"]==180000
+          exe=Path(os.environ["RUNNER_TEMP"])/"s3-g19/cteas_p6g_g21_source_fradj_probe"
+          args=[str(exe),str(root/"run/met/met.inp"),
+                str(root/"geo/makegeo/geo.dat"),
+                str(root/"met/surface/final/surf.dat"),
+                str(root/"met/upperair/final/up_58424.dat"),
+                "--output",str(root/"evidence/s4-p6b2-native-fradj.csv"),
+                "--source-stage",str(root/"evidence/s4-p6b2-fradj-vendor-input.dat")]
+          r=subprocess.run(args+["--real-one-ss-one-us-fradj-test-only"],
+                           capture_output=True,text=True,timeout=180)
+          if r.returncode:raise RuntimeError("authentic G21 rejected: "+r.stderr[-1400:])
+          assert "PASS_P6G_G21_REAL_1SS1US_FRADJ_TEST_ONLY" in r.stdout
+          assert "UV_VALUES=180000" in r.stdout
+          assert "HOURLY_COMMITTED=0" in r.stdout
+          negative=subprocess.run(args,capture_output=True,text=True,timeout=40)
+          assert negative.returncode!=0
+          assert "G21/G22 requires" in negative.stderr
+          assert (root/"evidence/s4-p6b2-native-fradj.csv").is_file()
+          assert (root/"evidence/s4-p6b2-fradj-vendor-input.dat").is_file()
+          print("S4_P6B2_REAL_HUOSHAN_NATIVE_G21_FRADJ_TEST_ONLY=PRODUCED_UNVERIFIED")
+          PY
+          /usr/bin/python3 native_cpp/modules/p6_calmet/reference/compare_g21_real_huoshan_original_fradj.py \
+            --vendor-calmet-for "$PWD/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --source-stage "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2-fradj-vendor-input.dat" \
+            --candidate "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2-native-fradj.csv" \
+            --out "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2-original-vendor-fradj-comparison.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          f=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022/evidence/s4-p6b2-original-vendor-fradj-comparison.json"
+          r=json.loads(f.read_text())
+          assert r["status"]=="S4_P6B2_REAL_HUOSHAN_ORIGINAL_FRADJ_KERNEL_PASS_SCOPED"
+          assert r["compared_uv_values"]==180000 and r["failures_over_tolerance"]==0
+          assert r["original_full_CALMET_45_fields"] is False
+          assert r["S4_P6_NEW_SITE_SCIENCE"]=="NOT_ACCEPTED"
+          print("S4_P6B2_ORIGINAL_VENDOR_REAL_HUOSHAN_180000_FRADJ=PASS_KERNEL_SCOPED")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -677,6 +732,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b7-alt-clock-negative-evidence.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-real-wind1-evidence.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-original-vendor-wind1-comparison.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2-original-vendor-fradj-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json

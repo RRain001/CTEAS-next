@@ -215,6 +215,40 @@ static void verify(const p6g::G17B4SurfaceControls& controls,
     rejects([&]{(void)invalid.make();},
             "G17B4 invented missing multi-site TEMP2D observations");
 }
+// P6-B2 scoped single real-station SURFVAR admission: no fake second
+// source, and no weakening of observed temperature or water rejection.
+static void verify_single_surface_source(
+    const p6g::G17B4SurfaceControls& controls,sys_seconds begin) {
+    Input f(controls,begin);
+    f.station_set.surface.resize(1);
+    f.series.station_ids.resize(1);
+    f.series.hourly.front().by_station.resize(1);
+    auto selected=f.make();
+    const auto raw=selected.raw_observed_temperature();
+    check(raw.size()==144&&
+          std::all_of(raw.begin(),raw.end(),[](float t){return t==281.f;}),
+          "G17B4 true one-observed-SS SURFVAR not exactly station temperature");
+    auto first_u=winds(0,false),first_v=winds(1,false);
+    auto second_u=winds(0,true),second_v=winds(1,true);
+    selected.after_wind1_before_fradj(f.series.end,first_u,first_v);
+    selected.after_fradj_before_heatfx(f.series.end,second_u,second_v);
+    check(selected.result().complete&&
+          selected.first_temperature().size()==144&&
+          selected.final_temperature().size()==144,
+          "G17B4 single-observed-SS selected IAVET twice could not complete");
+    auto invalid=f;
+    invalid.station_set.surface.clear();
+    rejects([&]{(void)invalid.make();},
+            "G17B4 admitted zero original surface stations");
+    invalid=f;
+    invalid.series.hourly.front().by_station[0].temperature_valid=false;
+    rejects([&]{(void)invalid.make();},
+            "G17B4 invented missing one-SS observed temperature");
+    invalid=f;
+    invalid.grid.landuse[0]=50;
+    rejects([&]{(void)invalid.make();},
+            "G17B4 one-SS improperly admitted unsupported land/water physics");
+}
 static void verify_source_staged_iavet(
     const p6g::G17B4SurfaceControls& controls,
     const p6g::OriginalWindControls& wind,
@@ -2277,6 +2311,7 @@ int main(int argc,char** argv){
         verify_g18b_asynchronous_upper_turnover(deck);
         verify_g18b3_source_iupt_choice(deck);
         verify(control,begin+hours{11});
+        verify_single_surface_source(control,begin+hours{12});
         // Accept original Fortran freeform control spacing, not a
         // hardcoded literal (e.g. source uses ! IAVET =   1 !).
         const std::regex control_pattern(
