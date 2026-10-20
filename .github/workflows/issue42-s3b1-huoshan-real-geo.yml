@@ -17,6 +17,9 @@ on:
       - docs/plans/ISSUE42_S3_B6_HUOSHAN_REAL_G19_SOURCE_20261020.md
       - native_cpp/orchestration/s3_huoshan_g19_negative_gates.py
       - docs/plans/ISSUE42_S3_B7_ALTERNATE_REAL_NOAA_AND_NEGATIVE_20261020.md
+      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp
+      - native_cpp/modules/p6_calmet/src/p6g_g20_source_wind1_probe_main.cpp
+      - docs/plans/ISSUE40_S4_P6B1_REAL_1SS1US_WIND1_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -538,6 +541,98 @@ jobs:
           assert report["original_source_recovery_after_mutation"]=="PASS"
           print("S3_B7_ALT_REAL_NOAA_UTC_3_NEGATIVES_NATIVE_G19=PASS_SCOPED")
           PY
+      - name: S4 P6-B1 compile existing G20 first-hour source WIND1 test-only native producer
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/s3-g19" --parallel 2 --target cteas_p6g_g20_source_wind1_probe
+      - name: S4 P6-B1 run genuine Huoshan first-hour 1SS1US WIND1 without MET or original parity claim
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import csv,hashlib,json,math,os,subprocess
+          from pathlib import Path
+          case=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
+          proof=json.loads((case/"evidence/s3-b6-g19-source-only.json").read_text())
+          assert proof["status"]=="S3_B6_HUOSHAN_GENUINE_FIVE_SOURCE_NATIVE_G19_PARSED_SCOPED"
+          assert proof["p4_source_stations"]==["CHM00058424"]
+          assert proof["p5_source_stations"]==["58321099999"]
+          roles=proof["actual_native_source_roles_sha256"]
+          def hash_file(p):
+            h=hashlib.sha256()
+            with p.open("rb") as f:
+              for chunk in iter(lambda:f.read(1<<20),b""): h.update(chunk)
+            return h.hexdigest()
+          for role in roles.values():
+            actual=case/role["path"]
+            assert actual.is_file() and not actual.is_symlink()
+            assert hash_file(actual)==role["sha256"]
+          exe=Path(os.environ["RUNNER_TEMP"])/"s3-g19/cteas_p6g_g20_source_wind1_probe"
+          args=[str(exe),
+                str(case/"run/met/met.inp"),
+                str(case/"geo/makegeo/geo.dat"),
+                str(case/"met/surface/final/surf.dat"),
+                str(case/"met/upperair/final/up_58424.dat")]
+          out=case/"evidence/s4-p6b1-real-1ss1us-first-hour-wind1.csv"
+          st=case/"evidence/s4-p6b1-original-wind1-station-profiles.txt"
+          ok=subprocess.run(args+["--output",str(out),
+                                  "--wind1-profiles",str(st),
+                                  "--real-one-ss-one-us-test-only"],
+                            text=True,capture_output=True,timeout=120)
+          if ok.returncode:
+            raise RuntimeError("actual G20 WIND1 source rejected "+ok.stderr[-1200:])
+          assert "PASS_P6G_G20_REAL_1SS1US_TEST_ONLY_NATIVE_WIND1" in ok.stdout
+          assert "G20_REAL_1SS1US_ORIGINAL_WIND1_PARITY=NOT_EVALUATED" in ok.stdout
+          reject=case/"evidence/s4-p6b1-improperly-unflagged.csv"
+          negative=subprocess.run(args+["--output",str(reject)],
+                                  text=True,capture_output=True,timeout=120)
+          assert negative.returncode!=0 and not reject.exists()
+          assert out.is_file() and st.is_file()
+          with out.open(newline="") as f:
+            rows=csv.DictReader(f)
+            count=0
+            mins=[float("inf")]*2
+            maxs=[-float("inf")]*2
+            nonzero=0
+            hours=set()
+            for row in rows:
+              count+=1
+              vals=[float(row["u_mps_real4"]),float(row["v_mps_real4"])]
+              assert all(math.isfinite(v) for v in vals)
+              for j,v in enumerate(vals):
+                mins[j]=min(mins[j],v)
+                maxs[j]=max(maxs[j],v)
+              nonzero+=int(any(abs(v)>1e-6 for v in vals))
+              hours.add(row["hour_end_utc_seconds"])
+            assert count==100*100*9 and len(hours)==1 and nonzero>0
+          certificate={
+            "status":"S4_P6B1_REAL_HUOSHAN_1SS1US_FIRST_HOUR_NATIVE_WIND1_PRODUCED_UNVERIFIED",
+            "selected_utc":"2022-06-01T02:00:00Z",
+            "nx":100,"ny":100,"nz":9,"rows":count,
+            "nonzero_wind_cells":nonzero,
+            "component_min_max":[[mins[j],maxs[j]] for j in range(2)],
+            "ordered_surface_station":["58321099999"],
+            "ordered_upper_station":["CHM00058424"],
+            "case_yaml_sha256":proof["case_yaml_sha256"],
+            "grid_cmn_sha256":proof["grid_cmn_sha256"],
+            "research_time_sha256":proof["research_time_sha256"],
+            "g19_native_source_receipt_sha256":hash_file(case/"evidence/s3-b6-g19-source-only.json"),
+            "wind1_csv_sha256":hash_file(out),
+            "station_profiles_sha256":hash_file(st),
+            "g20_binary_sha256":hash_file(exe),
+            "unflagged_real_1ss1us_rejected":True,
+            "original_fortran_wind1_numeric_parity":"NOT_RUN",
+            "post_DIAGI_INTER2_FRADJ_COMP":"NOT_RUN",
+            "P6_45_FIELD_CALMET_MET_DAT":"NOT_RUN",
+            "P6_SCIENCE":"NOT_ACCEPTED",
+          }
+          artifact=case/"evidence/s4-p6b1-real-wind1-evidence.json"
+          assert not artifact.exists()
+          artifact.write_text(json.dumps(certificate,indent=2,sort_keys=True)+"\n")
+          print("S4_P6B1_TRUE_NOAA_1SS1US_FIRST_HOUR_WIND1_NONZERO_TEST_ONLY=PRODUCED_UNVERIFIED",
+                "rows=",count,"nonzero=",nonzero)
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -556,6 +651,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b6-g19-source-only.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b7-alt-clock-negative-evidence.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-real-wind1-evidence.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
