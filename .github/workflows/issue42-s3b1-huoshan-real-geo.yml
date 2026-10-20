@@ -691,7 +691,7 @@ jobs:
           assert "HOURLY_COMMITTED=0" in r.stdout
           negative=subprocess.run(args,capture_output=True,text=True,timeout=40)
           assert negative.returncode!=0
-          assert "G21 requires" in negative.stderr
+          assert "G21/G22 requires" in negative.stderr
           assert (root/"evidence/s4-p6b2-native-fradj.csv").is_file()
           assert (root/"evidence/s4-p6b2-fradj-vendor-input.dat").is_file()
           print("S4_P6B2_REAL_HUOSHAN_NATIVE_G21_FRADJ_TEST_ONLY=PRODUCED_UNVERIFIED")
