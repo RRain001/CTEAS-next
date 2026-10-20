@@ -125,7 +125,7 @@ def compare(original:Path,cpp_csv:Path,cpp_geo:Path,report:Path,
     result=dict(
         status="P3_NONHEFEI_ORIGINAL_MAKEGEO_PASS" if problems==0 else
                "P3_NONHEFEI_ORIGINAL_MAKEGEO_NUMERIC_FAIL",
-        source="Original MAKEGEO 3.2 L110401 independently compiled same real Wolsong input",
+        source="Original MAKEGEO 3.2 L110401 independently compiled on the exact case-specific LU/TERREL input",
         native="CTEAS-next selected 38-to-14 no-snow MAKEGEO C++",
         nx=nx,ny=ny,utm_zone=zone,utm_hemisphere=hem,xrefkm=x0,yrefkm=y0,dgridkm=dx,
         values_compared=nx*ny*len(FIELDS),
