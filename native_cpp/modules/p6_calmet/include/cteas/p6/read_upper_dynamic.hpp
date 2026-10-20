@@ -47,7 +47,8 @@ inline std::chrono::sys_seconds upper_utc_ymd(
 }
 inline UpperSeries read_upper_dynamic(
     const std::string& path,int expected_station,
-    std::size_t max_soundings=100000,int max_padding_hours=24) {
+    std::size_t max_soundings=100000,int max_padding_hours=24,
+    bool allow_validated_archive_tail=false) {
     using namespace std::chrono;
     require_upper(expected_station>0&&max_soundings>0&&
                   max_padding_hours>=0&&max_padding_hours<=48,
@@ -122,8 +123,19 @@ inline UpperSeries read_upper_dynamic(
         sounding.end=upper_utc_ymd(ey,em,ed,eh,es);
         require_upper(sounding.start==sounding.end,
                       "UP.DAT only instantaneous soundings supported");
-        require_upper(sounding.end>=out.begin-hours{max_padding_hours}&&
-                      sounding.end<=out.end+hours{max_padding_hours},
+        // READ62 may produce a full annual sounding archive with a shorter
+        // CALMET run header (C1 2022: 143h header, 731 valid 00/12 records
+        // through 2023-01-01). G19 alone opts into a *bounded trailing*
+        // archive: no fabricated data, early records or relaxed ordering.
+        // Full original Fortran numerical compatibility is NOT established.
+        const bool ordinary_window=
+            sounding.end>=out.begin-hours{max_padding_hours}&&
+            sounding.end<=out.end+hours{max_padding_hours};
+        const bool archive_tail=
+            allow_validated_archive_tail &&
+            sounding.end>out.end+hours{max_padding_hours} &&
+            sounding.end<=out.end+hours{24*366};
+        require_upper(ordinary_window||archive_tail,
                       "UP.DAT sounding outside bounded header interval");
         if(!out.soundings.empty())
             require_upper(sounding.end>previous,
@@ -155,7 +167,8 @@ inline UpperSeries read_upper_dynamic(
 inline std::vector<UpperSeries> read_upper_station_set(
     const std::vector<std::string>& files,
     const std::vector<int>& deck_station_ids,
-    std::size_t max_soundings_per_station=100000) {
+    std::size_t max_soundings_per_station=100000,
+    bool allow_validated_archive_tail=false) {
     // No arbitrary station-number ceiling: one original-format UP file per
     // source US; hour and sounding allocation are independently bounded.
     require_upper(!files.empty()&&files.size()==deck_station_ids.size(),
@@ -167,7 +180,8 @@ inline std::vector<UpperSeries> read_upper_station_set(
         require_upper(seen.insert(deck_station_ids[i]).second,
                       "UP.DAT duplicate upper-air station in deck");
         result.push_back(read_upper_dynamic(files[i],deck_station_ids[i],
-                                           max_soundings_per_station));
+                                           max_soundings_per_station,24,
+                                           allow_validated_archive_tail));
     }
     return result;
 }
