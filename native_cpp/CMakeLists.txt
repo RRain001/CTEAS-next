@@ -198,6 +198,31 @@ if(NOT MSVC)
                          -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
 endif()
 
+# Issue #123 D11: strictly opt-in, original-source scoped GLCC+real BLN
+# LU.DAT v2.1 C++ production entrypoint. Not the frozen EXACT_AREA_V1 route.
+add_executable(cteas_p2_original_sampling_wolsong
+               src/p2_original_sampling_wolsong_cli.cpp)
+target_link_libraries(cteas_p2_original_sampling_wolsong PRIVATE
+                      cteas_p2_original_sampling_recount OpenSSL::Crypto)
+if(MSVC)
+  target_compile_options(cteas_p2_original_sampling_wolsong PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_sampling_wolsong PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_executable(cteas_p2_original_sampling_lu_tests
+               tests/p2_original_sampling_lu_writer_tests.cpp)
+target_link_libraries(cteas_p2_original_sampling_lu_tests PRIVATE
+                      cteas_p2_original_sampling_recount)
+if(MSVC)
+  target_compile_options(cteas_p2_original_sampling_lu_tests PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_sampling_lu_tests PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_test(NAME cteas_p2_original_sampling_lu_writer_synthetic
+         COMMAND cteas_p2_original_sampling_lu_tests)
+
 # Issue #53 D3: SHA-bound historical GLCC 24->38 LU.DAT serializer only.
 # The GLC_FCS30D 35->38 crosswalk remains scientifically unapproved.
 add_executable(cteas_p2_glcc_lu_dat src/p2_glcc_lu_dat_cli.cpp)
