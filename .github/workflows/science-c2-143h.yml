@@ -102,7 +102,8 @@ jobs:
           cmake --build "$RUNNER_TEMP/p7-c2/g35-build" --parallel 2 --target \
             cteas_p6g_g19_file_backed_case_tests \
             cteas_p6g_g21_source_fradj_probe \
-            cteas_p6g_g34b_six_hour_selected_gate
+            cteas_p6g_g34b_six_hour_selected_gate \
+            cteas_p6g_s4b2_unified_selected
           cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/p7-c2/p6e-comparator" -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/p7-c2/p6e-comparator" --parallel 2 --target p6e_calmet_dat21
 
@@ -152,6 +153,37 @@ jobs:
             | tee "$RUNNER_TEMP/p7-c2/dual-met-sha256.txt"
           echo 'P7_C2_DUAL_REAL_MET_READY=PASS HOURS=143 FIELDS=6435'
 
+      - name: S4B5 SAME native G14 binary C2 143h 6,435-field fresh-original science
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/p7-c2/source"
+          "$RUNNER_TEMP/p7-c2/g35-build/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --met "$src/met.inp" \
+            --geo "$src/GEO.DAT" --surf "$src/SURF.DAT" \
+            --up "$src/UP1.DAT" --up "$src/UP2.DAT" \
+            --hours 143 --out "$RUNNER_TEMP/p7-c2/s4b5-unified-native-met.dat" \
+            | tee "$RUNNER_TEMP/p7-c2/s4b5-unified-native.log"
+          test -s "$RUNNER_TEMP/p7-c2/s4b5-unified-native-met.dat"
+          cmp "$RUNNER_TEMP/p7-c2/native-met.dat" \
+              "$RUNNER_TEMP/p7-c2/s4b5-unified-native-met.dat"
+          sha256sum "$RUNNER_TEMP/p7-c2/native-met.dat" \
+                    "$RUNNER_TEMP/p7-c2/s4b5-unified-native-met.dat" \
+              > "$RUNNER_TEMP/p7-c2/s4b5-unified-vs-old-c2-sha256.txt"
+          "$RUNNER_TEMP/p7-c2/p6e-comparator/p6e_calmet_dat21" compare \
+            --reference "$RUNNER_TEMP/p7-c2/original/original-met.dat" \
+            --candidate "$RUNNER_TEMP/p7-c2/s4b5-unified-native-met.dat" \
+            --out "$RUNNER_TEMP/p7-c2/s4b5-fresh-original-vs-new-unified-143h.json" \
+            > "$RUNNER_TEMP/p7-c2/s4b5-fresh-original-vs-new-unified-143h.log"
+          python3 - "$RUNNER_TEMP/p7-c2/s4b5-fresh-original-vs-new-unified-143h.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["intervals"]==143
+          assert d["fields_per_hour"]==45
+          assert len(d["fields"])==45
+          assert d["total_exceedances"]==0 and d["status"]=="PASS"
+          print("S4B5_C2_ONE_BINARY_FRESH_VENDOR_143H_6435_FIELD=PASS_SCOPED")
+          PY
       - name: Run nonzero-controlled original CALPUFF A and C with SAME source inside true 12x12 grid
         shell: bash
         run: |
@@ -359,6 +391,10 @@ jobs:
           path: |
             ${{ runner.temp }}/integration-physical-source-identity.txt
             ${{ runner.temp }}/p7-c2/dual-met-sha256.txt
+            ${{ runner.temp }}/p7-c2/s4b5-unified-native.log
+            ${{ runner.temp }}/p7-c2/s4b5-unified-vs-old-c2-sha256.txt
+            ${{ runner.temp }}/p7-c2/s4b5-fresh-original-vs-new-unified-143h.json
+            ${{ runner.temp }}/p7-c2/s4b5-fresh-original-vs-new-unified-143h.log
             ${{ runner.temp }}/p7-c2/original-vs-native-45field.json
             ${{ runner.temp }}/p7-c2/C2-vendor-pair.log
             ${{ runner.temp }}/p7-c2/internal-source-science/C2-A-vs-C-science.json
