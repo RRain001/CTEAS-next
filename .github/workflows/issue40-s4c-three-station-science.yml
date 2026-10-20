@@ -25,6 +25,8 @@ jobs:
       matrix:
         station_counts:
           - {ss: 3, us: 3}
+          - {ss: 3, us: 2}
+          - {ss: 2, us: 3}
           - {ss: 3, us: 1}
           - {ss: 1, us: 3}
     steps:
