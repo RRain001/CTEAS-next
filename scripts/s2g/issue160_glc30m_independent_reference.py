@@ -13,6 +13,7 @@ from collections import Counter
 import csv
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import sys
@@ -101,7 +102,7 @@ def independent_coast_geometry(bln:Path):
     prepare(poly[0])
     return poly[0]
 
-def load_source(tif:Path,sha:str,epsg:int,x0:float,y0:float):
+def load_source(tif:Path,sha:str,epsg:int,x0:float,y0:float,nx:int=200,ny:int=200,dx_km:float=.1):
     require(regular(tif) and hashfile(tif)==sha,"ACTUAL_SOURCE_SHA_DRIFT")
     ds=gdal.Open(str(tif),gdal.GA_ReadOnly)
     require(ds is not None and ds.RasterCount==1,"SINGLE_BAND_GLC")
@@ -114,19 +115,26 @@ def load_source(tif:Path,sha:str,epsg:int,x0:float,y0:float):
     gt=ds.GetGeoTransform()
     require(gt[1]==30. and gt[2]==gt[4]==0. and gt[5]==-30.,
             "SOURCE_NOT_NORTH_UP_30M")
-    require(gt[0]<=x0 and gt[3]>=y0+20000 and
-            gt[0]+ds.RasterXSize*30>=x0+20000 and
+    require(gt[0]<=x0 and gt[3]>=y0+ny*dx_km*1000 and
+            gt[0]+ds.RasterXSize*30>=x0+nx*dx_km*1000 and
             gt[3]-ds.RasterYSize*30<=y0,
-            "NOT_FULL_20KM_COVERAGE")
+            "NOT_FULL_REQUESTED_GRID_COVERAGE")
     pixels=band.ReadAsArray()
     mask=band.GetMaskBand().ReadAsArray()!=0
     require(pixels.shape==mask.shape and pixels.ndim==2 and
             pixels.dtype==np.uint8,"PIXEL_MASK_SHAPE")
     return pixels,mask,gt
 
-def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None):
-    epsg,x0,y0=GRIDS[site]
-    a,mask,gt=load_source(tif,sha,epsg,x0,y0)
+def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None,
+                          grid:tuple|None=None):
+    epsg,x0,y0,nx,ny,dx_km=(grid if grid is not None else (*GRIDS[site],200,200,.1))
+    require(isinstance(nx,int) and isinstance(ny,int) and 1<=nx<=500 and
+            1<=ny<=500 and nx*ny<=250000 and
+            epsg in (32650,32652) and
+            all(math.isfinite(v) for v in (x0,y0,dx_km)) and
+            dx_km>0 and dx_km<=1.,
+            "S2E_GRID_OUTSIDE_ORACLE_BUDGET_OR_SELECTED_UTM")
+    a,mask,gt=load_source(tif,sha,epsg,x0,y0,nx,ny,dx_km)
     coastline=None
     if site=="wolsong":
         require(coast is not None,"COAST_BNL_REQUIRED")
@@ -134,7 +142,7 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None)
     else:
         require(coast is None,"INLAND_FORBIDS_SHORELINE")
     from shapely import contains_xy
-    hit_grid=np.zeros((40000,38),dtype=np.uint32)
+    hit_grid=np.zeros((nx*ny,38),dtype=np.uint32)
     raw_hist=Counter()
     used_hist=Counter()
     eligible=missing_pixels=masked_pixels=outside=0
@@ -147,7 +155,7 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None)
     x_m=gt[0]+30.*(cols[:,None,None]+(im[None,:,None]+.5)/10.)
     x_m=np.broadcast_to(x_m,(width,10,10)).ravel()
     one_milli=float(np.float32(0.001))
-    float_spacing=np.float32(.1)
+    float_spacing=np.float32(dx_km)
     fx0=np.float32(x0/1000.)
     fy0=np.float32(y0/1000.)
     cx=np.float32(x_m*one_milli)
@@ -171,12 +179,12 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None)
         cy=np.float32(y3*one_milli)
         dy=np.float32(cy-fy0)
         jy=np.trunc(np.float32(dy/float_spacing)).astype(np.int32)+(dy>=0)
-        inside=v&(ix>=1)&(ix<=200)&(jy>=1)&(jy<=200)
+        inside=v&(ix>=1)&(ix<=nx)&(jy>=1)&(jy<=ny)
         outside+=int(v.sum()-inside.sum())
         if not inside.any():continue
         used=codes[inside]
         used_hist.update(map(int,used))
-        cells=(jy[inside]-1)*200+(ix[inside]-1)
+        cells=(jy[inside]-1)*nx+(ix[inside]-1)
         classids=np.array([INDEX.get(policy.get(int(u),-1),-1) if u!=210 else INDEX[52]
                            for u in used],dtype=np.int16)
         waters=used==210
