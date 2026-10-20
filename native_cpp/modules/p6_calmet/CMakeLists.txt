@@ -1033,3 +1033,22 @@ add_test(NAME p6g_s4b1_refuses_unaccepted_production_execute
          COMMAND cteas_p6g_s4b1_source_admission --execute)
 set_tests_properties(p6g_s4b1_refuses_unaccepted_production_execute
                      PROPERTIES WILL_FAIL TRUE)
+
+# S4-B2: shared C2 accepted 17-stage G14 actor, with an independently
+# configurable original-G19 source-only experimental entry point. It
+# is NOT a production-supported P6 or a new-site CALMET science gate.
+add_executable(cteas_p6g_s4b2_unified_selected
+               src/p6g_s4b2_unified_selected_main.cpp
+               p6f/src/calmet_dat21_writer.cpp)
+target_link_libraries(cteas_p6g_s4b2_unified_selected PRIVATE cteas_p6a_contracts)
+target_include_directories(cteas_p6g_s4b2_unified_selected PRIVATE
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
+if(MSVC)
+  target_compile_options(cteas_p6g_s4b2_unified_selected PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_s4b2_unified_selected PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME p6g_s4b2_no_implicit_production
+         COMMAND cteas_p6g_s4b2_unified_selected --met missing.met)
+set_tests_properties(p6g_s4b2_no_implicit_production PROPERTIES WILL_FAIL TRUE)

@@ -1,0 +1,97 @@
+name: "Issue40 S4B2 shared selected G14 hour actor - C2 6h binary parity"
+on:
+  pull_request:
+    paths:
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp"
+      - "native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp"
+      - "native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp"
+      - "native_cpp/modules/p6_calmet/CMakeLists.txt"
+      - ".github/workflows/issue40-s4b2-selected-g14-parity.yml"
+      - "docs/plans/ISSUE40_S4B2_G14_SHARED_PHYSICAL_HOUR_20261020.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  c2-six-hour-old-vs-shared-actor:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact proposed source SHA
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build unchanged old C2 CLI and new shared selected candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4b2-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4b2-build" --parallel 2 --target \
+            cteas_p6g_g19_file_backed_case_tests \
+            cteas_p6g_g34b_six_hour_selected_gate \
+            cteas_p6g_s4b2_unified_selected
+          ctest --test-dir "$RUNNER_TEMP/s4b2-build" --output-on-failure -R "^p6g_s4b2_no_implicit_production$"
+      - name: Generate EXACT SAME original-format source for both C2 runners
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s4b2-source"
+          "$RUNNER_TEMP/s4b2-build/cteas_p6g_g19_file_backed_case_tests" \
+            --export-case project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp \
+            "$RUNNER_TEMP/s4b2-source" --fradj-stress --daylight-first-hour --hours 6
+          (cd "$RUNNER_TEMP/s4b2-source" && sha256sum met.inp GEO.DAT SURF.DAT UP1.DAT UP2.DAT) \
+            > "$RUNNER_TEMP/s4b2-source-sha256.txt"
+      - name: Execute existing accepted C2 executable for actual 6 hours
+        shell: bash
+        run: |
+          set -euo pipefail
+          x="$RUNNER_TEMP/s4b2-source"
+          "$RUNNER_TEMP/s4b2-build/cteas_p6g_g34b_six_hour_selected_gate" \
+            "$x/met.inp" "$x/GEO.DAT" "$x/SURF.DAT" "$x/UP1.DAT" "$x/UP2.DAT" \
+            "$RUNNER_TEMP/s4b2-old-c2.dat" > "$RUNNER_TEMP/s4b2-old-trace.txt"
+      - name: Execute common G14 actor with independently configurable original source
+        shell: bash
+        run: |
+          set -euo pipefail
+          x="$RUNNER_TEMP/s4b2-source"
+          "$RUNNER_TEMP/s4b2-build/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --met "$x/met.inp" --geo "$x/GEO.DAT" \
+            --surf "$x/SURF.DAT" --up "$x/UP1.DAT" --up "$x/UP2.DAT" \
+            --hours 6 --out "$RUNNER_TEMP/s4b2-new-candidate.dat" \
+            | tee "$RUNNER_TEMP/s4b2-new-trace.txt"
+          cmp "$RUNNER_TEMP/s4b2-old-c2.dat" "$RUNNER_TEMP/s4b2-new-candidate.dat"
+          sha256sum "$RUNNER_TEMP/s4b2-old-c2.dat" "$RUNNER_TEMP/s4b2-new-candidate.dat"
+          echo "S4B2_C2_6H_270_FIELDS_OLD_VS_SHARED_NATIVE=BYTE_IDENTICAL"
+          echo "S4B2_ORIGINAL_VENDOR_FRESH_RERUN=NOT_RUN"
+          echo "S4B2_C1_SINGLE_STATION_SCIENCE=NOT_RUN"
+      - name: Reject missing/or unauthorized source and partial clocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          x="$RUNNER_TEMP/s4b2-source"
+          b="$RUNNER_TEMP/s4b2-build/cteas_p6g_s4b2_unified_selected"
+          if "$b" --met "$x/met.inp" --geo "$x/GEO.DAT" --surf "$x/SURF.DAT" \
+             --up "$x/UP1.DAT" --up "$x/UP2.DAT" --hours 6 --out "$RUNNER_TEMP/unauthorized.dat"; then
+            echo "::error::S4B2 admitted production without experimental consent"; exit 1
+          fi
+          if "$b" --selected-experimental --met "$x/met.inp" --geo "$x/GEO.DAT" --surf "$x/SURF.DAT" \
+             --up "$x/UP1.DAT" --hours 6 --out "$RUNNER_TEMP/missing-us.dat"; then
+            echo "::error::S4B2 silently fabricated missing upper station"; exit 1
+          fi
+          if "$b" --selected-experimental --met "$x/met.inp" --geo "$x/GEO.DAT" --surf "$x/SURF.DAT" \
+             --up "$x/UP1.DAT" --up "$x/UP2.DAT" --hours 1 --out "$RUNNER_TEMP/truncated.dat"; then
+            echo "::error::S4B2 accepted mismatched UTC window"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/unauthorized.dat"
+          test ! -e "$RUNNER_TEMP/missing-us.dat"
+          test ! -e "$RUNNER_TEMP/truncated.dat"
+          echo "S4B2_FAIL_CLOSED_NEGATIVES=PASS"
+      - name: Preserve source and candidate proof, do not claim vendor parity
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4b2-c2-old-vs-shared-g14-6h-software-evidence
+          path: |
+            ${{ runner.temp }}/s4b2-source-sha256.txt
+            ${{ runner.temp }}/s4b2-old-trace.txt
+            ${{ runner.temp }}/s4b2-new-trace.txt
+          if-no-files-found: error
+          retention-days: 14
