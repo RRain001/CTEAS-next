@@ -89,6 +89,7 @@ class SameGridSyntheticNativeP3(unittest.TestCase):
         self.assertIsNotNone(ds)
         ds.SetProjection(geo.ExportToWkt())
         ds.SetGeoTransform((west,(east-west)/100.,0.,north,0.,-(north-south)/100.))
+        ds.GetRasterBand(1).SetNoDataValue(-32768.)
         ds.GetRasterBand(1).WriteRaster(0,0,100,100,
             struct.pack("<h",125)*10000,buf_type=gdal.GDT_Int16)
         ds=None
