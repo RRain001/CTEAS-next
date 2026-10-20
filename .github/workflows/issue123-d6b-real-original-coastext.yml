@@ -21,6 +21,11 @@ on:
       - scripts/s2g/tests/test_issue123_science_run_callback.py
       - scripts/s2g/issue123_d10_original_f63_lu.py
       - scripts/s2g/tests/test_issue123_d10_original_f63_lu.py
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
+      - native_cpp/src/p2_original_sampling_wolsong_cli.cpp
+      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
+      - scripts/s2g/issue123_d11_native_lu_verify.py
+      - scripts/s2g/tests/test_issue123_d11_native_lu_verify.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   push:
     branches: [main]
@@ -43,6 +48,11 @@ on:
       - scripts/s2g/tests/test_issue123_science_run_callback.py
       - scripts/s2g/issue123_d10_original_f63_lu.py
       - scripts/s2g/tests/test_issue123_d10_original_f63_lu.py
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
+      - native_cpp/src/p2_original_sampling_wolsong_cli.cpp
+      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
+      - scripts/s2g/issue123_d11_native_lu_verify.py
+      - scripts/s2g/tests/test_issue123_d11_native_lu_verify.py
       - .github/workflows/issue123-d6b-real-original-coastext.yml
   workflow_dispatch:
 permissions:
@@ -62,7 +72,7 @@ jobs:
       - name: Synthetic legal control and original BLN tests only
         run: |
           set -euo pipefail
-          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype scripts.s2g.tests.test_issue123_d9_original_coastal_hits scripts.s2g.tests.test_issue123_science_run_callback scripts.s2g.tests.test_issue123_d10_original_f63_lu
+          python3 -m unittest -v scripts.s2g.tests.test_issue123_original_coastext_wolsong scripts.s2g.tests.test_issue123_gfortran_stream_io_adapter scripts.s2g.tests.test_issue123_gfortran_eof_adapter scripts.s2g.tests.test_issue123_gfortran_split_io_adapter scripts.s2g.tests.test_issue123_d8_real_bln_iptype scripts.s2g.tests.test_issue123_d9_original_coastal_hits scripts.s2g.tests.test_issue123_science_run_callback scripts.s2g.tests.test_issue123_d10_original_f63_lu scripts.s2g.tests.test_issue123_d11_native_lu_verify
           echo "D6B_SOFTWARE=PASS ORIGINAL_COASTEXT=NOT_RUN"
       - name: D8 source/runtime preflight checkout (compile only, no real scientific claims)
         uses: actions/checkout@v4
@@ -103,9 +113,9 @@ jobs:
           cmake -S native_cpp -B "$RUNNER_TEMP/d8-offline-native" \
             -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/d8-offline-native" --parallel 2 \
-            --target cteas_p2_original_iptype_bln_batch cteas_p2_original_bln_pnpoly_tests cteas_p2_original_coast_hits_wolsong
+            --target cteas_p2_original_iptype_bln_batch cteas_p2_original_bln_pnpoly_tests cteas_p2_original_coast_hits_wolsong cteas_p2_original_sampling_wolsong cteas_p2_original_sampling_lu_tests
           ctest --test-dir "$RUNNER_TEMP/d8-offline-native" \
-            -R cteas_p2_original_bln_pnpoly_synthetic --output-on-failure
+            -R 'cteas_p2_original_bln_pnpoly_synthetic|cteas_p2_original_sampling_lu_writer_synthetic' --output-on-failure
           echo "D8_REAL_BLN_SCIENCE=NOT_RUN COMPILE_PREFLIGHT=PASS"
   genuine-original-wolsong-coastext-io-adapted:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -286,6 +296,24 @@ jobs:
             --native "$RUNNER_TEMP/issue123-d9-candidate-hits.csv" \
             --report-out "$RUNNER_TEMP/issue123-d10-f63-report.json"
           echo "D10_SAME_ORIGINAL_GLAZAS_F63_AND_MISSING_FLAGS=PASS_IF_REPORT OTHER_OPTIONS=NOT_RUN"
+      - name: D11 native ORIGINAL_SAMPLING standalone C++ LU.DAT production output
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/issue123-d8-build" --parallel 2 \
+            --target cteas_p2_original_sampling_wolsong
+          "$RUNNER_TEMP/issue123-d8-build/cteas_p2_original_sampling_wolsong" \
+            "$GITHUB_WORKSPACE/eausgs2_0la.img" \
+            "$RUNNER_TEMP/issue123-d6b-original-run/coast.bln" \
+            "$RUNNER_TEMP/issue123-d11-native"
+      - name: D11 independent actual original LFINAL-T versus native LU.DAT scientific gate
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_d11_native_lu_verify \
+            --original-final-dir "$RUNNER_TEMP/issue123-d10-original-fraction" \
+            --native-dir "$RUNNER_TEMP/issue123-d11-native" \
+            --d10-report "$RUNNER_TEMP/issue123-d10-f63-report.json" \
+            --out "$RUNNER_TEMP/issue123-d11-report.json"
+          echo "D11_NATIVE_ORIGINAL_SAMPLING_LU=PASS_IF_REPORT P2B_EXACT_AREA_V1=UNCHANGED"
       - name: Archive only JSON SHA/BLN metadata; no raw vendor BLN or IMG
         if: always()
         uses: actions/upload-artifact@v4
@@ -301,6 +329,7 @@ jobs:
             ${{ runner.temp }}/issue123-d9-hits-report.json
             ${{ runner.temp }}/issue123-d10-original-fraction/d10_provenance.json
             ${{ runner.temp }}/issue123-d10-f63-report.json
+            ${{ runner.temp }}/issue123-d11-report.json
           if-no-files-found: warn
           retention-days: 21
       - name: Return authentic main science run URL and bounded D6-D9 report to Issue 123
