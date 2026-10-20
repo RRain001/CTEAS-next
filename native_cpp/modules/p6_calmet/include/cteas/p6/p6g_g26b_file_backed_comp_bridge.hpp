@@ -40,6 +40,9 @@ inline G18ASelectedCompControls g26b_source_test_comp_controls(
     // no new numerical formula. C2 cardinality and result remain untouched.
     input.allow_one_one_source_audit=(frame.stations.surface.size()==1 &&
                                      frame.stations.upper.size()==1);
+    input.allow_asymmetric_source_audit=
+        (frame.stations.surface.size()==1&&frame.stations.upper.size()==2)||
+        (frame.stations.surface.size()==2&&frame.stations.upper.size()==1);
     auto& grid=input.grid_mixht;
     grid.nx=nx;
     grid.ny=ny;
@@ -161,6 +164,11 @@ public:
                     selected.allow_one_one_source_audit=
                         frame.stations.surface.size()==1&&
                         frame.stations.upper.size()==1;
+                    selected.allow_asymmetric_source_audit=
+                        (frame.stations.surface.size()==1&&
+                         frame.stations.upper.size()==2)||
+                        (frame.stations.surface.size()==2&&
+                         frame.stations.upper.size()==1);
                     return selected;
                 }());
             live_=&frame;
