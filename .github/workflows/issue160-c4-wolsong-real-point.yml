@@ -1,0 +1,89 @@
+name: Issue160 C4 real Wolsong 30m point-sampling candidate (not oracle)
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/src/geo/glc30m_point_sampling.cpp
+      - native_cpp/include/cteas/geo/glc30m_point_sampling.hpp
+      - native_cpp/src/p2_glc30m_point_lu_cli.cpp
+      - native_cpp/CMakeLists.txt
+      - .github/workflows/issue160-c4-wolsong-real-point.yml
+permissions:
+  contents: read
+jobs:
+  genuine-wolsong-glc30m-point-producer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            cmake ninja-build g++ libgdal-dev libssl-dev python3-gdal \
+            python3-rasterio python3-numpy python3-pyproj
+      - name: Verify authentic existing Wolsong 2022 raster and user mapping
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.p2b_wolsong_case verify
+          echo '2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711  data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif' | sha256sum -c -
+          /usr/bin/python3 -m unittest -v scripts.s2g.tests.test_p2b_user_mapping_20261019
+      - name: Restore unchanged official GSHHG v2.3.7 Full L1
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.gshhg_v237_cache fetch \
+            --source project-release --cache "$RUNNER_TEMP/gshhg/2.3.7"
+          python3 -m scripts.s2g.gshhg_v237_cache verify \
+            --cache "$RUNNER_TEMP/gshhg/2.3.7"
+          echo '121435427911ea80624802e0f352d777eaf6ba6966ca5f07e687650e95329fd9  '"$RUNNER_TEMP"'/gshhg/2.3.7/GSHHS_f_L1/GSHHS_f_L1.shp' | sha256sum -c -
+      - name: Compile modern 30m point-HITS production candidate
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/p2c30m" -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p2c30m" --parallel 3 --target \
+            cteas_p2_glc30m_point_lu cteas_p2_glc30m_point_tests
+          ctest --test-dir "$RUNNER_TEMP/p2c30m" -R '^cteas_p2_glc30m_point_synthetic$' --output-on-failure
+      - name: Compute Wolsong actual 200x200x38 integer HITS and FRACTION LU.DAT
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/p2c30m/cteas_p2_glc30m_point_lu" \
+            wolsong \
+            data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif \
+            docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            "$RUNNER_TEMP/gshhg/2.3.7/GSHHS_f_L1/GSHHS_f_L1.shp" \
+            "$RUNNER_TEMP/wolsong-p2c30m"
+      - name: Strict source-scoped *candidate* manifest admission (oracle not yet performed)
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'wolsong-p2c30m'
+          m=json.loads((root/'sampling_manifest.json').read_text())
+          assert m['site']=='wolsong' and m['epsg']==32652
+          assert m['nx']==m['ny']==200 and m['mesh']==10
+          assert m['method']=='P2_C_GLC30M_ORIGINAL_STYLE_POINT_SAMPLING'
+          assert m['tif_sha256']=='2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711'
+          assert m['full_l1_shp_sha256']=='121435427911ea80624802e0f352d777eaf6ba6966ca5f07e687650e95329fd9'
+          assert m['water55_hits']>0 and m['included_subpoints']>0
+          assert m['independent_40k_x_38_oracle']=='NOT_RUN'
+          for name,attr in [('lu.dat','lu_dat_sha256'),('hits.csv','hits_csv_sha256')]:
+              assert hashlib.sha256((root/name).read_bytes()).hexdigest()==m[attr]
+          assert len((root/'lu.dat').read_text().splitlines())==40011
+          print('P2C_30M_WOLSONG_REAL_PRODUCER_CANDIDATE=PASS',
+                json.dumps({k:m[k] for k in ['included_subpoints','outside_subpoints',
+                          'water52_hits','water55_hits','missing_cells']}))
+          print('P2C_30M_INDEPENDENT_INTEGER_HITS_AND_P3_FORMAT=NOT_RUN')
+          PY
+      - name: Archive only candidate hashed evidence (not source TIFF/GSHHG)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue160-c4-wolsong-real-candidate
+          path: |
+            ${{ runner.temp }}/wolsong-p2c30m/sampling_manifest.json
+          retention-days: 21
+          if-no-files-found: warn
