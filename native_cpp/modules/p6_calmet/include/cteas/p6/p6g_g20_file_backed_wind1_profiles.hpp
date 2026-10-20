@@ -31,13 +31,14 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
     if(!explicitly_test_only||!frame.source_controls||
        grid.hemisphere!='N'||grid.nx<2||grid.ny<2||
        ns<1||nu<1||ns>6||nu>6||
-       !((ns==1&&nu==1)||(ns==2&&nu==2))||
+       !((ns==1&&nu==1)||(ns==2&&nu==2)||
+         (ns==1&&nu==2)||(ns==2&&nu==1))||
        surface.by_station.size()!=ns||in.upper.size()!=nu||
        frame.upper.size()!=nu||surface.end!=in.end||
        surface.end-surface.start!=std::chrono::hours{1}||
        grid.z0_m.size()!=cells||grid.landuse.size()!=cells)
         throw std::invalid_argument(
-            "G20 accepts only source-file original 2SS/2US or test-only 1SS/1US WIND1");
+            "G20 requires audited original-format source 1/1 1/2 2/1 or 2/2 WIND1");
     const auto& readcf=*frame.source_controls;
     if(readcf.iextrp!=-4||readcf.noobs!=0||readcf.iprog!=0)
         throw std::invalid_argument("G20 original IEXTRP WIND1 scope");
@@ -169,8 +170,9 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
         }
         return profiles;
     }
-    if(ns!=2||nu!=2||
-       stations.upper[0].id!=58424||stations.upper[1].id!=58425||
+    if(ns<1||ns>2||nu<1||nu>2||
+       stations.upper[0].id!=58424||
+       (nu==2&&stations.upper[1].id!=58425)||
        zface.front()!=0.f||!(zface[1]>0.f))
         throw std::invalid_argument(
             "G32E original G19 synthetic upper profile scope changed");
