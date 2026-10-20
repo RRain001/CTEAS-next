@@ -52,10 +52,6 @@ def load(root:Path,relative:str)->tuple[dict,str]:
     need(isinstance(doc,dict),"producer manifest is not an object")
     return doc,hashlib.sha256(raw).hexdigest()
 
-def bind(proof:dict,actual_sha:str,label:str):
-    need(isinstance(actual_sha,str) and HEX.fullmatch(actual_sha) is not None and
-         proof==actual_sha,label+" input SHA mismatch")
-
 def validate(admission,p2,p3,p4,p5,files:dict)->dict:
     """Pure producer-proof join; actual filesystem SHA checked by collect."""
     root=admission.case_path.parent
@@ -82,7 +78,8 @@ def validate(admission,p2,p3,p4,p5,files:dict)->dict:
                  "terrel_dat_sha256","geo_dat_sha256"):
         need(isinstance(p3.get(name),str) and HEX.fullmatch(p3[name]) is not None,
              "P3 lacks true native P1/P3 SHA "+name)
-    need(p3.get("terrel_dat_sha256")==files["terrel_dat_sha256"] and
+    need(p3.get("p1_csv_sha256")==files["p1_csv_sha256"] and
+         p3.get("terrel_dat_sha256")==files["terrel_dat_sha256"] and
          p3.get("geo_dat_sha256")==files["geo_dat_sha256"],
          "P3 current new-case TERREL/GEO byte drift")
     a=p4.get("admission",{})
@@ -159,6 +156,7 @@ def collect(case_yaml:Path,destination:Path)->dict:
         "p2_attestation_sha256":p2hash,"p3_attestation_sha256":p3hash,
         "p4_attestation_sha256":p4hash,"p5_attestation_sha256":p5hash,
         "p2_lu_dat_sha256":digest(_path(root,lu)),
+        "p1_csv_sha256":digest(_path(root,"geo/makegeo/p3_case/terrain.csv")),
         "terrel_dat_sha256":digest(_path(root,"geo/makegeo/p3_case/terrel.dat")),
         "geo_dat_sha256":digest(_path(root,"geo/makegeo/p3_case/geo.dat")),
         "surf_sha256":digest(_path(root,"met/surface/final/surf.dat")),
