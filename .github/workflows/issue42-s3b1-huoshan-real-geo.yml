@@ -32,6 +32,7 @@ on:
       - native_cpp/modules/p6_calmet/CMakeLists.txt
       - docs/plans/ISSUE40_S4_P6B2C_TRUE_NOAA_1US_ORIGINAL_VERTAV_PREPDI_20261020.md
       - docs/plans/ISSUE40_S4_P6B2C2_REAL_G17C3_STHEOR_DIAGI_20261020.md
+      - docs/plans/ISSUE40_S4C_HUOSHAN_UNIFIED_REAL_G14_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -876,6 +877,53 @@ jobs:
           print("S4_P6B2C2_REAL_NOAA_STHEOR_DIAGI=PRODUCED_UNVERIFIED",
                 "valid_layers=",valid,"STHEOR_VENDOR_NUMERIC=NOT_RUN")
           PY
+      - name: S4-C compile SAME original-validated C1 C2 shared G14 executable for true Huoshan
+        if: matrix.period == 'jun_6h'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/s3-g19" --parallel 2 \
+            --target cteas_p6g_s4b2_unified_selected
+          sha256sum "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
+            > "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4c-unified-native-sha256.txt"
+      - name: S4-C REAL Huoshan original P1-P5 source first-hour unified G14 P6F
+        if: matrix.period == 'jun_6h'
+        shell: bash
+        run: |
+          set -euo pipefail
+          c="$RUNNER_TEMP/s3_huoshan_2022"
+          test -s "$c/evidence/s3-b6-g19-source-only.json"
+          "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --met "$c/run/met/met.inp" \
+            --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/met/surface/final/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 6 --probe-prefix-hours 1 \
+            --out "$c/evidence/s4c-real-native-first-hour-met.dat" \
+            2>&1 | tee "$c/evidence/s4c-real-first-hour-trace.log"
+          test -s "$c/evidence/s4c-real-native-first-hour-met.dat"
+          sha256sum "$c/evidence/s4c-real-native-first-hour-met.dat" \
+            > "$c/evidence/s4c-real-native-first-hour-sha256.txt"
+          echo 'S4C_TRUE_HUOSHAN_FIRST_HOUR_NATIVE_45FIELDS=PRODUCED_UNVERIFIED'
+      - name: S4-C REAL Huoshan full six-hour unified G14 P6F source execution
+        if: matrix.period == 'jun_6h'
+        shell: bash
+        run: |
+          set -euo pipefail
+          c="$RUNNER_TEMP/s3_huoshan_2022"
+          "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --met "$c/run/met/met.inp" \
+            --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/met/surface/final/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 6 \
+            --out "$c/evidence/s4c-real-native-six-hour-met.dat" \
+            2>&1 | tee "$c/evidence/s4c-real-six-hour-trace.log"
+          test -s "$c/evidence/s4c-real-native-six-hour-met.dat"
+          sha256sum "$c/evidence/s4c-real-native-six-hour-met.dat" \
+            > "$c/evidence/s4c-real-native-six-hour-sha256.txt"
+          echo 'S4C_TRUE_HUOSHAN_6H_NATIVE_270_FIELDS=PRODUCED_UNVERIFIED'
+          echo 'S4C_ORIGINAL_CALMET_NEW_SITE_NUMERIC=NOT_RUN'
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -900,6 +948,11 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2b-original-vendor-slope-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2c-real-1us-original-prepdi-science.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2c2-real-stheor-diagi-receipt.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-unified-native-sha256.txt
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-native-first-hour-sha256.txt
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-first-hour-trace.log
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-native-six-hour-sha256.txt
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-six-hour-trace.log
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
