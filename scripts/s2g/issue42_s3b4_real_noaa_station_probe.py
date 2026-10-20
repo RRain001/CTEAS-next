@@ -50,8 +50,11 @@ def probe(case_yaml: Path, destination: Path) -> dict:
         raise ValueError("S3-B4 output must be inside the case's new evidence directory")
     if destination.exists() or destination.is_symlink() or destination.parent.is_symlink():
         raise ValueError("S3-B4 must emit fresh and unlinked evidence")
-    if admission.research_begin != "20220601-000000" or admission.research_end != "20220602-000000":
-        raise ValueError("S3-B4 requires the independently verified June 2022 exact B0")
+    if (admission.research_begin, admission.research_end) not in {
+        ("20220601-000000", "20220602-000000"),
+        ("20220601-010000", "20220601-070000"),
+    }:
+        raise ValueError("S3-B4 requires independently verified June 2022 real-source B0")
     if (admission.utm_zone, admission.hemisphere, admission.nx, admission.ny,
         admission.xrefkm_text, admission.yrefkm_text) != (
             50, "N", 100, 100, "462.305", "3501.570"
