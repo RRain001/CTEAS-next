@@ -116,8 +116,8 @@ class P2ACaseAdapterTests(unittest.TestCase):
         self.assertFalse((self.root / "geo").exists())
 
     def test_b0_grid_case_disagreement_blocks_before_source(self):
-        self.grid.write_text(self.grid.read_text().replace("510.885", "510.886"))
-        with self.assertRaisesRegex(ContractError, "mismatch|disagreement"):
+        self.case.write_text(self.case.read_text().replace("utm_zone: 50", "utm_zone: 49"))
+        with self.assertRaisesRegex(ContractError, "disagreement"):
             self.invoke()
         self.assertFalse((self.root / "geo").exists())
 
