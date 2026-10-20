@@ -132,7 +132,10 @@ inline G19FileBackedCase g19_load_original_source_case(
     for(const auto& st:result.stations.surface) ss.push_back(st.id);
     for(const auto& st:result.stations.upper) us.push_back(st.id);
     result.surface=read_surface_dynamic(paths.surf_dat,ss);
-    result.upper=read_upper_station_set(paths.ordered_up_dat,us);
+    // A real READ62 annual UP archive may extend beyond the selected met.inp
+    // modeled interval. Accept only a strictly increasing, bounded trailing
+    // archive in G19; the existing strict standalone reader stays unchanged.
+    result.upper=read_upper_station_set(paths.ordered_up_dat,us,100000,true);
 
     // G19B source science admission. The current selected DIAGNO and
     // P6E kernels are verified ONLY for the original nearest-US IUPT=-1,
