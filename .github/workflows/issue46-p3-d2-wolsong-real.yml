@@ -1,0 +1,207 @@
+name: Issue46 D2 real Wolsong SRTMGL1 + 2022 GLC30m -> native P3 GEO
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - .github/workflows/issue46-p3-d2-wolsong-real.yml
+      - native_cpp/orchestration/p3_case_handoff.py
+      - native_cpp/orchestration/p2c_case_producer.py
+      - native_cpp/p3/**
+      - docs/plans/ISSUE46_P3_D2_WOLSONG_REAL_SOURCE_20261020.md
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue46-d2-wolsong-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  genuine-source-wolsong-native-p1-p2c-p3:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    steps:
+      - name: Checkout real 2022 Wolsong 30m source via LFS
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Checkout pinned original CTGPROC for Full shoreline provenance only
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Install original shoreline and genuine native geospatial runtimes
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            cmake g++-12 gfortran libgdal-dev libssl-dev \
+            python3-gdal python3-numpy python3-pyproj python3-pip python3-rasterio
+          /usr/bin/python3 -m pip install --user --disable-pip-version-check shapely==2.0.7
+      - name: Download genuine 30m SRTMGL1 Wolsong N35E129 and pin exact science-source bytes
+        run: |
+          set -euo pipefail
+          curl -fLsS --retry 3 --connect-timeout 25 --max-time 240 \
+            https://opentopography.s3.sdsc.edu/raster/SRTM_GL1/SRTM_GL1_srtm/N35E129.tif \
+            -o "$RUNNER_TEMP/N35E129.tif"
+          test "$(wc -c < "$RUNNER_TEMP/N35E129.tif")" -eq 6456645
+          echo "b9b44e6936d45a738ead91429804048e6fa095abbee98e1792b7c42dbecf0769  $RUNNER_TEMP/N35E129.tif" | sha256sum -c -
+          echo "2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711  data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif" | sha256sum -c -
+          echo "a5fa157f57feb1aa160dd96d920a22d267fea78c5828c6040fa95e86536544ed  docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json" | sha256sum -c -
+      - name: Build authentic original Full COASTEXT BLN with frozen Fortran and official GSHHG v2.3.7
+        run: |
+          set -euo pipefail
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          echo "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281  $vendor/ctgproc.for" | sha256sum -c -
+          echo "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img" | sha256sum -c -
+          stage="$RUNNER_TEMP/original-ctgproc-stage"
+          mkdir -p "$stage"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$stage/$bn"
+          done
+          rm "$stage/ctgproc.for" "$stage/params.ctg"
+          cp "$vendor/ctgproc.for" "$stage/ctgproc.for"
+          cp "$vendor/params.ctg" "$stage/params.ctg"
+          python3 -m scripts.s2g.issue123_gfortran_eof_adapter \
+            --original-source "$vendor/ctgproc.for" \
+            --staged-source "$stage/ctgproc.for" \
+            --manifest "$RUNNER_TEMP/p3-d2-eof.json"
+          python3 -m scripts.s2g.issue123_gfortran_split_io_adapter \
+            --original-source "$vendor/ctgproc.for" \
+            --original-params "$vendor/params.ctg" \
+            --staged-source "$stage/ctgproc.for" \
+            --staged-params "$stage/params.ctg" \
+            --manifest "$RUNNER_TEMP/p3-d2-split-io.json"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -O0 -I"$stage" \
+            "$stage/ctgproc.for" -o "$RUNNER_TEMP/ctgproc-original"
+          python3 -m scripts.s2g.issue123_gshhg_binary_full fetch --cache "$RUNNER_TEMP/gshhg-full"
+          python3 -m scripts.s2g.issue123_original_coastext_wolsong prepare \
+            --original-source "$vendor/ctgproc.for" \
+            --template "$vendor/ctgproc.inp" \
+            --glcc eausgs2_0la.img \
+            --cache "$RUNNER_TEMP/gshhg-full" \
+            --out "$RUNNER_TEMP/p3-d2-original-full-coast"
+          (
+            cd "$RUNNER_TEMP/p3-d2-original-full-coast"
+            timeout 1200 "$RUNNER_TEMP/ctgproc-original" > original.log 2>&1 || {
+              tail -n 40 original.log
+              exit 1
+            }
+            test -s coast.bln
+            echo '67da93d441e7defe3eb46627ed9ce896c0a91ffd89fd5e4363d834d8108e11f9  coast.bln' | sha256sum -c -
+          )
+      - name: Build unchanged native P1/P2-C/P3 and dynamic original-input adapter
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/p1 -B "$RUNNER_TEMP/p1" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p1" --parallel 2 --target cteas_p1_terrain_case
+          cmake -S native_cpp -B "$RUNNER_TEMP/p2" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p2" --parallel 2 --target cteas_p2c_glc30m_sampling
+          cmake -S native_cpp/p3 -B "$RUNNER_TEMP/p3" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p3" --parallel 2 --target cteas_p12_to_p3_dat cteas_p3_makegeo
+      - name: Stage independent Wolsong 2022 B0 case from true 200x200 100m UTM52N numeric authority
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from pyproj import Transformer
+          p=Path(os.environ["RUNNER_TEMP"])/"p3_d2_wolsong_2022"
+          (p/"grid").mkdir(parents=True)
+          lon,lat=Transformer.from_crs(32652,4326,always_xy=True).transform(543215.,3952629.)
+          (p/"case.yaml").write_text(
+            "case_name: p3_d2_wolsong_2022\nsettings:\n  timezone: UTC+0000\n"
+            "preprocess:\n  grid:\n    utm_zone: 52\n    hemisphere: N\n"
+            "    nz: 1\n    resolution_km: 0.100\n"
+            "    domain:\n      length_km: 20.000\n      width_km: 20.000\n"
+            f"    center:\n      latitude: {lat:.12f}\n      longitude: {lon:.12f}\n"
+            "  research_time:\n    begin: 20220101-000000\n"
+            "    end: 20221231-230000\n",encoding="utf-8")
+          (p/"grid/grid.cmn").write_text(
+            "! IMAP = UTM !\n! DATUM = WGS-84 !\n! IUTMZN = 52 !\n"
+            "! LSOHEM = N !\n! XREFKM = 533.215 !\n! YREFKM = 3942.629 !\n"
+            "! DGRIDKM = 0.100 !\n! NX = 200 !\n! NY = 200 !\n"
+            "! NZ = 1 !\n! ZFACE = 0 !\n! ZFACE = 100 !\n",encoding="utf-8")
+          (p/"grid/research_time").write_text(
+            "BEGIN:20220101-000000\nEND:20221231-230000\n",encoding="utf-8")
+          PY
+      - name: Produce genuine 2022 coastal 30m P2-C on case grid with pinned original BLN
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.p2c_case_producer \
+            --case-yaml "$RUNNER_TEMP/p3_d2_wolsong_2022/case.yaml" \
+            --tif data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif \
+            --tif-sha256 2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711 \
+            --policy docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            --mode coastal \
+            --bln "$RUNNER_TEMP/p3-d2-original-full-coast/coast.bln" \
+            --bln-sha256 67da93d441e7defe3eb46627ed9ce896c0a91ffd89fd5e4363d834d8108e11f9 \
+            --native-cpp-bin "$RUNNER_TEMP/p2/cteas_p2c_glc30m_sampling"
+      - name: Produce genuine SRTMGL1 P1 terrain and P3 GEO on exactly same B0 case
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.p3_case_handoff \
+            --case-yaml "$RUNNER_TEMP/p3_d2_wolsong_2022/case.yaml" \
+            --p1-tif "$RUNNER_TEMP/N35E129.tif" \
+            --p1-tif-sha256 b9b44e6936d45a738ead91429804048e6fa095abbee98e1792b7c42dbecf0769 \
+            --p1-bin "$RUNNER_TEMP/p1/cteas_p1_terrain_case" \
+            --dat-bin "$RUNNER_TEMP/p3/cteas_p12_to_p3_dat" \
+            --p3-bin "$RUNNER_TEMP/p3/cteas_p3_makegeo" --p2-kind C
+      - name: Genuine-source independent structure / hash gates with scoped D2 verdict only
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import csv,json,os,hashlib,math
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p3_d2_wolsong_2022"
+          a=json.loads((p/"evidence/p2.json").read_text())
+          b=json.loads((p/"evidence/p3.json").read_text())
+          assert (a["nx"],a["ny"],a["utm_epsg"])==(200,200,32652)
+          assert (b["nx"],b["ny"],b["utm_epsg"])==(200,200,32652)
+          assert b["p1_tif_sha256"]=="b9b44e6936d45a738ead91429804048e6fa095abbee98e1792b7c42dbecf0769"
+          assert b["p2_kind"]=="C" and b["p2_lu_dat_sha256"]==a["lu_dat_sha256"]
+          assert b["status"]=="P3_NATIVE_SAME_CASE_PRODUCED_UNVERIFIED"
+          assert b["p3_original_makegeo_science"]=="NOT_RUN"
+          stage=p/"geo/makegeo/p3_case"
+          with (stage/"p3.csv").open(newline="") as stream:
+            data=list(csv.DictReader(stream))
+          assert len(data)==40000
+          assert all(float(row["z0_m"])>0 and math.isfinite(float(row["elevation_m"]))
+                     for row in data)
+          assert hashlib.sha256((stage/"geo.dat").read_bytes()).hexdigest()==b["geo_dat_sha256"]
+          summary={
+            "status":"P3_D2_REAL_WOLSONG_SOURCE_PRODUCED_UNVERIFIED",
+            "actual_source_srtmgl1_sha256":b["p1_tif_sha256"],
+            "actual_source_glc_fcs30d_2022_sha256":a["source_tiff_sha256"],
+            "actual_original_coast_bln_sha256":a["source_bln_sha256"],
+            "case_yaml_sha256":b["case_yaml_sha256"],
+            "grid_cmn_sha256":b["grid_cmn_sha256"],
+            "research_time_sha256":b["research_time_sha256"],
+            "p3_geo_sha256":b["geo_dat_sha256"],
+            "p3_rows":40000,
+            "original_makegeo_numeric_parity":"NOT_RUN",
+          }
+          (Path(os.environ["RUNNER_TEMP"])/"p3-d2-real-summary.json").write_text(json.dumps(summary,indent=2))
+          print(json.dumps(summary,sort_keys=True))
+          PY
+      - name: Save bounded JSON evidence only (no restricted vendor, SRTM, BLN, raster, LU or GEO bytes)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue46-p3-d2-wolsong-genuine-srtmgl1-glc30m-handoff
+          path: |
+            ${{ runner.temp }}/p3_d2_wolsong_2022/evidence/p2.json
+            ${{ runner.temp }}/p3_d2_wolsong_2022/evidence/p3.json
+            ${{ runner.temp }}/p3_d2_wolsong_2022/geo/ctgproc/p2c_case/p2c_glc30m_manifest.json
+            ${{ runner.temp }}/p3-d2-real-summary.json
+            ${{ runner.temp }}/p3-d2-eof.json
+            ${{ runner.temp }}/p3-d2-split-io.json
+          retention-days: 21
+          if-no-files-found: warn
