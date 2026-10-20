@@ -163,6 +163,8 @@ jobs:
           assert j["status"]=="P2A_TRUE_ORIGINAL_GLAZAS_UTM52_20X20_PASS_SCOPED"
           assert j["integer_fields_compared"]==j["F6_3_fields_compared"]==15200
           assert j["integer_mismatches"]==j["F6_3_mismatches"]==j["missing_flag_mismatches"]==0
+          assert j["original_hits_total"]==j["native_hits_total"]>0
+          assert 0<=j["missing_cells"]<400 and j["nonempty_cells"]>0
           assert j["grid"]["utm_epsg"]==32652
           print("S2E_GENUINE_HISTORICAL_GLCC_UTM52_ORIGINAL_FORTRAN_30400_VALUES=PASS")
           print("S2E_COASTAL_GSHHG_AND_MODERN_30M=NOT_COVERED")
