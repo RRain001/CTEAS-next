@@ -42,8 +42,8 @@ inline G18ASelectedCompControls g26b_source_test_comp_controls(
                                      frame.stations.upper.size()==1);
     input.allow_asymmetric_source_audit=
         (frame.stations.surface.size()==1&&frame.stations.upper.size()>=2&&
-         frame.stations.upper.size()<=4)||
-        (frame.stations.surface.size()>=2&&frame.stations.surface.size()<=4&&
+         frame.stations.upper.size()>=2)||
+        (frame.stations.surface.size()>=2&&frame.stations.surface.size()>=2&&
          frame.stations.upper.size()==1);
     auto& grid=input.grid_mixht;
     grid.nx=nx;
@@ -169,9 +169,9 @@ public:
                     selected.allow_asymmetric_source_audit=
                         (frame.stations.surface.size()==1&&
                          frame.stations.upper.size()>=2&&
-                         frame.stations.upper.size()<=4)||
+                         frame.stations.upper.size()>=2)||
                         (frame.stations.surface.size()>=2&&
-                         frame.stations.surface.size()<=4&&
+                         frame.stations.surface.size()>=2&&
                          frame.stations.upper.size()==1);
                     return selected;
                 }());
