@@ -60,7 +60,7 @@ class S3B0FiveSourceSoftwareTests(unittest.TestCase):
             "produced_output_sha256":{
                "met/surface/final/stations.csv":"8"*64}}
         self.files={"p2_attestation_sha256":"d"*64,
-            "p2_lu_dat_sha256":"e"*64,
+            "p2_lu_dat_sha256":"e"*64,"p1_csv_sha256":"2"*64,
             "terrel_dat_sha256":"3"*64,"geo_dat_sha256":"4"*64,
             "upperair_stations_sha256":"5"*64,
             "upperair":{"58424":"6"*64},
@@ -75,6 +75,29 @@ class S3B0FiveSourceSoftwareTests(unittest.TestCase):
         self.assertEqual(x["s3_g19_native_reader"],"NOT_RUN")
         self.assertEqual(x["s3_five_product_scientific_acceptance"],"NOT_ACCEPTED")
         self.assertEqual(x["native_paths"],["P1","P2-C","P3","P4","P5"])
+
+    def test_rejects_stale_native_p1_terrain_csv_sha(self):
+        self.files["p1_csv_sha256"]="0"*64
+        with self.assertRaisesRegex(ContractError,"P3 current new-case TERREL/GEO"):
+            self.run_join()
+
+    def test_actual_file_path_gates_no_symlinks_or_parent_escape(self):
+        from native_cpp.orchestration.s3_five_source_preflight import _path,digest
+        root=self.root
+        (root/"geo").mkdir()
+        f=root/"geo/source.dat"
+        f.write_bytes(b"synthetic test content, not science")
+        self.assertEqual(len(digest(_path(root,"geo/source.dat"))),64)
+        with self.assertRaisesRegex(ContractError,"unsafe source-relative"):
+            _path(root,"../foreign.dat")
+        alias=root/"geo/source-link.dat"
+        alias.symlink_to(f)
+        with self.assertRaisesRegex(ContractError,"missing/empty/oversized source"):
+            _path(root,"geo/source-link.dat")
+        empty=root/"geo/empty.dat"
+        empty.touch()
+        with self.assertRaisesRegex(ContractError,"missing/empty/oversized source"):
+            _path(root,"geo/empty.dat")
 
     def test_rejects_retired_p2b_even_if_other_shas_equal(self):
         self.p3["p2_kind"]="B"
