@@ -8,6 +8,7 @@ on:
       - native_cpp/orchestration/p3_case_handoff.py
       - native_cpp/orchestration/case_admission.py
       - docs/plans/ISSUE42_S3_B1_HUOSHAN_REAL_SOURCE_20261020.md
+      - scripts/s2g/issue42_s3_b1_true_srtm_window.py
   workflow_dispatch:
 permissions:
   contents: read
@@ -29,7 +30,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
-            g++-12 cmake libgdal-dev libssl-dev python3-gdal python3-yaml python3-pyproj
+            g++-12 cmake libgdal-dev libssl-dev python3-gdal python3-rasterio python3-numpy python3-yaml python3-pyproj
       - name: Admit genuine SHA-verified already tracked SRTM90 and 156MB GLCC
         run: |
           set -euo pipefail
@@ -111,13 +112,33 @@ jobs:
             --glcc-img "$PWD/eausgs2_0la.img" \
             --raw-bin "$RUNNER_TEMP/s3-p2/cteas_p2_glcc_raw" \
             --lu-bin "$RUNNER_TEMP/s3-p2/cteas_p2_glcc_lu_dat"
+      - name: Cut bounded, exact-pixel Huoshan TIFF from authenticated 6000x6000 source with no interpolation
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue42_s3_b1_true_srtm_window \
+            --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
+            --original-tif "$PWD/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif" \
+            --original-sha256 913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4 \
+            --cropped-tif "$RUNNER_TEMP/s3_huoshan_2022/inputs/p1_srtm90_source_window.tif" \
+            --manifest "$RUNNER_TEMP/s3_huoshan_2022/inputs/p1_srtm90_source_window.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022/inputs"
+          j=json.loads((root/"p1_srtm90_source_window.json").read_text())
+          assert j["status"]=="TRUE_SOURCE_WINDOW_PIXEL_IDENTITY_PASS_NOT_P1_SCIENCE"
+          assert j["parent_original_tif_sha256"]=="913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4"
+          assert j["window_pixel_count"]<5_000_000
+          assert j["valid_source_pixels"]>0
+          print("S3_NATIVE_P1_MEMORY_BUDGET_PRESERVED_REAL_SOURCE_PIXEL_WINDOW=PASS")
+          PY
       - name: Produce actual Huoshan 90m terrain TERREL and P2-A based GEO without copying prior site
         run: |
           set -euo pipefail
           /usr/bin/python3 -m native_cpp.orchestration.p3_case_handoff \
             --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
-            --p1-tif "$PWD/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif" \
-            --p1-tif-sha256 913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4 \
+            --p1-tif "$RUNNER_TEMP/s3_huoshan_2022/inputs/p1_srtm90_source_window.tif" \
+            --p1-tif-sha256 "$(/usr/bin/python3 -c 'import json,os;from pathlib import Path;p=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022/inputs/p1_srtm90_source_window.json";print(json.loads(p.read_text())["cropped_source_sha256"])')" \
             --p1-bin "$RUNNER_TEMP/s3-p1/cteas_p1_terrain_case" \
             --dat-bin "$RUNNER_TEMP/s3-p3/cteas_p12_to_p3_dat" \
             --p3-bin "$RUNNER_TEMP/s3-p3/cteas_p3_makegeo" \
@@ -145,7 +166,10 @@ jobs:
           assert (p2["nx"],p2["ny"])==(100,100)
           assert (p3["nx"],p3["ny"])==(100,100)
           assert p2["source_img_sha256"]=="4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a"
-          assert p3["p1_tif_sha256"]=="913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4"
+          source=json.loads((root/"inputs/p1_srtm90_source_window.json").read_text())
+          assert source["parent_original_tif_sha256"]=="913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4"
+          assert p3["p1_tif_sha256"]==source["cropped_source_sha256"]
+          assert h(root/"inputs/p1_srtm90_source_window.tif")==source["cropped_source_sha256"]
           lu=root/"geo/ctgproc/p2a_case/lu/lu.dat"
           terrain=root/"geo/makegeo/p3_case/terrain.csv"
           terrel=root/"geo/makegeo/p3_case/terrel.dat"
@@ -169,7 +193,10 @@ jobs:
             "case_yaml_sha256":b0.case_sha256,
             "grid_cmn_sha256":b0.grid_sha256,
             "research_time_sha256":b0.time_sha256,
-            "true_srtm90_sha256":p3["p1_tif_sha256"],
+            "true_srtm90_parent_sha256":source["parent_original_tif_sha256"],
+            "true_srtm90_window_sha256":source["cropped_source_sha256"],
+            "source_window_manifest_sha256":h(root/"inputs/p1_srtm90_source_window.json"),
+            "source_window_integer_pixel_count":source["window_pixel_count"],
             "true_historical_glcc_sha256":p2["source_img_sha256"],
             "p2_proof_sha256":h(root/"evidence/p2.json"),
             "p3_proof_sha256":h(root/"evidence/p3.json"),
@@ -192,6 +219,7 @@ jobs:
           path: |
             ${{ runner.temp }}/s3_huoshan_2022/evidence/p2.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/p3.json
+            ${{ runner.temp }}/s3_huoshan_2022/inputs/p1_srtm90_source_window.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/lu/p2_d3_manifest.json
