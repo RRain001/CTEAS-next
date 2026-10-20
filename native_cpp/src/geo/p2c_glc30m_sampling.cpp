@@ -204,3 +204,5 @@ P2cGlc30mStatistics sample_p2c_glc30m(
   if(!coast)need(result.water_sea_hits==0,"P2C_HEFEI_FORBIDS_USGS55");
   return result;
 }
+
+} // namespace cteas::reconstruction::geo
