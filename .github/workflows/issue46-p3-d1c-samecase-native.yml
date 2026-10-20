@@ -1,0 +1,48 @@
+name: Issue46 P3 B0 native P1/P2C to GEO same-case software
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/orchestration/p3_case_handoff.py
+      - native_cpp/orchestration/tests/test_p3_case_handoff.py
+      - .github/workflows/issue46-p3-d1c-samecase-native.yml
+      - docs/plans/ISSUE46_P3_D1C_P1_P2_TO_GEO_HANDOFF_20261020.md
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  b0-actual-native-three-module-chain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install native C++ and geospatial source runtime (no Docker/vendor)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++ libgdal-dev libssl-dev python3-gdal python3-pyproj python3-yaml
+      - name: Compile actual P1 and retained P2-C original-style point producer
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/native" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/native" --parallel 2 --target cteas_p1_terrain_case cteas_p2c_glc30m_sampling
+          cmake -S native_cpp/p3 -B "$RUNNER_TEMP/p3" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p3" --parallel 2 --target cteas_p12_to_p3_dat cteas_p3_makegeo
+      - name: Distinct synthetic geographic P1 source and native UTM P2-C through real MAKEGEO C++ binary
+        env:
+          CTEAS_P1_BIN: ${{ runner.temp }}/native/cteas_p1_terrain_case
+          CTEAS_P2C_BIN: ${{ runner.temp }}/native/cteas_p2c_glc30m_sampling
+          CTEAS_P12_BIN: ${{ runner.temp }}/p3/cteas_p12_to_p3_dat
+          CTEAS_P3_BIN: ${{ runner.temp }}/p3/cteas_p3_makegeo
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest native_cpp.orchestration.tests.test_p3_case_handoff -v
+          echo 'P3_D1C_B0_SYNTHETIC_NATIVE_P1_P2C_P3=PASS P3_ORIGINAL_NON_HEFEI=NOT_RUN'
+      - name: No original science by inference
+        run: |
+          echo 'Actual producer binary exercised, but all raster pixels GENERATED SYNTHETIC.'
+          echo 'P1_GENUINE_SOURCE=NOT_RUN P2_REAL_NEW_SITE=NOT_RUN P3_ORIGINAL_MAKEGEO=NOT_RUN'
+          echo 'DOCKER=DEFERRED'
