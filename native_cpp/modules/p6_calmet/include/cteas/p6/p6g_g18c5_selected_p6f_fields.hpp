@@ -53,7 +53,7 @@ inline G18C5SelectedHourFields g18c5_selected_p6f_fields(
         !((allow_one_one_source_audit&&frame.stations.surface.size()==1&&
            frame.stations.upper.size()==1)||
           (allow_asymmetric_source_audit&&frame.stations.surface.size()==1&&
-           frame.stations.upper.size()==2)))||
+           frame.stations.upper.size()>=2&&frame.stations.upper.size()<=3)))||
        candidate.candidate_memory.zi_m.size()!=n||
        candidate.candidate_memory.ziconv_m.size()!=n||
        candidate.candidate_memory.dptt_k.size()!=n)

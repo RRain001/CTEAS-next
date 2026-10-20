@@ -32,8 +32,10 @@ public:
             const bool single_site_source_audit=
                 frame.stations.surface.size()==1&&frame.stations.upper.size()==1;
             const bool asymmetric_source_audit=
-                (frame.stations.surface.size()==1&&frame.stations.upper.size()==2)||
-                (frame.stations.surface.size()==2&&frame.stations.upper.size()==1);
+                (frame.stations.surface.size()==1&&frame.stations.upper.size()>=2&&
+                 frame.stations.upper.size()<=3)||
+                (frame.stations.surface.size()>=2&&frame.stations.surface.size()<=3&&
+                 frame.stations.upper.size()==1);
             const auto records=p6g::g18c5_selected_p6f_fields(
                 frame,heat,candidate,source_.original_metinp,true,
                 single_site_source_audit,asymmetric_source_audit);
