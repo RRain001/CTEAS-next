@@ -121,26 +121,8 @@ add_executable(cteas_grid_origin_precision_tests tests/grid_origin_precision_tes
 target_include_directories(cteas_grid_origin_precision_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME cteas_grid_origin_three_decimal_km COMMAND cteas_grid_origin_precision_tests)
 
-# Issue #53 D2: offline GLC_FCS30D raw-class area fractions (no crosswalk/P3).
-add_library(cteas_p2_glc_area STATIC src/geo/glc_area_fractions.cpp)
-target_include_directories(cteas_p2_glc_area PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(cteas_p2_glc_area PUBLIC cteas_p2_gen GDAL::GDAL)
-if(MSVC)
-  target_compile_options(cteas_p2_glc_area PRIVATE /W4 /WX)
-else()
-  target_compile_options(cteas_p2_glc_area PRIVATE -Wall -Wextra -Wpedantic -Werror)
-endif()
-add_executable(cteas_p2_glc_area_tests tests/p2_glc_area_tests.cpp)
-target_link_libraries(cteas_p2_glc_area_tests PRIVATE cteas_p2_glc_area)
-add_test(NAME cteas_p2_glc_raw_area_contract COMMAND cteas_p2_glc_area_tests)
+# OpenSSL remains required by retained P2-A / P2-C source-SHA-gated CLIs.
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
-add_executable(cteas_p2_glc_raw src/p2_glc_area_cli.cpp)
-target_link_libraries(cteas_p2_glc_raw PRIVATE cteas_p2_glc_area OpenSSL::Crypto)
-if(MSVC)
-  target_compile_options(cteas_p2_glc_raw PRIVATE /W4 /WX)
-else()
-  target_compile_options(cteas_p2_glc_raw PRIVATE -Wall -Wextra -Wpedantic -Werror)
-endif()
 
 # Issue #53 D1: genuine raw GLCC binary reader and GEN replay comparator.
 add_library(cteas_p2_glcc_source STATIC src/geo/glcc_raw_fractions.cpp)
@@ -158,7 +140,7 @@ target_link_libraries(cteas_p2_glcc_gen_test_driver PRIVATE cteas_p2_glcc_source
 
 # Issue #123 D3: opt-in coastal RECOUNT from immutable P2-A source mesh trace.
 # This deliberately links no production CLI; baseline GLCC and frozen
-# Wolsong EXACT_AREA_V1 remain unchanged.
+# P2-A and P2-C source-faithful production controls remain unchanged.
 add_library(cteas_p2_original_sampling_recount STATIC
             src/geo/ctgproc_original_sampling_recount.cpp)
 target_include_directories(cteas_p2_original_sampling_recount
@@ -302,14 +284,4 @@ if(MSVC)
   target_compile_options(cteas_p2_glcc_lu_dat PRIVATE /W4 /WX)
 else()
   target_compile_options(cteas_p2_glcc_lu_dat PRIVATE -Wall -Wextra -Wpedantic -Werror)
-endif()
-
-# Issue #53 P2-B native source-gated GLC35 -> GSHHS Full land 52 / sea 55 -> USGS38 LU.DAT.
-# Never reuse GLCC historical D3 source gate; original MAKEGEO/P6 science remains separate.
-add_executable(cteas_p2_glc_lu_dat src/p2_glc_lu_dat_cli.cpp)
-target_link_libraries(cteas_p2_glc_lu_dat PRIVATE cteas_p2_glc_area GDAL::GDAL OpenSSL::Crypto)
-if(MSVC)
-  target_compile_options(cteas_p2_glc_lu_dat PRIVATE /W4 /WX)
-else()
-  target_compile_options(cteas_p2_glc_lu_dat PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()

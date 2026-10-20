@@ -144,20 +144,6 @@ class TestCoastGeometry(unittest.TestCase):
             r=site.coast_diagnostic(path)
             self.assertNotEqual(r["status"],"CROSSES_COAST")
 
-class TestManualWorkflow(unittest.TestCase):
-    def test_science_workflow_can_only_be_manually_triggered(self):
-        try:
-            import yaml
-        except ImportError:
-            self.skipTest("PyYAML unavailable")
-        path=ROOT/".github/workflows/issue119-wolsong-p2b-real-coast.yml"
-        doc=yaml.safe_load(path.read_text())
-        self.assertEqual(set(doc.get("on",doc.get(True)).keys()), {"workflow_dispatch"})
-        contents=path.read_text()
-        self.assertNotIn("ee.Initialize",contents)
-        self.assertNotIn("secrets.",contents)
-        self.assertIn("coastline_only",contents)
-        self.assertIn("full_p2b",contents)
 
 if __name__=="__main__":
     unittest.main()

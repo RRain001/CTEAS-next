@@ -1,0 +1,69 @@
+name: Issue168 S1 retirement build, link and policy regression
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/**
+      - docker/cpp/Dockerfile
+      - scripts/migration/validate_ubuntu.py
+      - scripts/s2g/tests/test_issue119_wolsong_contract.py
+      - .github/workflows/issue160-*.yml
+      - .github/workflows/issue168-p2-retirement-ci.yml
+      - docs/plans/ISSUE168_S1_P2B_RETIREMENT_AUDIT_20261020.md
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retired-area-absent-retained-producers-work:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake ninja-build g++-12 libgdal-dev libssl-dev binutils
+      - name: Frozen P2-C mapping SHA
+        run: |
+          set -euo pipefail
+          echo 'a5fa157f57feb1aa160dd96d920a22d267fea78c5828c6040fa95e86536544ed  docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json' | sha256sum -c -
+      - name: Reject B-only CMake targets and Docker paths
+        run: |
+          set -euo pipefail
+          if grep -E 'cteas_p2_glc_(area|raw|lu_dat)([^a-zA-Z0-9_]|$)' native_cpp/CMakeLists.txt docker/cpp/Dockerfile; then
+            echo 'P2B_PRODUCTION_TARGET_RESIDUAL'
+            exit 2
+          fi
+          test ! -e native_cpp/src/geo/glc_area_fractions.cpp
+          test ! -e native_cpp/src/p2_glc_lu_dat_cli.cpp
+          test ! -e native_cpp/src/p2_glc_area_cli.cpp
+          test -e native_cpp/src/geo/p2c_glc30m_sampling.cpp
+          test -e native_cpp/src/geo/glcc_raw_fractions.cpp
+          echo 'P2B_B_ONLY_ENTRY_ABSENT_AND_P2A_P2C_PRESENT'
+      - name: Configure and compile all retained native targets
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/s1-native-build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$RUNNER_TEMP/s1-native-build" --parallel 2
+      - name: Full native CTest
+        run: |
+          set -euo pipefail
+          ctest --test-dir "$RUNNER_TEMP/s1-native-build" --output-on-failure
+      - name: Retained point sampler and original recount have no area-library dependency
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/s1-native-build/libcteas_p2c_glc30m_core.a"
+          test -s "$RUNNER_TEMP/s1-native-build/libcteas_p2_original_sampling_recount.a"
+          test ! -e "$RUNNER_TEMP/s1-native-build/libcteas_p2_glc_area.a"
+          if nm -C "$RUNNER_TEMP/s1-native-build/libcteas_p2c_glc30m_core.a" | grep -E 'cteas::geo::(intersect|area_fraction).*glc'; then
+            echo 'P2B_AREA_SYMBOL_LEAK'
+            exit 3
+          fi
+      - name: Frozen modern-policy compatibility test
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v scripts.s2g.tests.test_p2b_user_mapping_20261019

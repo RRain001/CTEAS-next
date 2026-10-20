@@ -52,3 +52,18 @@ See `docs/maintenance/REPOSITORY_CLEANUP_20261017.md`. The frozen `docs/migratio
 Both case configurations, grids, raw meteorological input and current science baseline files are kept. Generated `project/cases/*/deliverables/`, captured run logs and obsolete diagnostic outputs were deleted from **current** Git checkout. Exceptions deliberately retained as **read-only scientific inputs** include the frozen 2022 `run/met/met.dat`, `run/puff/puff.con`, `run/puff/puff.lst`, the 2023 `run/met/met.dat`, and the original model input decks; CMake and C1/C2 science jobs still require these bytes. They are not dispensable without an explicit, hash-checked fixture restoration redesign.
 
 Old complete cases and documents can be inspected at pre-cleanup Git commit `2f1747434e4217a99b9b9c6fed4d413e90006bd5` (the same content is in the older CTEAS source archive). **Deleting a path in a new commit does not erase historical Git objects or guarantee a smaller cloned .git history.** For actual history size reduction, use a separate approved repository migration rather than rewriting the accepted main history.
+
+## P2 land-use producers (Issue #168 S1)
+
+Supported paths: **P2-A** historical 1 km GLCC through the frozen original
+CTGPROC sampling / historical 24-to-USGS38 mapping, and **P2-C** 2022
+GLC_FCS30D 30 m through original-style `MESHGLAZ=10` source-pixel point
+sampling to `LU.DAT v2.1` (`cteas_p2c_glc30m_sampling`). P2-B
+`EXACT_AREA_V1` area-intersection production and its native CLI are retired.
+Do not substitute an area-fraction product for point HITS. The frozen
+`docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json` filename
+and `cteas.p2b` schema are historical naming only: it remains the **required,
+SHA-pinned P2-C modern class policy** and must not be renamed or edited.
+The original-source audits and pre-retirement runs remain traceable in Git
+history; P3 original MAKEGEO physics parity is not established by P2-C's
+format-only LU.DAT contract.

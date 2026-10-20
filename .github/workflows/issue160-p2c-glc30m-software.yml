@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           echo 'a5fa157f57feb1aa160dd96d920a22d267fea78c5828c6040fa95e86536544ed  docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json' | sha256sum -c -
-      - name: Compile GLCC historical, P2-B frozen and C4 native targets
+      - name: Compile retained GLCC historical and P2-C C4 native targets
         run: |
           set -euo pipefail
           cmake -S native_cpp -B "$RUNNER_TEMP/issue160-c4" -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -42,14 +42,12 @@ jobs:
             cteas_p2c_glc30m_sampling_tests \
             cteas_p2_original_sampling_hefei \
             cteas_p2_original_sampling_wolsong \
-            cteas_p2_original_sampling_lu_tests \
-            cteas_p2_glc_lu_dat \
-            cteas_p2_glc_area_tests
+            cteas_p2_original_sampling_lu_tests
       - name: Scoped regression and negative gate for wrong-source inputs
         run: |
           set -euo pipefail
           ctest --test-dir "$RUNNER_TEMP/issue160-c4" --output-on-failure \
-            -R 'cteas_p2_original_sampling_lu_writer_synthetic|cteas_p2_glc_raw_area_contract|cteas_p2c_glc30m'
+            -R 'cteas_p2_original_sampling_lu_writer_synthetic|cteas_p2c_glc30m'
           if "$RUNNER_TEMP/issue160-c4/cteas_p2c_glc30m_sampling" \
               inland /missing '0' docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
               - /tmp/should-not-create-160; then

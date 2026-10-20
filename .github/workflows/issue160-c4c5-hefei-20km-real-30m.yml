@@ -4,6 +4,7 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - data/landcover/glc_fcs30d/v1_2022/hefei20km/**
+      - native_cpp/CMakeLists.txt
       - native_cpp/src/geo/p2c_glc30m_sampling.cpp
       - native_cpp/src/p2c_glc30m_sampling_cli.cpp
       - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp

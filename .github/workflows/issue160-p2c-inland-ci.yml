@@ -34,7 +34,7 @@ jobs:
           sudo apt-get install -y cmake ninja-build g++ libgdal-dev libssl-dev
       - name: Configure native P2
         run: cmake -S native_cpp -B "${RUNNER_TEMP}/p2c160-build" -G Ninja -DCMAKE_BUILD_TYPE=Release
-      - name: Build both original GLCC modes and frozen P2-B targets
+      - name: Build retained original GLCC sampling targets
         run: |
           cmake --build "${RUNNER_TEMP}/p2c160-build" --parallel 3 --target \
             cteas_p2_original_sampling_hefei \
@@ -42,13 +42,11 @@ jobs:
             cteas_p2_original_sampling_lu_tests \
             cteas_p2_original_sampling_recount_tests \
             cteas_p2_original_coast_policy_tests \
-            cteas_p2_original_bln_pnpoly_tests \
-            cteas_p2_glc_lu_dat \
-            cteas_p2_glc_area_tests
-      - name: Synthetic original-writer, coast and P2-B regression
+            cteas_p2_original_bln_pnpoly_tests
+      - name: Synthetic original-writer and coast regression
         run: |
           ctest --test-dir "${RUNNER_TEMP}/p2c160-build" --output-on-failure \
-            -R 'cteas_p2_original_(sampling_lu_writer|sampling_recount_synthetic|coast_policy_synthetic|bln_pnpoly_synthetic)|cteas_p2_glc_raw_area_contract'
+            -R 'cteas_p2_original_(sampling_lu_writer|sampling_recount_synthetic|coast_policy_synthetic|bln_pnpoly_synthetic)'
       - name: New inland CLI must reject missing real canonical GLCC data
         run: |
           set -euo pipefail
