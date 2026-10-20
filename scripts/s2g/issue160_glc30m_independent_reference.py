@@ -333,6 +333,12 @@ def main():
     p.add_argument("--data-sha256",required=True)
     p.add_argument("--policy",type=Path,required=True)
     p.add_argument("--coast-bln",type=Path)
+    p.add_argument("--utm-epsg",type=int)
+    p.add_argument("--xrefkm",type=float)
+    p.add_argument("--yrefkm",type=float)
+    p.add_argument("--nx",type=int)
+    p.add_argument("--ny",type=int)
+    p.add_argument("--dgridkm",type=float)
     p.add_argument("--native",type=Path,required=True)
     p.add_argument("--report",type=Path,required=True)
     a=p.parse_args()
@@ -341,10 +347,17 @@ def main():
                 (a.site=="wolsong" and a.data_sha256==WOLSONG_TIFF_SHA or
                  a.site=="inland"),"CASE_SOURCE_SHA_SCOPE")
         policy=policy_map(a.policy)
+        base=(*GRIDS[a.site],200,200,.1)
+        opts=(a.utm_epsg,a.xrefkm,a.yrefkm,a.nx,a.ny,a.dgridkm)
+        grid=tuple(base[i] if value is None else
+                   value*(1000 if i in (1,2) else 1)
+                   for i,value in enumerate(opts))
+        require(grid[0]==base[0] and 1<=grid[3]*grid[4]<=250000,
+                "S2E_ORACLE_SOURCE_UTM_GRID_BUDGET")
         result,summary=independently_compute(a.tif,a.data_sha256,
-                                              a.site,policy,a.coast_bln)
+                                               a.site,policy,a.coast_bln,grid)
         report=compare(a.native,result,summary,a.site,a.policy,a.tif,
-                       a.data_sha256,a.coast_bln,a.report)
+                       a.data_sha256,a.coast_bln,a.report,grid)
         print(json.dumps({k:report[k] for k in
             ("status","integer_fields_compared","integer_mismatches",
              "F6_3_mismatches","missing_flag_mismatches","included_hits")}))
