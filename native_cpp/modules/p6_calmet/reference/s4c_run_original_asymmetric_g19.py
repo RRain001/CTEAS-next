@@ -44,8 +44,8 @@ def surface_clock(path: Path, nss: int, id_offset: int=0):
 
 def move_station_declaration(deck: str, kind: str, total: int) -> str:
     """Stage genuine SS2..SSN / US2..USM immediately after station 1."""
-    if kind not in ("SS","US") or not 1<=total<=8:
-        raise ValueError("Unexpected controlled original site configuration")
+    if kind not in ("SS","US") or total<1:
+        raise ValueError("Original station declaration requires positive station cardinality")
     extra_lines=[]
     for ordinal in range(2,total+1):
         extra=re.compile(r"(?m)^!\s*"+kind+str(ordinal)+r"\s*=[^\n]*")
@@ -92,8 +92,8 @@ def run() -> None:
     ap.add_argument("--source",type=Path,required=True)
     ap.add_argument("--out",type=Path,required=True)
     ap.add_argument("--vendor-dir",type=Path,required=True)
-    ap.add_argument("--ss",type=int,choices=range(1,9),required=True)
-    ap.add_argument("--us",type=int,choices=range(1,9),required=True)
+    ap.add_argument("--ss",type=int,required=True)
+    ap.add_argument("--us",type=int,required=True)
     ap.add_argument("--hours",type=int,choices=[1,6],required=True)
     ap.add_argument("--id-offset",type=int,default=0)
     ap.add_argument("--compiler",default="gfortran")
@@ -107,6 +107,20 @@ def run() -> None:
              "station_pair":[args.ss,args.us],"hours":args.hours,
              "original_vendor_fresh":False,"CXX_MET_USED_AS_VENDOR_INPUT":False}
     try:
+        # The unchanged vendor—not a fictional C++ limit—owns the
+        # upper bound of a fresh-Fortran scientific oracle. Source data
+        # and native execution remain independently size-checked.
+        params=(original_dir/"params.met").read_text()
+        capacity=re.search(
+            r"parameter\s*\(\s*mxss\s*=\s*(\d+)\s*,\s*mxus\s*=\s*(\d+)\b",
+            params,re.I)
+        if capacity is None:
+            raise RuntimeError("Original CALMET compilation station capacity unknown")
+        max_ss,max_us=(int(capacity.group(1)),int(capacity.group(2)))
+        receipt["original_compiled_station_capacity"]={"mxss":max_ss,"mxus":max_us}
+        receipt["original_params_sha256"]=g31.sha256(original_dir/"params.met")
+        if args.ss<1 or args.us<1 or args.ss>max_ss or args.us>max_us:
+            raise ValueError("Source station counts exceed compiled original mxss/mxus")
         src=original_dir/"calmet.for"
         blob=g31.git_blob(src.read_bytes())
         receipt["original_calmet_blob"]=blob
