@@ -172,14 +172,33 @@ def _render_upperair_group(upperair_rows: list[dict[str, str]], grid: Any) -> st
     return section
 
 
-def render_met_inp(case_name: str, config: dict[str, Any], work_dir: Path) -> tuple[str, dict[str, Any]]:
-    paths = case_paths(
-        config,
-        case_name,
-        required=["geo_makegeo_dir", "met_surface_dir", "met_upperair_dir", "run_met_dir"],
-    )
-    grid = parse_grid_cmn(case_name)
-    begin_dt, end_dt = parse_research_time(case_name)
+def render_met_inp(
+    case_name: str, config: dict[str, Any], work_dir: Path,
+    *, source_paths: dict[str, Path] | None = None,
+    source_grid: Any | None = None,
+    source_times: tuple[Any, Any] | None = None,
+) -> tuple[str, dict[str, Any]]:
+    """Use one original CALMET deck renderer for legacy and admitted new-site files.
+
+    Explicit source roles are for read-only isolated S3 source preflight; the
+    legacy case-name path remains byte-for-byte unchanged when omitted.
+    """
+    override = (source_paths is not None, source_grid is not None, source_times is not None)
+    if any(override) and not all(override):
+        raise ValueError("staged MET input rendering requires explicit paths, grid and clock together")
+    if all(override):
+        paths, grid = source_paths, source_grid
+        begin_dt, end_dt = source_times
+        if work_dir != paths["run_met_dir"]:
+            raise ValueError("source-only staged work_dir differs from independent MET directory")
+    else:
+        paths = case_paths(
+            config,
+            case_name,
+            required=["geo_makegeo_dir", "met_surface_dir", "met_upperair_dir", "run_met_dir"],
+        )
+        grid = parse_grid_cmn(case_name)
+        begin_dt, end_dt = parse_research_time(case_name)
 
     geo_dat = paths["geo_makegeo_dir"] / "geo.dat"
     surf_dat = paths["met_surface_dir"] / "final" / "surf.dat"
