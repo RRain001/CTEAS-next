@@ -168,10 +168,10 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
         }
         return profiles;
     }
+    // Station identity is validated against the actual original G19
+    // deck and UP file for every station above. A literal 58424/58425
+    // check here was fixture-only and incorrectly rejected legal IDs.
     if(ns<1||ns>4||nu<1||nu>4||
-       ((ns<=2&&nu<=2)&&
-         (stations.upper[0].id!=58424||
-          (nu==2&&stations.upper[1].id!=58425)))||
        zface.front()!=0.f||!(zface[1]>0.f))
         throw std::invalid_argument(
             "G32E original G19 synthetic upper profile scope changed");
