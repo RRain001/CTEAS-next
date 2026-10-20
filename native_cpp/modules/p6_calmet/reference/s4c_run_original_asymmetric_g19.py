@@ -160,9 +160,54 @@ def run() -> None:
         data=stage/"met.dat"
         if not data.is_file() or data.stat().st_size<10000:
             raise RuntimeError("Original Fortran created no complete CALMET.DAT")
-        from g31_extract_original_science_hour import layout
-        groups=layout(data,"literal_original")["groups"]
-        if len(groups)!=args.hours:raise RuntimeError("Original returned wrong 45-field hours")
+        # The frozen G31 C2 layout audit requires 2SS/2US by design.
+        # Do NOT modify that accepted oracle. Independently verify the
+        # same original Fortran framing and 45 labels with this case's true
+        # asymmetric SS/US controls and all original 12x12 source cells.
+        import struct
+        from verify_g18c6_independent_binary import fortran_records
+        from verify_g30_source_p6f_candidate import LABELS
+        records=fortran_records(data.read_bytes())
+        if len(records)<10 or len(records[0])!=96 or (
+                records[0][:16].decode("ascii").strip()!="CALMET.DAT" or
+                records[0][16:32].decode("ascii").strip()!="2.1"):
+            raise RuntimeError("Actual original Fortran MET.DAT framing incorrect")
+        if len(records[1])!=4:
+            raise RuntimeError("Original comment count record invalid")
+        ncomments,=struct.unpack("<i",records[1])
+        if not 0<=ncomments<=10000:
+            raise RuntimeError("Original comment count out of range")
+        control_record=records[2+ncomments]
+        if len(control_record)!=176:
+            raise RuntimeError("Original CALMET 176-byte controls absent")
+        irlg,irtype,nx,ny,nz=struct.unpack_from("<5i",control_record,48)
+        iwfcod,nss,nus,nps=struct.unpack_from("<4i",control_record,80)
+        if (irlg,irtype,nx,ny,nz,iwfcod,nss,nus,nps)!=(
+                args.hours,1,12,12,9,1,args.ss,args.us,0):
+            raise RuntimeError("Original CALMET asymmetric header does not match actual source")
+        hourly=[]
+        seen_hour=False
+        for payload in records[3+ncomments:]:
+            if len(payload)<24:
+                raise RuntimeError("Original Fortran record too short")
+            label=payload[:8].decode("ascii")
+            begin,bsec,end,esec=struct.unpack_from("<4i",payload,8)
+            if begin==end==0:
+                if seen_hour:raise RuntimeError("Static original field after hourly fields")
+            else:
+                seen_hour=True
+                if len(payload)!=24+4*nx*ny:
+                    raise RuntimeError("Original asymmetric hourly field payload mismatch")
+                hourly.append((label,begin,bsec,end,esec))
+        if len(hourly)!=45*args.hours:
+            raise RuntimeError("Actual original 45-field hours incomplete")
+        labels=tuple(LABELS)
+        for pos in range(0,len(hourly),45):
+            group=hourly[pos:pos+45]
+            if tuple(k[0] for k in group)!=labels or len({k[1:] for k in group})!=1:
+                raise RuntimeError("Original 45 field labels/time in wrong order")
+        receipt["original_hourly_field_records"]=len(hourly)
+        receipt["original_layout_header_station_counts"]=[nss,nus]
         shutil.copyfile(data,out/"original-met.dat")
         receipt["original_met_sha256"]=g31.sha256(data)
         receipt["status"]="ORIGINAL_VENDOR_FRESH_PRODUCED_UNVERIFIED"
