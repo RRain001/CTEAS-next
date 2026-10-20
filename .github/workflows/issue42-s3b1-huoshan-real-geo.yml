@@ -27,6 +27,10 @@ on:
       - docs/plans/ISSUE40_S4_P6B2_G21_REAL_FRADJ_180K_20261020.md
       - native_cpp/modules/p6_calmet/reference/compare_g22_real_huoshan_original_slope.py
       - docs/plans/ISSUE40_S4_P6B2B_REAL_G22_SLOPE_20261020.md
+      - native_cpp/modules/p6_calmet/src/p6g_g20_real_1us_prepdi_export_main.cpp
+      - native_cpp/modules/p6_calmet/reference/compare_g20_real_1us_original_vertav_prepdi.py
+      - native_cpp/modules/p6_calmet/CMakeLists.txt
+      - docs/plans/ISSUE40_S4_P6B2C_TRUE_NOAA_1US_ORIGINAL_VERTAV_PREPDI_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -662,6 +666,42 @@ jobs:
           assert j["original_full_CALMET_45_fields"] is False
           print("S4_P6B1_ORIGINAL_VENDOR_180000_TRUE_NOAA_FIRST_HOUR_UV=PASS_KERNEL_SCOPED_NOT_45_FIELDS")
           PY
+      - name: S4 P6-B2C-1 compile real one-upper raw NOAA VERTAV/PREPDI original input exporter
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/s3-g19" --parallel 2 \
+            --target cteas_p6g_g20_real_1us_prepdi_export
+      - name: S4 P6-B2C-1 actual NOAA one-upper original VERTAV PREPDI IEXTRP validity and numerical gate
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          "$RUNNER_TEMP/s3-g19/cteas_p6g_g20_real_1us_prepdi_export" \
+            "$RUNNER_TEMP/s3_huoshan_2022/run/met/met.inp" \
+            "$RUNNER_TEMP/s3_huoshan_2022/geo/makegeo/geo.dat" \
+            "$RUNNER_TEMP/s3_huoshan_2022/met/surface/final/surf.dat" \
+            "$RUNNER_TEMP/s3_huoshan_2022/met/upperair/final/up_58424.dat" \
+            --out "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2c-real-1us-native-original-raw-stage.txt"
+          /usr/bin/python3 native_cpp/modules/p6_calmet/reference/compare_g20_real_1us_original_vertav_prepdi.py \
+            --vendor-calmet-for "$PWD/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --source-stage "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2c-real-1us-native-original-raw-stage.txt" \
+            --out "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2c-real-1us-original-prepdi-science.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022/evidence"
+          o=json.loads((root/"s4-p6b2c-real-1us-original-prepdi-science.json").read_text())
+          assert o["status"]=="S4_P6B2C1_TRUE_NOAA_1US_ORIGINAL_VERTAV_PREPDI_PASS_SCOPED"
+          assert o["original_prepdi_first_hour_compared_uv"]==18
+          assert o["failed_components"]==0
+          assert o["original_iextrp"]==-4
+          assert o["original_upper_inter2_layer_one"]=="MISSING_EDIT_999"
+          assert o["original_upper_inter2_valid_k"]==[2,3,4,5,6,7,8,9]
+          assert o["original_full_DIAGI_STHEOR_INTER2"] is False
+          assert o["independent_original_full_CALMET_45_fields"] is False
+          print("S4_P6B2C_TRUE_NOAA_ORIGINAL_1US_00_12_VERTAV_PREPDI=PASS_SCOPED")
+          PY
       - name: S4 P6-B2 compile existing native G21 FRADJ source diagnostic
         if: matrix.period == 'jun_6h'
         run: |
@@ -784,6 +824,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-original-vendor-wind1-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2-original-vendor-fradj-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2b-original-vendor-slope-comparison.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2c-real-1us-original-prepdi-science.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
