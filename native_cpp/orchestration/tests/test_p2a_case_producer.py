@@ -65,7 +65,7 @@ class P2ACaseAdapterTests(unittest.TestCase):
             self.assertEqual(command[-1], "--production-direct")
             self.assertEqual(command[3], "32650")
             self.assertEqual(command[4:6], ["510.885", "3531.269"])
-            self.assertEqual(command[8:10], ["50", "50"])
+            self.assertEqual(command[7:9], ["50", "50"])
             output = Path(command[2])
             output.mkdir()
             (output / producer.RAW_NAME).write_text("i,j,samples\n1,1,4\n")
