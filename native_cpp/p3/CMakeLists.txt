@@ -13,6 +13,7 @@ endif()
 
 # S2-2B: independent scoped ASCII writer, without changing P1/P2/P3 physics.
 add_executable(cteas_p12_to_p3_dat p12_native_dat_adapter.cpp)
+target_include_directories(cteas_p12_to_p3_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 if(MSVC)
   target_compile_options(cteas_p12_to_p3_dat PRIVATE /W4 /WX)
 else()
