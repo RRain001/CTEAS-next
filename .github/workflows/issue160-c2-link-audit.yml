@@ -1,0 +1,61 @@
+name: Issue160 C2 historic production-link isolation static audit
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/src/geo/ctgproc_original_sampling_recount.cpp
+      - native_cpp/CMakeLists.txt
+      - docs/plans/ISSUE160_C2_SURROGATE_DEPENDENCY_ISOLATION_20261020.md
+      - .github/workflows/issue160-c2-link-audit.yml
+permissions:
+  contents: read
+jobs:
+  compiler-link-symbol-science-scope:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            cmake ninja-build g++ binutils libgdal-dev libssl-dev
+      - run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/c2-build" -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/c2-build" --parallel 3 --target \
+            cteas_p2_original_coast_policy_tests \
+            cteas_p2_original_sampling_recount_tests \
+            cteas_p2_original_sampling_hefei \
+            cteas_p2_original_sampling_wolsong \
+            cteas_p2_original_sampling_lu_tests \
+            cteas_p2_glc_lu_dat \
+            cteas_p2_glc_area_tests
+          ctest --test-dir "$RUNNER_TEMP/c2-build" \
+            -R 'cteas_p2_original_(sampling_recount_synthetic|sampling_lu_writer_synthetic|coast_policy_synthetic)|cteas_p2_glc_raw_area_contract' \
+            --output-on-failure
+      - name: Check no unverified GEOS D2 classifier linkage from real production recount
+        run: |
+          set -euo pipefail
+          prod="$RUNNER_TEMP/c2-build/libcteas_p2_original_sampling_recount.a"
+          diag="$RUNNER_TEMP/c2-build/libcteas_p2_original_sampling_d2_surrogate.a"
+          test -s "$prod"
+          test -s "$diag"
+          nm -C "$prod" > "$RUNNER_TEMP/issue160-c2-prod-symbols.txt"
+          nm -C "$diag" > "$RUNNER_TEMP/issue160-c2-diag-symbols.txt"
+          if grep -F 'OriginalGshhsPointClassifier::iptype_model_km' "$RUNNER_TEMP/issue160-c2-prod-symbols.txt"; then
+            echo 'FAIL: nonoriginal GEOS D2 leaked into source-faithful production core'
+            exit 2
+          fi
+          grep -qF 'recount_glcc_original_coast_bln(' "$RUNNER_TEMP/issue160-c2-prod-symbols.txt"
+          grep -qF 'recount_glcc_original_coast(' "$RUNNER_TEMP/issue160-c2-diag-symbols.txt"
+          if grep -qF 'recount_glcc_original_coast(' "$RUNNER_TEMP/issue160-c2-prod-symbols.txt"; then
+            echo 'FAIL: diagnostic-only D2 adapter compiled into original production'
+            exit 2
+          fi
+          echo 'ISSUE160_C2_D2_SURROGATE_ISOLATED=PASS_IF_THIS_STEP_SUCCEEDS'
+          echo 'C2_GENUINE_WOLSONG_POSTCHANGE_ORIGINAL_PARITY=NOT_RUN'
+          echo 'C4_MODERN_GLC30M_POINT_SAMPLING=NOT_RUN'

@@ -118,7 +118,9 @@ jobs:
             -R 'cteas_p2_original_bln_pnpoly_synthetic|cteas_p2_original_sampling_lu_writer_synthetic' --output-on-failure
           echo "D8_REAL_BLN_SCIENCE=NOT_RUN COMPILE_PREFLIGHT=PASS"
   genuine-original-wolsong-coastext-io-adapted:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    # #160 C2: allow only same-repo stacked cleanup PR to execute the
+    # genuine ORIGINAL-SAMPLING numerical regression before safe merge.
+    if: (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'RRain001/CTEAS-next' && github.head_ref == 'codex/issue160-c2-isolate-d2-surrogate' && github.event.pull_request.base.ref == 'codex/issue160-p2c-c0-hefei-inland')
     needs: [offline-original-deck-and-bln-contract]
     permissions:
       contents: read

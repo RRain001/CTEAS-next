@@ -14,6 +14,7 @@ std::size_t class_index(int category) {
   return std::size_t(it-kGlccUsgs92Classes.begin());
 }
 }
+#if !defined(CTEAS_P2_D2_GEOS_DIAGNOSTIC_ONLY)
 double OriginalSamplingRecount::fraction(std::size_t i,std::size_t j,std::size_t k) const {
   if(i>=grid.nx||j>=grid.ny||k>=kGlccUsgs92Classes.size())
     throw std::out_of_range("ORIGINAL_RECOUNT_FRACTION_INDEX");
@@ -23,6 +24,7 @@ double OriginalSamplingRecount::fraction(std::size_t i,std::size_t j,std::size_t
   if(fill_ocean.at(cell))return kGlccUsgs92Classes[k]==iocean?1.:0.;
   throw std::domain_error("ORIGINAL_RECOUNT_MISSING_NOT_OCEAN_FILLED");
 }
+#endif // real BLN/production build owns fraction API
 namespace {
 // Shared original LUGRID/SVGRID integer bookkeeping. The classifier is
 // injectable so the D2 GEOS diagnostic stays separate from the authentic
@@ -97,6 +99,7 @@ OriginalSamplingRecount recount_with_classifier(
 }
 } // namespace
 
+#if defined(CTEAS_P2_D2_GEOS_DIAGNOSTIC_ONLY)
 OriginalSamplingRecount recount_glcc_original_coast(
     const GlccRawResult& source, const OriginalCoastControl& controls,
     const OriginalGshhsPointClassifier* classifier) {
@@ -107,6 +110,7 @@ OriginalSamplingRecount recount_glcc_original_coast(
       });
 }
 
+#else // production authentic original BLN and inland no-coast only
 OriginalSamplingRecount recount_glcc_original_coast_bln(
     const GlccRawResult& source, const OriginalCoastControl& controls,
     const OriginalBlnIptypeR4* classifier) {
@@ -116,4 +120,5 @@ OriginalSamplingRecount recount_glcc_original_coast_bln(
         return classifier ? classifier->iptype(x,y) : 1;
       });
 }
+#endif // CTEAS_P2_D2_GEOS_DIAGNOSTIC_ONLY
 } // namespace cteas::reconstruction::geo
