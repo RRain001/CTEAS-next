@@ -58,14 +58,18 @@ jobs:
           /usr/bin/python3 - <<'PY'
           import os
           from pathlib import Path
+          from pyproj import Transformer
           temp=Path(os.environ['RUNNER_TEMP'])
           samples=(
-              ('s2b_hefei',50,'510.885','3531.269',50,50,.100,
-               '31.939774444','117.141610855'),
-              ('s2b_wolsong',52,'533.215','3942.629',20,20,.200,
-               '35.700000000','129.500000000'),
+              ('s2b_hefei',50,'510.885','3531.269',50,50,.100),
+              ('s2b_wolsong',52,'533.215','3942.629',20,20,.200),
           )
-          for name,zone,x0,y0,nx,ny,dx,lat,lon in samples:
+          for name,zone,x0,y0,nx,ny,dx in samples:
+              cx=float(x0)*1000+nx*dx*500
+              cy=float(y0)*1000+ny*dx*500
+              lon,lat=Transformer.from_crs(
+                  f'EPSG:{32600+zone}', 'EPSG:4326',
+                  always_xy=True).transform(cx,cy)
               case=temp/name
               (case/'grid').mkdir(parents=True)
               grid=f'''! IMAP = UTM !
