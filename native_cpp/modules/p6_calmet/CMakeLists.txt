@@ -205,6 +205,18 @@ else()
                          -Wall -Wextra -Wpedantic -Werror)
 endif()
 
+# S4 P6-B2C: genuine 1US original upper VERTAV/PREPDI independent Fortran
+# forensic input only. No resulting G23/INTER2 model hour is authorized.
+add_executable(cteas_p6g_g20_real_1us_prepdi_export
+               src/p6g_g20_real_1us_prepdi_export_main.cpp)
+target_link_libraries(cteas_p6g_g20_real_1us_prepdi_export PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g20_real_1us_prepdi_export PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g20_real_1us_prepdi_export PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 # G21: compile source-file-driven native FRADJ/CGAMMA/SURFVAR first-hour
 # audit. This is NOT an accepted production multi-station CALMET solver.
 add_executable(cteas_p6g_g21_source_fradj_probe
