@@ -4,6 +4,8 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - scripts/s2g/issue160_hefei20km_glc_acquire.py
+      - scripts/s2g/tests/test_issue160_hefei20km_source.py
+      - data/landcover/glc_fcs30d/v1_2022/hefei20km/**
       - .github/workflows/issue160-c4-hefei-source-contract.yml
 permissions:
   contents: read
@@ -51,5 +53,9 @@ jobs:
               raise SystemExit('P2C_WRONGLY_ADMITTED_5KM_AS_20KM')
           print('P2C_HEFEI20KM_5KM_NEGATIVE=PASS')
           PY
-          echo 'GEE_FULL_20KM_ACTUAL_2022_SOURCE=NOT_ACQUIRED'
           echo 'P2C_MODERN_HEFEI_ORIGINAL_STYLE_30M_HITS=NOT_RUN'
+      - name: Verify genuine committed 2022 source and provenance fail-closed tests
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue160_hefei20km_glc_acquire verify
+          /usr/bin/python3 -m unittest scripts.s2g.tests.test_issue160_hefei20km_source -v

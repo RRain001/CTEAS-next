@@ -31,6 +31,9 @@ Y0=3523769.
 D=100.
 N=200
 BUFFER=60.
+CATALOG="https://gee-community-catalog.org/projects/glc_fcs/"
+RESAMPLING="Earth Engine default nearest neighbor; no class remapping or gap filling"
+DOWNLOAD_METHOD="Earth Engine Image.getDownloadURL GEO_TIFF; two independent requests"
 
 def require(ok,reason):
     if not ok:raise ValueError("P2C_HEFEI20KM_"+reason)
@@ -84,7 +87,8 @@ def inspect(source:Path,geom:dict):
                 bounds.right>=q[2] and bounds.top>=q[3],
                 "FULL_20KM_PLUS_BUFFER_COVERAGE")
         data=d.read(1)
-        valid=(d.read_masks(1)!=0)&~np.isin(data,list(FILL))
+        mask=d.read_masks(1)
+        valid=(mask!=0)&~np.isin(data,list(FILL))
         bad=set(map(int,np.unique(data[valid])))-CLASSES
         require(not bad and valid.any(),"UNEXPECTED_CLASS_OR_NO_VALID_PIXELS")
         vals,n=np.unique(data[valid],return_counts=True)
@@ -95,9 +99,14 @@ def inspect(source:Path,geom:dict):
                 "dtype":d.dtypes[0],"nodata":d.nodata,
                 "valid_pixel_count":int(valid.sum()),
                 "nodata_or_fill_count":int((~valid).sum()),
+                "nodata_fraction":float((~valid).mean()),
+                "masked_pixel_count":int((mask==0).sum()),
+                "fill_code_counts":{str(v):int((data==v).sum()) for v in sorted(FILL)},
+                "all_35_classes_histogram":{str(v):int((valid&(data==v)).sum()) for v in sorted(CLASSES)},
                 "classes_histogram":{str(int(v)):int(count) for v,count in zip(vals,n)},
                 "source_glc210_pixel_count":int((valid&(data==210)).sum()),
                 "pixel_sha256":hashlib.sha256(data.tobytes()).hexdigest(),
+                "mask_sha256":hashlib.sha256(mask.tobytes()).hexdigest(),
                 "sha256":sha(source),"size_bytes":source.stat().st_size}
 
 def acquire(directory:Path,project:str):
@@ -138,10 +147,21 @@ def acquire(directory:Path,project:str):
         require(same_pixels and info==other,"REPEAT_SOURCE_NONDETERMINISM")
         metadata={**g,**info,
                   "year":2022,"band":"b23","source":ASSET,
+                  "version":"v1-community-gee","source_catalog":CATALOG,
+                  "resampling":RESAMPLING,"download_method":DOWNLOAD_METHOD,
+                  "allowed_class_codes":sorted(CLASSES),"fill_codes":sorted(FILL),
+                  "license_url":"https://creativecommons.org/licenses/by/4.0/",
+                  "attribution":"Liangyun Liu, Xiao Zhang and Tingting Zhao (2023), GLC_FCS30D, Zenodo v1; GEE community mirror curated by Samapriya Roy",
                   "image_ids":ids,"mosaic_order":"system:index ascending; last valid pixel wins",
                   "license":"CC-BY-4.0","doi":"10.5281/zenodo.8239305",
                   "repeat_download":{"pixels_equal":same_pixels,
                                      "metadata_equal":info==other,
+                                     "masks_equal":info["mask_sha256"]==other["mask_sha256"],
+                                     "transform_equal":info["transform"]==other["transform"],
+                                     "histogram_equal":info["all_35_classes_histogram"]==other["all_35_classes_histogram"],
+                                     "bytes_equal":info["sha256"]==other["sha256"],
+                                     "second_pixel_sha256":other["pixel_sha256"],
+                                     "second_mask_sha256":other["mask_sha256"],
                                      "second_sha256":other["sha256"]},
                   "acquired_utc":datetime.now(timezone.utc).isoformat(),
                   "acquisition_script_sha256":sha(Path(__file__)),
@@ -165,6 +185,22 @@ def verify(directory:Path):
             metadata.get("repeat_download",{}).get("pixels_equal") is True and
             metadata.get("repeat_download",{}).get("metadata_equal") is True,
             "UNVERIFIED_SOURCE_PROVENANCE")
+    require(metadata.get("license")=="CC-BY-4.0" and
+            metadata.get("doi")=="10.5281/zenodo.8239305" and
+            metadata.get("version")=="v1-community-gee" and
+            metadata.get("source_catalog")==CATALOG and
+            metadata.get("resampling")==RESAMPLING and
+            metadata.get("download_method")==DOWNLOAD_METHOD and
+            metadata.get("allowed_class_codes")==sorted(CLASSES) and
+            metadata.get("fill_codes")==sorted(FILL) and
+            bool(metadata.get("image_ids")) and
+            all(isinstance(i,str) and i.startswith(ASSET+"/GLC_FCS30D_20002022_")
+                for i in metadata["image_ids"]),"INCOMPLETE_SOURCE_CONTRACT")
+    repeat=metadata["repeat_download"]
+    require(all(repeat.get(k) is True for k in
+                ("masks_equal","transform_equal","histogram_equal","bytes_equal")) and
+            all(repeat.get("second_"+k)==actual[k] for k in
+                ("sha256","pixel_sha256","mask_sha256")),"REPEAT_HASH_DRIFT")
     return {"gate":"HEFEI_20KM_GLC_FCS30D_2022_SOURCE_VERIFIED",
             "sha256":actual["sha256"],
             "width":actual["width"],"height":actual["height"],
