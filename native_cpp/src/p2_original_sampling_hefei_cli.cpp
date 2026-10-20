@@ -110,7 +110,7 @@ int main(int argc,char** argv) {
       need(bool(csv),"P2C_HEFEI_HITS_CREATE");
       csv<<"i,j,samples";
       for (const int id:kGlccUsgs92Classes) csv<<",cat"<<id;
-      csv<<"\\n";
+      csv<<"\n";
       for (std::size_t j=0;j<grid.ny;++j)
         for (std::size_t i=0;i<grid.nx;++i) {
           const auto cell=j*grid.nx+i;
@@ -122,7 +122,7 @@ int main(int argc,char** argv) {
             csv<<","<<n;
           }
           need(sum==hits.samples[cell],"P2C_HEFEI_HITS_CELL_MISMATCH");
-          csv<<"\\n";
+          csv<<"\n";
         }
       csv.close();need(bool(csv),"P2C_HEFEI_HITS_CLOSE");
       const auto hits_hash=sha256(dest/"hits.csv");
