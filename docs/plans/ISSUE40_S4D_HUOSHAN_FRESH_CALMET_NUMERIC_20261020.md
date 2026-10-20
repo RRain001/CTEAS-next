@@ -11,3 +11,15 @@ This PR is a **strict, independent original Fortran** comparison, reusing the ex
 5. Preserves original binary/source hash, true S3 observation-source SHA, native SHA and actual failure diagnosis. No secret or large raw source files attached.
 
 **Current science status: NOT_RUN until the actual independent workflow result is checked.** No merging it as proof of successful original parity on a failure; report first differing field/time/cell and repair only validated original control or physics. Source context: virtual station effective positions reflect already accepted NOAA fallback and original READCF, *not a fabricated extra station*. No 24-hour run because the real S3 source lacks legal complete 00/12 upper brackets in that window. P7, asymmetric station combinations, other grids/years and S5 memory limit remain separate.
+
+## Actual scientific acceptance evidence — 2026-10-20
+
+[Actions #39446678843](https://github.com/RRain001/CTEAS-next/actions/runs/39446678843), exact PR head `08a17ff8ec162de09dfbb3c450a9dc604e0fdfed`, all 4 S3 jobs completed **SUCCESS**. New `jun_6h` steps independently compiled/reran unchanged CALMET 6.5.0 and completed a separate frozen-tolerance comparison against the same newly shared C1/C2 native G14 executable on genuinely regenerated Huoshan 2022 1SS/1US, 100×100×9, 01–07 UTC 2022-06-01.
+
+- Actual vendor execution: `S4D_HUOSHAN_6H_FRESH_UNMODIFIED_VENDOR_CALMET=PRODUCED_UNVERIFIED`, compile and six-hour execution success, original listing and source SHA artifacts preserved, no native output used as vendor input.
+- Actual strict numerical conclusion: `S4D_TRUE_HUOSHAN_6H_270_FIELDS_FRESH_ORIGINAL_NUMERIC=PASS_SCOPED`. Independent `p6e_calmet_dat21 compare` JSON: `intervals=6`, `fields_per_hour=45`, `status=PASS`, `total_exceedances=0`.
+- The independent job log contains all **45 fields**, each **denominator 60,000** (6×100×100), `missing_reference=0` and `missing_candidate=0`: exactly **2,700,000 nonmissing field-cell checks**, zero exceeding frozen tolerances. Largest of the 45 per-field absolute differences is **0.00006866455078125**, on `EL`; this is *not* a changed scientific tolerance or a claim of byte-for-byte identical files.
+- The same original pipeline generated S3 P1–P5 and actual source SHA, original grid geometry/stations and controls; `jun_6h_alt` is **source-only** with different UTC window, not claimed P6 45-field science.
+- The result is real **new-site** P6 original-vs-C++ selected branch science beyond Hefei C1/C2, but **not** all options, 1SS2US/2SS1US asymmetrical site cases, larger actual domains, P7 newsite or full production G26 admission. `#40` still OPEN, `#36` still OPEN.
+
+Verdict: `S4D_TRUE_HUOSHAN_1SS1US_100X100_20220601_6H_CALMET45=PASS_SCOPED`. Reviewer must validate SHA and actual job result prior to merge.
