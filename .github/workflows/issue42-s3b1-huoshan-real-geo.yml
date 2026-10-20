@@ -12,6 +12,9 @@ on:
       - native_cpp/reference/compare_p3_makegeo_dynamic.py
       - scripts/s2g/issue42_s3b4_real_noaa_station_probe.py
       - docs/plans/ISSUE42_S3_B5_REAL_NOAA_PRODUCERS_20261020.md
+      - native_cpp/orchestration/s3_huoshan_g19_source_only.py
+      - engine/run_met/prepare_met.py
+      - docs/plans/ISSUE42_S3_B6_HUOSHAN_REAL_G19_SOURCE_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -116,6 +119,26 @@ jobs:
               "  surface:\n    auto_select_all: true\n"
               f"puff:\n  point_sources:\n    - latitude: {lat:.12f}\n      longitude: {lon:.12f}\n",
               encoding="utf-8")
+          # The G19 input-only planner requires a fully declared *selected*
+          # legacy-option and source contract. This is a source-only fixture;
+          # these declared emission values are NOT executed as P6/P7 physics.
+          import yaml
+          from native_cpp.orchestration.plan import FROZEN_MET_CONTROLS,FROZEN_PUFF_CONTROLS
+          c=yaml.safe_load((root/"case.yaml").read_text(encoding="utf-8"))
+          c["met"]={"options":dict(FROZEN_MET_CONTROLS),
+                    "station_selection":{"isurft_mode":"spatial","iupt_mode":"spatial",
+                                         "iupwnd_mode":"spatial"}}
+          c["puff"]["options"]=dict(FROZEN_PUFF_CONTROLS)
+          c["puff"]["point_sources"][0].update({
+            "name":"HUOSHAN_S3_G19_SOURCE_ONLY_FIXTURE",
+            "stack_height_m":70.8,"base_elev_m":0.0,
+            "stack_diameter_m":1.6,"exit_velocity_mps":17.26,
+            "exit_temp_k":298.15,"building_downwash_flag":0.0,
+            "zpltfm_m":0.0,"fmfac":1.0,
+            "emissions":[833967.5291730086,0.0],
+          })
+          (root/"case.yaml").write_text(yaml.safe_dump(c,sort_keys=False),
+                                        encoding="utf-8")
           (root/"grid/grid.cmn").write_text(
               "! IMAP = UTM !\n! DATUM = WGS-84 !\n"
               "! IUTMZN = 50 !\n! LSOHEM = N !\n"
@@ -478,6 +501,21 @@ jobs:
             --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
             --destination "$RUNNER_TEMP/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json"
           echo 'S3_B5_FIVE_TRUE_SOURCE_PRODUCTS=SHA_JOIN_ONLY_G19_NOT_RUN'
+      - name: S3-B6 compile genuine C++ G19 actual-file-only parser
+        if: matrix.period == 'jun_24h'
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s3-g19" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s3-g19" --parallel 2 --target cteas_p6g_g19_source_case_preflight
+      - name: S3-B6 render existing original MET control from same case and execute native G19 source-only
+        if: matrix.period == 'jun_24h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.s3_huoshan_g19_source_only \
+            --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
+            --native-g19 "$RUNNER_TEMP/s3-g19/cteas_p6g_g19_source_case_preflight"
+          test -s "$RUNNER_TEMP/s3_huoshan_2022/evidence/s3-b6-g19-source-only.json"
+          echo 'S3_B6_REAL_G19_INPUT_PARSER_PASS_IF_SOURCE_SCOPED_NO_P6_WIND'
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -494,6 +532,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/p5.json
             ${{ runner.temp }}/s3_huoshan_2022/met/upperair/p4_d1a_annual_manifest.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b6-g19-source-only.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
