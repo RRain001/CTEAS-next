@@ -86,6 +86,33 @@ class IsolatedP4D1ATest(unittest.TestCase):
         self.assertEqual(selected_years(None, self.case / "grid/research_time"), [2022, 2023])
         self.assertFalse(self.output.exists())
 
+    def test_rejects_duplicate_yaml_keys_even_when_legacy_yaml_would_override(self):
+        # The legacy yaml.safe_load kept the final duplicate silently.
+        with (self.case / "case.yaml").open("a", encoding="utf-8") as out:
+            out.write("settings:\\n  timezone: UTC+0000\\n")
+        with self.assertRaisesRegex(ContractError, "duplicate"):
+            self.admit()
+        self.assertFalse(self.output.exists())
+
+    def test_rejects_shadowed_and_duplicated_grid_authority(self):
+        path = self.case / "grid/grid.cmn"
+        for extra in ("! NX = 21 !\\n", "* NX = 20 *\\n"):
+            with self.subTest(extra=extra):
+                before = path.read_text(encoding="utf-8")
+                path.write_text(before + extra, encoding="utf-8")
+                with self.assertRaisesRegex(ContractError, "duplicate|shadow"):
+                    self.admit()
+                path.write_text(before, encoding="utf-8")
+        self.assertFalse(self.output.exists())
+
+    def test_rejects_grid_size_disagreement_with_case(self):
+        path = self.case / "grid/grid.cmn"
+        path.write_text(path.read_text(encoding="utf-8").replace("! NX = 20 !", "! NX = 21 !"),
+                        encoding="utf-8")
+        with self.assertRaisesRegex(ContractError, "grid|domain|mismatch|inconsistent"):
+            self.admit()
+        self.assertFalse(self.output.exists())
+
     def test_rejects_preexisting_output(self):
         self.output.mkdir()
         with self.assertRaisesRegex(ContractError, "must not preexist"):
