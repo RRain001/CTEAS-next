@@ -1,0 +1,41 @@
+name: Issue160 C4 30m original-style point HITS compiler and synthetic tests
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/src/geo/glc30m_point_sampling.cpp
+      - native_cpp/include/cteas/geo/glc30m_point_sampling.hpp
+      - native_cpp/src/p2_glc30m_point_lu_cli.cpp
+      - native_cpp/tests/p2_glc30m_point_tests.cpp
+      - native_cpp/CMakeLists.txt
+      - .github/workflows/issue160-c4-p2c30m-synthetic-ci.yml
+permissions:
+  contents: read
+jobs:
+  native-glc30m-sampling-software:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            cmake ninja-build g++ libgdal-dev libssl-dev
+      - name: Build modern point sampler without altering old historical/P2-B modules
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/p2c-30m" -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p2c-30m" --parallel 3 --target \
+            cteas_p2_glc30m_point_tests \
+            cteas_p2_glc30m_point_lu \
+            cteas_p2_original_sampling_lu_tests \
+            cteas_p2_original_sampling_hefei \
+            cteas_p2_glc_lu_dat \
+            cteas_p2_glc_area_tests
+          ctest --test-dir "$RUNNER_TEMP/p2c-30m" --output-on-failure \
+            -R 'cteas_p2_glc30m_point_synthetic|cteas_p2_original_sampling_lu_writer_synthetic|cteas_p2_glc_raw_area_contract'
+          echo 'P2C_30M_SYNTHETIC=PASS_IF_TESTS_SUCCESS GENUINE_30M=NOT_RUN'
