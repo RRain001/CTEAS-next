@@ -12,6 +12,7 @@ on:
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp'
       - '.github/workflows/issue40-s4c-asymmetric-ss-us.yml'
       - 'docs/plans/ISSUE40_S4C_ASYMMETRIC_STATION_SOURCE_20261020.md'
+      - 'native_cpp/modules/p6_calmet/reference/s4c_run_original_asymmetric_g19.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -91,6 +92,64 @@ jobs:
             | tee "$RUNNER_TEMP/s4c-output-hash.txt"
           echo "S4C_ASYMMETRIC_SHARED_G14_NATIVE_1H_6H=PRODUCED_UNVERIFIED SS=$NS US=$NU"
           echo "S4C_ASYMMETRIC_ORIGINAL_FORTRAN_45_FIELD=NOT_RUN"
+      - name: Restore independently pinned unchanged original CALMET source
+        if: (matrix.station_counts.ss == 1 && matrix.station_counts.us == 2) || (matrix.station_counts.ss == 2 && matrix.station_counts.us == 1)
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          sparse-checkout: |
+            engine/vendor/src/CALMET_v6.5.0_L150223
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+      - name: Original vendor independently computes matching asymmetric first and full six hours
+        if: (matrix.station_counts.ss == 1 && matrix.station_counts.us == 2) || (matrix.station_counts.ss == 2 && matrix.station_counts.us == 1)
+        shell: bash
+        env:
+          NS: ${{ matrix.station_counts.ss }}
+          NU: ${{ matrix.station_counts.us }}
+        run: |
+          set -euo pipefail
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran
+          for hours in 1 6; do
+            python3 native_cpp/modules/p6_calmet/reference/s4c_run_original_asymmetric_g19.py \
+              --source "$RUNNER_TEMP/case" --ss "$NS" --us "$NU" \
+              --hours "$hours" \
+              --vendor-dir "$PWD/original-cteas/engine/vendor/src/CALMET_v6.5.0_L150223" \
+              --out "$RUNNER_TEMP/s4c-original-$hours" \
+              2>&1 | tee "$RUNNER_TEMP/s4c-original-$hours-trace.log"
+          done
+      - name: Compare independent original vs SAME selected G14 candidate with frozen P6E tolerance
+        if: (matrix.station_counts.ss == 1 && matrix.station_counts.us == 2) || (matrix.station_counts.ss == 2 && matrix.station_counts.us == 1)
+        shell: bash
+        env:
+          NS: ${{ matrix.station_counts.ss }}
+          NU: ${{ matrix.station_counts.us }}
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/s4c-p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4c-p6e" --parallel 2 --target p6e_calmet_dat21
+          for hours in 1 6; do
+            if [[ "$hours" -eq 1 ]]; then candidate="$RUNNER_TEMP/s4c-first-hour-candidate.dat"; else candidate="$RUNNER_TEMP/s4c-six-hour-candidate.dat"; fi
+            "$RUNNER_TEMP/s4c-p6e/p6e_calmet_dat21" compare \
+              --reference "$RUNNER_TEMP/s4c-original-$hours/original-met.dat" \
+              --candidate "$candidate" \
+              --out "$RUNNER_TEMP/s4c-fresh-vendor-$hours-comparison.json" \
+              > "$RUNNER_TEMP/s4c-fresh-vendor-$hours-comparison.log"
+            python3 - "$RUNNER_TEMP/s4c-fresh-vendor-$hours-comparison.json" "$hours" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1]))
+          count=int(sys.argv[2])
+          assert data["intervals"]==count
+          assert data["fields_per_hour"]==45
+          assert len(data["fields"])==45
+          assert data["total_exceedances"]==0 and data["status"]=="PASS"
+          print("S4C_ASYMMETRIC_FRESH_VENDOR_CALMET_NUMERIC=PASS_SCOPED",count)
+          PY
+          done
       - name: Frozen C2 old-versus-shared-actor byte parity for 2SS 2US
         if: matrix.station_counts.ss == 2 && matrix.station_counts.us == 2
         shell: bash
@@ -113,5 +172,15 @@ jobs:
             ${{ runner.temp }}/s4c-first-hour-trace.txt
             ${{ runner.temp }}/s4c-six-hour-trace.txt
             ${{ runner.temp }}/s4c-output-hash.txt
+            ${{ runner.temp }}/s4c-original-1-trace.log
+            ${{ runner.temp }}/s4c-original-6-trace.log
+            ${{ runner.temp }}/s4c-original-1/original-verb-evidence.json
+            ${{ runner.temp }}/s4c-original-6/original-verb-evidence.json
+            ${{ runner.temp }}/s4c-original-1/original-met.lst
+            ${{ runner.temp }}/s4c-original-6/original-met.lst
+            ${{ runner.temp }}/s4c-fresh-vendor-1-comparison.json
+            ${{ runner.temp }}/s4c-fresh-vendor-6-comparison.json
+            ${{ runner.temp }}/s4c-fresh-vendor-1-comparison.log
+            ${{ runner.temp }}/s4c-fresh-vendor-6-comparison.log
           if-no-files-found: warn
           retention-days: 14
