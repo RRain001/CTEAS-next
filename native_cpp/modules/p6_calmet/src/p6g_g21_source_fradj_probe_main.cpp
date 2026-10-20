@@ -28,7 +28,8 @@ int main(int argc,char** argv) {
                     "<met.inp> <GEO.DAT> <SURF.DAT> <US1_UP.DAT> "
                     "[US2_UP.DAT ...] "
                     "--output <fradj-native.csv> --source-stage <fradj-input.dat> "
-                    "[--real-one-ss-one-us-fradj-test-only]\n"
+                    "[--real-one-ss-one-us-fradj-test-only] "
+                    "[--real-one-ss-one-us-slope-test-only]\n"
                     "Source-only 1h native PREPDI CGAMMA GAMMA, original "
                     "SURFVAR(TEMP2D), TERSET and FRADJ. TEST ONLY; "
                     "45-field CALMET/COMP/P6F NOT ACCEPTED.\n";
@@ -47,9 +48,14 @@ int main(int argc,char** argv) {
         std::string mixht_original_prefix,temp3d_original_prefix;
         std::string p6f_candidate_file,surfvar_two_pass_output,comp_third_surfvar_output;
         bool real_one_one_fradj_test_only=false;
+        bool real_one_one_slope_test_only=false;
         for(int i=4;i<argc;++i) {
             const std::string arg=argv[i];
-            if(arg=="--real-one-ss-one-us-fradj-test-only") {
+            if(arg=="--real-one-ss-one-us-slope-test-only") {
+                if(real_one_one_slope_test_only)
+                    throw std::invalid_argument("G22 duplicated real 1SS1US slope opt-in");
+                real_one_one_slope_test_only=true;
+            } else if(arg=="--real-one-ss-one-us-fradj-test-only") {
                 if(real_one_one_fradj_test_only)
                     throw std::invalid_argument("G21 duplicate real 1SS1US diagnostic opt-in");
                 real_one_one_fradj_test_only=true;
@@ -139,20 +145,28 @@ int main(int argc,char** argv) {
                     if(outputs[i]==outputs[j])
                         throw std::invalid_argument("G21/G22 output filename collision");
         const auto source=cteas::calmet::p6g::g19_load_original_source_case(paths);
+        if(real_one_one_slope_test_only&&!real_one_one_fradj_test_only)
+            throw std::invalid_argument("G22 separate slope opt-in also requires G21 single-source opt-in");
         const bool real_one_one=(source.stations.surface.size()==1&&
                                  source.stations.upper.size()==1);
+        if(real_one_one_slope_test_only&&!real_one_one)
+            throw std::invalid_argument("G22 selected single-source flag invalid on multistation");
         if(real_one_one!=real_one_one_fradj_test_only)
             throw std::invalid_argument(
                 "G21 1SS1US source FRADJ requires explicit test-only flag; "
                 "old multisite source may not opt into single-site mode");
-        if(real_one_one &&
-           (!slope_output_file.empty()||!inter2_output_file.empty()||
+        if(real_one_one && (
+           (real_one_one_slope_test_only &&
+             (slope_output_file.empty()||slope_stage_file.empty()))||
+           (!real_one_one_slope_test_only && !slope_output_file.empty())||
+           !inter2_output_file.empty()||
             !diagi_similt_prefix.empty()||!wind_tail_stage.empty()||
             !comp_original_prefix.empty()||!p6f_candidate_file.empty()||
             !station_flux_prefix.empty()||!original_nearu_prefix.empty()))
+
             throw std::invalid_argument(
-                "G21 true 1SS1US may only run uncommitted FRADJ, "
-                "not unverified G22/G23/G24/COMP physics");
+                "G21 1SS1US G22 requires separate opt-in and only "
+                "uncommitted selected SLOPE, no G23/G24/COMP");
         auto scheduler=source.make_scheduler();
         auto frame=scheduler.preview_next_hour();
         cteas::calmet::p6g::G18D2StationClockAuthority clocks;

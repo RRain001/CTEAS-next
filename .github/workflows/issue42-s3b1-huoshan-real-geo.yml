@@ -25,6 +25,8 @@ on:
       - native_cpp/modules/p6_calmet/src/p6g_g21_source_fradj_probe_main.cpp
       - native_cpp/modules/p6_calmet/reference/compare_g21_real_huoshan_original_fradj.py
       - docs/plans/ISSUE40_S4_P6B2_G21_REAL_FRADJ_180K_20261020.md
+      - native_cpp/modules/p6_calmet/reference/compare_g22_real_huoshan_original_slope.py
+      - docs/plans/ISSUE40_S4_P6B2B_REAL_G22_SLOPE_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -712,6 +714,54 @@ jobs:
           assert r["S4_P6_NEW_SITE_SCIENCE"]=="NOT_ACCEPTED"
           print("S4_P6B2_ORIGINAL_VENDOR_REAL_HUOSHAN_180000_FRADJ=PASS_KERNEL_SCOPED")
           PY
+      - name: S4 P6-B2B true NOAA Huoshan original G22 slope and vendor parity 180k
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import json,os,subprocess
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
+          prior=json.loads((root/"evidence/s4-p6b2-original-vendor-fradj-comparison.json").read_text())
+          assert prior["status"]=="S4_P6B2_REAL_HUOSHAN_ORIGINAL_FRADJ_KERNEL_PASS_SCOPED"
+          assert prior["compared_uv_values"]==180000 and prior["failures_over_tolerance"]==0
+          exe=Path(os.environ["RUNNER_TEMP"])/"s3-g19/cteas_p6g_g21_source_fradj_probe"
+          base=[str(exe),str(root/"run/met/met.inp"),str(root/"geo/makegeo/geo.dat"),
+                str(root/"met/surface/final/surf.dat"),
+                str(root/"met/upperair/final/up_58424.dat")]
+          opts=["--output",str(root/"evidence/s4-p6b2b-native-fradj.csv"),
+                "--source-stage",str(root/"evidence/s4-p6b2b-original-fradj-stage.dat"),
+                "--slope-output",str(root/"evidence/s4-p6b2b-native-slope.csv"),
+                "--slope-stage",str(root/"evidence/s4-p6b2b-original-slope-stage.dat")]
+          negative=subprocess.run(base+opts+["--real-one-ss-one-us-fradj-test-only"],
+                                  capture_output=True,text=True,timeout=90)
+          assert negative.returncode!=0, "G22 unflagged real slope was incorrectly accepted"
+          assert not (root/"evidence/s4-p6b2b-native-slope.csv").exists()
+          positive=subprocess.run(base+opts+["--real-one-ss-one-us-fradj-test-only",
+                "--real-one-ss-one-us-slope-test-only"],capture_output=True,text=True,timeout=240)
+          if positive.returncode:
+            raise RuntimeError("genuine NOAA G22 rejected: "+positive.stderr[-1600:])
+          assert "PASS_P6G_G22_SOURCE_HEATFX_AIRDEN_ELUSTR_SLOPE" in positive.stdout
+          assert "WIND_UV_VALUES=180000" in positive.stdout
+          assert "G14_HOURS_COMMITTED=0" in positive.stdout
+          print("S4_P6B2B_GENUINE_NOAA_G22_FIRST_HOUR_HEATFX_AIRDEN_ELUSTR_SLOPE=PRODUCED_UNVERIFIED")
+          PY
+          /usr/bin/python3 native_cpp/modules/p6_calmet/reference/compare_g22_real_huoshan_original_slope.py \
+            --vendor-calmet-for "$PWD/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --source-stage "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2b-original-slope-stage.dat" \
+            --candidate "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2b-native-slope.csv" \
+            --out "$RUNNER_TEMP/s3_huoshan_2022/evidence/s4-p6b2b-original-vendor-slope-comparison.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022/evidence"
+          a=json.loads((root/"s4-p6b2b-original-vendor-slope-comparison.json").read_text())
+          assert a["status"]=="S4_P6B2B_HUOSHAN_ORIGINAL_SLOPE_KERNEL_PASS_SCOPED"
+          assert a["compared_uv_values"]==180000 and a["differences_exceeding_tolerance"]==0
+          assert a["independent_vendor_upstream_HEATFX_AIRDEN_ELUSTR"] is False
+          assert a["independent_vendor_full_CALMET_45fields"] is False
+          print("S4_P6B2B_REAL_HUOSHAN_180000_ORIGINAL_SLOPE_KERNEL=PASS_SCOPED")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -733,6 +783,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-real-wind1-evidence.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b1-original-vendor-wind1-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2-original-vendor-fradj-comparison.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2b-original-vendor-slope-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
