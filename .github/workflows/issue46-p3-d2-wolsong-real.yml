@@ -6,6 +6,8 @@ on:
       - .github/workflows/issue46-p3-d2-wolsong-real.yml
       - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
       - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
+      - native_cpp/orchestration/p3_d4_science_handoff.py
+      - native_cpp/orchestration/tests/test_p3_d4_science_handoff.py
       - native_cpp/reference/compare_p3_makegeo_dynamic.py
       - native_cpp/reference/tests/test_compare_p3_dynamic.py
       - native_cpp/orchestration/p3_case_handoff.py
@@ -19,6 +21,19 @@ concurrency:
   group: issue46-d3-wolsong-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  d4-provenance-certificate-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Fail-closed D4 provenance/science contract synthetic negatives
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest native_cpp.orchestration.tests.test_p3_d4_science_handoff -v
+          echo 'D4_SHA_CERTIFICATE_SOFTWARE=PASS; WOLSONG_TRUE_SCIENCE=ONLY_IN_REAL_JOB'
   independent-geo-parser-contract:
     runs-on: ubuntu-24.04
     timeout-minutes: 6
@@ -303,6 +318,24 @@ jobs:
           assert verdict["failures"]==0 and verdict["values_compared"]==320000
           print("WOLSONG_P3_D3_GENUINE_ORIGINAL_FORTRAN_SAME_SOURCE_320K_FIELDS=PASS")
           PY
+      - name: Promote independently PASS original-science proof only if all B0/native and D3 SHA match
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.p3_d4_science_handoff \
+            --case-root "$RUNNER_TEMP/p3_d2_wolsong_2022" \
+            --original-geo "$RUNNER_TEMP/p3-d3-original-run/original_geo.dat" \
+            --comparison "$RUNNER_TEMP/p3-d3-wolsong-comparison.json" \
+            --destination "$RUNNER_TEMP/p3_d2_wolsong_2022/evidence/p3-d4-scoped-science.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          x=json.loads((Path(os.environ["RUNNER_TEMP"])/"p3_d2_wolsong_2022/evidence/p3-d4-scoped-science.json").read_text())
+          assert x["status"]=="P3_WOLSONG_SELECTED_ORIGINAL_MAKEGEO_ACCEPTED_SCOPED"
+          assert x["original_displayed_values_compared"]==320000
+          assert x["p4_up_dat"]=="NOT_RUN" and x["p5_surf_dat"]=="NOT_RUN"
+          assert x["s3_five_product_stack"]=="NOT_ACCEPTED"
+          print("P3_D4_WOLSONG_SCIENCE_ARTIFACT_SHA_BINDING=PASS; S3_FIVE_PRODUCT_STACK=NOT_ACCEPTED")
+          PY
       - name: Save bounded JSON evidence only (no restricted vendor, SRTM, BLN, raster, LU or GEO bytes)
         if: always()
         uses: actions/upload-artifact@v4
@@ -316,5 +349,6 @@ jobs:
             ${{ runner.temp }}/p3-d2-eof.json
             ${{ runner.temp }}/p3-d2-split-io.json
             ${{ runner.temp }}/p3-d3-wolsong-comparison.json
+            ${{ runner.temp }}/p3_d2_wolsong_2022/evidence/p3-d4-scoped-science.json
           retention-days: 21
           if-no-files-found: warn
