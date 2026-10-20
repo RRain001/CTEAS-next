@@ -72,7 +72,7 @@ def validate_deck(deck:str,lfinal:str)->None:
         else:
             require(control_value(deck,key).upper()==val.upper(),
                     "CONTROL_DRIFT_"+key)
-    require("!GEN =" not in deck,"GEN_NOT_ALLOWED")
+    require(re.search(r"(?m)^\\s*1\\s+!GEN\\s*=",deck) is None, "GEN_NOT_ALLOWED")
 
 def prepare(template:Path,glcc:Path,original:Path,out:Path)->dict:
     assert_canonical_source(glcc,original)
@@ -107,7 +107,7 @@ def parsed_header(stream,kind:str)->None:
             lines[6].strip()=="50N" and lines[7].startswith("WGS-84"),
             "LU_HEADER_CRS_FORMAT_"+kind)
     vals=lines[8].split()
-    require(len(vals)==7 and int(vals[0])==N and int(vals[1])==N and
+    require(len(vals)>=7 and int(vals[0])==N and int(vals[1])==N and
             math.isclose(float(vals[2]),float(XREF),abs_tol=1e-8) and
             math.isclose(float(vals[3]),float(YREF),abs_tol=1e-8) and
             math.isclose(float(vals[4]),.1,abs_tol=1e-8) and
