@@ -85,7 +85,11 @@ inline OriginalSamplingLuStats write_original_sampling_lu(
     stats.nonempty_cells+=bool(n);
     stats.missing_cells+=!n;
     const char* flag=n?".":"Missing";
-    o<<std::left<<std::setw(20)<<flag<<std::right<<"\n";
+    // Original CTGPROC SVGRID separates the 38th F6.3 fraction from the
+    // terminal "." / "Missing" marker. Without it "0.000." passes C++
+    // parsing but original Fortran list-directed READ fails on numeric #40.
+    // Preserve all integer HITS and numeric fractions; serialization only.
+    o<<"   "<<std::left<<std::setw(20)<<flag<<std::right<<"\n";
   }
   if(!o)throw std::runtime_error("D11_LU_IO_FAILURE");
   if(stats.nonempty_cells+stats.missing_cells!=g.nx*g.ny)
