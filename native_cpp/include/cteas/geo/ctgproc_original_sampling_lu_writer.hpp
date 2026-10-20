@@ -22,7 +22,9 @@ struct OriginalSamplingLuStats {
 
 inline OriginalSamplingLuStats write_original_sampling_lu(
     std::ostream& o, const OriginalSamplingRecount& data,
-    bool enforce_wolsong_scope=true) {
+    bool enforce_wolsong_scope=true, int utm_zone=52,
+    const char* producer_comment="Produced by CTEAS C++ ORIGINAL_SAMPLING D11 (source-faithful Wolsong scope)",
+    const char* source_comment="Generated from SHA-admitted historical GLCC and original COASTRD BLN") {
   const auto& g=data.grid;
   if(g.nx==0||g.ny==0||g.nx>250000/g.ny||
      data.counts.size()!=g.nx*g.ny*38||
@@ -36,14 +38,16 @@ inline OriginalSamplingLuStats write_original_sampling_lu(
     throw std::runtime_error("D11_NOT_WOLSONG_ACCEPTED_GRID");
   if(data.iocean!=55)
     throw std::runtime_error("D11_UNSUPPORTED_ORIGINAL_IOCEAN");
+  if((utm_zone!=50&&utm_zone!=52) || (enforce_wolsong_scope&&utm_zone!=52))
+    throw std::runtime_error("P2C_UNSUPPORTED_UTM_ZONE_OR_WOLSONG_HEADER_DRIFT");
   // Source original WRTHEAD: record 1 (2A16,A64), comment count,
   // two comment records, file type, map, zone, datum, grid, KM, categories.
   o<<std::left<<std::setw(16)<<"LU.DAT"<<std::setw(16)<<"2.1"
    <<std::setw(64)<<"Coordinate parameters and LandUse categories"<<"\n"
    <<std::right<<std::setw(4)<<2<<"\n"
-   <<"Produced by CTEAS C++ ORIGINAL_SAMPLING D11 (source-faithful Wolsong scope)\n"
-   <<"Generated from SHA-admitted historical GLCC and original COASTRD BLN\n"
-   <<"FRACTION\nUTM\n"<<std::setw(4)<<52<<"N   "<<"\n"
+   <<producer_comment<<"\n"
+   <<source_comment<<"\n"
+   <<"FRACTION\nUTM\n"<<std::setw(4)<<utm_zone<<"N   "<<"\n"
    <<std::left<<std::setw(8)<<"WGS-84"<<std::setw(12)<<"02-21-2003"<<"\n"
    <<std::right<<std::setw(8)<<g.nx<<std::setw(8)<<g.ny
    <<std::fixed<<std::setprecision(3)

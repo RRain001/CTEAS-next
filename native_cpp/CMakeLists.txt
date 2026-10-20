@@ -223,6 +223,20 @@ endif()
 add_test(NAME cteas_p2_original_sampling_lu_writer_synthetic
          COMMAND cteas_p2_original_sampling_lu_tests)
 
+# Issue #160 C1: Hefei inland historical GLCC original-style sampling.
+# Same canonical GLCC source, direct GLAZAS/LUGRID and original writer as
+# Wolsong D11, but with LCOAST=F and EPSG:32650. No modern GLC area method.
+add_executable(cteas_p2_original_sampling_hefei
+               src/p2_original_sampling_hefei_cli.cpp)
+target_link_libraries(cteas_p2_original_sampling_hefei PRIVATE
+                      cteas_p2_original_sampling_recount GDAL::GDAL OpenSSL::Crypto)
+if(MSVC)
+  target_compile_options(cteas_p2_original_sampling_hefei PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2_original_sampling_hefei PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+
 # Issue #53 D3: SHA-bound historical GLCC 24->38 LU.DAT serializer only.
 # The GLC_FCS30D 35->38 crosswalk remains scientifically unapproved.
 add_executable(cteas_p2_glcc_lu_dat src/p2_glcc_lu_dat_cli.cpp)
