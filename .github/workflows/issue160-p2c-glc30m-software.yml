@@ -10,6 +10,9 @@ on:
       - native_cpp/CMakeLists.txt
       - .github/workflows/issue160-p2c-glc30m-software.yml
   workflow_dispatch:
+concurrency:
+  group: issue160-c4-software-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
