@@ -30,10 +30,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        period: [jan_48h, jun_24h]
+        period: [jan_48h, jun_24h, jun_6h]
     env:
-      S3_RESEARCH_BEGIN: ${{ matrix.period == 'jan_48h' && '20220101-000000' || '20220601-000000' }}
-      S3_RESEARCH_END: ${{ matrix.period == 'jan_48h' && '20220103-000000' || '20220602-000000' }}
+      S3_RESEARCH_BEGIN: ${{ matrix.period == 'jan_48h' && '20220101-000000' || matrix.period == 'jun_6h' && '20220601-010000' || '20220601-000000' }}
+      S3_RESEARCH_END: ${{ matrix.period == 'jan_48h' && '20220103-000000' || matrix.period == 'jun_6h' && '20220601-070000' || '20220602-000000' }}
     steps:
       - name: Checkout true SRTM 90m and original GLCC via LFS
         uses: actions/checkout@v4
@@ -98,7 +98,8 @@ jobs:
           from pyproj import Transformer
           begin,end=os.environ["S3_RESEARCH_BEGIN"],os.environ["S3_RESEARCH_END"]
           assert (begin,end) in {("20220101-000000","20220103-000000"),
-                                 ("20220601-000000","20220602-000000")}
+                                 ("20220601-000000","20220602-000000"),
+                                 ("20220601-010000","20220601-070000")}
           root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
           assert not root.exists()
           (root/"grid").mkdir(parents=True)
@@ -388,7 +389,7 @@ jobs:
           print("S3_P4_P5_G19=NOT_RUN")
           PY
       - name: S3-B4 genuinely screen original NOAA station catalogs against the actual June Huoshan grid
-        if: matrix.period == 'jun_24h'
+        if: matrix.period != 'jan_48h'
         shell: bash
         run: |
           set -euo pipefail
@@ -411,7 +412,7 @@ jobs:
           print("S3_B4_REAL_NOAA_CATALOG_GEOMETRY_CASE_SHA_PASS_NO_OBSERVATIONS")
           PY
       - name: S3-B5 build unchanged native P4 and P5 selected-source executables
-        if: matrix.period == 'jun_24h'
+        if: matrix.period != 'jan_48h'
         run: |
           set -euo pipefail
           cmake -S native_cpp/modules/p4_read62 -B "$RUNNER_TEMP/s3-p4" -DCMAKE_BUILD_TYPE=Release
@@ -419,7 +420,7 @@ jobs:
           cmake -S native_cpp/modules/p5_smerge -B "$RUNNER_TEMP/s3-p5" -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/s3-p5" --parallel 2 --target cteas_p5_smerge
       - name: S3-B5 stage authentic archived NOAA original POR and ISD+Lite source under same June case
-        if: matrix.period == 'jun_24h'
+        if: matrix.period != 'jan_48h'
         run: |
           set -euo pipefail
           /usr/bin/python3 - <<'PY'
@@ -432,7 +433,7 @@ jobs:
           from native_cpp.orchestration.case_admission import admit_case,verify_immutable
           case=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
           b0=admit_case(case/"case.yaml")
-          assert (b0.research_begin,b0.research_end)==("20220601-000000","20220602-000000")
+          assert (b0.research_begin,b0.research_end) in {("20220601-000000","20220602-000000"),("20220601-010000","20220601-070000")}
           archive=Path(os.environ["RUNNER_TEMP"])/"s3-genuine-igra"
           archive.mkdir(exist_ok=False)
           sources={
@@ -471,7 +472,7 @@ jobs:
           print("S3_B5_GENUINE_NOAA_ORIGINAL_SOURCE_SHA_AND_ANNUAL_RAW_COVERAGE=PASS_SCOPED")
           PY
       - name: S3-B5 run original-select NOAA P4 00-12 and native READ62 on genuine June B0
-        if: matrix.period == 'jun_24h'
+        if: matrix.period != 'jan_48h'
         run: |
           set -euo pipefail
           /usr/bin/python3 -m native_cpp.modules.p4_read62.data_prep.run_cpp_pipeline \
@@ -483,7 +484,7 @@ jobs:
           test -s "$RUNNER_TEMP/s3_huoshan_2022/met/upperair/p4_d1a_annual_manifest.json"
           echo 'S3_B5_REAL_SAME_B0_P4_UP=PRODUCED_UNVERIFIED'
       - name: S3-B5 run authentic offline NOAA selection and unchanged native P5 SMERGE
-        if: matrix.period == 'jun_24h'
+        if: matrix.period != 'jan_48h'
         run: |
           set -euo pipefail
           /usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.p5_case_producer \
@@ -494,7 +495,7 @@ jobs:
           test -s "$RUNNER_TEMP/s3_huoshan_2022/met/surface/final/surf.dat"
           echo 'S3_B5_REAL_SAME_B0_P5_PUBLISHED_SURF=PRODUCED_UNVERIFIED'
       - name: S3-B5 jointly SHA-admit all five actual newsite P1-P5 source products without G19
-        if: matrix.period == 'jun_24h'
+        if: matrix.period != 'jan_48h'
         run: |
           set -euo pipefail
           /usr/bin/python3 -m native_cpp.orchestration.s3_five_source_preflight \
@@ -502,13 +503,13 @@ jobs:
             --destination "$RUNNER_TEMP/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json"
           echo 'S3_B5_FIVE_TRUE_SOURCE_PRODUCTS=SHA_JOIN_ONLY_G19_NOT_RUN'
       - name: S3-B6 compile genuine C++ G19 actual-file-only parser
-        if: matrix.period == 'jun_24h'
+        if: matrix.period == 'jun_6h'
         run: |
           set -euo pipefail
           cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s3-g19" -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/s3-g19" --parallel 2 --target cteas_p6g_g19_source_case_preflight
       - name: S3-B6 render existing original MET control from same case and execute native G19 source-only
-        if: matrix.period == 'jun_24h'
+        if: matrix.period == 'jun_6h'
         run: |
           set -euo pipefail
           /usr/bin/python3 -m native_cpp.orchestration.s3_huoshan_g19_source_only \
