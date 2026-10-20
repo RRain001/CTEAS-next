@@ -142,6 +142,7 @@ def compare(case,glcc,source,b0,out):
         need(path.is_file() and path.stat().st_size>1000,"ACTUAL_OUTPUT_MISSING")
     err_hits=err_frac=err_flag=0
     total_original=total_native=0
+    missing_cells=0
     first=[]
     with oh.open() as a,of.open() as b,lu.open() as c,hits.open(newline="") as d:
         header(a,"HITS");header(b,"FRACTION");header(c,"FRACTION")
@@ -159,6 +160,7 @@ def compare(case,glcc,source,b0,out):
             need(vals[:2]==[row_index%NX+1,row_index//NX+1] and
                  vals[2]==sum(vals[3:]),"NATIVE_INTEGER_COUNTS")
             total_original+=sum(ih);total_native+=vals[2]
+            missing_cells+=int(sum(ih)==0)
             bad=sum(x!=y for x,y in zip(ih,vals[3:]))
             diff=sum(x!=y for x,y in zip(ff,nf))
             flags=(fh!=fb or fb!=fn or fn!=("Missing" if sum(ih)==0 else "."))
@@ -168,7 +170,8 @@ def compare(case,glcc,source,b0,out):
                               "wrong_hits":bad,"wrong_F6_3":diff,"flag":bool(flags)})
         need(not a.readline() and not b.readline() and not c.readline() and
              next(reader,None) is None,"EXTRA_ROWS")
-    passed=(err_hits==err_frac==err_flag==0 and total_original==total_native)
+    passed=(err_hits==err_frac==err_flag==0 and total_original==total_native and
+            total_original>0 and missing_cells<NX*NY)
     report={"status":("P2A_TRUE_ORIGINAL_GLAZAS_UTM52_20X20_PASS_SCOPED" if passed else
                       "P2A_TRUE_ORIGINAL_GLAZAS_UTM52_NUMERIC_FAIL"),
             "source":{"historical_glcc_sha256":sha(glcc),
@@ -179,6 +182,7 @@ def compare(case,glcc,source,b0,out):
             "F6_3_fields_compared":NX*NY*NC,"F6_3_mismatches":err_frac,
             "missing_flag_mismatches":err_flag,
             "original_hits_total":total_original,"native_hits_total":total_native,
+            "missing_cells":missing_cells,"nonempty_cells":NX*NY-missing_cells,
             "original_hits_lu_sha256":sha(oh),
             "original_fraction_lu_sha256":sha(of),
             "native_lu_sha256":sha(lu),"native_hits_sha256":sha(hits),
