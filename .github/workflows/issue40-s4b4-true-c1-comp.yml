@@ -1,0 +1,90 @@
+name: "Issue40 S4B4 genuine C1 selected COMP 1SS+1US hour gate"
+on:
+  pull_request:
+    paths:
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18a_selected_comp_mixht.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
+      - ".github/workflows/issue40-s4b4-true-c1-comp.yml"
+      - "docs/plans/ISSUE40_S4B4_C1_SINGLE_STATION_COMP_20261020.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-c1-single-source-g14-experimental:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile true shared G14 selected actor and frozen C2 old actor
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/b4" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/b4" --parallel 2 --target \
+            cteas_p6g_s4b1_source_admission \
+            cteas_p6g_s4b2_unified_selected \
+            cteas_p6g_g34b_six_hour_selected_gate
+      - name: Source SHA and original C1 1SS1US 143h admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          sha256sum "$c/run/met/met.inp" "$c/geo/makegeo/geo.dat" \
+            "$c/run/smerge/surf.dat" "$c/met/upperair/final/up_58424.dat" \
+            | tee "$RUNNER_TEMP/b4-source-sha256.txt"
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b1_source_admission" \
+            --admit-only "$c/run/met/met.inp" "$c/geo/makegeo/geo.dat" \
+            "$c/run/smerge/surf.dat" "$c/met/upperair/final/up_58424.dat" \
+            | tee "$RUNNER_TEMP/b4-c1-source-admission.log"
+      - name: Actual authentic 1SS1US first hour DIAGNO COMP P6F
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental \
+            --met "$c/run/met/met.inp" --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 143 --probe-prefix-hours 1 \
+            --out "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/b4-c1-selected-hour-trace.log"
+          test -s "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat"
+          sha256sum "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/b4-first-hour-sha256.txt"
+          echo 'S4B4_C1_ONE_HOUR_G14_COMP_P6F=PRODUCED_UNVERIFIED'
+          echo 'S4B4_C1_ORIGINAL_45_FIELD_PARITY=NOT_RUN'
+      - name: Strictly refuse fabricated station, production mode and an invalid prefix
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          b="$RUNNER_TEMP/b4/cteas_p6g_s4b2_unified_selected"
+          base=(--met "$c/run/met/met.inp" --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" --up "$c/met/upperair/final/up_58424.dat")
+          if "$b" "${base[@]}" --hours 143 --probe-prefix-hours 1 \
+            --out "$RUNNER_TEMP/b4-unauthorized.dat"; then
+            echo "::error::S4B4 allowed implicit production"; exit 1
+          fi
+          if "$b" --selected-experimental "${base[@]}" \
+            --up "$c/met/upperair/final/up_58424.dat" --hours 143 \
+            --probe-prefix-hours 1 --out "$RUNNER_TEMP/b4-phantom.dat"; then
+            echo "::error::S4B4 allowed fake duplicate upper"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/b4-unauthorized.dat"
+          test ! -e "$RUNNER_TEMP/b4-phantom.dat"
+          echo 'S4B4_NEGATIVE_STATION_AND_PRODUCTION=PASS'
+      - name: Provenance artifact, no scientific pass claim
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4b4-1ss1us-authentic-comp-probe
+          path: |
+            ${{ runner.temp }}/b4-source-sha256.txt
+            ${{ runner.temp }}/b4-c1-source-admission.log
+            ${{ runner.temp }}/b4-c1-selected-hour-trace.log
+            ${{ runner.temp }}/b4-first-hour-sha256.txt
+          if-no-files-found: warn
+          retention-days: 14
