@@ -1,0 +1,56 @@
+name: "Issue40 G17C3 one SS one US selected STHEOR unit (no P6 science)"
+on:
+  pull_request:
+    paths:
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c3_station_diagi.hpp"
+      - "native_cpp/modules/p6_calmet/tests/p6g_g17b4_iavet_two_pass_tests.cpp"
+      - ".github/workflows/issue40-g17c3-1ss1us-cardinality.yml"
+      - "docs/plans/ISSUE40_S4_P6B2C_G17C3_1SS1US_ORIGINAL_MIN_CARDINALITY_20261020.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-noobs0-minimum-source-cardinality:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install source-selected C++ test toolchain
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cmake g++-12 libgdal-dev gfortran python3
+      - name: Build exact PR source G17C3 selected STHEOR tests
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/p6-g17c3" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$RUNNER_TEMP/p6-g17c3" --parallel 2 \
+            --target cteas_p6g_g17b4_iavet_two_pass_tests
+      - name: Old multistation and new one-one physics gate, negative policy
+        run: |
+          set -euo pipefail
+          ctest --test-dir "$RUNNER_TEMP/p6-g17c3" \
+            --output-on-failure --verbose \
+            -R '^p6g_g17b4_original_iavet1_pre_and_post_fradj_surfvar$' \
+            | tee "$RUNNER_TEMP/issue40-g17c3-unit-log.txt"
+          grep -Fq 'PASS_G17C3_1SS1US_STHEOR_MIXHTST_DIAGI_UNIT_ONLY' \
+            "$RUNNER_TEMP/issue40-g17c3-unit-log.txt"
+          grep -Fq 'PREPDI_UPPER_INTER2=NOT_ACCEPTED' \
+            "$RUNNER_TEMP/issue40-g17c3-unit-log.txt"
+          grep -Fq 'ORIGINAL_VENDOR_SINGLE_STATION=NOT_RUN' \
+            "$RUNNER_TEMP/issue40-g17c3-unit-log.txt"
+          grep -Fq 'P6_MET45=NOT_RUN' "$RUNNER_TEMP/issue40-g17c3-unit-log.txt"
+          echo "G17C3_REAL_ONE_STATION_1SS1US_CARDINALITY=PASS_SOFTWARE_UNIT_ONLY"
+          echo "G23_REAL_HUOSHAN_INTER2=NOT_RUN"
+          echo "P6_NEW_SITE_SCIENCE=NOT_ACCEPTED"
+      - name: Preserve small CI receipt, not weather or vendor code
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-g17c3-minimum-1ss1us-test-software-only
+          path: ${{ runner.temp }}/issue40-g17c3-unit-log.txt
+          retention-days: 14
+          if-no-files-found: warn
