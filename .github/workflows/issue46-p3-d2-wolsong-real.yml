@@ -332,6 +332,7 @@ jobs:
           x=json.loads((Path(os.environ["RUNNER_TEMP"])/"p3_d2_wolsong_2022/evidence/p3-d4-scoped-science.json").read_text())
           assert x["status"]=="P3_WOLSONG_SELECTED_ORIGINAL_MAKEGEO_ACCEPTED_SCOPED"
           assert x["original_displayed_values_compared"]==320000
+          assert x["p2_integer_hits_csv_sha256"]=="80c46b69f6befbffe4b88a722a8e8cfcac5f0fa7ce28bbe1fa539d1f449ec7a7"
           assert x["p4_up_dat"]=="NOT_RUN" and x["p5_surf_dat"]=="NOT_RUN"
           assert x["s3_five_product_stack"]=="NOT_ACCEPTED"
           print("P3_D4_WOLSONG_SCIENCE_ARTIFACT_SHA_BINDING=PASS; S3_FIVE_PRODUCT_STACK=NOT_ACCEPTED")
