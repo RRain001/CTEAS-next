@@ -1,4 +1,5 @@
 #include "cteas/geo/ctgproc_original_sampling_lu_writer.hpp"
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
