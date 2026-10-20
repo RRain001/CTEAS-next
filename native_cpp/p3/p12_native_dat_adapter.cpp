@@ -1,6 +1,8 @@
 // Strict data-only serialization of native P1/P2 CSV for frozen Hefei P3.
 // No terrain/land-use physics, imputation, or general-case authority.
+#include "cteas/geo/grid_origin.hpp"
 #include <array>
+#include <cstdint>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -96,6 +98,130 @@ std::string landuse_file(const std::string& source){
  }
  return out.str();
 }
+
+struct DynamicGrid {
+ int zone=0,nx=0,ny=0;
+ std::string hemisphere,xtext,ytext;
+ double x=0,y=0,d=0;
+ [[nodiscard]] bool frozen() const {
+  return zone==50&&hemisphere=="N"&&nx==50&&ny==50&&
+         xtext=="510.885"&&ytext=="3531.269"&&std::abs(d-.100)<1.e-9;
+ }
+};
+int positive(const std::string& literal,int upper,const std::string& label) {
+ require(!literal.empty()&&literal.find_first_not_of("0123456789")==std::string::npos,
+         "invalid positive integer "+label);
+ std::size_t n=0;
+ const long long value=std::stoll(literal,&n);
+ require(n==literal.size()&&value>0&&value<=upper,"invalid dimension "+label);
+ return static_cast<int>(value);
+}
+DynamicGrid make_dynamic_grid(char** argv) {
+ DynamicGrid g;
+ g.zone=positive(argv[5],60,"zone");g.hemisphere=argv[6];
+ require(g.hemisphere=="N"||g.hemisphere=="S","WGS84 UTM hemisphere must be N or S");
+ g.xtext=argv[7];g.ytext=argv[8];
+ g.x=cteas::reconstruction::geo::three_decimal_origin_km(g.xtext);
+ g.y=cteas::reconstruction::geo::three_decimal_origin_km(g.ytext);
+ require(g.x>=100&&g.x<=900&&g.y>=0&&g.y<=10000,"UTM numeric origin outside range");
+ g.nx=positive(argv[9],500,"NX");g.ny=positive(argv[10],500,"NY");
+ require(static_cast<std::int64_t>(g.nx)*g.ny<=250000,"P3 current 250000-cell budget");
+ std::size_t consumed=0;const std::string spacing=argv[11];
+ g.d=std::stod(spacing,&consumed);
+ require(consumed==spacing.size()&&std::isfinite(g.d)&&g.d>=.001&&g.d<=100.&&
+         std::abs(g.d*1000.-std::round(g.d*1000.))<1.e-7,
+         "DGRIDKM must be whole metres within supported bounds");
+ require(g.x+g.nx*g.d<=1000.&&g.y+g.ny*g.d<=10000.,
+         "dynamic grid footprint beyond UTM numeric bounds");
+ return g;
+}
+void dynamic_header(std::ostream& out,bool terrain,const DynamicGrid& g) {
+ out<<std::left<<std::setw(16)<<(terrain?"TERREL.DAT":"LU.DAT")
+    <<std::setw(16)<<(terrain?"2.0":"2.1")
+    <<(terrain?"Header structure with coordinate parameters":
+                "Coordinate parameters and LandUse categories")<<"\n"
+    <<"   2\n"
+    <<"Produced by CTEAS C++20 scoped P1/P2 serializer (not original Fortran)\n"
+    <<"Dynamic WGS84 UTM case; source SHA and case SHA in independent evidence\n";
+ if(!terrain)out<<"FRACTION\n";
+ out<<"UTM\n  "<<g.zone<<g.hemisphere<<"\nWGS-84  02-21-2003\n"
+    <<std::right<<std::setw(8)<<g.nx<<std::setw(8)<<g.ny
+    <<std::fixed<<std::setprecision(3)
+    <<std::setw(12)<<g.x<<std::setw(12)<<g.y
+    <<std::setw(12)<<g.d<<std::setw(12)<<g.d;
+ if(!terrain)out<<std::setw(6)<<38;
+ out<<"\nKM  M\n";
+ if(terrain)out<<"W_E N_S\n";
+ else for(std::size_t k=0;k<CATS.size();++k)
+   out<<(k?"":"")<<std::setw(6)<<CATS[k]<<(k+1==CATS.size()?"\n":"");
+}
+void dynamic_cell(const std::vector<std::string>& row,int index,int nx) {
+ require(row.size()>=2&&numint(row[0])==index%nx+1&&
+         numint(row[1])==index/nx+1,"dynamic cell index/order mismatch");
+}
+std::string dynamic_terrain_file(const std::string& source,const DynamicGrid& g) {
+ if(g.frozen())return terrain_file(source);
+ std::ifstream in(source);require(bool(in),"cannot open P1 dynamic CSV");
+ std::string line;require(bool(std::getline(in,line))&&line=="i,j,hits,elevation_m",
+                            "wrong dynamic P1 header");
+ std::vector<double> elevations(static_cast<std::size_t>(g.nx)*g.ny);
+ for(std::size_t n=0;n<elevations.size();++n) {
+  require(bool(std::getline(in,line)),"dynamic P1 rows truncated");
+  auto row=csv(line);require(row.size()==4,"dynamic P1 wrong width");
+  dynamic_cell(row,static_cast<int>(n),g.nx);
+  require(numint(row[2])>0,"dynamic uncovered P1 terrain cell");
+  const double h=numfloat(row[3]);
+  require(h>=-998.,"dynamic terrain missing; no imputation");
+  elevations[n]=h;
+ }
+ require(!std::getline(in,line),"dynamic P1 unexpected extra row");
+ std::ostringstream out;dynamic_header(out,true,g);
+ for(int j=g.ny-1;j>=0;--j)for(int i=0;i<g.nx;++i){
+  std::ostringstream token;
+  token<<std::fixed<<std::setw(8)<<std::setprecision(1)
+       <<elevations[static_cast<std::size_t>(j*g.nx+i)];
+  require(token.str().size()==8,"dynamic TERREL F8.1 overflow");
+  out<<token.str();
+  if((i+1)%10==0||i+1==g.nx)out<<"\n";
+ }
+ return out.str();
+}
+std::string dynamic_landuse_file(const std::string& source,const DynamicGrid& g) {
+ if(g.frozen())return landuse_file(source);
+ std::ifstream in(source);require(bool(in),"cannot open P2 dynamic fractions CSV");
+ std::string line;require(bool(std::getline(in,line)),"dynamic P2 header missing");
+ std::ostringstream expected;expected<<"i,j,samples";
+ for(int c:CATS)expected<<",cat"<<c;
+ require(line==expected.str(),"dynamic P2 class order/count mismatch");
+ const std::size_t cells=static_cast<std::size_t>(g.nx)*g.ny;
+ std::ostringstream out;dynamic_header(out,false,g);
+ for(std::size_t n=0;n<cells;++n) {
+  require(bool(std::getline(in,line)),"dynamic P2 rows truncated");
+  const auto values=csv(line);require(values.size()==41,"dynamic P2 wrong CSV width");
+  dynamic_cell(values,static_cast<int>(n),g.nx);
+  require(numint(values[2])>0,"dynamic P2 missing sample cell");
+  double total=0,rounded=0;
+  std::array<double,38> fractions{};
+  for(int k=0;k<38;++k) {
+   const double v=numfloat(values[static_cast<std::size_t>(3+k)]);
+   require(v>=0&&v<=1,"dynamic P2 fraction outside [0,1]");
+   total+=v;
+   std::ostringstream token;token<<std::fixed<<std::setprecision(3)<<v;
+   fractions[static_cast<std::size_t>(k)]=numfloat(token.str());
+   rounded+=fractions[static_cast<std::size_t>(k)];
+  }
+  require(total>=.96&&total<=1.005&&rounded>=.96&&rounded<=1.005,
+          "dynamic P2 incomplete fraction coverage");
+  out<<std::right<<std::setw(5)<<static_cast<int>(n%g.nx)+1
+     <<std::setw(5)<<static_cast<int>(n/g.nx)+1;
+  for(double v:fractions)
+   out<<" "<<std::fixed<<std::setw(5)<<std::setprecision(3)<<v;
+  out<<"   .\n";
+ }
+ require(!std::getline(in,line),"dynamic P2 unexpected extra row");
+ return out.str();
+}
+
 void safe_write(const std::filesystem::path& dest,const std::string& contents){
  namespace fs=std::filesystem;
  require(!fs::exists(dest),"destination already exists; refusing overwrite");
@@ -110,13 +236,23 @@ void safe_write(const std::filesystem::path& dest,const std::string& contents){
 }
 }
 int main(int argc,char** argv){
- if(argc!=4||(std::string(argv[1])!="terrain"&&std::string(argv[1])!="landuse")){
-  std::cerr<<"usage: cteas_p12_to_p3_dat terrain|landuse SOURCE_NATIVE_CSV OUTPUT_DAT\n";return 2;
+ const bool dynamic=argc==12&&std::string(argv[1])=="--grid";
+ const int mode_index=dynamic?2:1;
+ if((!dynamic&&argc!=4)||
+    (std::string(argv[mode_index])!="terrain"&&
+     std::string(argv[mode_index])!="landuse")){
+  std::cerr<<"usage (frozen): cteas_p12_to_p3_dat terrain|landuse SOURCE_NATIVE_CSV OUTPUT_DAT\n"
+           <<"usage (case): cteas_p12_to_p3_dat --grid terrain|landuse SOURCE_NATIVE_CSV OUTPUT_DAT UTM_ZONE N_OR_S XREFKM YREFKM NX NY DGRIDKM\n";
+  return 2;
  }
  try{
-  bool t=std::string(argv[1])=="terrain";
-  auto data=t?terrain_file(argv[2]):landuse_file(argv[2]);
-  safe_write(argv[3],data);
-  std::cout<<"P12_P3_SCOPED_FORMAT_WRITTEN bytes="<<data.size()<<"\n";return 0;
+  const bool t=std::string(argv[mode_index])=="terrain";
+  const std::string data=dynamic?([&]{
+    auto g=make_dynamic_grid(argv);
+    return t?dynamic_terrain_file(argv[3],g):dynamic_landuse_file(argv[3],g);
+  }()):(t?terrain_file(argv[2]):landuse_file(argv[2]));
+  safe_write(argv[dynamic?4:3],data);
+  std::cout<<"P12_P3_FORMAT_WRITTEN bytes="<<data.size()
+           <<" original_science=NOT_RUN\n";return 0;
  }catch(const std::exception& e){std::cerr<<e.what()<<"\n";return 1;}
 }
