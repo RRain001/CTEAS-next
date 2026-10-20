@@ -57,9 +57,14 @@ int main() {
           inland_out.str().find("0.333")!=std::string::npos &&
           inland_out.str().find("Missing")!=std::string::npos,
           "P2C_INLAND_UTM50_F63_AND_MISSING_CONTRACT");
+  std::ostringstream other_zone;
+  write_original_sampling_lu(other_zone,inland,false,49,
+      "P2-C new-site producer","Original-style subpoints; science NOT_RUN",'S');
+  require(other_zone.str().find("  49S   ")!=std::string::npos,
+          "P2C_GENERIC_UTM49S_HEADER");
   rejects([&]{
-      std::ostringstream out;write_original_sampling_lu(out,inland,false,49);
-  },"P2C_REJECT_UNREVIEWED_ZONE");
+      std::ostringstream out;write_original_sampling_lu(out,inland,false,61);
+  },"P2C_REJECT_INVALID_ZONE");
   rejects([&]{
       std::ostringstream out;write_original_sampling_lu(out,source,true,50);
   },"D11_REJECT_WOLSONG_UTM_HEADER_OVERRIDE");

@@ -1,0 +1,42 @@
+name: Issue169 S2-B dynamic P2-C native software (no original science)
+on:
+  pull_request:
+    paths:
+      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
+      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
+      - native_cpp/orchestration/p2c_case_producer.py
+      - native_cpp/tests/p2c_glc30m_sampling_tests.cpp
+      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
+      - scripts/s2g/tests/test_issue169_p2c_case_producer.py
+      - .github/workflows/issue169-s2b-p2c-generic-software.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  p2c-dynamic-synthetic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install GDAL and native/immutable-case tooling
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++ libgdal-dev libssl-dev python3-gdal python3-yaml python3-pyproj
+      - name: Compile native point producer and existing synthetic contracts
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/s2b" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s2b" --parallel 2 --target cteas_p2c_glc30m_sampling cteas_p2c_glc30m_sampling_tests cteas_p2_original_sampling_lu_tests
+          ctest --test-dir "$RUNNER_TEMP/s2b" --output-on-failure -R '^(cteas_p2c_glc30m_synthetic_integer_conservation|cteas_p2_original_sampling_lu_writer_synthetic)$'
+      - name: Native C++ real-format synthetic GeoTIFF plus immutable case contract
+        env:
+          CTEAS_P2C_BIN: ${{ runner.temp }}/s2b/cteas_p2c_glc30m_sampling
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest scripts.s2g.tests.test_issue169_p2c_case_producer -v
+          echo 'P2C_S2B_DYNAMIC_NATIVE_SOFTWARE=PASS NEW_SITE_REAL_SCIENCE=NOT_RUN DOCKER=DEFERRED'

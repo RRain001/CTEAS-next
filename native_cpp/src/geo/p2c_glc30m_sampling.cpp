@@ -99,12 +99,13 @@ P2cGlc30mStatistics sample_p2c_glc30m(
   need(mesh==10,"P2C_MESHGLAZ_MUST_BE_10");
   need(grid.nx>0&&grid.ny>0&&grid.nx<=250000/grid.ny&&
        std::isfinite(grid.x0_m)&&std::isfinite(grid.y0_m)&&
-       std::isfinite(grid.dx_m)&&grid.dx_m==100.,
+       std::isfinite(grid.dx_m)&&grid.dx_m>=1.&&grid.dx_m<=50000.&&
+       std::abs(grid.dx_m-std::round(grid.dx_m))<1e-7,
        "P2C_MODEL_GRID_INVALID");
-  need(epsg==32650||epsg==32652,"P2C_ONLY_TWO_REVIEWED_UTM_ZONES");
-  // Only the Wolsong coastal model grid is permitted to use a coast BLN;
-  // inland must not load or invoke any shoreline geometry.
-  need((epsg==32652)==(coast!=nullptr),"P2C_COAST_MODE_MUST_MATCH_SITE");
+  need((epsg>=32601&&epsg<=32660)||(epsg>=32701&&epsg<=32760),
+       "P2C_WGS84_UTM_ONLY");
+  // Coastal processing is an explicit P2-C control, not a UTM zone alias.
+  // Never infer a coastline from EPSG or silently synthesize coast polygons.
   GDALAllRegister();
   using Ds=std::unique_ptr<GDALDataset,decltype(&GDALClose)>;
   Ds ds(static_cast<GDALDataset*>(GDALOpenEx(tif.string().c_str(),
