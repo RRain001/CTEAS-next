@@ -273,6 +273,19 @@ else()
   target_compile_options(cteas_p2c_glc30m_sampling PRIVATE
                          -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
 endif()
+add_executable(cteas_p2c_glc30m_sampling_tests
+               tests/p2c_glc30m_sampling_tests.cpp)
+target_link_libraries(cteas_p2c_glc30m_sampling_tests PRIVATE
+                      cteas_p2c_glc30m_sampling GDAL::GDAL)
+if(MSVC)
+  target_compile_options(cteas_p2c_glc30m_sampling_tests PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2c_glc30m_sampling_tests PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_test(NAME cteas_p2c_glc30m_synthetic_integer_conservation
+         COMMAND cteas_p2c_glc30m_sampling_tests
+         ${CMAKE_SOURCE_DIR}/../docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json)
 add_executable(cteas_p2c_glc30m_sampling
                src/p2c_glc30m_sampling_cli.cpp)
 target_link_libraries(cteas_p2c_glc30m_sampling PRIVATE
