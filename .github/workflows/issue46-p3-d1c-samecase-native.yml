@@ -27,13 +27,15 @@ jobs:
       - name: Compile actual P1 and retained P2-C original-style point producer
         run: |
           set -euo pipefail
+          cmake -S native_cpp/p1 -B "$RUNNER_TEMP/p1" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p1" --parallel 2 --target cteas_p1_terrain_case
           cmake -S native_cpp -B "$RUNNER_TEMP/native" -DCMAKE_BUILD_TYPE=Release
-          cmake --build "$RUNNER_TEMP/native" --parallel 2 --target cteas_p1_terrain_case cteas_p2c_glc30m_sampling
+          cmake --build "$RUNNER_TEMP/native" --parallel 2 --target cteas_p2c_glc30m_sampling
           cmake -S native_cpp/p3 -B "$RUNNER_TEMP/p3" -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/p3" --parallel 2 --target cteas_p12_to_p3_dat cteas_p3_makegeo
       - name: Distinct synthetic geographic P1 source and native UTM P2-C through real MAKEGEO C++ binary
         env:
-          CTEAS_P1_BIN: ${{ runner.temp }}/native/cteas_p1_terrain_case
+          CTEAS_P1_BIN: ${{ runner.temp }}/p1/cteas_p1_terrain_case
           CTEAS_P2C_BIN: ${{ runner.temp }}/native/cteas_p2c_glc30m_sampling
           CTEAS_P12_BIN: ${{ runner.temp }}/p3/cteas_p12_to_p3_dat
           CTEAS_P3_BIN: ${{ runner.temp }}/p3/cteas_p3_makegeo
