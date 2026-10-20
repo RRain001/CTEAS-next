@@ -22,7 +22,8 @@ inline cteas::p6f::Calmet21File g18c6_selected_one_hour_dataset(
     const G18C5SelectedHourFields& selected,
     const std::vector<int>& original_nears,
     const std::string& original_deck,
-    bool explicitly_test_only) {
+    bool explicitly_test_only,
+    bool allow_one_one_source_audit=false) {
     using namespace std::chrono;
     const auto nx=static_cast<std::size_t>(frame.grid.nx);
     const auto ny=static_cast<std::size_t>(frame.grid.ny);
@@ -32,8 +33,10 @@ inline cteas::p6f::Calmet21File g18c6_selected_one_hour_dataset(
        frame.input.end!=selected.end||
        frame.surface.end!=selected.end||
        frame.surface.end-frame.surface.start!=hours{1}||
-       frame.stations.surface.size()<2||frame.stations.surface.size()>6||
-       frame.stations.upper.size()<2||frame.stations.upper.size()>6||
+       ((frame.stations.surface.size()<2||frame.stations.surface.size()>6||
+         frame.stations.upper.size()<2||frame.stations.upper.size()>6)&&
+        !(allow_one_one_source_audit&&frame.stations.surface.size()==1&&
+          frame.stations.upper.size()==1))||
        frame.grid.nlu<=0||frame.grid.nlu>200||
        frame.grid.valid_categories.size()!=
            static_cast<std::size_t>(frame.grid.nlu)||

@@ -36,6 +36,10 @@ inline G18ASelectedCompControls g26b_source_test_comp_controls(
         throw std::invalid_argument("G26B source COMP must follow native G26A GEO");
     G18ASelectedCompControls input;
     input.explicitly_test_only=true;
+    // S4-B4 strictly gated source-science experiment. No fabricated station,
+    // no new numerical formula. C2 cardinality and result remain untouched.
+    input.allow_one_one_source_audit=(frame.stations.surface.size()==1 &&
+                                     frame.stations.upper.size()==1);
     auto& grid=input.grid_mixht;
     grid.nx=nx;
     grid.ny=ny;
@@ -151,7 +155,14 @@ public:
                 comp_heat,comp_elustr,station.station_diagi,upper,
                 g26b_source_test_comp_controls(frame,source_,true),
                 g18c1_parse_original_avemix(source_.original_metinp),
-                g18c3_parse_original_temp3d_controls(source_.original_metinp));
+                [&] {
+                    auto selected=g18c3_parse_original_temp3d_controls(
+                        source_.original_metinp);
+                    selected.allow_one_one_source_audit=
+                        frame.stations.surface.size()==1&&
+                        frame.stations.upper.size()==1;
+                    return selected;
+                }());
             live_=&frame;
             hour_index_=frame.hour_index;
             end_=frame.input.end;

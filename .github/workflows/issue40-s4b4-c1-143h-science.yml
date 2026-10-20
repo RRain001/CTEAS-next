@@ -1,0 +1,114 @@
+name: "Issue40 S4B4 C1 unified G14 143h frozen original science (manual or agent-request)"
+# Purpose-bound expensive original 143h regression; NEVER ordinary PR/push CI.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'automation/science/s4b4/**'
+    paths:
+      - '.github/science-triggers/s4b4.request'
+permissions:
+  contents: read
+concurrency:
+  group: s4b4-c1-original-source-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  c1-single-binary-frozen-original-143h:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout exact science-request commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Authenticate main SHA for owner/agent-request
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            [[ "$GITHUB_REF" == refs/heads/automation/science/s4b4/* ]]
+            test "$(git diff --name-only HEAD^ HEAD)" = ".github/science-triggers/s4b4.request"
+            requested="$(sed -n 's/^SOURCE_SHA=//p' .github/science-triggers/s4b4.request)"
+            test -n "$requested"
+            test "$requested" = "$(git rev-parse HEAD^)"
+            git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+            test "$requested" = "$(git rev-parse refs/remotes/origin/main)"
+            git checkout --detach "$requested"
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            test "$GITHUB_REF" = refs/heads/main
+          else
+            echo "::error::Unapproved science trigger";exit 1
+          fi
+          sha="$(git rev-parse HEAD)"
+          echo "S4B4_SOURCE_SHA=$sha" >> "$GITHUB_ENV"
+          echo "S4B4_ORIGINAL_C1_REFERENCE_FRESH=NO FROZEN_SHA_PINNED=YES"
+      - name: Source, real C1 station and frozen original MET SHA chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          test -s "$c/run/met/met.inp" && test -s "$c/geo/makegeo/geo.dat"
+          test -s "$c/run/smerge/surf.dat" && test -s "$c/met/upperair/final/up_58424.dat"
+          echo 'b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat' | sha256sum -c -
+          sha256sum "$c/run/met/met.inp" "$c/geo/makegeo/geo.dat" \
+            "$c/run/smerge/surf.dat" "$c/met/upperair/final/up_58424.dat" \
+            "$c/run/met/met.dat" \
+            > "$RUNNER_TEMP/s4b4-c1-143h-sources-sha256.txt"
+      - name: Compile one source-backed G14 17-stage native binary and independent comparator
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4b4-c1" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4b4-c1" --parallel 2 --target cteas_p6g_s4b2_unified_selected
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/s4b4-p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4b4-p6e" --parallel 2 --target p6e_calmet_dat21
+      - name: Execute full 143 genuine 1SS 1US source-driven CALMET native hours
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          "$RUNNER_TEMP/s4b4-c1/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental \
+            --met "$c/run/met/met.inp" \
+            --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 143 --out "$RUNNER_TEMP/s4b4-native-143h.dat" \
+            | tee "$RUNNER_TEMP/s4b4-native-143h.log"
+          test -s "$RUNNER_TEMP/s4b4-native-143h.dat"
+          sha256sum "$RUNNER_TEMP/s4b4-native-143h.dat" > "$RUNNER_TEMP/s4b4-native-143h-sha256.txt"
+      - name: Independent all 6,435 original-vs-native fields at frozen tolerances
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          "$RUNNER_TEMP/s4b4-p6e/p6e_calmet_dat21" compare \
+            --reference "$c/run/met/met.dat" \
+            --candidate "$RUNNER_TEMP/s4b4-native-143h.dat" \
+            --out "$RUNNER_TEMP/s4b4-c1-143h-45fields.json" \
+            > "$RUNNER_TEMP/s4b4-c1-143h-comparison.log"
+          python3 - "$RUNNER_TEMP/s4b4-c1-143h-45fields.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["intervals"]==143
+          assert d["fields_per_hour"]==45
+          assert len(d["fields"])==45
+          assert d["total_exceedances"]==0
+          assert d["status"]=="PASS"
+          print("S4B4_ONE_BINARY_C1_143H_6435_FIELD_FROZEN_ORIGINAL_PARITY=PASS_SCOPED")
+          print("S4B4_VENDOR_ORIGINAL_FRESH_C1=NO")
+          PY
+      - name: Preserve actual SHA, numeric verdict and limited scope
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4b4-genuine-c1-one-binary-143h-science
+          path: |
+            ${{ runner.temp }}/s4b4-c1-143h-sources-sha256.txt
+            ${{ runner.temp }}/s4b4-native-143h-sha256.txt
+            ${{ runner.temp }}/s4b4-native-143h.log
+            ${{ runner.temp }}/s4b4-c1-143h-45fields.json
+            ${{ runner.temp }}/s4b4-c1-143h-comparison.log
+          retention-days: 14
+          if-no-files-found: warn

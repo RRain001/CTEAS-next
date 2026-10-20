@@ -1,0 +1,157 @@
+name: "Issue40 S4B4 genuine C1 selected COMP 1SS+1US hour gate"
+on:
+  pull_request:
+    paths:
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18a_selected_comp_mixht.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c3_temp3d_after_comp.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c5_selected_p6f_fields.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c6_selected_p6f_dataset.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp"
+      - "native_cpp/modules/p6_calmet/src/p6g_s4b4_original_c1_first_hour_main.cpp"
+      - "native_cpp/modules/p6_calmet/CMakeLists.txt"
+      - ".github/workflows/issue40-s4b4-true-c1-comp.yml"
+      - "docs/plans/ISSUE40_S4B4_C1_SINGLE_STATION_COMP_20261020.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-c1-single-source-g14-experimental:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile true shared G14 selected actor and frozen C2 old actor
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/b4" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/b4" --parallel 2 --target \
+            cteas_p6g_s4b1_source_admission \
+            cteas_p6g_s4b2_unified_selected \
+            cteas_p6g_g34b_six_hour_selected_gate
+      - name: Build independent P6E original-format frozen-value comparator
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build "$RUNNER_TEMP/b4" --parallel 2 --target cteas_p6g_s4b4_extract_original_c1_first_hour
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/b4-p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/b4-p6e" --parallel 2 --target p6e_calmet_dat21
+      - name: Source SHA and original C1 1SS1US 143h admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          sha256sum "$c/run/met/met.inp" "$c/geo/makegeo/geo.dat" \
+            "$c/run/smerge/surf.dat" "$c/met/upperair/final/up_58424.dat" \
+            | tee "$RUNNER_TEMP/b4-source-sha256.txt"
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b1_source_admission" \
+            --admit-only "$c/run/met/met.inp" "$c/geo/makegeo/geo.dat" \
+            "$c/run/smerge/surf.dat" "$c/met/upperair/final/up_58424.dat" \
+            | tee "$RUNNER_TEMP/b4-c1-source-admission.log"
+      - name: Actual authentic 1SS1US first hour DIAGNO COMP P6F
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental \
+            --met "$c/run/met/met.inp" --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 143 --probe-prefix-hours 1 \
+            --out "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/b4-c1-selected-hour-trace.log"
+          test -s "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat"
+          sha256sum "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/b4-first-hour-sha256.txt"
+          echo 'S4B4_C1_ONE_HOUR_G14_COMP_P6F=PRODUCED_UNVERIFIED'
+          echo 'S4B4_C1_ORIGINAL_45_FIELD_PARITY=NOT_RUN'
+      - name: Independently compare true original C1 frozen 45 fields versus native hour
+        shell: bash
+        run: |
+          set -euo pipefail
+          frozen=project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+          test -s "$frozen"
+          echo 'S4B4_C1_ORIGINAL_FROZEN_143H_NOT_FRESHLY_RUN=YES'
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b4_extract_original_c1_first_hour" \
+            "$frozen" "$RUNNER_TEMP/b4-original-first-hour.dat" 1
+          "$RUNNER_TEMP/b4-p6e/p6e_calmet_dat21" compare \
+            --reference "$RUNNER_TEMP/b4-original-first-hour.dat" \
+            --candidate "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat" \
+            --out "$RUNNER_TEMP/b4-original-vs-native-first-hour-45-fields.json" \
+            | tee "$RUNNER_TEMP/b4-original-vs-native-first-hour.log"
+          python3 - "$RUNNER_TEMP/b4-original-vs-native-first-hour-45-fields.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["intervals"]==1 and d["fields_per_hour"]==45
+          assert d["total_exceedances"]==0, "C1 native 1h exceeds original tolerance"
+          print("S4B4_C1_1H_FROZEN_ORIGINAL_VS_NEW_UNIFIED_45FIELDS=PASS_SCOPED")
+          PY
+      - name: Original C1 six-hour causal G14 and frozen CALMET 270-field parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --met "$c/run/met/met.inp" \
+            --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 143 --probe-prefix-hours 6 \
+            --out "$RUNNER_TEMP/b4-c1-six-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/b4-c1-six-hour-trace.log"
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b4_extract_original_c1_first_hour" \
+            "$c/run/met/met.dat" "$RUNNER_TEMP/b4-original-six-hour.dat" 6
+          "$RUNNER_TEMP/b4-p6e/p6e_calmet_dat21" compare \
+            --reference "$RUNNER_TEMP/b4-original-six-hour.dat" \
+            --candidate "$RUNNER_TEMP/b4-c1-six-hour-candidate.dat" \
+            --out "$RUNNER_TEMP/b4-original-vs-native-six-hour-45-fields.json" \
+            > "$RUNNER_TEMP/b4-original-vs-native-six-hour.log"
+          python3 - "$RUNNER_TEMP/b4-original-vs-native-six-hour-45-fields.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["intervals"]==6 and d["fields_per_hour"]==45
+          assert d["total_exceedances"]==0
+          print("S4B4_C1_6H_FROZEN_ORIGINAL_VS_NEW_UNIFIED_270FIELDS=PASS_SCOPED")
+          PY
+      - name: Strictly refuse fabricated station, production mode and an invalid prefix
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          b="$RUNNER_TEMP/b4/cteas_p6g_s4b2_unified_selected"
+          base=(--met "$c/run/met/met.inp" --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" --up "$c/met/upperair/final/up_58424.dat")
+          if "$b" "${base[@]}" --hours 143 --probe-prefix-hours 1 \
+            --out "$RUNNER_TEMP/b4-unauthorized.dat"; then
+            echo "::error::S4B4 allowed implicit production"; exit 1
+          fi
+          if "$b" --selected-experimental "${base[@]}" \
+            --up "$c/met/upperair/final/up_58424.dat" --hours 143 \
+            --probe-prefix-hours 1 --out "$RUNNER_TEMP/b4-phantom.dat"; then
+            echo "::error::S4B4 allowed fake duplicate upper"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/b4-unauthorized.dat"
+          test ! -e "$RUNNER_TEMP/b4-phantom.dat"
+          echo 'S4B4_NEGATIVE_STATION_AND_PRODUCTION=PASS'
+      - name: Provenance artifact, no scientific pass claim
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4b4-1ss1us-authentic-comp-probe
+          path: |
+            ${{ runner.temp }}/b4-source-sha256.txt
+            ${{ runner.temp }}/b4-c1-source-admission.log
+            ${{ runner.temp }}/b4-c1-selected-hour-trace.log
+            ${{ runner.temp }}/b4-first-hour-sha256.txt
+            ${{ runner.temp }}/b4-original-vs-native-first-hour-45-fields.json
+            ${{ runner.temp }}/b4-original-vs-native-first-hour.log
+            ${{ runner.temp }}/b4-original-vs-native-six-hour-45-fields.json
+            ${{ runner.temp }}/b4-original-vs-native-six-hour.log
+            ${{ runner.temp }}/b4-c1-six-hour-trace.log
+          if-no-files-found: warn
+          retention-days: 14
