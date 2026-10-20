@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Strict independent original CALMET 6.5.0 comparator for asymmetric G19 cases.
+"""Strict independent original CALMET 6.5.0 comparator for bounded G19 station counts.
 
 Only the original-format 2024 controlled 12x12 synthetic C2 source may be
 used. No C++ MET field may be an input to the vendor. Original physical
@@ -42,17 +42,22 @@ def surface_clock(path: Path, nss: int):
         raise ValueError("SURF controlled C2 authentic station subset mismatch")
     return start,end,ids
 
-def move_station_declaration(deck: str, kind: str) -> str:
-    if kind not in ("SS","US"):raise ValueError("bad station kind")
-    extra=re.compile(r"(?m)^!\s*"+kind+r"2\s*=[^\n]*")
-    second=list(extra.finditer(deck))
-    if len(second)!=1:raise ValueError(f"Ambiguous {kind}2 original declaration")
-    line=second[0].group()
-    deck=deck[:second[0].start()]+deck[second[0].end():]
+def move_station_declaration(deck: str, kind: str, total: int) -> str:
+    """Stage genuine SS2..SSN / US2..USM immediately after station 1."""
+    if kind not in ("SS","US") or not 1<=total<=3:
+        raise ValueError("Unexpected controlled original site configuration")
+    extra_lines=[]
+    for ordinal in range(2,total+1):
+        extra=re.compile(r"(?m)^!\s*"+kind+str(ordinal)+r"\s*=[^\n]*")
+        found=list(extra.finditer(deck))
+        if len(found)!=1:raise ValueError(f"Ambiguous {kind}{ordinal} original declaration")
+        match=found[0]
+        extra_lines.append(match.group())
+        deck=deck[:match.start()]+deck[match.end():]
     first=list(re.finditer(r"(?m)^!\s*"+kind+r"1\s*=[^\n]*",deck))
     if len(first)!=1:raise ValueError(f"Missing {kind}1 original declaration")
     at=first[0].end()
-    return deck[:at]+"\n"+line+deck[at:]
+    return deck[:at]+("".join("\n"+line for line in extra_lines))+deck[at:]
 
 def stage_original_deck(deck: str,start:dt.datetime,end:dt.datetime,nss:int,nus:int)->str:
     values={"GEODAT":"geo.dat","SRFDAT":"surf.dat","METLST":"met.lst",
@@ -68,10 +73,11 @@ def stage_original_deck(deck: str,start:dt.datetime,end:dt.datetime,nss:int,nus:
     if len(matches)!=1:raise ValueError("Original UP1 list ambiguous")
     old=matches[0]
     list_lines="UP1.DAT       input     1  ! UPDAT=up1.dat !    !END!"
-    if nus==2:list_lines+="\nUP2.DAT       input     2  ! UPDAT=up2.dat !    !END!"
+    for ordinal in range(2,nus+1):
+        list_lines+=f"\nUP{ordinal}.DAT       input     {ordinal}  ! UPDAT=up{ordinal}.dat !    !END!"
     result=result[:old.start()]+list_lines+result[old.end():]
-    if nus==2:result=move_station_declaration(result,"US")
-    if nss==2:result=move_station_declaration(result,"SS")
+    result=move_station_declaration(result,"US",nus)
+    result=move_station_declaration(result,"SS",nss)
     if result.count("UPDAT=")!=nus:raise ValueError("Extra/missing original UP files")
     protected=("NSSTA","NUSTA","NX","NY","NZ","DGRIDKM","IUPT","IAVET",
                "IMIXH","IZICRLX","IEXTRP","IPROG","ITPROG","CRITFN",
@@ -86,8 +92,8 @@ def run() -> None:
     ap.add_argument("--source",type=Path,required=True)
     ap.add_argument("--out",type=Path,required=True)
     ap.add_argument("--vendor-dir",type=Path,required=True)
-    ap.add_argument("--ss",type=int,choices=[1,2],required=True)
-    ap.add_argument("--us",type=int,choices=[1,2],required=True)
+    ap.add_argument("--ss",type=int,choices=[1,2,3],required=True)
+    ap.add_argument("--us",type=int,choices=[1,2,3],required=True)
     ap.add_argument("--hours",type=int,choices=[1,6],required=True)
     ap.add_argument("--compiler",default="gfortran")
     args=ap.parse_args()
