@@ -44,7 +44,7 @@ class D4GenuineFortranHandoffContract(unittest.TestCase):
              "case_yaml_sha256":"a"*64,"grid_cmn_sha256":"b"*64,
              "research_time_sha256":"c"*64,
              "utm_epsg":32652,"nx":200,"ny":200,"lu_dat_sha256":digest(self.lu),
-             "hits_sha256":"d"*64}
+             "hits_csv_sha256":"d"*64}
         self.p2_path=self.site/"evidence/p2.json"
         jwrite(self.p2_path,source)
         p3={"status":"P3_NATIVE_SAME_CASE_PRODUCED_UNVERIFIED",
@@ -110,6 +110,14 @@ class D4GenuineFortranHandoffContract(unittest.TestCase):
         jwrite(self.p2_path,x)
         with self.assertRaisesRegex(ContractError,"B-0 mismatch"):
             self.accept()
+
+    def test_missing_native_integer_hits_sha_never_attested(self):
+        original=json.loads(self.p2_path.read_text())
+        original.pop("hits_csv_sha256")
+        jwrite(self.p2_path,original)
+        with self.assertRaisesRegex(ContractError,"integer HITS CSV SHA missing"):
+            self.accept()
+        self.assertFalse(self.dest.exists())
 
     def test_native_lu_bytes_cannot_change_after_d3(self):
         self.lu.write_text("mutated 38-class file")
