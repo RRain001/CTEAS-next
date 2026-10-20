@@ -13,6 +13,7 @@ from datetime import datetime,timezone
 import hashlib
 import importlib.metadata
 import json
+import sys
 from pathlib import Path
 import tempfile
 import numpy as np
@@ -132,8 +133,8 @@ def acquire(directory:Path,project:str):
         get(a);info=inspect(a,g)
         get(b);other=inspect(b,g)
         with rasterio.open(a) as ra,rasterio.open(b) as rb:
-            same_pixels=np.array_equal(ra.read(1),rb.read(1)) and
-                np.array_equal(ra.read_masks(1),rb.read_masks(1))
+            same_pixels=(np.array_equal(ra.read(1),rb.read(1)) and
+                         np.array_equal(ra.read_masks(1),rb.read_masks(1)))
         require(same_pixels and info==other,"REPEAT_SOURCE_NONDETERMINISM")
         metadata={**g,**info,
                   "year":2022,"band":"b23","source":ASSET,
@@ -187,5 +188,4 @@ def main():
         return 2
 
 if __name__=="__main__":
-    import sys
     raise SystemExit(main())
