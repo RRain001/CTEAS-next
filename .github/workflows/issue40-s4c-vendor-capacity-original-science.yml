@@ -1,0 +1,179 @@
+name: "Issue40 S4C vendor-capacity station science beyond eight"
+on:
+  pull_request:
+    paths:
+      - 'native_cpp/modules/p6_calmet/tests/p6g_g19_file_backed_case_tests.cpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18a_selected_comp_mixht.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c3_temp3d_after_comp.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c5_selected_p6f_fields.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c6_selected_p6f_dataset.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp'
+      - '.github/workflows/issue40-s4c-vendor-capacity-original-science.yml'
+      - 'docs/plans/ISSUE40_S4C_VENDOR_CAPACITY_MULTISTATION_20261021.md'
+      - 'native_cpp/modules/p6_calmet/reference/s4c_run_original_asymmetric_g19.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controlled-dynamic-source-stations:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        station_counts:
+          - {ss: 7, us: 7}
+          - {ss: 8, us: 2}
+          - {ss: 2, us: 8}
+          - {ss: 9, us: 9}
+          - {ss: 12, us: 3}
+          - {ss: 3, us: 12}
+          - {ss: 1, us: 9}
+          - {ss: 9, us: 1}
+    steps:
+      - name: Checkout exact test source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile G19 original source/selection and SAME unified G14 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4c" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4c" --parallel 2 --target \
+            cteas_p6g_g19_file_backed_case_tests \
+            cteas_p6g_s4b2_unified_selected \
+            cteas_p6g_g34b_six_hour_selected_gate
+      - name: Source-only independently cardinal source with NO extra copied stations
+        shell: bash
+        env:
+          NS: ${{ matrix.station_counts.ss }}
+          NU: ${{ matrix.station_counts.us }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/case"
+          "$RUNNER_TEMP/s4c/cteas_p6g_g19_file_backed_case_tests" \
+            --export-case project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp \
+            "$RUNNER_TEMP/case" --fradj-stress --daylight-first-hour --hours 6 \
+            --stations "$NS" "$NU"
+          test -s "$RUNNER_TEMP/case/met.inp"
+          test -s "$RUNNER_TEMP/case/GEO.DAT"
+          test -s "$RUNNER_TEMP/case/SURF.DAT"
+          test -s "$RUNNER_TEMP/case/UP1.DAT"
+          for ((i=1;i<=NU;i++)); do
+            test -s "$RUNNER_TEMP/case/UP${i}.DAT"
+          done
+          for ((i=NU+1;i<=12;i++)); do
+            test ! -e "$RUNNER_TEMP/case/UP${i}.DAT"
+          done
+          sha256sum "$RUNNER_TEMP/case/met.inp" "$RUNNER_TEMP/case/GEO.DAT" \
+            "$RUNNER_TEMP/case/SURF.DAT" "$RUNNER_TEMP/case/"UP*.DAT \
+            > "$RUNNER_TEMP/s4c-source-hash.txt"
+          echo "S4C_VENDOR_CAPACITY_CONTROLLED_SOURCE_ADMITTED=PASS SS=$NS US=$NU"
+      - name: Same shared G14 selected physical actor first-hour and six-hour probes
+        shell: bash
+        env:
+          NS: ${{ matrix.station_counts.ss }}
+          NU: ${{ matrix.station_counts.us }}
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/case"
+          b="$RUNNER_TEMP/s4c/cteas_p6g_s4b2_unified_selected"
+          args=(--selected-experimental --met "$src/met.inp" --geo "$src/GEO.DAT" \
+            --surf "$src/SURF.DAT" --up "$src/UP1.DAT")
+          for ((i=2;i<=NU;i++)); do args+=(--up "$src/UP${i}.DAT"); done
+          "$b" "${args[@]}" --hours 6 --probe-prefix-hours 1 \
+            --out "$RUNNER_TEMP/s4c-first-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/s4c-first-hour-trace.txt"
+          "$b" "${args[@]}" --hours 6 \
+            --out "$RUNNER_TEMP/s4c-six-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/s4c-six-hour-trace.txt"
+          test -s "$RUNNER_TEMP/s4c-first-hour-candidate.dat"
+          test -s "$RUNNER_TEMP/s4c-six-hour-candidate.dat"
+          sha256sum "$RUNNER_TEMP/s4c-first-hour-candidate.dat" \
+                    "$RUNNER_TEMP/s4c-six-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/s4c-output-hash.txt"
+          echo "S4C_VENDOR_CAPACITY_SHARED_G14_NATIVE_1H_6H=PRODUCED_UNVERIFIED SS=$NS US=$NU"
+          echo "S4C_VENDOR_CAPACITY_ORIGINAL_45_FIELD=NOT_RUN_UNTIL_FRESH_FORTRAN_COMPARE"
+      - name: Restore independently pinned unchanged original CALMET source
+        if: true
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          sparse-checkout: |
+            engine/vendor/src/CALMET_v6.5.0_L150223
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+      - name: Original vendor independently computes matching asymmetric first and full six hours
+        if: true
+        shell: bash
+        env:
+          NS: ${{ matrix.station_counts.ss }}
+          NU: ${{ matrix.station_counts.us }}
+        run: |
+          set -euo pipefail
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gfortran
+          for hours in 1 6; do
+            python3 native_cpp/modules/p6_calmet/reference/s4c_run_original_asymmetric_g19.py \
+              --source "$RUNNER_TEMP/case" --ss "$NS" --us "$NU" \
+              --hours "$hours" \
+              --vendor-dir "$PWD/original-cteas/engine/vendor/src/CALMET_v6.5.0_L150223" \
+              --out "$RUNNER_TEMP/s4c-original-$hours" \
+              2>&1 | tee "$RUNNER_TEMP/s4c-original-$hours-trace.log"
+          done
+      - name: Compare independent original vs SAME selected G14 candidate with frozen P6E tolerance
+        if: true
+        shell: bash
+        env:
+          NS: ${{ matrix.station_counts.ss }}
+          NU: ${{ matrix.station_counts.us }}
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/s4c-p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4c-p6e" --parallel 2 --target p6e_calmet_dat21
+          for hours in 1 6; do
+            if [[ "$hours" -eq 1 ]]; then candidate="$RUNNER_TEMP/s4c-first-hour-candidate.dat"; else candidate="$RUNNER_TEMP/s4c-six-hour-candidate.dat"; fi
+            "$RUNNER_TEMP/s4c-p6e/p6e_calmet_dat21" compare \
+              --reference "$RUNNER_TEMP/s4c-original-$hours/original-met.dat" \
+              --candidate "$candidate" \
+              --out "$RUNNER_TEMP/s4c-fresh-vendor-$hours-comparison.json" \
+              > "$RUNNER_TEMP/s4c-fresh-vendor-$hours-comparison.log"
+            python3 - "$RUNNER_TEMP/s4c-fresh-vendor-$hours-comparison.json" "$hours" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1]))
+          count=int(sys.argv[2])
+          assert data["intervals"]==count
+          assert data["fields_per_hour"]==45
+          assert len(data["fields"])==45
+          assert data["total_exceedances"]==0 and data["status"]=="PASS"
+          print("S4C_THREE_STATION_FRESH_ORIGINAL_NUMERIC=PASS_SCOPED",count)
+          PY
+          done
+      - name: Preserve scientific scope and source file SHA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s4c-controlled-dynamic-stations-${{ matrix.station_counts.ss }}ss-${{ matrix.station_counts.us }}us
+          path: |
+            ${{ runner.temp }}/s4c-source-hash.txt
+            ${{ runner.temp }}/s4c-first-hour-trace.txt
+            ${{ runner.temp }}/s4c-six-hour-trace.txt
+            ${{ runner.temp }}/s4c-output-hash.txt
+            ${{ runner.temp }}/s4c-original-1-trace.log
+            ${{ runner.temp }}/s4c-original-6-trace.log
+            ${{ runner.temp }}/s4c-original-1/original-verb-evidence.json
+            ${{ runner.temp }}/s4c-original-6/original-verb-evidence.json
+            ${{ runner.temp }}/s4c-original-1/original-met.lst
+            ${{ runner.temp }}/s4c-original-6/original-met.lst
+            ${{ runner.temp }}/s4c-fresh-vendor-1-comparison.json
+            ${{ runner.temp }}/s4c-fresh-vendor-6-comparison.json
+            ${{ runner.temp }}/s4c-fresh-vendor-1-comparison.log
+            ${{ runner.temp }}/s4c-fresh-vendor-6-comparison.log
+          if-no-files-found: warn
+          retention-days: 14
