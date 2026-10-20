@@ -1,0 +1,50 @@
+name: Issue160 C4 Hefei 20km source coverage offline fail-closed contract
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/issue160_hefei20km_glc_acquire.py
+      - .github/workflows/issue160-c4-hefei20km-source-contract.yml
+permissions:
+  contents: read
+jobs:
+  hefei-full-20km-source-admission-no-auth:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install offline source inspection dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            python3-numpy python3-rasterio python3-pyproj
+      - name: Syntax, actual 20km geometry and rejection of old 5km raster
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m py_compile scripts/s2g/issue160_hefei20km_glc_acquire.py
+          /usr/bin/python3 -m scripts.s2g.issue160_hefei20km_glc_acquire geometry
+          /usr/bin/python3 - <<'PY'
+          from pathlib import Path
+          from scripts.s2g.issue160_hefei20km_glc_acquire import (
+              BOUNDS,REQUEST,inspect,verify,DEFAULT)
+          assert BOUNDS==(503385.,3523769.,523385.,3543769.)
+          assert REQUEST==(503325.,3523709.,523445.,3543829.)
+          old=Path("data/landcover/glc_fcs30d/v1_2022/hefei/hefei_2022_30m.tif")
+          try:
+              inspect(old)
+          except ValueError as e:
+              assert "HEFEI20KM_OLD_5KM_OR_INCOMPLETE_SOURCE_REJECTED" in str(e)
+          else:
+              raise AssertionError("OLD_5KM_TIFF_WRONGLY_ACCEPTED_AS_20KM")
+          try:
+              verify(DEFAULT)
+          except (OSError,FileNotFoundError):
+              pass
+          else:
+              raise AssertionError("FALSE_HEFEI_20KM_DELIVERY_CLAIM")
+          print('HEFEI_20KM_COVERAGE_REJECTION=PASS')
+          print('HEFEI_20KM_AUTHENTIC_GLC2022_SOURCE=NOT_ACQUIRED')
+          PY
