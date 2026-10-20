@@ -259,6 +259,41 @@ else()
                          -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
 endif()
 
+# #160 C4: modern 30m GLAZAS count kernel, not P2-B area method.
+add_library(cteas_p2c_glc30m_core STATIC src/geo/p2c_glc30m_sampling.cpp)
+target_include_directories(cteas_p2c_glc30m_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(cteas_p2c_glc30m_core PUBLIC
+                      cteas_p2_original_sampling_recount GDAL::GDAL)
+if(MSVC)
+  target_compile_options(cteas_p2c_glc30m_core PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2c_glc30m_core PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_executable(cteas_p2c_glc30m_sampling_tests
+               tests/p2c_glc30m_sampling_tests.cpp)
+target_link_libraries(cteas_p2c_glc30m_sampling_tests PRIVATE
+                      cteas_p2c_glc30m_core GDAL::GDAL)
+if(MSVC)
+  target_compile_options(cteas_p2c_glc30m_sampling_tests PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2c_glc30m_sampling_tests PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+add_test(NAME cteas_p2c_glc30m_synthetic_integer_conservation
+         COMMAND cteas_p2c_glc30m_sampling_tests
+         ${CMAKE_SOURCE_DIR}/../docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json)
+add_executable(cteas_p2c_glc30m_sampling
+               src/p2c_glc30m_sampling_cli.cpp)
+target_link_libraries(cteas_p2c_glc30m_sampling PRIVATE
+                      cteas_p2c_glc30m_core OpenSSL::Crypto)
+if(MSVC)
+  target_compile_options(cteas_p2c_glc30m_sampling PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p2c_glc30m_sampling PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+endif()
+
 # Issue #53 D3: SHA-bound historical GLCC 24->38 LU.DAT serializer only.
 # The GLC_FCS30D 35->38 crosswalk remains scientifically unapproved.
 add_executable(cteas_p2_glcc_lu_dat src/p2_glcc_lu_dat_cli.cpp)

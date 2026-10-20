@@ -1,0 +1,142 @@
+name: Issue160 C4 Wolsong real 2022 30m source point sampling vs independent reference
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
+      - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp
+      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
+      - scripts/s2g/issue160_glc30m_independent_reference.py
+      - .github/workflows/issue160-c4-wolsong-real-30m.yml
+  workflow_dispatch:
+concurrency:
+  group: issue160-c4-wolsong-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  wolsong-real-30m-original-style-sampling:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - name: Checkout authentic frozen LFS GLCC and 2022 Wolsong GLC
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Checkout pinned original Fortran for authentic Full COASTEXT BLN
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Install native original and independent Python geospatial dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            gfortran g++-12 cmake libgdal-dev libssl-dev python3-gdal python3-numpy python3-pip
+          /usr/bin/python3 -m pip install --user --disable-pip-version-check shapely==2.0.7
+      - name: SHA-admit real 2022 GLC, frozen policy and original vendor
+        run: |
+          set -euo pipefail
+          tif=data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          echo '2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711  '${tif} | sha256sum -c -
+          echo 'a5fa157f57feb1aa160dd96d920a22d267fea78c5828c6040fa95e86536544ed  docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json' | sha256sum -c -
+          echo '4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img' | sha256sum -c -
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          echo "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281  $vendor/ctgproc.for" | sha256sum -c -
+      - name: Compile authentic original CTGPROC with frozen GNU I/O only adapters
+        run: |
+          set -euo pipefail
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          stage="$RUNNER_TEMP/p2c160-orig"
+          mkdir -p "$stage"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$stage/$bn"
+          done
+          rm "$stage/ctgproc.for" "$stage/params.ctg"
+          cp "$vendor/ctgproc.for" "$stage/ctgproc.for"
+          cp "$vendor/params.ctg" "$stage/params.ctg"
+          echo "28dc5877c6a70d74f7a0e136bdd4aa1777dc9cbab15c184e7f483f772cd266c6  $stage/params.ctg" | sha256sum -c -
+          python3 -m scripts.s2g.issue123_gfortran_eof_adapter \
+            --original-source "$vendor/ctgproc.for" --staged-source "$stage/ctgproc.for" \
+            --manifest "$RUNNER_TEMP/p2c160-eof-adapter.json"
+          python3 -m scripts.s2g.issue123_gfortran_split_io_adapter \
+            --original-source "$vendor/ctgproc.for" --original-params "$vendor/params.ctg" \
+            --staged-source "$stage/ctgproc.for" --staged-params "$stage/params.ctg" \
+            --manifest "$RUNNER_TEMP/p2c160-split-io-adapter.json"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 -I"$stage" \
+            "$stage/ctgproc.for" -o "$RUNNER_TEMP/p2c160-original-ctgproc"
+      - name: Fetch and SHA-verify official GSHHG v2.3.7 Full binary
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_gshhg_binary_full fetch \
+            --cache "$RUNNER_TEMP/p2c160-full"
+      - name: Generate ONLY genuine original Full L1 COASTRD BLN Wolsong
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue123_original_coastext_wolsong prepare \
+            --original-source original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --template original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.inp \
+            --glcc eausgs2_0la.img \
+            --cache "$RUNNER_TEMP/p2c160-full" \
+            --out "$RUNNER_TEMP/p2c160-genuine-original-coast"
+          (
+            cd "$RUNNER_TEMP/p2c160-genuine-original-coast"
+            timeout 1200 "$RUNNER_TEMP/p2c160-original-ctgproc" > original.log 2>&1 || {
+              tail -n 40 original.log
+              exit 1
+            }
+            test -s coast.bln
+            echo '67da93d441e7defe3eb46627ed9ce896c0a91ffd89fd5e4363d834d8108e11f9  coast.bln' | sha256sum -c -
+          )
+      - name: Compile 30m POINT HITS native producer and synthetic regression
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/p2c160-native" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/p2c160-native" --parallel 2 \
+            --target cteas_p2c_glc30m_sampling cteas_p2c_glc30m_sampling_tests
+          ctest --test-dir "$RUNNER_TEMP/p2c160-native" \
+            -R '^cteas_p2c_glc30m_synthetic_integer_conservation$' --output-on-failure
+      - name: Produce genuine Wolsong 2022 source-pixel 10x10 HITS and LU.DAT
+        run: |
+          set -euo pipefail
+          timeout 1800 "$RUNNER_TEMP/p2c160-native/cteas_p2c_glc30m_sampling" \
+            wolsong data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif \
+            2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711 \
+            docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            "$RUNNER_TEMP/p2c160-genuine-original-coast/coast.bln" \
+            "$RUNNER_TEMP/p2c160-wolsong-native"
+      - name: Independent NumPy and GEOS point oracle 40,000x38 zero-difference
+        run: |
+          set -euo pipefail
+          timeout 1800 /usr/bin/python3 -m scripts.s2g.issue160_glc30m_independent_reference \
+            --site wolsong \
+            --tif data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif \
+            --data-sha256 2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711 \
+            --policy docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            --coast-bln "$RUNNER_TEMP/p2c160-genuine-original-coast/coast.bln" \
+            --native "$RUNNER_TEMP/p2c160-wolsong-native" \
+            --report "$RUNNER_TEMP/p2c160-wolsong-independent-audit.json"
+          echo 'P2C_WOLSONG_30M_ZERO_DIFF=PASS_IF_ACTUAL_ORACLE_REPORT P3_PARAMETERS=OUT_OF_SCOPE'
+      - name: Preserve SHA-bounded JSON evidence only, no original BLN or LU.DAT
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue160-c4-wolsong-30m-independent-point-science
+          path: |
+            ${{ runner.temp }}/p2c160-wolsong-native/p2c_glc30m_manifest.json
+            ${{ runner.temp }}/p2c160-wolsong-independent-audit.json
+            ${{ runner.temp }}/p2c160-eof-adapter.json
+            ${{ runner.temp }}/p2c160-split-io-adapter.json
+          retention-days: 21
+          if-no-files-found: warn

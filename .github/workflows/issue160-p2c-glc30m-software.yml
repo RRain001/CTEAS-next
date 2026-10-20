@@ -1,0 +1,62 @@
+name: Issue160 C4 native GLC30m point-sampling software compile
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp
+      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
+      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
+      - native_cpp/tests/p2c_glc30m_sampling_tests.cpp
+      - native_cpp/CMakeLists.txt
+      - .github/workflows/issue160-p2c-glc30m-software.yml
+  workflow_dispatch:
+concurrency:
+  group: issue160-c4-software-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  native-glc30m-software-gates:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install native geospatial dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            cmake ninja-build g++ libgdal-dev libssl-dev
+      - name: Freeze exactly user-selected 35 class policy SHA
+        run: |
+          set -euo pipefail
+          echo 'a5fa157f57feb1aa160dd96d920a22d267fea78c5828c6040fa95e86536544ed  docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json' | sha256sum -c -
+      - name: Compile GLCC historical, P2-B frozen and C4 native targets
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/issue160-c4" -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/issue160-c4" --parallel 3 --target \
+            cteas_p2c_glc30m_sampling \
+            cteas_p2c_glc30m_sampling_tests \
+            cteas_p2_original_sampling_hefei \
+            cteas_p2_original_sampling_wolsong \
+            cteas_p2_original_sampling_lu_tests \
+            cteas_p2_glc_lu_dat \
+            cteas_p2_glc_area_tests
+      - name: Scoped regression and negative gate for wrong-source inputs
+        run: |
+          set -euo pipefail
+          ctest --test-dir "$RUNNER_TEMP/issue160-c4" --output-on-failure \
+            -R 'cteas_p2_original_sampling_lu_writer_synthetic|cteas_p2_glc_raw_area_contract|cteas_p2c_glc30m'
+          if "$RUNNER_TEMP/issue160-c4/cteas_p2c_glc30m_sampling" \
+              inland /missing '0' docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+              - /tmp/should-not-create-160; then
+            echo "ERROR: missing original source unexpectedly admitted"
+            exit 1
+          fi
+          test ! -e /tmp/should-not-create-160
+          echo 'ISSUE160_C4_NATIVE_SOFTWARE=PASS_IF_ALL_STEPS_SUCCEED'
+          echo 'REAL_30M_INDEPENDENT_INTEGER_ORACLE=NOT_RUN'
+          echo 'P3_FORMAT_ONLY=NOT_RUN'
