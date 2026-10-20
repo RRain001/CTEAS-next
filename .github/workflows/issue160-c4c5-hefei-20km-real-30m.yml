@@ -82,6 +82,41 @@ jobs:
             - "$RUNNER_TEMP/issue160-hefei-native-result"
           test -s "$RUNNER_TEMP/issue160-hefei-native-result/hits.csv"
           test -s "$RUNNER_TEMP/issue160-hefei-native-result/lu.dat"
+      - name: S2-B real Hefei same-source frozen-vs-dynamic byte parity and alternate 90x100 grid
+        run: |
+          set -euo pipefail
+          bin="$RUNNER_TEMP/issue160-hefei-native/cteas_p2c_glc30m_sampling"
+          tif=data/landcover/glc_fcs30d/v1_2022/hefei20km/hefei_2022_30m_20km.tif
+          policy=docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json
+          sha=ee5cefc27827d84f0aa42d0e014e211fcfef67f2bffc43185d17897d840d2e58
+          timeout 1200 "$bin" --case-grid inland "$tif" "$sha" "$policy" \
+            32650 503.385 3523.769 200 200 0.100 - - \
+            "$RUNNER_TEMP/issue169-hefei-generic-samegrid"
+          cmp "$RUNNER_TEMP/issue160-hefei-native-result/lu.dat" \
+              "$RUNNER_TEMP/issue169-hefei-generic-samegrid/lu.dat"
+          cmp "$RUNNER_TEMP/issue160-hefei-native-result/hits.csv" \
+              "$RUNNER_TEMP/issue169-hefei-generic-samegrid/hits.csv"
+          timeout 1200 "$bin" --case-grid inland "$tif" "$sha" "$policy" \
+            32650 504.385 3524.769 90 100 0.100 - - \
+            "$RUNNER_TEMP/issue169-hefei-alternate-real-grid"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          old=json.loads((root/"issue160-hefei-native-result/p2c_glc30m_manifest.json").read_text())
+          same=json.loads((root/"issue169-hefei-generic-samegrid/p2c_glc30m_manifest.json").read_text())
+          alt=json.loads((root/"issue169-hefei-alternate-real-grid/p2c_glc30m_manifest.json").read_text())
+          assert same["lu_dat_sha256"]==old["lu_dat_sha256"]
+          assert same["hits_csv_sha256"]==old["hits_csv_sha256"]
+          assert (alt["nx"],alt["ny"],alt["utm_epsg"])==(90,100,32650)
+          assert alt["fraction_fields"]==9000*38
+          assert alt["nonempty_cells"]==9000 and alt["missing_cells"]==0
+          assert alt["water55_hits"]==0 and alt["mesh"]==10
+          assert alt["included_hits"]>0
+          assert alt["independent_30m_integer_hit_oracle"]=="NOT_RUN"
+          print("P2C_S2B_GENUINE_HEFEI_SHA_SOURCE_ALT_90X100=PRODUCED_UNVERIFIED")
+          print("P2C_S2B_FROZEN_SAME_SOURCE_LU_AND_HITS=BYTE_IDENTICAL")
+          PY
       - name: Independent NumPy point oracle - EXACT all 1,520,000 integer HITS, F6.3 and Missing
         run: |
           set -euo pipefail
@@ -128,6 +163,8 @@ jobs:
           name: issue160-hefei20km-2022-glc30m-c4c5-real-science
           path: |
             ${{ runner.temp }}/issue160-hefei-native-result/p2c_glc30m_manifest.json
+            ${{ runner.temp }}/issue169-hefei-generic-samegrid/p2c_glc30m_manifest.json
+            ${{ runner.temp }}/issue169-hefei-alternate-real-grid/p2c_glc30m_manifest.json
             ${{ runner.temp }}/issue160-hefei-independent-40k38.json
             ${{ runner.temp }}/issue160-hefei-p3-format-only.json
           retention-days: 21
