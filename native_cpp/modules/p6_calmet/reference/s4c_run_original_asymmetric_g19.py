@@ -25,7 +25,7 @@ def control(deck: str, key: str) -> str:
     if len(found)!=1:raise ValueError(f"READCF ambiguous key {key}")
     return found[0].strip()
 
-def surface_clock(path: Path, nss: int):
+def surface_clock(path: Path, nss: int, id_offset: int=0):
     lines=path.read_text().splitlines()
     if len(lines)<9+nss or not lines[0].startswith("SURF.DAT"):
         raise ValueError("Asymmetric original SURF source malformed")
@@ -38,7 +38,7 @@ def surface_clock(path: Path, nss: int):
     start=instant(header[:4])
     end=instant(header[4:8])
     ids=[int(x.strip()) for x in lines[6:6+nss]]
-    if ids!=[583210+10*k for k in range(nss)]:
+    if ids!=[583210+10*k+id_offset for k in range(nss)]:
         raise ValueError("SURF controlled C2 authentic station subset mismatch")
     return start,end,ids
 
@@ -95,8 +95,11 @@ def run() -> None:
     ap.add_argument("--ss",type=int,choices=[1,2,3,4],required=True)
     ap.add_argument("--us",type=int,choices=[1,2,3,4],required=True)
     ap.add_argument("--hours",type=int,choices=[1,6],required=True)
+    ap.add_argument("--id-offset",type=int,default=0)
     ap.add_argument("--compiler",default="gfortran")
     args=ap.parse_args()
+    if not 0<=args.id_offset<=5000:
+        ap.error("S4-C original-source ID offset out of contract")
     root=args.source.resolve();out=args.out.resolve();out.mkdir(parents=True,exist_ok=True)
     original_dir=args.vendor_dir.resolve()
     g31.VENDOR=original_dir
@@ -114,7 +117,7 @@ def run() -> None:
             str(args.ss),str(args.us)):raise ValueError("Asymmetric cardinality declared incorrectly")
         if control(input_deck,"NX")!="12" or control(input_deck,"NY")!="12":
             raise ValueError("G31 fixed controlled 12x12 scope changed")
-        start,source_end,ids=surface_clock(root/"SURF.DAT",args.ss)
+        start,source_end,ids=surface_clock(root/"SURF.DAT",args.ss,args.id_offset)
         if source_end-start!=dt.timedelta(hours=6):
             raise ValueError("G19 original controlled six-hour source incomplete")
         end=start+dt.timedelta(hours=args.hours)
@@ -140,7 +143,7 @@ def run() -> None:
         if not receipt["GEO_physical_rows_unchanged"]:
             raise ValueError("GEO numerical matrix changed")
         for i in range(args.us):
-            station=58424+i
+            station=58424+i+args.id_offset
             p=stage/f"up{i+1}.dat"
             p.write_text(g31.stage_vendor_updat_header(p.read_text(),station))
         staged_deck=stage_original_deck(input_deck,start,end,args.ss,args.us)
