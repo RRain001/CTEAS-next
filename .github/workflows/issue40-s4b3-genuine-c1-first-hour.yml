@@ -1,0 +1,119 @@
+name: "Issue40 S4B3 original C1 1SS1US G14 first-hour diagnostic"
+on:
+  pull_request:
+    paths:
+      - "native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp"
+      - ".github/workflows/issue40-s4b3-genuine-c1-first-hour.yml"
+      - "docs/plans/ISSUE40_S4B3_C1_GENUINE_SINGLE_STATION_20261020.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-c1-original-hour-probe:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact unmodified genuine C1 source data and S4B3 proposed code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile same shared selected C2 17-stage actor for C1 experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4b3-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4b3-build" --parallel 2 --target \
+            cteas_p6g_s4b1_source_admission cteas_p6g_s4b2_unified_selected
+      - name: Verify immutable real C1 2022 1SS+1US provenance and original input admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="project/cases/hefei5km_2022_reference_case_20261011"
+          met="$case/run/met/met.inp"
+          geo="$case/geo/makegeo/geo.dat"
+          surf="$case/run/smerge/surf.dat"
+          up="$case/met/upperair/final/up_58424.dat"
+          test -s "$met" && test -s "$geo" && test -s "$surf" && test -s "$up"
+          sha256sum "$met" "$geo" "$surf" "$up" | tee "$RUNNER_TEMP/s4b3-source-sha256.txt"
+          python3 - "$up" <<'PY'
+          import sys
+          from pathlib import Path
+          path=Path(sys.argv[1])
+          header=[]
+          records=[]
+          with path.open(encoding='utf-8') as stream:
+              for no,line in enumerate(stream,1):
+                  if no<=9: header.append((no,line.rstrip()))
+                  if line.lstrip().startswith('6201 '):
+                      fields=line.split()
+                      if len(fields)>=12:
+                          records.append((no,fields[1:12]))
+          print("S4B3_ORIGINAL_UP_FIRST_9_LINES=",repr(header))
+          print("S4B3_ORIGINAL_UP_SOUNDINGS_COUNT=",len(records))
+          print("S4B3_ORIGINAL_UP_FIRST_SOUNDINGS=",repr(records[:3]))
+          print("S4B3_ORIGINAL_UP_LAST_SOUNDINGS=",repr(records[-3:]))
+          PY
+          "$RUNNER_TEMP/s4b3-build/cteas_p6g_s4b1_source_admission" \
+            --admit-only "$met" "$geo" "$surf" "$up" \
+            | tee "$RUNNER_TEMP/s4b3-original-g19-source-admission.txt"
+          echo "S4B3_C1_GENUINE_2022_SOURCE_ADMISSION=MEASURED"
+      - name: Execute ONLY original-source first G14 hour with same shared C2 actor
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="project/cases/hefei5km_2022_reference_case_20261011"
+          set +e
+          "$RUNNER_TEMP/s4b3-build/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental \
+            --met "$case/run/met/met.inp" \
+            --geo "$case/geo/makegeo/geo.dat" \
+            --surf "$case/run/smerge/surf.dat" \
+            --up "$case/met/upperair/final/up_58424.dat" \
+            --hours 143 --probe-prefix-hours 1 \
+            --out "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat" \
+            > "$RUNNER_TEMP/s4b3-c1-first-hour-trace.txt" 2>&1
+          rc=$?
+          set -e
+          cat "$RUNNER_TEMP/s4b3-c1-first-hour-trace.txt"
+          if [[ "$rc" -eq 0 ]]; then
+            test -s "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat"
+            sha256sum "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat" \
+              | tee "$RUNNER_TEMP/s4b3-c1-first-hour-sha256.txt"
+            echo "S4B3_C1_SHARED_ACTOR_FIRST_HOUR=PRODUCED_UNVERIFIED"
+          elif [[ "$rc" -eq 2 ]] && \
+               grep -F 'G18A input provenance or selected COMP scope' \
+                    "$RUNNER_TEMP/s4b3-c1-first-hour-trace.txt"; then
+            test ! -e "$RUNNER_TEMP/s4b3-c1-first-hour-candidate.dat"
+            echo "S4B3_C1_DIAGNO_EXECUTED_COMP_MIN_2SS_2US=BLOCKED_EXPECTED"
+            echo "S4B3_NEW_C1_PHYSICS=UNSUPPORTED_NOT_ACCEPTED"
+          else
+            echo "::error::S4B3 unexpected source or physical failure"; exit 1
+          fi
+          echo "S4B3_C1_143H_FULL_SCIENCE=NOT_RUN"
+      - name: Reject fake complete-year output from probe-only prefix
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="project/cases/hefei5km_2022_reference_case_20261011"
+          if "$RUNNER_TEMP/s4b3-build/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --met "$case/run/met/met.inp" \
+            --geo "$case/geo/makegeo/geo.dat" --surf "$case/run/smerge/surf.dat" \
+            --up "$case/met/upperair/final/up_58424.dat" \
+            --hours 143 --probe-prefix-hours 144 \
+            --out "$RUNNER_TEMP/invalid-prefix.dat"; then
+            echo "::error::S4B3 accepted out-of-bound prefix"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/invalid-prefix.dat"
+          echo "S4B3_PROBE_BOUNDARY_FAIL_CLOSED=PASS"
+      - name: Preserve original source SHA and honest experimental evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4b3-authentic-c1-1ss1us-first-hour-diagnostic
+          path: |
+            ${{ runner.temp }}/s4b3-source-sha256.txt
+            ${{ runner.temp }}/s4b3-original-g19-source-admission.txt
+            ${{ runner.temp }}/s4b3-c1-first-hour-trace.txt
+            ${{ runner.temp }}/s4b3-c1-first-hour-sha256.txt
+          if-no-files-found: warn
+          retention-days: 14

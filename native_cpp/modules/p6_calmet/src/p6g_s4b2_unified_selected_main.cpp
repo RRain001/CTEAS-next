@@ -21,6 +21,7 @@ struct S4B2Options {
     std::string met, geo, surf, output;
     std::vector<std::string> up;
     std::size_t hours=0;
+    std::size_t probe_prefix_hours=0;
     bool experimental=false;
 };
 
@@ -41,6 +42,15 @@ static S4B2Options parse_args(int argc, char** argv) {
         else if(key=="--surf" && o.surf.empty())o.surf=value;
         else if(key=="--up")o.up.push_back(value);
         else if(key=="--out" && o.output.empty())o.output=value;
+        else if(key=="--probe-prefix-hours" && o.probe_prefix_hours==0) {
+            if(value[0]=='-')throw std::invalid_argument("S4B3 invalid probe hours");
+            std::size_t consumed=0;
+            const auto parsed=std::stoull(value,&consumed);
+            if(consumed!=value.size()||parsed==0)
+                throw std::invalid_argument("S4B3 invalid probe hours");
+            o.probe_prefix_hours=static_cast<std::size_t>(parsed);
+            if(parsed!=o.probe_prefix_hours)throw std::invalid_argument("S4B3 probe hours overflow");
+        }
         else if(key=="--hours" && o.hours==0) {
             std::size_t consumed=0;
             const auto parsed=std::stoull(value,&consumed);
@@ -55,7 +65,9 @@ static S4B2Options parse_args(int argc, char** argv) {
         throw std::invalid_argument(
             "S4B2 experimental ONLY: --selected-experimental --met met.inp "
             "--geo GEO.DAT --surf SURF.DAT --up UP1.DAT [--up UP2.DAT ...] "
-            "--hours N --out candidate-met.dat; no production mode");
+            "--hours N [--probe-prefix-hours K] --out candidate-met.dat; no production mode");
+    if(o.probe_prefix_hours>o.hours)
+        throw std::invalid_argument("S4B3 prefix exceeds complete declared G14 hours");
     return o;
 }
 
@@ -81,9 +93,10 @@ int main(int argc, char** argv) {
             source.stations.upper.size(),
             scheduler.planned_hours(),true,true
         });
+        const auto executed_hours=opt.probe_prefix_hours>0?opt.probe_prefix_hours:opt.hours;
         p6g::G18D2StationClockAuthority clocks;
         std::optional<cteas::p6f::Calmet21File> all_hours;
-        for(std::size_t hour=0;hour<opt.hours;++hour) {
+        for(std::size_t hour=0;hour<executed_hours;++hour) {
             std::optional<cteas::p6f::Calmet21File> accepted;
             G34BSelectedOnlyHour* active=nullptr;
             bool published=false;
@@ -142,9 +155,11 @@ int main(int argc, char** argv) {
                 combined.header.end_second=next.header.end_second;
             }
         }
-        scheduler.require_complete();
-        if(!all_hours||all_hours->hourly.size()!=admission.potential_field_records||
-           all_hours->header.irlg!=static_cast<int>(opt.hours))
+        if(opt.probe_prefix_hours==0)scheduler.require_complete();
+        else if(scheduler.completed_hours()!=executed_hours)
+            throw std::logic_error("S4B3 incomplete selected G14 probe prefix");
+        if(!all_hours||all_hours->hourly.size()!=executed_hours*45||
+           all_hours->header.irlg!=static_cast<int>(executed_hours))
             throw std::logic_error("S4B2 missing exact 45 original-format records/hour");
         const auto bytes=cteas::p6f::serialize_calmet_dat21(*all_hours);
         const std::filesystem::path target(opt.output);
@@ -167,12 +182,14 @@ int main(int argc, char** argv) {
         try {std::filesystem::rename(staging,target);}
         catch(...) {std::filesystem::remove(staging);throw;}
         std::cout<<"S4B2_SELECTED_G14_17_STAGE_CANDIDATE=PRODUCED_UNVERIFIED"
-                 <<" HOURS="<<opt.hours
+                 <<" HOURS="<<executed_hours
+                 <<" DECLARED_SOURCE_HOURS="<<admission.input.hours
+                 <<" PREFIX_PROBE="<<(opt.probe_prefix_hours>0?"YES":"NO")
                  <<" SS="<<admission.input.surface_stations
                  <<" US="<<admission.input.upper_stations
                  <<" NX="<<admission.input.nx
                  <<" NY="<<admission.input.ny
-                 <<" FIELDS="<<admission.potential_field_records
+                 <<" FIELDS="<<executed_hours*45
                  <<" VENDOR_CALMET_PARITY=NOT_RUN"
                  <<" PRODUCTION_ADMISSION=NOT_ACCEPTED\n";
         return 0;
