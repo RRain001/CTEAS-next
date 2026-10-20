@@ -47,6 +47,25 @@ class D11ProductionParityTests(unittest.TestCase):
             self.assertEqual(m["fraction_3dp_differences"],1)
             self.assertEqual(m["status"],"D11_REAL_ORIGINAL_VS_NATIVE_LU_MISMATCH")
 
+    def test_native_cli_uses_exact_official_glcc_sha(self):
+        # Regression for authentic Run #39346090827 SHA typo.
+        from scripts.s2g.issue123_original_coastext_wolsong import GLCC_SHA
+        source=(Path(__file__).resolve().parents[3]/
+                "native_cpp/src/p2_original_sampling_wolsong_cli.cpp")
+        self.assertIn(GLCC_SHA,source.read_text())
+        self.assertEqual(len(GLCC_SHA),64)
+
+    def test_original_wrthead_a8_trailing_blanks_are_not_physics(self):
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(d11,"N",2), \
+             patch("scripts.s2g.issue123_d10_original_f63_lu.N",2):
+            a=Path(td)/"original";b=Path(td)/"native"
+            a.write_text(lu_rows().replace("\\nUTM\\n","\\nUTM     \\n",1))
+            b.write_text(lu_rows())
+            m=d11.compare(a,b,{"scope":"SYNTHETIC_ONLY"})
+            self.assertEqual(m["fraction_3dp_differences"],0)
+            self.assertEqual(m["missing_flag_differences"],0)
+
     def test_incompatible_categories_fail_closed(self):
         with tempfile.TemporaryDirectory() as td,patch.object(d11,"N",2):
             a=Path(td)/"original";b=Path(td)/"native"
