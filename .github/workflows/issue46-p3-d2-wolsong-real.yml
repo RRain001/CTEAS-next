@@ -4,6 +4,8 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - .github/workflows/issue46-p3-d2-wolsong-real.yml
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
+      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
       - native_cpp/reference/compare_p3_makegeo_dynamic.py
       - native_cpp/reference/tests/test_compare_p3_dynamic.py
       - native_cpp/orchestration/p3_case_handoff.py
@@ -214,7 +216,7 @@ jobs:
           set -euo pipefail
           vendor="$PWD/original_cteas/engine/vendor/src/MAKEGEO_V3.2_L110401"
           test -s "$vendor/makegeo.for"
-          echo "ORIGINAL_MAKEGEO_SOURCE_SHA256=$(sha256sum "$vendor/makegeo.for" | cut -d' ' -f1)"
+          echo "8c4fb11db36d4b976b54f470b7a06ce4e38ab09e934951b0e2c613bddc34e347  $vendor/makegeo.for" | sha256sum -c -
           stage="$RUNNER_TEMP/p3-d3-original-stage"
           mkdir -p "$stage"
           for file in "$vendor"/*; do
@@ -253,6 +255,18 @@ jobs:
               assert num==1,(key,num)
           (work/"makegeo.inp").write_text(text)
           (work/"MAKEGEO.INP").symlink_to("makegeo.inp")
+          # Non-semantic list-directed syntax check against actual Fortran
+          # READ(IO2,*) I,J,(PLAND(I,J,K),K=1,NINCAT): 2+38 numerics.
+          lu=work/"lu.dat"
+          lines=lu.read_text().splitlines()
+          assert len(lines)==40011, ("P2_C_40K_NATIVE_LU_ROWS",len(lines))
+          for index,line in enumerate(lines[11:]):
+              fields=line.split()
+              assert len(fields)==41, ("MALFORMED_ORIGINAL_FORTRAN_ROW",index,len(fields))
+              assert (int(fields[0]),int(fields[1]))==(index%200+1,index//200+1)
+              assert fields[40]==".",("ORIGINAL_FORTRAN_TRAILING_MARKER",index)
+              assert all(0. <= float(f) <= 1. for f in fields[2:40])
+          print("D3_TRUE_SOURCE_40K_ROWS_EACH_2_INDICES_38_SEPARATE_REAL_FIELDS=PASS")
           print("D3_ORIGINAL_CONTROL_FILE_PATHS_ONLY_EDITED; numeric controls unchanged")
           PY
           (
