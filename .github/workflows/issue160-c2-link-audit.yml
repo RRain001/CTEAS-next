@@ -31,11 +31,9 @@ jobs:
             cteas_p2_original_sampling_recount_tests \
             cteas_p2_original_sampling_hefei \
             cteas_p2_original_sampling_wolsong \
-            cteas_p2_original_sampling_lu_tests \
-            cteas_p2_glc_lu_dat \
-            cteas_p2_glc_area_tests
+            cteas_p2_original_sampling_lu_tests
           ctest --test-dir "$RUNNER_TEMP/c2-build" \
-            -R 'cteas_p2_original_(sampling_recount_synthetic|sampling_lu_writer_synthetic|coast_policy_synthetic)|cteas_p2_glc_raw_area_contract' \
+            -R 'cteas_p2_original_(sampling_recount_synthetic|sampling_lu_writer_synthetic|coast_policy_synthetic)' \
             --output-on-failure
       - name: Check no unverified GEOS D2 classifier linkage from real production recount
         run: |

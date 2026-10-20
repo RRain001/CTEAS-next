@@ -12,7 +12,6 @@ acceptance criteria unchanged.
 ## Authorized ways to launch
 1. An authenticated repository-owner Issue comment on any OPEN non-PR Issue:
    /cteas run issue123-original-binary-full-manual.yml
-   /cteas run issue119-wolsong-p2b-real-coast.yml validation_scope=full_p2b
    /cteas run issue84-noaa-source-screen.yml years=2023,2024 max_nearest=6
    This fires the issue_comment Actions dispatcher, which calls GitHub's
    workflow_dispatch API on trusted main. Connected agents posting as the
@@ -45,9 +44,10 @@ acceptance criteria unchanged.
 
 ## Scope
 Applies to P1-P7, Wolsong #119/#123, P3 #46, P5 #84, C1/C2, and
-future workflows. Does not change the Wolsong GSHHG Full-only
-EXACT_AREA_V1 frozen methodology, physical options, or science
-NOT_RUN assessments.
+future workflows. P2-B EXACT_AREA_V1 is retired as a supported producer
+under Issue #168; historical Wolsong scoped evidence remains in Git history.
+The retained P2-C reference uses original-style 10x10 point HITS, not area overlap.
+Previously obtained original-source scientific evidence must not be relabelled.
 
 Do not claim all workflows were run, or that a connector can directly
 call workflow_dispatch where no such action is available; use the issue
