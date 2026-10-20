@@ -118,6 +118,36 @@ jobs:
             docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
             "$RUNNER_TEMP/p2c160-genuine-original-coast/coast.bln" \
             "$RUNNER_TEMP/p2c160-wolsong-native"
+      - name: S2-B real Wolsong same-BLN dynamic coastal mode byte-identical replay
+        run: |
+          set -euo pipefail
+          bin="$RUNNER_TEMP/p2c160-native/cteas_p2c_glc30m_sampling"
+          tif=data/landcover/glc_fcs30d/v1_2022/wolsong/wolsong_2022_30m.tif
+          policy=docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json
+          coast="$RUNNER_TEMP/p2c160-genuine-original-coast/coast.bln"
+          timeout 1800 "$bin" --case-grid coastal "$tif" \
+            2a1a208c5386735692d788066f730c7391e87f0981e7b9ad099442af2e217711 \
+            "$policy" 32652 533.215 3942.629 200 200 0.100 "$coast" \
+            67da93d441e7defe3eb46627ed9ce896c0a91ffd89fd5e4363d834d8108e11f9 \
+            "$RUNNER_TEMP/issue169-wolsong-coastal-generic"
+          cmp "$RUNNER_TEMP/p2c160-wolsong-native/lu.dat" \
+              "$RUNNER_TEMP/issue169-wolsong-coastal-generic/lu.dat"
+          cmp "$RUNNER_TEMP/p2c160-wolsong-native/hits.csv" \
+              "$RUNNER_TEMP/issue169-wolsong-coastal-generic/hits.csv"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=Path(os.environ["RUNNER_TEMP"])
+          old=json.loads((r/"p2c160-wolsong-native/p2c_glc30m_manifest.json").read_text())
+          new=json.loads((r/"issue169-wolsong-coastal-generic/p2c_glc30m_manifest.json").read_text())
+          assert new["site"]=="coastal"
+          assert new["lcoast"] is True and new["lmarswap"] is True
+          assert new["full_l1_original_bln_sha256"]=="67da93d441e7defe3eb46627ed9ce896c0a91ffd89fd5e4363d834d8108e11f9"
+          assert old["lu_dat_sha256"]==new["lu_dat_sha256"]
+          assert old["hits_csv_sha256"]==new["hits_csv_sha256"]
+          assert new["independent_30m_integer_hit_oracle"]=="NOT_RUN"
+          print("P2C_S2B_WOLSONG_AUTHENTIC_COAST_BLN_GENERIC_MODE=BYTE_IDENTICAL")
+          PY
       - name: Independent NumPy and GEOS point oracle 40,000x38 zero-difference
         run: |
           set -euo pipefail
@@ -147,6 +177,7 @@ jobs:
           name: issue160-c4-wolsong-30m-independent-point-science
           path: |
             ${{ runner.temp }}/p2c160-wolsong-native/p2c_glc30m_manifest.json
+            ${{ runner.temp }}/issue169-wolsong-coastal-generic/p2c_glc30m_manifest.json
             ${{ runner.temp }}/p2c160-wolsong-independent-audit.json
             ${{ runner.temp }}/p2c160-wolsong-p3-format-contract.json
             ${{ runner.temp }}/p2c160-eof-adapter.json
