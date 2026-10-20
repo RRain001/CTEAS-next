@@ -33,6 +33,8 @@ on:
       - docs/plans/ISSUE40_S4_P6B2C_TRUE_NOAA_1US_ORIGINAL_VERTAV_PREPDI_20261020.md
       - docs/plans/ISSUE40_S4_P6B2C2_REAL_G17C3_STHEOR_DIAGI_20261020.md
       - docs/plans/ISSUE40_S4C_HUOSHAN_UNIFIED_REAL_G14_20261020.md
+      - native_cpp/modules/p6_calmet/reference/s4d_run_real_huoshan_original_calmet.py
+      - docs/plans/ISSUE40_S4D_HUOSHAN_FRESH_CALMET_NUMERIC_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -924,6 +926,42 @@ jobs:
             > "$c/evidence/s4c-real-native-six-hour-sha256.txt"
           echo 'S4C_TRUE_HUOSHAN_6H_NATIVE_270_FIELDS=PRODUCED_UNVERIFIED'
           echo 'S4C_ORIGINAL_CALMET_NEW_SITE_NUMERIC=NOT_RUN'
+      - name: S4-D independently FRESH compile and run pinned unchanged original CALMET on SAME true Huoshan source
+        if: matrix.period == 'jun_6h'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          c="$RUNNER_TEMP/s3_huoshan_2022"
+          /usr/bin/python3 native_cpp/modules/p6_calmet/reference/s4d_run_real_huoshan_original_calmet.py \
+            --case-root "$c" \
+            --vendor-dir "$PWD/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223" \
+            --out "$c/evidence/s4d-original" \
+            --compiler gfortran \
+            | tee "$c/evidence/s4d-original-standalone-trace.log"
+          test -s "$c/evidence/s4d-original/original-met.dat"
+      - name: S4-D independent original vs new unified G14 true 1SS1US 100x100 full 6h 45-field science
+        if: matrix.period == 'jun_6h'
+        shell: bash
+        run: |
+          set -euo pipefail
+          c="$RUNNER_TEMP/s3_huoshan_2022"
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/s4d-p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4d-p6e" --parallel 2 --target p6e_calmet_dat21
+          "$RUNNER_TEMP/s4d-p6e/p6e_calmet_dat21" compare \
+            --reference "$c/evidence/s4d-original/original-met.dat" \
+            --candidate "$c/evidence/s4c-real-native-six-hour-met.dat" \
+            --out "$c/evidence/s4d-huoshan-6h-original-vs-native.json" \
+            | tee "$c/evidence/s4d-huoshan-6h-original-vs-native.log"
+          /usr/bin/python3 - "$c/evidence/s4d-huoshan-6h-original-vs-native.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["intervals"]==6 and d["fields_per_hour"]==45
+          assert len(d["fields"])==45
+          assert d["total_exceedances"]==0 and d["status"]=="PASS",(
+            "True fresh original Huoshan 45-field comparison failed")
+          print("S4D_TRUE_HUOSHAN_6H_270_FIELDS_FRESH_ORIGINAL_NUMERIC=PASS_SCOPED")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -953,6 +991,14 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-first-hour-trace.log
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-native-six-hour-sha256.txt
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-six-hour-trace.log
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original-standalone-trace.log
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original/s4d-original-provenance.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original/compiler-stderr.log
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original/original-stderr.log
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original/original-stdout.log
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original/original-met.lst
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-huoshan-6h-original-vs-native.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-huoshan-6h-original-vs-native.log
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
