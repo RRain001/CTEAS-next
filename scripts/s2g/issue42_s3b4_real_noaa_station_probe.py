@@ -53,6 +53,7 @@ def probe(case_yaml: Path, destination: Path) -> dict:
     if (admission.research_begin, admission.research_end) not in {
         ("20220601-000000", "20220602-000000"),
         ("20220601-010000", "20220601-070000"),
+        ("20220601-020000", "20220601-080000"),
     }:
         raise ValueError("S3-B4 requires independently verified June 2022 real-source B0")
     if (admission.utm_zone, admission.hemisphere, admission.nx, admission.ny,
