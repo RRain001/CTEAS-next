@@ -12,7 +12,7 @@ def lu_rows(difference: bool=False):
     header=[
        "LU.DAT   2.1", "   2","source","version","FRACTION","UTM",
        "  52N   ","WGS-84  02-21-2003",
-       "200 200 533.215 3942.629 0.100 0.100 38","KM  ",
+       "2 2 533.215 3942.629 0.100 0.100 38","KM  ",
        "          "+"".join(f"{v:6d}" for v in CATS),
     ]
     body=[]
