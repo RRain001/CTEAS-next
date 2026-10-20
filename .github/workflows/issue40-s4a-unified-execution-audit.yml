@@ -1,0 +1,64 @@
+name: "Issue40 S4A C1-C2 selected P6 route audit (source only)"
+on:
+  pull_request:
+    paths:
+      - "scripts/s4/p6s4a_execution_route_audit.py"
+      - "docs/plans/ISSUE40_S4A_C1_C2_UNIFIED_EXECUTION_ARCHITECTURE_20261020.md"
+      - ".github/workflows/issue40-s4a-unified-execution-audit.yml"
+      - ".github/workflows/science-c1-143h.yml"
+      - ".github/workflows/science-c2-143h.yml"
+      - "native_cpp/modules/p6_calmet/src/native_hourly_driver_main.cpp"
+      - "native_cpp/modules/p6_calmet/src/realcase_wind_field_main.cpp"
+      - "native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c3_station_diagi.hpp"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-head-c1-c2-source-route:
+    name: S4A exact PR C1-C2 source route and drift negative
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact audited source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Native C1/C2 execution inventory and unique-anchor SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/s4/p6s4a_execution_route_audit.py
+          python3 scripts/s4/p6s4a_execution_route_audit.py --repo . \
+            --out "$RUNNER_TEMP/s4a-c1-c2-execution-audit.json"
+          python3 - "$RUNNER_TEMP/s4a-c1-c2-execution-audit.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["status"]=="S4A_C1_C2_SOURCE_EXECUTION_ROUTE_AUDIT_PASS_SCOPED"
+          assert d["fact_count"]==37
+          assert len(d["source_files"])==10
+          assert d["original_calmet_fresh_C1"] is False
+          assert d["original_calmet_fresh_C2"] is True
+          assert d["c1_c2_one_shared_production_binary"] is False
+          assert d["c1_c2_cross_runner_numerical_identity_proven"] is False
+          assert d["physics_formulas_modified"] is False
+          assert d["source_level_only"] is True
+          assert len({x["key"] for x in d["facts"]})==37
+          print("S4A_EXACT_SOURCE_ONLY_C1_C2_EXECUTION_ROUTE=PASS_SCOPED")
+          print("S4A_UNIFIED_RUNNER=NOT_IMPLEMENTED C1_C2_NEW_RUNNER_NUMERIC=NOT_RUN")
+          PY
+      - name: Fail closed on changed original accepted C2 case guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/s4/p6s4a_execution_route_audit.py \
+            --repo . --negative-self-test
+      - name: Preserve only source SHA and scope receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4a-c1-c2-execution-route-sha-only
+          path: ${{ runner.temp }}/s4a-c1-c2-execution-audit.json
+          retention-days: 14
+          if-no-files-found: error
