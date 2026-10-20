@@ -71,9 +71,33 @@ class P5ProducerContractTests(unittest.TestCase):
             self.assertEqual(p5_case_paths.case_root(), self.root)
             self.assertEqual(p5_case_paths.history_file(), self.fixture.history)
         other = Path(self.fixture.tmp.name) / "missing"
-        with patch.dict(os.environ, {p5_case_paths.ROOT_ENV: str(other)}):
+        with patch.dict(os.environ, {
+            p5_case_paths.ROOT_ENV: str(other),
+            p5_case_paths.HISTORY_ENV: str(self.fixture.history),
+        }):
             with self.assertRaisesRegex(ValueError, "independent case"):
                 p5_case_paths.case_root()
+
+    def test_isolated_environment_cannot_silently_use_default_project_or_history(self):
+        # Any one-sided staging declaration used to fall back to
+        # project/current or the engine's default ISD station history.
+        for name,value in (
+            (p5_case_paths.ROOT_ENV, str(self.root)),
+            (p5_case_paths.HISTORY_ENV, str(self.fixture.history)),
+        ):
+            with self.subTest(variable=name), patch.dict(os.environ, {name: value}, clear=True):
+                with self.assertRaisesRegex(ValueError, "declared together"):
+                    p5_case_paths.case_root()
+                with self.assertRaisesRegex(ValueError, "declared together"):
+                    p5_case_paths.history_file()
+        with patch.dict(os.environ, {
+            p5_case_paths.ROOT_ENV: str(self.root),
+            p5_case_paths.HISTORY_ENV: "",
+        }, clear=True):
+            with self.assertRaisesRegex(ValueError, "cannot be empty"):
+                p5_case_paths.case_root()
+            with self.assertRaisesRegex(ValueError, "cannot be empty"):
+                p5_case_paths.history_file()
 
     def test_control_clock_and_alias_and_original_options(self):
         start = "2022"
