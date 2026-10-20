@@ -292,7 +292,7 @@ static void source_cardinality_surface_file(
     out<<"1\nG1B cardinality original-format synthetic SURF\nNONE\nUTC+0000\n";
     stamp(out,begin);out<<" ";stamp(out,begin+hours{hours_count},true);
     out<<" "<<nss<<"\n";
-    for(int i=0;i<nss;++i)out<<583210+10*i+id_offset+id_offset<<"\n";
+    for(int i=0;i<nss;++i)out<<583210+10*i+id_offset<<"\n";
     for(int k=0;k<hours_count;++k) {
         stamp(out,begin+hours{k});out<<" ";
         stamp(out,begin+hours{k+1},true);out<<"\n";
@@ -334,7 +334,7 @@ static std::string source_cardinality_deck(
     std::ostringstream out;
     out<<std::fixed<<std::setprecision(3);
     for(int i=1;i<nss;++i)
-        out<<"! SS"<<i+1<<" = 'SS"<<i+1<<"' "<<583210+10*i
+        out<<"! SS"<<i+1<<" = 'SS"<<i+1<<"' "<<583210+10*i+id_offset
            <<" "<<513.385+10*i<<" "<<3533.769+10*i
            <<" 0 10.0 !\n";
     for(int i=1;i<nus;++i)
