@@ -35,6 +35,24 @@ jobs:
           up="$case/met/upperair/final/up_58424.dat"
           test -s "$met" && test -s "$geo" && test -s "$surf" && test -s "$up"
           sha256sum "$met" "$geo" "$surf" "$up" | tee "$RUNNER_TEMP/s4b3-source-sha256.txt"
+          python3 - "$up" <<'PY'
+          import sys
+          from pathlib import Path
+          path=Path(sys.argv[1])
+          header=[]
+          records=[]
+          with path.open(encoding='utf-8') as stream:
+              for no,line in enumerate(stream,1):
+                  if no<=9: header.append((no,line.rstrip()))
+                  if line.lstrip().startswith('6201 '):
+                      fields=line.split()
+                      if len(fields)>=12:
+                          records.append((no,fields[1:12]))
+          print("S4B3_ORIGINAL_UP_FIRST_9_LINES=",repr(header))
+          print("S4B3_ORIGINAL_UP_SOUNDINGS_COUNT=",len(records))
+          print("S4B3_ORIGINAL_UP_FIRST_SOUNDINGS=",repr(records[:3]))
+          print("S4B3_ORIGINAL_UP_LAST_SOUNDINGS=",repr(records[-3:]))
+          PY
           "$RUNNER_TEMP/s4b3-build/cteas_p6g_s4b1_source_admission" \
             --admit-only "$met" "$geo" "$surf" "$up" \
             | tee "$RUNNER_TEMP/s4b3-original-g19-source-admission.txt"
