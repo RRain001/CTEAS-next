@@ -22,7 +22,8 @@ int main(int argc,char** argv) {
         const auto first=original.hourly.front().begin;
         const auto last=original.hourly[44].end;
         if(first.year!=2022||first.julian_day!=1||first.hour!=0||
-           last.year!=2022||last.julian_day!=1||last.hour!=1)
+           last.year!=2022||last.julian_day!=1||
+           calmet21_instant_seconds(last)-calmet21_instant_seconds(first)!=3600)
             throw std::invalid_argument("S4B4 original C1 first hour differs from frozen contract");
         auto h=original.header;
         h.run_hours=1;
