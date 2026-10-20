@@ -46,7 +46,12 @@ def compare(original:Path,native:Path,metadata:dict)->dict:
     with original.open(encoding="utf-8") as a, native.open(encoding="utf-8") as b:
         ah=read_header(a)
         bh=read_header(b)
-        require(ah[4:11]==bh[4:11],
+        # Original WRTHEAD's comment and NIMADATE version strings are
+        # informational and may differ from a standalone native producer.
+        # Require the actual physical field definition, UTM zone, grid
+        # geometry and original 38-class IDs to be identical.
+        require(ah[4:7]==bh[4:7] and ah[8:11]==bh[8:11] and
+                ah[7][:8]==bh[7][:8],
                 "D11_ORIGINAL_NATIVE_PHYSICAL_HEADER_DRIFT")
         for index in range(N*N):
             orig=a.readline()
