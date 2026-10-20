@@ -63,7 +63,7 @@ inline G18C3SelectedTemperature g18c3_selected_native_temp3d(
                     frame.stations.surface.size()==1)||
                     (control.allow_asymmetric_source_audit && nu==1 &&
                     frame.stations.surface.size()>=2&&
-                    frame.stations.surface.size()<=3)))||
+                    frame.stations.surface.size()<=4)))||
        frame.upper.size()!=nu||
        original_upper.station_ids.size()!=nu||
        original_faces.station_ids!=original_upper.station_ids||
