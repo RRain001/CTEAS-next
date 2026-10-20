@@ -13,6 +13,7 @@ on:
       - '.github/workflows/issue40-s4c-vendor-capacity-original-science.yml'
       - 'docs/plans/ISSUE40_S4C_VENDOR_CAPACITY_MULTISTATION_20261021.md'
       - 'native_cpp/modules/p6_calmet/reference/s4c_run_original_asymmetric_g19.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp'
   workflow_dispatch:
 permissions:
   contents: read
