@@ -68,6 +68,10 @@ def accept(*, case_root: Path, original_geo: Path,
     need(p2.get("status")=="P2C_GENERIC_CASE_PRODUCED_UNVERIFIED"
          and p2.get("method")==SELECTED_P2C and p2.get("mode")=="coastal",
          "not the selected coastal original-style P2-C input")
+    hits_sha=p2.get("hits_csv_sha256")
+    need(isinstance(hits_sha,str) and len(hits_sha)==64 and
+         all(ch in "0123456789abcdef" for ch in hits_sha),
+         "P2 native integer HITS CSV SHA missing or malformed")
     need(p2.get("source_tiff_sha256")==WOLSONG_GLC30M_SHA256 and
          p2.get("source_bln_sha256")==FULL_ORIGINAL_COAST_BNL_SHA256 and
          p2.get("mapping_policy_sha256")==FROZEN_30M_POLICY_SHA256,
@@ -141,7 +145,7 @@ def accept(*, case_root: Path, original_geo: Path,
         "p2_original_coast_bln_sha256":FULL_ORIGINAL_COAST_BNL_SHA256,
         "p2_mapping_policy_sha256":FROZEN_30M_POLICY_SHA256,
         "p2_lu_dat_sha256":sha(lu_path),
-        "p2_integer_hits_csv_sha256":p2.get("hits_sha256"),
+        "p2_integer_hits_csv_sha256":hits_sha,
         "terrel_dat_sha256":p3["terrel_dat_sha256"],
         "p3_native_geo_dat_sha256":sha(geo_path),
         "p3_original_geo_dat_sha256":sha(original_geo),
