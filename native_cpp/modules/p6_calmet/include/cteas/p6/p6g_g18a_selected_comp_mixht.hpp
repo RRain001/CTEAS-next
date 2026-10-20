@@ -53,8 +53,9 @@ inline G18ASelectedCompResult selected_comp_mixht_wstarr_from_previous(
         !((ctrl.allow_one_one_source_audit&&
            frame.stations.surface.size()==1&&frame.stations.upper.size()==1)||
           (ctrl.allow_asymmetric_source_audit&&
-           ((frame.stations.surface.size()==1&&frame.stations.upper.size()==2)||
-            (frame.stations.surface.size()==2&&frame.stations.upper.size()==1))))))
+           frame.stations.surface.size()<=3&&frame.stations.upper.size()<=3&&
+           ((frame.stations.surface.size()==1&&frame.stations.upper.size()>=2)||
+            (frame.stations.surface.size()>=2&&frame.stations.upper.size()==1))))))
         throw std::invalid_argument("G18A input provenance or selected COMP scope");
     const auto nx=static_cast<std::size_t>(g.nx);
     const auto ny=static_cast<std::size_t>(g.ny);
