@@ -5,6 +5,7 @@
 #include <cpl_json.h>
 #include <gdal_priv.h>
 #include <ogrsf_frmts.h>
+#include <ogr_api.h>
 #include <ogr_spatialref.h>
 #include <openssl/evp.h>
 #include <array>
@@ -16,6 +17,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 namespace {
 namespace fs=std::filesystem;
@@ -79,14 +81,20 @@ std::map<int,int> selected_map(const fs::path& file){
 using Dataset=std::unique_ptr<GDALDataset,decltype(&GDALClose)>;
 using Transform=std::unique_ptr<OGRCoordinateTransformation,decltype(&OCTDestroyCoordinateTransformation)>;
 struct LandPolygons {
+  using Prepared=std::unique_ptr<std::remove_pointer_t<OGRPreparedGeometryH>,
+                                 decltype(&OGRDestroyPreparedGeometry)>;
   std::vector<std::unique_ptr<OGRGeometry>> land;
+  std::vector<Prepared> prepared;
   std::vector<OGREnvelope> envelopes;
   bool contains(double x,double y)const{
-    const OGRPoint p(x,y);
+    OGRPoint p(x,y);
     for(std::size_t k=0;k<land.size();++k){
       const auto& b=envelopes[k];
-      if(x>=b.MinX&&x<=b.MaxX&&y>=b.MinY&&y<=b.MaxY&&
-         land[k]->Contains(&p))return true;
+      if(x<b.MinX||x>b.MaxX||y<b.MinY||y>b.MaxY)continue;
+      const int result=OGRPreparedGeometryContains(
+          prepared[k].get(),OGRGeometry::ToHandle(&p));
+      need(result>=0,"P2C_30M_GSHHG_PREPARED_PREDICATE_FAILURE");
+      if(result==1)return true;
     }
     return false;
   }
@@ -136,7 +144,12 @@ LandPolygons read_full_l1(const fs::path& path,int epsg,const P2Grid& grid){
     need(bool(poly)&&poly->transform(to_utm.get())==OGRERR_NONE,
          "P2C_GSHHG_FULL_L1_TRANSFORM_FAIL");
     OGREnvelope box;poly->getEnvelope(&box);
+    LandPolygons::Prepared prepared(
+        OGRCreatePreparedGeometry(OGRGeometry::ToHandle(poly.get())),
+        OGRDestroyPreparedGeometry);
+    need(bool(prepared),"P2C_GSHHG_PREPARED_GEOMETRY_REQUIRED");
     out.envelopes.push_back(box);
+    out.prepared.push_back(std::move(prepared));
     out.land.push_back(std::move(poly));
     need(out.land.size()<10000,"P2C_GSHHG_UNBOUNDED_POLYGON_SET");
   }
