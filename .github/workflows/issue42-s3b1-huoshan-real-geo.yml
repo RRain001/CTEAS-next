@@ -11,6 +11,7 @@ on:
       - scripts/s2g/issue42_s3_b1_true_srtm_window.py
       - native_cpp/reference/compare_p3_makegeo_dynamic.py
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
+      - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +22,13 @@ jobs:
   genuine-huoshan-utm50-terrel-glcc-makegeo:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        period: [jan_48h, jun_24h]
+    env:
+      S3_RESEARCH_BEGIN: ${{ matrix.period == 'jan_48h' && '20220101-000000' || '20220601-000000' }}
+      S3_RESEARCH_END: ${{ matrix.period == 'jan_48h' && '20220103-000000' || '20220602-000000' }}
     steps:
       - name: Checkout true SRTM 90m and original GLCC via LFS
         uses: actions/checkout@v4
@@ -83,6 +91,9 @@ jobs:
           import os
           from pathlib import Path
           from pyproj import Transformer
+          begin,end=os.environ["S3_RESEARCH_BEGIN"],os.environ["S3_RESEARCH_END"]
+          assert (begin,end) in {("20220101-000000","20220103-000000"),
+                                 ("20220601-000000","20220602-000000")}
           root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
           assert not root.exists()
           (root/"grid").mkdir(parents=True)
@@ -98,7 +109,7 @@ jobs:
               "    nz: 9\n    resolution_km: 0.1\n"
               "    domain:\n      length_km: 10.0\n      width_km: 10.0\n"
               f"    center:\n      longitude: {lon:.12f}\n      latitude: {lat:.12f}\n"
-              "  research_time:\n    begin: 20220101-000000\n    end: 20220103-000000\n",
+              f"  research_time:\n    begin: {begin}\n    end: {end}\n",
               encoding="utf-8")
           (root/"grid/grid.cmn").write_text(
               "! IMAP = UTM !\n! DATUM = WGS-84 !\n"
@@ -108,12 +119,12 @@ jobs:
               + "".join(f"! ZFACE = {value} !\n" for value in
                         (0,20,40,80,160,320,640,1200,2000,3000)),encoding="utf-8")
           (root/"grid/research_time").write_text(
-              "BEGIN:20220101-000000\nEND:20220103-000000\n",encoding="utf-8")
+              f"BEGIN:{begin}\nEND:{end}\n",encoding="utf-8")
           from native_cpp.orchestration.case_admission import admit_case
           b0=admit_case(root/"case.yaml")
           assert (b0.nx,b0.ny,b0.utm_zone,b0.hemisphere)==(100,100,50,"N")
           assert (b0.xrefkm_text,b0.yrefkm_text)==("462.305","3501.570")
-          assert (b0.research_begin,b0.research_end)==("20220101-000000","20220103-000000")
+          assert (b0.research_begin,b0.research_end)==(begin,end)
           print("S3_HUOSHAN_TRUE_NON_HEFEI_B0_ADMISSION=PASS")
           PY
       - name: Produce actual Huoshan P2-A native GLCC LU and immutable evidence
@@ -350,7 +361,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: issue42-s3-b1-real-huoshan-terrel-glcc-geo-evidence
+          name: issue42-s3-b1b2-huoshan-${{ matrix.period }}-source-original-science
           path: |
             ${{ runner.temp }}/s3_huoshan_2022/evidence/p2.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/p3.json
