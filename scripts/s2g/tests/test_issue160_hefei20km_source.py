@@ -64,6 +64,25 @@ class Hefei20kmSourceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "UNEXPECTED_CLASS"):
                 inspect(path, geometry())
 
+    def test_only_inverse_proj_diagnostics_allow_final_bit_variation(self):
+        original = json.loads((OUT / "metadata.json").read_text())
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            shutil.copyfile(OUT / NAME, directory / NAME)
+            metadata = directory / "metadata.json"
+            original["buffer_corners_wgs84"][0][0] += 1e-12
+            metadata.write_text(json.dumps(original))
+            verify(directory)
+            original["buffer_corners_wgs84"][0][0] += 1e-8
+            metadata.write_text(json.dumps(original))
+            with self.assertRaisesRegex(ValueError, "GEOMETRY_DRIFT_buffer_corners_wgs84"):
+                verify(directory)
+            original = json.loads((OUT / "metadata.json").read_text())
+            original["model_bounds_utm_m"][0] += 1e-8
+            metadata.write_text(json.dumps(original))
+            with self.assertRaisesRegex(ValueError, "GEOMETRY_DRIFT_model_bounds_utm_m"):
+                verify(directory)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -177,7 +177,18 @@ def acquire(directory:Path,project:str):
 def verify(directory:Path):
     g=geometry()
     metadata=json.loads((directory/"metadata.json").read_text())
-    for key,v in g.items():require(metadata.get(key)==v,"GEOMETRY_DRIFT_"+key)
+    for key,v in g.items():
+        if key=="buffer_corners_wgs84":
+            # These inverse-PROJ coordinates are diagnostics, never sampling
+            # inputs. PROJ versions can differ in their final floating bits.
+            # 1e-10 degree is ~11 micrometres; all UTM bounds/origins below
+            # remain exact, with no tolerance or hidden origin rounding.
+            corners=np.asarray(metadata.get(key,[]),dtype=float)
+            require(corners.shape==(5,2) and
+                    np.allclose(corners,v,rtol=0,atol=1e-10),
+                    "GEOMETRY_DRIFT_"+key)
+        else:
+            require(metadata.get(key)==v,"GEOMETRY_DRIFT_"+key)
     actual=inspect(directory/NAME,g)
     for key,v in actual.items():require(metadata.get(key)==v,"SOURCE_DRIFT_"+key)
     require(metadata.get("year")==2022 and metadata.get("band")=="b23" and

@@ -54,6 +54,12 @@ records the enhanced pair: identical bytes, pixels, masks, transform,
 coverage, histogram, file size and hashes. Download URLs and credentials are
 never recorded. Dependencies, UTC acquisition time and acquisition script
 SHA are in `metadata.json`.
+The acquisition script SHA records the exact script used in source commit
+`03a7029b24b21dc152581a9dc7d6198b3f807aac`; later offline verifier fixes
+do not rewrite acquisition provenance. Only inverse-PROJ WGS84 diagnostic
+corners allow 1e-10 degree variation across PROJ versions (about 11 µm).
+Authoritative UTM origin, bounds, resolution and affine remain exact; this
+does not change sampling coordinates or any science comparison tolerance.
 
 Run from repository root with Python >=3.11, earthengine-api, numpy,
 rasterio, pyproj and requests installed. The operator must already have
