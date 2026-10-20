@@ -31,6 +31,7 @@ on:
       - native_cpp/modules/p6_calmet/reference/compare_g20_real_1us_original_vertav_prepdi.py
       - native_cpp/modules/p6_calmet/CMakeLists.txt
       - docs/plans/ISSUE40_S4_P6B2C_TRUE_NOAA_1US_ORIGINAL_VERTAV_PREPDI_20261020.md
+      - docs/plans/ISSUE40_S4_P6B2C2_REAL_G17C3_STHEOR_DIAGI_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -802,6 +803,79 @@ jobs:
           assert a["independent_vendor_full_CALMET_45fields"] is False
           print("S4_P6B2B_REAL_HUOSHAN_180000_ORIGINAL_SLOPE_KERNEL=PASS_SCOPED")
           PY
+      - name: S4 P6-B2C-2 genuine Huoshan 1SS1US STHEOR-MIXHTST-DIAGI station diagnostic, not INTER2
+        if: matrix.period == 'jun_6h'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import csv,hashlib,json,math,os,subprocess
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
+          evidence=root/"evidence"
+          prepdi=json.loads((evidence/"s4-p6b2c-real-1us-original-prepdi-science.json").read_text())
+          assert prepdi["status"]=="S4_P6B2C1_TRUE_NOAA_1US_ORIGINAL_VERTAV_PREPDI_PASS_SCOPED"
+          slope=json.loads((evidence/"s4-p6b2b-original-vendor-slope-comparison.json").read_text())
+          assert slope["status"]=="S4_P6B2B_HUOSHAN_ORIGINAL_SLOPE_KERNEL_PASS_SCOPED"
+          exe=Path(os.environ["RUNNER_TEMP"])/"s3-g19/cteas_p6g_g21_source_fradj_probe"
+          args=[str(exe),str(root/"run/met/met.inp"),
+                str(root/"geo/makegeo/geo.dat"),
+                str(root/"met/surface/final/surf.dat"),
+                str(root/"met/upperair/final/up_58424.dat"),
+                "--output",str(evidence/"s4-p6b2c2-native-fradj.csv"),
+                "--source-stage",str(evidence/"s4-p6b2c2-fradj-stage.dat"),
+                "--slope-output",str(evidence/"s4-p6b2c2-native-slope.csv"),
+                "--slope-stage",str(evidence/"s4-p6b2c2-original-slope-stage.dat"),
+                "--stheor-site-output",str(evidence/"s4-p6b2c2-real-one-station-diagi.csv")]
+          flags=["--real-one-ss-one-us-fradj-test-only",
+                 "--real-one-ss-one-us-slope-test-only"]
+          negative=subprocess.run(args+flags,capture_output=True,text=True,timeout=100)
+          assert negative.returncode!=0, "STHEOR without separate opt-in must reject"
+          assert not (evidence/"s4-p6b2c2-real-one-station-diagi.csv").exists()
+          positive=subprocess.run(args+flags+["--real-one-ss-one-us-stheor-test-only"],
+                                  capture_output=True,text=True,timeout=240)
+          if positive.returncode:
+            raise RuntimeError("genuine NOAA G17C3 refused source: "+positive.stderr[-1600:])
+          assert "G17C3_REAL_ONE_SS_ONE_US_STHEOR_ELUSTR2_MIXHTST_DIAGI=PRODUCED_UNVERIFIED" in positive.stdout
+          assert "G23_INTER2=NOT_RUN" in positive.stdout
+          path=evidence/"s4-p6b2c2-real-one-station-diagi.csv"
+          with path.open(newline="") as f:
+            records=list(csv.DictReader(f))
+          assert len(records)==9
+          ids={(r["surface_id"],r["upper_id"]) for r in records}
+          assert len(ids)==1 and records[0]["upper_id"]==str(prepdi["original_station_id"])
+          times={int(r["hour_end_utc_seconds"]) for r in records}
+          assert times=={prepdi["original_model_end_epoch"]}
+          assert [int(r["k_1based"]) for r in records]==list(range(1,10))
+          assert len({r["station_cell_0based"] for r in records})==1
+          valid=0
+          for r in records:
+            for name in ("station_qh_wm2","station_ustar_mps","station_el_m",
+                         "mixhtst_zi_to_similt_m","mixhtst_ziconv_after_m",
+                         "mixhtst_dptt_for_comp_k"):
+              assert math.isfinite(float(r[name]))
+            if int(r["present"])==1:
+              assert all(math.isfinite(float(r[name])) and abs(float(r[name]))<998.99
+                         for name in ("diagi_u_mps","diagi_v_mps"))
+              valid+=1
+            else:
+              assert r["diagi_u_mps"]=="999" and r["diagi_v_mps"]=="999"
+          assert 1<=valid<=9
+          cert={"status":"S4_P6B2C2_REAL_HUOSHAN_1SS1US_STHEOR_DIAGI_PRODUCED_UNVERIFIED",
+                "actual_source_station_pair":list(next(iter(ids))),
+                "hour_end_utc_seconds":next(iter(times)),
+                "observed_native_diagi_levels":valid,
+                "original_source_prepdi_science_sha256":hashlib.sha256(
+                  (evidence/"s4-p6b2c-real-1us-original-prepdi-science.json").read_bytes()).hexdigest(),
+                "native_station_diagi_sha256":hashlib.sha256(path.read_bytes()).hexdigest(),
+                "original_station_ELUSTR2_MIXHTST_SIMILT_numeric":"NOT_RUN",
+                "G23_INTER2_native":"NOT_RUN",
+                "full_original_CALMET_MET45":"NOT_RUN",
+                "P6_NEW_SITE_SCIENCE":"NOT_ACCEPTED"}
+          (evidence/"s4-p6b2c2-real-stheor-diagi-receipt.json").write_text(
+            json.dumps(cert,sort_keys=True,indent=2)+"\n")
+          print("S4_P6B2C2_REAL_NOAA_STHEOR_DIAGI=PRODUCED_UNVERIFIED",
+                "valid_layers=",valid,"STHEOR_VENDOR_NUMERIC=NOT_RUN")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -825,6 +899,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2-original-vendor-fradj-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2b-original-vendor-slope-comparison.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2c-real-1us-original-prepdi-science.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4-p6b2c2-real-stheor-diagi-receipt.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
