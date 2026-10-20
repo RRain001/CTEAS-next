@@ -1,9 +1,13 @@
-name: Issue46 D2 real Wolsong SRTMGL1 + 2022 GLC30m -> native P3 GEO
+name: Issue46 D2+D3 original Wolsong same-source MAKEGEO numerical science
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - .github/workflows/issue46-p3-d2-wolsong-real.yml
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
+      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
+      - native_cpp/reference/compare_p3_makegeo_dynamic.py
+      - native_cpp/reference/tests/test_compare_p3_dynamic.py
       - native_cpp/orchestration/p3_case_handoff.py
       - native_cpp/orchestration/p2c_case_producer.py
       - native_cpp/p3/**
@@ -12,9 +16,23 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: issue46-d2-wolsong-${{ github.event.pull_request.number || github.ref }}
+  group: issue46-d3-wolsong-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  independent-geo-parser-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Frozen original GEO reference parser and strict precision-negative unit tests
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest native_cpp.reference.tests.test_compare_p3_dynamic -v
+          echo 'P3_DYNAMIC_GEO_ORIGINAL_PARSER_SOFTWARE=PASS'
+          echo 'WOLSONG_GENUINE_ORIGINAL_MAKEGEO_NUMERIC=SEPARATE_JOB_NOT_INFERRED'
   genuine-source-wolsong-native-p1-p2c-p3:
     runs-on: ubuntu-22.04
     timeout-minutes: 75
@@ -30,7 +48,9 @@ jobs:
           repository: RRain001/CTEAS
           ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
           path: original_cteas
-          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout: |
+            engine/vendor/src/CTGPROC_v7.0.0_L150211
+            engine/vendor/src/MAKEGEO_V3.2_L110401
           sparse-checkout-cone-mode: true
           lfs: false
           persist-credentials: false
@@ -191,6 +211,98 @@ jobs:
           (Path(os.environ["RUNNER_TEMP"])/"p3-d2-real-summary.json").write_text(json.dumps(summary,indent=2))
           print(json.dumps(summary,sort_keys=True))
           PY
+      - name: Independently compile exact pinned original MAKEGEO 3.2 Fortran
+        run: |
+          set -euo pipefail
+          vendor="$PWD/original_cteas/engine/vendor/src/MAKEGEO_V3.2_L110401"
+          test -s "$vendor/makegeo.for"
+          echo "8c4fb11db36d4b976b54f470b7a06ce4e38ab09e934951b0e2c613bddc34e347  $vendor/makegeo.for" | sha256sum -c -
+          stage="$RUNNER_TEMP/p3-d3-original-stage"
+          mkdir -p "$stage"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$stage/$bn"
+          done
+          gfortran -std=legacy -ffixed-line-length-72 \
+            -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$stage" "$stage/makegeo.for" -o "$RUNNER_TEMP/p3-d3-original-makegeo"
+          test -x "$RUNNER_TEMP/p3-d3-original-makegeo"
+          sha256sum "$RUNNER_TEMP/p3-d3-original-makegeo"
+      - name: Run ORIGINAL MAKEGEO on exact same genuine native Wolsong LU/TERREL
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          from pathlib import Path
+          import os,re
+          root=Path(os.environ["RUNNER_TEMP"])
+          case=root/"p3_d2_wolsong_2022"
+          src=case/"geo/makegeo/p3_case/makegeo.inp"
+          work=root/"p3-d3-original-run"
+          work.mkdir()
+          for filename,source in (
+              ("lu.dat",case/"geo/ctgproc/p2c_case/lu.dat"),
+              ("terrel.dat",case/"geo/makegeo/p3_case/terrel.dat"),
+          ):
+              assert source.is_file() and source.stat().st_size>0
+              (work/filename).symlink_to(source)
+          text=src.read_text()
+          for key,value in (
+              ("LUDAT","lu.dat"),("TERRDAT","terrel.dat"),
+              ("GEODAT","original_geo.dat"),("RUNLST","original_makegeo.lst"),
+          ):
+              text,num=re.subn(rf"(!\s*{key}\s*=\s*)([^!]*)(!)",
+                               lambda m:m.group(1)+value+" "+m.group(3),text)
+              assert num==1,(key,num)
+          (work/"makegeo.inp").write_text(text)
+          (work/"MAKEGEO.INP").symlink_to("makegeo.inp")
+          # Non-semantic list-directed syntax check against actual Fortran
+          # READ(IO2,*) I,J,(PLAND(I,J,K),K=1,NINCAT): 2+38 numerics.
+          lu=work/"lu.dat"
+          lines=lu.read_text().splitlines()
+          assert len(lines)==40011, ("P2_C_40K_NATIVE_LU_ROWS",len(lines))
+          for index,line in enumerate(lines[11:]):
+              fields=line.split()
+              assert len(fields)==41, ("MALFORMED_ORIGINAL_FORTRAN_ROW",index,len(fields))
+              assert (int(fields[0]),int(fields[1]))==(index%200+1,index//200+1)
+              assert fields[40]==".",("ORIGINAL_FORTRAN_TRAILING_MARKER",index)
+              assert all(0. <= float(f) <= 1. for f in fields[2:40])
+          print("D3_TRUE_SOURCE_40K_ROWS_EACH_2_INDICES_38_SEPARATE_REAL_FIELDS=PASS")
+          print("D3_ORIGINAL_CONTROL_FILE_PATHS_ONLY_EDITED; numeric controls unchanged")
+          PY
+          (
+            cd "$RUNNER_TEMP/p3-d3-original-run"
+            timeout 1800 "$RUNNER_TEMP/p3-d3-original-makegeo" \
+              > original_stdout.log 2>&1 || {
+                tail -n 100 original_stdout.log
+                test ! -f original_makegeo.lst || tail -n 80 original_makegeo.lst
+                exit 1
+              }
+            test -s original_geo.dat || {
+              tail -n 100 original_stdout.log
+              exit 1
+            }
+            sha256sum original_geo.dat
+          )
+      - name: Independently compare original Fortran and native 40k Wolsong GEO 8 fields per cell
+        run: |
+          set -euo pipefail
+          native="$RUNNER_TEMP/p3_d2_wolsong_2022/geo/makegeo/p3_case"
+          /usr/bin/python3 -m native_cpp.reference.compare_p3_makegeo_dynamic \
+            --original-geo "$RUNNER_TEMP/p3-d3-original-run/original_geo.dat" \
+            --cpp-csv "$native/p3.csv" \
+            --cpp-geo "$native/geo.dat" \
+            --report "$RUNNER_TEMP/p3-d3-wolsong-comparison.json" \
+            --zone 52 --hem N --nx 200 --ny 200 \
+            --xrefkm 533.215 --yrefkm 3942.629 --dgridkm .100
+          /usr/bin/python3 - <<'PY'
+          from pathlib import Path
+          import os,json
+          file=Path(os.environ["RUNNER_TEMP"])/"p3-d3-wolsong-comparison.json"
+          verdict=json.loads(file.read_text())
+          assert verdict["status"]=="P3_NONHEFEI_ORIGINAL_MAKEGEO_PASS"
+          assert verdict["failures"]==0 and verdict["values_compared"]==320000
+          print("WOLSONG_P3_D3_GENUINE_ORIGINAL_FORTRAN_SAME_SOURCE_320K_FIELDS=PASS")
+          PY
       - name: Save bounded JSON evidence only (no restricted vendor, SRTM, BLN, raster, LU or GEO bytes)
         if: always()
         uses: actions/upload-artifact@v4
@@ -203,5 +315,6 @@ jobs:
             ${{ runner.temp }}/p3-d2-real-summary.json
             ${{ runner.temp }}/p3-d2-eof.json
             ${{ runner.temp }}/p3-d2-split-io.json
+            ${{ runner.temp }}/p3-d3-wolsong-comparison.json
           retention-days: 21
           if-no-files-found: warn
