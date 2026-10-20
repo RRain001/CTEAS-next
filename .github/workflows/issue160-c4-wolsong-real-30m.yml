@@ -7,6 +7,7 @@ on:
       - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp
       - native_cpp/src/p2c_glc30m_sampling_cli.cpp
       - scripts/s2g/issue160_glc30m_independent_reference.py
+      - scripts/s2g/issue160_p3_lu_format_contract.py
       - .github/workflows/issue160-c4-wolsong-real-30m.yml
   workflow_dispatch:
 concurrency:
@@ -128,6 +129,16 @@ jobs:
             --native "$RUNNER_TEMP/p2c160-wolsong-native" \
             --report "$RUNNER_TEMP/p2c160-wolsong-independent-audit.json"
           echo 'P2C_WOLSONG_30M_ZERO_DIFF=PASS_IF_ACTUAL_ORACLE_REPORT P3_PARAMETERS=OUT_OF_SCOPE'
+      - name: Independently consume actual P2-C Wolsong 20km LU.DAT as P3 v2.1 format
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue160_p3_lu_format_contract \
+            --site wolsong \
+            --lu "$RUNNER_TEMP/p2c160-wolsong-native/lu.dat" \
+            --manifest "$RUNNER_TEMP/p2c160-wolsong-native/p2c_glc30m_manifest.json" \
+            --out "$RUNNER_TEMP/p2c160-wolsong-p3-format-contract.json"
+          echo 'P3_LU_V2_1_FORMAT_ONLY=PASS_IF_REAL_OUTPUT_CONSUMED'
+          echo 'P3_MAKEGEO_NUMERIC_AND_GEO_DAT=OUT_OF_SCOPE_ISSUE46'
       - name: Preserve SHA-bounded JSON evidence only, no original BLN or LU.DAT
         if: always()
         uses: actions/upload-artifact@v4
@@ -136,6 +147,7 @@ jobs:
           path: |
             ${{ runner.temp }}/p2c160-wolsong-native/p2c_glc30m_manifest.json
             ${{ runner.temp }}/p2c160-wolsong-independent-audit.json
+            ${{ runner.temp }}/p2c160-wolsong-p3-format-contract.json
             ${{ runner.temp }}/p2c160-eof-adapter.json
             ${{ runner.temp }}/p2c160-split-io-adapter.json
           retention-days: 21
