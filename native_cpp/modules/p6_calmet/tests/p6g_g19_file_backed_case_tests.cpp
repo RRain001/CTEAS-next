@@ -129,8 +129,15 @@ static void upper_sounding(std::ostream& out,int station,sys_seconds at){
            <<"/"<<std::setw(5)<<temp<<"/"<<std::setw(3)<<wd
            <<"/"<<std::setw(3)<<ws;
     };
-    row(1000,120,280.f,90,50);
-    row(500,5500,259.8f,180,45);
+    if(station==58427) {
+        // Fourth original-format source station has distinct observed winds.
+        // Never duplicate another station's synthetic sounding to inflate NU.
+        row(1000,120,280.f,125,62);
+        row(500,5500,259.8f,225,38);
+    } else {
+        row(1000,120,280.f,90,50);
+        row(500,5500,259.8f,180,45);
+    }
     out<<"\n";
 }
 static void upper_file(const std::string& path,int site,sys_seconds begin,
@@ -288,8 +295,12 @@ static void source_cardinality_surface_file(
     for(int k=0;k<hours_count;++k) {
         stamp(out,begin+hours{k});out<<" ";
         stamp(out,begin+hours{k+1},true);out<<"\n";
-        for(int i=0;i<nss;++i)
-            out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
+        for(int i=0;i<nss;++i) {
+            // Distinct fourth-station measurements expose accidental
+            // positional aliasing while retaining the existing 1..3 baseline.
+            if(i==3)out<<"6.0 215.0 722 5 285 70 1008.1 0\n";
+            else out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
+        }
     }
 }
 
@@ -430,9 +441,9 @@ int main(int argc,char** argv){
                 else if(arg=="--stations"&&!stations_option&&i+2<argc) {
                     export_ss=std::stoi(argv[++i]);
                     export_us=std::stoi(argv[++i]);
-                    if(export_ss<1||export_ss>3||export_us<1||export_us>3)
+                    if(export_ss<1||export_ss>4||export_us<1||export_us>4)
                         throw std::invalid_argument(
-                            "S4C science exporter bounded 1..3 independent SS/US");
+                            "S4C science exporter bounded 1..4 independent SS/US");
                     stations_option=true;
                 }
                 else if(arg=="--hours"&&!hours_option&&i+1<argc) {
@@ -445,8 +456,8 @@ int main(int argc,char** argv){
                     "G35 duplicate or unknown original-format case option");
             }
             auto two=make_two_station_crossyear_deck(original);
-            const bool three_site_science=(export_ss==3||export_us==3);
-            if(three_site_science) {
+            const bool multi_site_science=(export_ss>=3||export_us>=3);
+            if(multi_site_science) {
                 // Independently sourced G19 test generator: honest 3rd
                 // station has its own site ID, observations and UP file.
                 // This is controlled synthetic input, never actual NOAA.
@@ -454,14 +465,14 @@ int main(int argc,char** argv){
             }
             // Asymmetric cases are only a SUBSET of the existing C2
             // original-format controlled source, never duplicate/fake SS/US.
-            if(!three_site_science) {
+            if(!multi_site_science) {
                 two=replace_one(two,"NSSTA",std::to_string(export_ss));
                 two=replace_one(two,"NUSTA",std::to_string(export_us));
             }
             for(const auto& [count,line]:std::vector<std::pair<int,std::string>>{
                    {export_ss,"! SS2 = 'S002' 583220 543.385 3563.769 0 10.0 !\n"},
                    {export_us,"! US2 = 'U002' 58425 553.384 3573.772 0 !\n"}}) {
-                if(three_site_science||count!=1)continue;
+                if(multi_site_science||count!=1)continue;
                 auto pos=two.find(line);
                 if(pos==std::string::npos||two.find(line,pos+line.size())!=std::string::npos)
                     throw std::logic_error("S4C original site subset not unique");
@@ -480,8 +491,9 @@ int main(int argc,char** argv){
                 (root/"SURF.DAT").string(),{(root/"UP1.DAT").string()}};
             if(export_us>=2)
                 paths.ordered_up_dat.push_back((root/"UP2.DAT").string());
-            if(export_us>=3)
-                paths.ordered_up_dat.push_back((root/"UP3.DAT").string());
+            for(int ordinal=3;ordinal<=export_us;++ordinal)
+                paths.ordered_up_dat.push_back(
+                    (root/("UP"+std::to_string(ordinal)+".DAT")).string());
             save(paths.met_inp,two);
             geo_file(paths.geo_dat,false,steep);
             // Observed original-format synthetic source hour at 02:00
@@ -489,7 +501,7 @@ int main(int argc,char** argv){
             // UP 00/12 UTC bracket remains source-valid at the new hour.
             const auto begin=sys_days{year{2023}/December/31}+
                 hours{daylight?26:22};
-            if(export_ss==2&&!three_site_science)
+            if(export_ss==2&&!multi_site_science)
                 surface_file(paths.surf_dat,begin,export_hours);
             else source_cardinality_surface_file(
                 paths.surf_dat,begin,export_hours,export_ss);

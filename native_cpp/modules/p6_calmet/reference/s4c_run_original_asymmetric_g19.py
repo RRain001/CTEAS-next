@@ -44,7 +44,7 @@ def surface_clock(path: Path, nss: int):
 
 def move_station_declaration(deck: str, kind: str, total: int) -> str:
     """Stage genuine SS2..SSN / US2..USM immediately after station 1."""
-    if kind not in ("SS","US") or not 1<=total<=3:
+    if kind not in ("SS","US") or not 1<=total<=4:
         raise ValueError("Unexpected controlled original site configuration")
     extra_lines=[]
     for ordinal in range(2,total+1):
@@ -92,8 +92,8 @@ def run() -> None:
     ap.add_argument("--source",type=Path,required=True)
     ap.add_argument("--out",type=Path,required=True)
     ap.add_argument("--vendor-dir",type=Path,required=True)
-    ap.add_argument("--ss",type=int,choices=[1,2,3],required=True)
-    ap.add_argument("--us",type=int,choices=[1,2,3],required=True)
+    ap.add_argument("--ss",type=int,choices=[1,2,3,4],required=True)
+    ap.add_argument("--us",type=int,choices=[1,2,3,4],required=True)
     ap.add_argument("--hours",type=int,choices=[1,6],required=True)
     ap.add_argument("--compiler",default="gfortran")
     args=ap.parse_args()
