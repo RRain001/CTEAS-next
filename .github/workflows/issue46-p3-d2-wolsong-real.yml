@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/issue46-p3-d2-wolsong-real.yml
       - native_cpp/reference/compare_p3_makegeo_dynamic.py
+      - native_cpp/reference/tests/test_compare_p3_dynamic.py
       - native_cpp/orchestration/p3_case_handoff.py
       - native_cpp/orchestration/p2c_case_producer.py
       - native_cpp/p3/**
@@ -16,6 +17,20 @@ concurrency:
   group: issue46-d3-wolsong-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  independent-geo-parser-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Frozen original GEO reference parser and strict precision-negative unit tests
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest native_cpp.reference.tests.test_compare_p3_dynamic -v
+          echo 'P3_DYNAMIC_GEO_ORIGINAL_PARSER_SOFTWARE=PASS'
+          echo 'WOLSONG_GENUINE_ORIGINAL_MAKEGEO_NUMERIC=SEPARATE_JOB_NOT_INFERRED'
   genuine-source-wolsong-native-p1-p2c-p3:
     runs-on: ubuntu-22.04
     timeout-minutes: 75
