@@ -12,7 +12,7 @@ class ScienceCallbackTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             text=report_body(Path(temp),39312345678,"a"*40)
             self.assertIn("39312345678",text)
-            self.assertEqual(text.count("REPORT_NOT_PRESENT_OR_INVALID"),4)
+            self.assertEqual(text.count("REPORT_NOT_PRESENT_OR_INVALID"),5)
             self.assertIn("Do not infer full ORIGINAL_SAMPLING",text)
 
     def test_success_labels_are_reports_not_verdicts(self):
