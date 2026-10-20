@@ -15,7 +15,7 @@
 namespace {
 namespace fs=std::filesystem;
 constexpr const char* kGlccSha=
-  "4f2a1977c6a70d74f7a0e136bdd4aa1777dc9cbab15c184e7f483f772cd266c6";
+  "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a";
 constexpr const char* kBlnSha=
   "67da93d441e7defe3eb46627ed9ce896c0a91ffd89fd5e4363d834d8108e11f9";
 constexpr const char* kOriginalSourceSha=
