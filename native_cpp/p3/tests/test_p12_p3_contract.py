@@ -197,6 +197,91 @@ class P12ToP3Contract(unittest.TestCase):
         self.assertFalse(self.terrel.exists())
 
 
+    def test_dynamic_p1_p2_csv_native_bridge_into_makegeo(self):
+        """Distinct 4x3 @200 m 52N. Synthetic only, no original scientific claim."""
+        nx, ny = 4, 3
+        inp = self.tmp/"native-dynamic-makegeo.inp"
+        inp.write_text(self.make_dynamic_control(self.control.read_text(), {
+            "NX": nx, "NY": ny, "IUTMZN": 52, "UTMHEM": "N",
+            "XREFKM": "401.123", "YREFKM": "3790.456", "DGRIDKM": "0.200",
+        }))
+        p1 = self.tmp/"dynamic-p1.csv"
+        p2 = self.tmp/"dynamic-p2.csv"
+        heights = [float(105+n) for n in range(nx*ny)]
+        with p1.open("w",newline="") as h:
+            w=csv.writer(h,lineterminator="\n")
+            w.writerow(["i","j","hits","elevation_m"])
+            for n,value in enumerate(heights):
+                w.writerow([n%nx+1,n//nx+1,3,f"{value:.9f}"])
+        with p2.open("w",newline="") as h:
+            w=csv.writer(h,lineterminator="\n")
+            w.writerow(["i","j","samples",*(f"cat{cat}" for cat in CATS)])
+            for n in range(nx*ny):
+                values = [0.]*38
+                values[CATS.index(52)] = 1.
+                w.writerow([n%nx+1,n//nx+1,100,*[f"{v:.12f}" for v in values]])
+        terrain=self.tmp/"native-dynamic-terrel.dat"
+        lu=self.tmp/"native-dynamic-lu.dat"
+        command=lambda mode,src,dest,origin="401.123":subprocess.run(
+            [str(ADAPTER),"--grid",mode,str(src),str(dest),
+             "52","N",origin,"3790.456","4","3","0.200"],
+            capture_output=True,text=True,timeout=35)
+        for mode,src,dest in (
+            ("terrain",p1,terrain),("landuse",p2,lu)
+        ):
+            run=command(mode,src,dest)
+            self.assertEqual(run.returncode,0,run.stderr)
+        tlines=terrain.read_text().splitlines()
+        llines=lu.read_text().splitlines()
+        self.assertEqual(tlines[5].strip(),"52N")
+        self.assertEqual(llines[6].strip(),"52N")
+        self.assertEqual(tlines[7].split(),["4","3","401.123","3790.456","0.200","0.200"])
+        self.assertEqual(llines[8].split()[:6],["4","3","401.123","3790.456","0.200","0.200"])
+        self.assertEqual([float(x) for line in tlines[10:] for x in line.split()],
+                         [heights[n] for j in reversed(range(ny))
+                          for n in range(j*nx,(j+1)*nx)])
+        self.assertEqual(len(llines),11+nx*ny)
+        self.assertEqual(tuple(map(int,llines[10].split())),CATS)
+        csv_out,geo_out=self.tmp/"case-dynamic.csv",self.tmp/"case-dynamic-geo.dat"
+        run=subprocess.run([str(P3),str(inp),str(lu),str(terrain),
+                            str(csv_out),str(geo_out)],capture_output=True,text=True,timeout=35)
+        self.assertEqual(run.returncode,0,run.stderr)
+        rows=list(csv.DictReader(csv_out.open()))
+        self.assertEqual(len(rows),12)
+        for n,row in enumerate(rows):
+            self.assertEqual((int(row["i"]),int(row["j"])),(n%nx+1,n//nx+1))
+            self.assertEqual(float(row["elevation_m"]),heights[n])
+            self.assertEqual(int(row["category"]),51)
+        self.assertEqual(geo_out.read_text().splitlines()[7].split(),
+                         ["4","3","401.123","3790.456","0.200","0.200"])
+        old_terr=terrain.read_bytes()
+        self.assertNotEqual(command("terrain",p1,terrain).returncode,0)
+        self.assertEqual(terrain.read_bytes(),old_terr)
+
+        # Malformed real source and inconsistent geometry must stop before
+        # the original-format P3 output or any default-value interpolation.
+        wrong=self.tmp/"dynamic-bad-terrel.dat"
+        r=command("terrain",p1,wrong,"401.1234")
+        self.assertNotEqual(r.returncode,0)
+        self.assertFalse(wrong.exists())
+        broken=self.tmp/"truncated-p2.csv"
+        broken.write_text("\n".join(p2.read_text().splitlines()[:-1])+"\n")
+        r=command("landuse",broken,self.tmp/"broken-lu.dat")
+        self.assertNotEqual(r.returncode,0)
+        self.assertFalse((self.tmp/"broken-lu.dat").exists())
+
+    def test_dynamic_same_frozen_geometry_is_byte_identical(self):
+        for mode,src,dest in (("terrain",self.csv1,self.terrel),
+                              ("landuse",self.csv2,self.lu)):
+            old=self.run_writer(mode,src,dest)
+            self.assertEqual(old.returncode,0,old.stderr)
+            new_out=self.tmp/("new-"+mode+".dat")
+            new=subprocess.run([str(ADAPTER),"--grid",mode,str(src),str(new_out),
+                                "50","N","510.885","3531.269","50","50","0.100"],
+                               capture_output=True,text=True,timeout=35)
+            self.assertEqual(new.returncode,0,new.stderr)
+            self.assertEqual(dest.read_bytes(),new_out.read_bytes())
+
     @staticmethod
     def make_dynamic_control(source, values):
         """Replace only existing original MAKEGEO control values, not formulas."""
