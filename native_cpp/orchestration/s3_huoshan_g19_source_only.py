@@ -12,6 +12,7 @@ import argparse
 from datetime import datetime
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import sys
 
@@ -59,8 +60,21 @@ def run(case_yaml: Path, native_binary: Path) -> dict:
     if output.exists() or deck.exists() or output.is_symlink() or deck.is_symlink():
         raise ValueError("S3-B6 refuses old/previously staged MET inputs")
     config = yaml.safe_load(case_yaml.read_text(encoding="utf-8"))
+    # The accepted native P3 producer writes under p3_case, whereas the
+    # original CALMET G19 fixed file role is geo/makegeo/geo.dat. Publish
+    # byte-for-byte into the *same* source case; never take another site's GEO.
+    source_geo = root / "geo/makegeo/p3_case/geo.dat"
+    published_geo = root / "geo/makegeo/geo.dat"
+    original_sha = receipt.get("actual_source_sha256", {}).get("geo_dat_sha256")
+    if (source_geo.is_symlink() or not source_geo.is_file()
+            or published_geo.exists() or published_geo.is_symlink()
+            or not isinstance(original_sha, str) or digest(source_geo) != original_sha):
+        raise ValueError("S3-B6 real P3 GEO original SHA/custody mismatch")
+    shutil.copyfile(source_geo, published_geo)
+    if digest(published_geo) != original_sha:
+        raise ValueError("S3-B6 original P3 GEO bytes changed during same-case publishing")
     paths = {
-        "geo_makegeo_dir": root / "geo/makegeo/p3_case",
+        "geo_makegeo_dir": root / "geo/makegeo",
         "met_surface_dir": root / "met/surface",
         "met_upperair_dir": root / "met/upperair",
         "run_met_dir": root / "run/met",
@@ -97,6 +111,7 @@ def run(case_yaml: Path, native_binary: Path) -> dict:
         "grid_cmn_sha256": admission.grid_sha256,
         "research_time_sha256": admission.time_sha256,
         "five_producer_receipt_sha256": digest(join),
+        "same_case_original_geo_published_sha256": digest(published_geo),
         "met_deck_sha256": digest(deck),
         "g19_native_executable_sha256": digest(native_binary),
         "p4_source_stations": result["ordered_upper_station_ids"],
