@@ -129,8 +129,15 @@ static void upper_sounding(std::ostream& out,int station,sys_seconds at){
            <<"/"<<std::setw(5)<<temp<<"/"<<std::setw(3)<<wd
            <<"/"<<std::setw(3)<<ws;
     };
-    row(1000,120,280.f,90,50);
-    row(500,5500,259.8f,180,45);
+    if(station==58427) {
+        // Fourth original-format source station has distinct observed winds.
+        // Never duplicate another station's synthetic sounding to inflate NU.
+        row(1000,120,280.f,125,62);
+        row(500,5500,259.8f,225,38);
+    } else {
+        row(1000,120,280.f,90,50);
+        row(500,5500,259.8f,180,45);
+    }
     out<<"\n";
 }
 static void upper_file(const std::string& path,int site,sys_seconds begin,
@@ -288,8 +295,12 @@ static void source_cardinality_surface_file(
     for(int k=0;k<hours_count;++k) {
         stamp(out,begin+hours{k});out<<" ";
         stamp(out,begin+hours{k+1},true);out<<"\n";
-        for(int i=0;i<nss;++i)
-            out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
+        for(int i=0;i<nss;++i) {
+            // Distinct fourth-station measurements expose accidental
+            // positional aliasing while retaining the existing 1..3 baseline.
+            if(i==3)out<<"6.0 215.0 722 5 285 70 1008.1 0\n";
+            else out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
+        }
     }
 }
 
