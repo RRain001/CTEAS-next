@@ -1,0 +1,171 @@
+name: Issue169 S2-B P2-A GLCC immutable case and real source parity
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - native_cpp/orchestration/p2a_case_producer.py
+      - native_cpp/orchestration/tests/test_p2a_case_producer.py
+      - native_cpp/src/p2_glcc_raw_cli.cpp
+      - native_cpp/src/p2_glcc_lu_dat_cli.cpp
+      - native_cpp/orchestration/case_admission.py
+      - .github/workflows/issue169-s2b-p2a-glcc-case-ci.yml
+      - docs/plans/ISSUE169_S2B_P2A_CASE_PRODUCER_20261020.md
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: issue169-s2b-p2a-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  p2a-b0-mocked-native-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install B0 case runtime
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends python3-yaml python3-pyproj
+      - name: P2-A B0 contract, positive/negative tests (native deliberately mocked)
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m unittest native_cpp.orchestration.tests.test_p2a_case_producer -v
+          echo 'P2A_B0_ADAPTER_SOFTWARE=PASS REAL_GLCC=NOT_USED ORIGINAL_GLAZAS=NOT_RUN'
+  p2a-real-glcc-dual-case:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Compile exact existing P2-A D1/D3 binaries with pinned real GLCC LFS
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends cmake g++-12 libgdal-dev libssl-dev python3-yaml python3-pyproj
+          test "$(wc -c < eausgs2_0la.img)" -eq 156000000
+          echo '4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img' | sha256sum -c -
+          cmake -S native_cpp -B "$RUNNER_TEMP/s2b-p2a-native" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s2b-p2a-native" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
+      - name: Stage two independent B0 sites (Hefei baseline and different WGS84 UTM zone)
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from pyproj import Transformer
+          temp=Path(os.environ['RUNNER_TEMP'])
+          samples=(
+              ('s2b_hefei',50,'510.885','3531.269',50,50,.100),
+              ('s2b_wolsong',52,'533.215','3942.629',20,20,.200),
+          )
+          for name,zone,x0,y0,nx,ny,dx in samples:
+              cx=float(x0)*1000+nx*dx*500
+              cy=float(y0)*1000+ny*dx*500
+              lon,lat=Transformer.from_crs(
+                  f'EPSG:{32600+zone}', 'EPSG:4326',
+                  always_xy=True).transform(cx,cy)
+              case=temp/name
+              (case/'grid').mkdir(parents=True)
+              grid=f'''! IMAP = UTM !
+          ! DATUM = WGS-84 !
+          ! IUTMZN = {zone} !
+          ! LSOHEM = N !
+          ! XREFKM = {x0} !
+          ! YREFKM = {y0} !
+          ! DGRIDKM = {dx:.3f} !
+          ! NX = {nx} !
+          ! NY = {ny} !
+          ! NZ = 1 !
+          ! ZFACE = 0 !
+          ! ZFACE = 100 !
+          '''
+              case_yaml=f'''case_name: {name}
+          settings:
+            timezone: UTC+0000
+          preprocess:
+            grid:
+              utm_zone: {zone}
+              hemisphere: N
+              nz: 1
+              resolution_km: {dx:.3f}
+              domain:
+                length_km: {nx*dx:.3f}
+                width_km: {ny*dx:.3f}
+              center:
+                latitude: {lat}
+                longitude: {lon}
+            research_time:
+              begin: 20221231-230000
+              end: 20230101-020000
+          '''
+              # YAML and grid fragments have no embedded indentation: here-doc
+              # indentation removed by GitHub Actions run block preprocessing.
+              (case/'grid/grid.cmn').write_text(grid)
+              (case/'grid/research_time').write_text('BEGIN:20221231-230000\nEND:20230101-020000\n')
+              (case/'case.yaml').write_text(case_yaml)
+              print(name, 'zone=',zone,'dims=',(nx,ny),'source=OFFICIAL_GLCC')
+          PY
+      - name: True pinned-source P2-A native legacy-vs-B0 case exact byte replay
+        run: |
+          set -euo pipefail
+          raw="$RUNNER_TEMP/s2b-p2a-native/cteas_p2_glcc_raw"
+          lu="$RUNNER_TEMP/s2b-p2a-native/cteas_p2_glcc_lu_dat"
+          src="$PWD/eausgs2_0la.img"
+          "$raw" "$src" "$RUNNER_TEMP/legacy-hefei-raw" 32650 510.885 3531.269 0.100 50 50 20 --production-direct
+          "$lu" "$RUNNER_TEMP/legacy-hefei-raw/p2_manifest.json" "$RUNNER_TEMP/legacy-hefei-raw/p2_glcc_usgs92_direct_laea.csv" "$RUNNER_TEMP/legacy-hefei-lu"
+          /usr/bin/python3 -m native_cpp.orchestration.p2a_case_producer \
+            --case-yaml "$RUNNER_TEMP/s2b_hefei/case.yaml" \
+            --glcc-img "$src" --raw-bin "$raw" --lu-bin "$lu"
+          cmp "$RUNNER_TEMP/legacy-hefei-raw/p2_glcc_usgs92_direct_laea.csv" "$RUNNER_TEMP/s2b_hefei/geo/ctgproc/p2a_case/raw/p2_glcc_usgs92_direct_laea.csv"
+          cmp "$RUNNER_TEMP/legacy-hefei-raw/p2_glcc_usgs92_hits.csv" "$RUNNER_TEMP/s2b_hefei/geo/ctgproc/p2a_case/raw/p2_glcc_usgs92_hits.csv"
+          cmp "$RUNNER_TEMP/legacy-hefei-lu/lu.dat" "$RUNNER_TEMP/s2b_hefei/geo/ctgproc/p2a_case/lu/lu.dat"
+          echo 'P2A_REAL_GLCC_HEFEI_SOURCE_FRACTIONS_HITS_LU=BYTE_IDENTICAL'
+      - name: True GLCC on independent UTM52 new grid (software/source, original parity NOT_RUN)
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.p2a_case_producer \
+            --case-yaml "$RUNNER_TEMP/s2b_wolsong/case.yaml" \
+            --glcc-img "$PWD/eausgs2_0la.img" \
+            --raw-bin "$RUNNER_TEMP/s2b-p2a-native/cteas_p2_glcc_raw" \
+            --lu-bin "$RUNNER_TEMP/s2b-p2a-native/cteas_p2_glcc_lu_dat"
+          /usr/bin/python3 - <<'PY'
+          import json,os,hashlib
+          from pathlib import Path
+          r=Path(os.environ['RUNNER_TEMP'])
+          for site,zone,nx,ny,method in (
+            ('s2b_hefei',32650,50,50,'GLCC_HEADERLESS_LAEA_DIRECT_UTM50N_REAL4_GLOBE_LUGRID'),
+            ('s2b_wolsong',32652,20,20,'GLCC_HEADERLESS_LAEA_DIRECT_WGS84_UTM_REAL4_GLOBE_LUGRID'),
+          ):
+              stage=r/site
+              proof=json.loads((stage/'evidence/p2.json').read_text())
+              d3=json.loads((stage/'geo/ctgproc/p2a_case/lu/p2_d3_manifest.json').read_text())
+              assert (proof['utm_epsg'],proof['nx'],proof['ny'],proof['mesh'])==(zone,nx,ny,20)
+              assert proof['method']==d3['input_d1_method']==method
+              assert proof['status']=='P2A_GENERIC_CASE_PRODUCED_UNVERIFIED'
+              assert proof['original_science']=='NOT_RUN' and proof['p3_makegeo']=='OUT_OF_SCOPE_ISSUE46'
+              assert d3['rows']==nx*ny and d3['classes']==38
+              lu=stage/'geo/ctgproc/p2a_case/lu/lu.dat'
+              assert hashlib.sha256(lu.read_bytes()).hexdigest()==proof['lu_dat_sha256']
+              assert len(lu.read_text().splitlines())==11+nx*ny
+              print(site, 'REAL_GLCC_BYTE_SOURCE=VERIFIED D3_ROWS=',d3['rows'],'ORIGINAL_NONHEFEI_PARITY=NOT_RUN')
+          PY
+      - name: Preserve only manifests/attestation, never 156 MB original GLCC
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue169-s2b-p2a-authentic-glcc-b0-case-evidence
+          path: |
+            ${{ runner.temp }}/s2b_hefei/evidence/p2.json
+            ${{ runner.temp }}/s2b_hefei/geo/ctgproc/p2a_case/raw/p2_manifest.json
+            ${{ runner.temp }}/s2b_hefei/geo/ctgproc/p2a_case/lu/p2_d3_manifest.json
+            ${{ runner.temp }}/s2b_wolsong/evidence/p2.json
+            ${{ runner.temp }}/s2b_wolsong/geo/ctgproc/p2a_case/raw/p2_manifest.json
+            ${{ runner.temp }}/s2b_wolsong/geo/ctgproc/p2a_case/lu/p2_d3_manifest.json
+          retention-days: 21
+          if-no-files-found: warn
