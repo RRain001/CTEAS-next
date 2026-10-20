@@ -128,6 +128,49 @@ jobs:
             --native "$RUNNER_TEMP/issue160-hefei-native-result" \
             --report "$RUNNER_TEMP/issue160-hefei-independent-40k38.json"
           echo 'P2C_HEFEI_C4_30M_INDEPENDENT_SCIENCE=PASS_ONLY_IF_ALL_ZERO_DIFF'
+      - name: S2-E independent real-source alternate 90x100 grid 342000 integer HITS and F6.3
+        run: |
+          set -euo pipefail
+          timeout 1200 /usr/bin/python3 -m scripts.s2g.issue160_glc30m_independent_reference \
+            --site inland \
+            --nx 90 --ny 100 --xrefkm 504.385 --yrefkm 3524.769 --dgridkm .100 \
+            --utm-epsg 32650 \
+            --tif data/landcover/glc_fcs30d/v1_2022/hefei20km/hefei_2022_30m_20km.tif \
+            --data-sha256 ee5cefc27827d84f0aa42d0e014e211fcfef67f2bffc43185d17897d840d2e58 \
+            --policy docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            --native "$RUNNER_TEMP/issue169-hefei-alternate-real-grid" \
+            --report "$RUNNER_TEMP/issue169-p2c-alt-90x100-independent-342k.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          proof=json.loads((root/"issue169-p2c-alt-90x100-independent-342k.json").read_text())
+          alt=json.loads((root/"issue169-hefei-alternate-real-grid/p2c_glc30m_manifest.json").read_text())
+          assert proof["status"]=="P2C_30M_SAME_SOURCE_INDEPENDENT_9000X38_HITS_PASS_SCOPED"
+          assert (proof["integer_fields_compared"],proof["F6_3_fields_compared"])==(342000,342000)
+          assert (proof["integer_mismatches"],proof["F6_3_mismatches"],proof["missing_flag_mismatches"])==(0,0,0)
+          assert (proof["grid"]["nx"],proof["grid"]["ny"],proof["grid"]["utm_epsg"])==(90,100,32650)
+          assert proof["native_file_sha256"]==alt["lu_dat_sha256"]
+          assert proof["native_hits_sha256"]==alt["hits_csv_sha256"]
+          assert proof["included_hits"]==alt["included_hits"]
+          assert proof["source_sha256"]==alt["data_sha256"]
+          print("S2E_ALT_GENUINE_HEFEI_90X100_342000_INTEGER_AND_F63_ZERO_DIFF=PASS_SCOPED")
+          print("S2E_ORIGINAL_FORTRAN_MODERN_30M=NOT_SUPPORTED_NOT_CLAIMED")
+          PY
+      - name: S2-E wrong declared UTM must fail before approving any second-grid oracle
+        run: |
+          set -euo pipefail
+          if /usr/bin/python3 -m scripts.s2g.issue160_glc30m_independent_reference \
+            --site inland --nx 90 --ny 100 --xrefkm 504.385 --yrefkm 3524.769 --utm-epsg 32652 \
+            --tif data/landcover/glc_fcs30d/v1_2022/hefei20km/hefei_2022_30m_20km.tif \
+            --data-sha256 ee5cefc27827d84f0aa42d0e014e211fcfef67f2bffc43185d17897d840d2e58 \
+            --policy docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            --native "$RUNNER_TEMP/issue169-hefei-alternate-real-grid" \
+            --report "$RUNNER_TEMP/issue169-p2c-negative-should-not-exist.json"; then
+            echo "FAIL_S2E_WRONG_CRS_ADMITTED"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/issue169-p2c-negative-should-not-exist.json"
+          echo "S2E_WRONG_SOURCE_PROJECTION_FAIL_CLOSED=PASS"
       - name: Independently consume actual 200x200 38-class LU.DAT as P3 format-only
         run: |
           set -euo pipefail
@@ -166,6 +209,7 @@ jobs:
             ${{ runner.temp }}/issue169-hefei-generic-samegrid/p2c_glc30m_manifest.json
             ${{ runner.temp }}/issue169-hefei-alternate-real-grid/p2c_glc30m_manifest.json
             ${{ runner.temp }}/issue160-hefei-independent-40k38.json
+            ${{ runner.temp }}/issue169-p2c-alt-90x100-independent-342k.json
             ${{ runner.temp }}/issue160-hefei-p3-format-only.json
           retention-days: 21
           if-no-files-found: warn

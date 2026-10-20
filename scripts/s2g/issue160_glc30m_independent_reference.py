@@ -13,6 +13,7 @@ from collections import Counter
 import csv
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import sys
@@ -101,7 +102,7 @@ def independent_coast_geometry(bln:Path):
     prepare(poly[0])
     return poly[0]
 
-def load_source(tif:Path,sha:str,epsg:int,x0:float,y0:float):
+def load_source(tif:Path,sha:str,epsg:int,x0:float,y0:float,nx:int=200,ny:int=200,dx_km:float=.1):
     require(regular(tif) and hashfile(tif)==sha,"ACTUAL_SOURCE_SHA_DRIFT")
     ds=gdal.Open(str(tif),gdal.GA_ReadOnly)
     require(ds is not None and ds.RasterCount==1,"SINGLE_BAND_GLC")
@@ -114,19 +115,26 @@ def load_source(tif:Path,sha:str,epsg:int,x0:float,y0:float):
     gt=ds.GetGeoTransform()
     require(gt[1]==30. and gt[2]==gt[4]==0. and gt[5]==-30.,
             "SOURCE_NOT_NORTH_UP_30M")
-    require(gt[0]<=x0 and gt[3]>=y0+20000 and
-            gt[0]+ds.RasterXSize*30>=x0+20000 and
+    require(gt[0]<=x0 and gt[3]>=y0+ny*dx_km*1000 and
+            gt[0]+ds.RasterXSize*30>=x0+nx*dx_km*1000 and
             gt[3]-ds.RasterYSize*30<=y0,
-            "NOT_FULL_20KM_COVERAGE")
+            "NOT_FULL_REQUESTED_GRID_COVERAGE")
     pixels=band.ReadAsArray()
     mask=band.GetMaskBand().ReadAsArray()!=0
     require(pixels.shape==mask.shape and pixels.ndim==2 and
             pixels.dtype==np.uint8,"PIXEL_MASK_SHAPE")
     return pixels,mask,gt
 
-def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None):
-    epsg,x0,y0=GRIDS[site]
-    a,mask,gt=load_source(tif,sha,epsg,x0,y0)
+def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None,
+                          grid:tuple|None=None):
+    epsg,x0,y0,nx,ny,dx_km=(grid if grid is not None else (*GRIDS[site],200,200,.1))
+    require(isinstance(nx,int) and isinstance(ny,int) and 1<=nx<=500 and
+            1<=ny<=500 and nx*ny<=250000 and
+            epsg in (32650,32652) and
+            all(math.isfinite(v) for v in (x0,y0,dx_km)) and
+            dx_km>0 and dx_km<=1.,
+            "S2E_GRID_OUTSIDE_ORACLE_BUDGET_OR_SELECTED_UTM")
+    a,mask,gt=load_source(tif,sha,epsg,x0,y0,nx,ny,dx_km)
     coastline=None
     if site=="wolsong":
         require(coast is not None,"COAST_BNL_REQUIRED")
@@ -134,7 +142,7 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None)
     else:
         require(coast is None,"INLAND_FORBIDS_SHORELINE")
     from shapely import contains_xy
-    hit_grid=np.zeros((40000,38),dtype=np.uint32)
+    hit_grid=np.zeros((nx*ny,38),dtype=np.uint32)
     raw_hist=Counter()
     used_hist=Counter()
     eligible=missing_pixels=masked_pixels=outside=0
@@ -147,7 +155,7 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None)
     x_m=gt[0]+30.*(cols[:,None,None]+(im[None,:,None]+.5)/10.)
     x_m=np.broadcast_to(x_m,(width,10,10)).ravel()
     one_milli=float(np.float32(0.001))
-    float_spacing=np.float32(.1)
+    float_spacing=np.float32(dx_km)
     fx0=np.float32(x0/1000.)
     fy0=np.float32(y0/1000.)
     cx=np.float32(x_m*one_milli)
@@ -171,12 +179,12 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None)
         cy=np.float32(y3*one_milli)
         dy=np.float32(cy-fy0)
         jy=np.trunc(np.float32(dy/float_spacing)).astype(np.int32)+(dy>=0)
-        inside=v&(ix>=1)&(ix<=200)&(jy>=1)&(jy<=200)
+        inside=v&(ix>=1)&(ix<=nx)&(jy>=1)&(jy<=ny)
         outside+=int(v.sum()-inside.sum())
         if not inside.any():continue
         used=codes[inside]
         used_hist.update(map(int,used))
-        cells=(jy[inside]-1)*200+(ix[inside]-1)
+        cells=(jy[inside]-1)*nx+(ix[inside]-1)
         classids=np.array([INDEX.get(policy.get(int(u),-1),-1) if u!=210 else INDEX[52]
                            for u in used],dtype=np.int16)
         waters=used==210
@@ -205,15 +213,21 @@ def independently_compute(tif:Path,sha:str,site:str,policy:dict,coast:Path|None)
                      "water52_hits":landwater,"water55_hits":seawater}
 
 def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file:Path,
-            raster:Path,data_sha:str,coast:Path|None,out:Path):
+            raster:Path,data_sha:str,coast:Path|None,out:Path,
+            grid:tuple|None=None):
+    epsg,x0,y0,nx,ny,dx_km=(grid if grid is not None else (*GRIDS[site],200,200,.1))
+    require(counts.shape==(nx*ny,38),"INDEPENDENT_GRID_SHAPE")
     manifest=json.loads((produced/"p2c_glc30m_manifest.json").read_text())
     require(manifest.get("method")==METHOD and
             manifest.get("mapping_policy_sha256")==POLICY_SHA and
             manifest.get("site")==site and
             manifest.get("data_sha256")==data_sha and
-            manifest.get("utm_epsg")==GRIDS[site][0] and
-            manifest.get("classes")==38 and manifest.get("nx")==200 and
-            manifest.get("ny")==200 and manifest.get("mesh")==10,
+            manifest.get("utm_epsg")==epsg and
+            manifest.get("classes")==38 and manifest.get("nx")==nx and
+            manifest.get("ny")==ny and manifest.get("mesh")==10 and
+            abs(float(manifest.get("xrefkm",-1))-x0/1000.)<1e-8 and
+            abs(float(manifest.get("yrefkm",-1))-y0/1000.)<1e-8 and
+            abs(float(manifest.get("dgridkm",-1))-dx_km)<1e-9,
             "PRODUCER_MANIFEST_SCOPE")
     require(regular(produced/"hits.csv") and
             regular(produced/"lu.dat") and
@@ -241,14 +255,14 @@ def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file
             require(row is not None and len(row)==41 and
                     all(re.fullmatch(r"\d+",v) for v in row),"HITS_NONINTEGER_ROW")
             values=list(map(int,row))
-            require(values[:2]==[idx%200+1,idx//200+1] and
+            require(values[:2]==[idx%nx+1,idx//nx+1] and
                     sum(values[3:])==values[2],"HITS_GRID_ORDER_CONSERVATION")
             native=np.array(values[3:],dtype=np.uint32)
             unequal=np.flatnonzero(expected!=native)
             if len(unequal):
                 errors+=len(unequal);different_cells+=1
                 for k in unequal[:max(0,20-len(first))]:
-                    first.append({"i":idx%200+1,"j":idx//200+1,
+                    first.append({"i":idx%nx+1,"j":idx//nx+1,
                                   "category":CLASS_IDS[k],
                                   "reference":int(expected[k]),
                                   "native":int(native[k])})
@@ -260,20 +274,20 @@ def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file
         lines=[f.readline().rstrip("\r\n") for _ in range(11)]
         require(lines[0].split()[:2]==["LU.DAT","2.1"] and
                 lines[4:6]==["FRACTION","UTM"] and
-                lines[6].strip()==str(GRIDS[site][0]%100)+"N" and
+                lines[6].strip()==str(epsg%100)+"N" and
                 lines[7].startswith("WGS-84"),
                 "LU_HEADER_VERSION_PROJECTION")
         meta=lines[8].split()
-        require(len(meta)==7 and int(meta[0])==int(meta[1])==200 and
-                float(meta[2])==GRIDS[site][1]/1000. and
-                float(meta[3])==GRIDS[site][2]/1000. and
-                float(meta[4])==float(meta[5])==.1 and
+        require(len(meta)==7 and int(meta[0])==nx and int(meta[1])==ny and
+                abs(float(meta[2])-x0/1000.)<1e-8 and
+                abs(float(meta[3])-y0/1000.)<1e-8 and
+                abs(float(meta[4])-dx_km)<1e-9 and abs(float(meta[5])-dx_km)<1e-9 and
                 int(meta[6])==38,"LU_HEADER_GRID_AND_UNITS")
         require(tuple(map(int,lines[10].split()))==CLASS_IDS,"LU_HEADER_USGS38_ORDER")
         for idx,n in enumerate(counts):
             line=f.readline().rstrip("\r\n")
             require(len(line)>=238 and
-                    int(line[:5])==idx%200+1 and int(line[5:10])==idx//200+1,
+                    int(line[:5])==idx%nx+1 and int(line[5:10])==idx//nx+1,
                     "LU_ROW_FIXED_POSITION")
             total=int(n.sum())
             expected_flag="Missing" if total==0 else "."
@@ -287,16 +301,19 @@ def compare(produced:Path,counts:np.ndarray,statistics:dict,site:str,policy_file
         require(f.readline()=="","LU_EXTRA_ROWS")
     require(not out.exists() and not out.is_symlink(),"REPORT_ALREADY_EXISTS")
     accepted=(errors==different_cells==f6_err==missing_err==0)
-    report={"status":("P2C_30M_SAME_SOURCE_INDEPENDENT_40000X38_HITS_PASS_SCOPED"
+    report={"status":(f"P2C_30M_SAME_SOURCE_INDEPENDENT_{nx*ny}X38_HITS_PASS_SCOPED"
                       if accepted else "P2C_30M_INDEPENDENT_INTEGER_OR_F63_MISMATCH"),
-            "site":site,"method":METHOD,"native_file_sha256":hashfile(produced/"lu.dat"),
+            "site":site,"grid":{"utm_epsg":epsg,"nx":nx,"ny":ny,
+                                  "xrefkm":x0/1000.,"yrefkm":y0/1000.,
+                                  "dgridkm":dx_km},
+             "method":METHOD,"native_file_sha256":hashfile(produced/"lu.dat"),
             "native_hits_sha256":hashfile(produced/"hits.csv"),
             "source_sha256":hashfile(raster),"mapping_policy_sha256":hashfile(policy_file),
             "original_full_l1_bln_sha256":hashfile(coast) if coast else None,
             "independent_oracle":"PYTHON_NUMPY_BROADCAST_AND_GEOS_POINT_CONTAINS",
-            "integer_fields_compared":1520000,"integer_mismatches":errors,
+            "integer_fields_compared":nx*ny*38,"integer_mismatches":errors,
             "cells_with_mismatches":different_cells,
-            "F6_3_fields_compared":1520000,"F6_3_mismatches":f6_err,
+            "F6_3_fields_compared":nx*ny*38,"F6_3_mismatches":f6_err,
             "missing_flag_mismatches":missing_err,
             "included_hits":statistics["included_hits"],
             "nonempty_cells":int(np.count_nonzero(counts.sum(axis=1))),
@@ -316,6 +333,12 @@ def main():
     p.add_argument("--data-sha256",required=True)
     p.add_argument("--policy",type=Path,required=True)
     p.add_argument("--coast-bln",type=Path)
+    p.add_argument("--utm-epsg",type=int)
+    p.add_argument("--xrefkm",type=float)
+    p.add_argument("--yrefkm",type=float)
+    p.add_argument("--nx",type=int)
+    p.add_argument("--ny",type=int)
+    p.add_argument("--dgridkm",type=float)
     p.add_argument("--native",type=Path,required=True)
     p.add_argument("--report",type=Path,required=True)
     a=p.parse_args()
@@ -324,10 +347,17 @@ def main():
                 (a.site=="wolsong" and a.data_sha256==WOLSONG_TIFF_SHA or
                  a.site=="inland"),"CASE_SOURCE_SHA_SCOPE")
         policy=policy_map(a.policy)
+        base=(*GRIDS[a.site],200,200,.1)
+        opts=(a.utm_epsg,a.xrefkm,a.yrefkm,a.nx,a.ny,a.dgridkm)
+        grid=tuple(base[i] if value is None else
+                   value*(1000 if i in (1,2) else 1)
+                   for i,value in enumerate(opts))
+        require(grid[0]==base[0] and 1<=grid[3]*grid[4]<=250000,
+                "S2E_ORACLE_SOURCE_UTM_GRID_BUDGET")
         result,summary=independently_compute(a.tif,a.data_sha256,
-                                              a.site,policy,a.coast_bln)
+                                               a.site,policy,a.coast_bln,grid)
         report=compare(a.native,result,summary,a.site,a.policy,a.tif,
-                       a.data_sha256,a.coast_bln,a.report)
+                       a.data_sha256,a.coast_bln,a.report,grid)
         print(json.dumps({k:report[k] for k in
             ("status","integer_fields_compared","integer_mismatches",
              "F6_3_mismatches","missing_flag_mismatches","included_hits")}))
