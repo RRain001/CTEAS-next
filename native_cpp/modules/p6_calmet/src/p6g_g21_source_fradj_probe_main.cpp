@@ -26,8 +26,9 @@ int main(int argc,char** argv) {
     if(argc==2&&std::string(argv[1])=="--help") {
         std::cout<<"Usage: cteas_p6g_g21_source_fradj_probe "
                     "<met.inp> <GEO.DAT> <SURF.DAT> <US1_UP.DAT> "
-                    "<US2_UP.DAT> [USn_UP.DAT ...] "
-                    "--output <fradj-native.csv> --source-stage <fradj-input.dat>\n"
+                    "[US2_UP.DAT ...] "
+                    "--output <fradj-native.csv> --source-stage <fradj-input.dat> "
+                    "[--real-one-ss-one-us-fradj-test-only]\n"
                     "Source-only 1h native PREPDI CGAMMA GAMMA, original "
                     "SURFVAR(TEMP2D), TERSET and FRADJ. TEST ONLY; "
                     "45-field CALMET/COMP/P6F NOT ACCEPTED.\n";
@@ -35,7 +36,7 @@ int main(int argc,char** argv) {
     }
     try {
         cteas::calmet::p6g::G19SourceFilePaths paths;
-        if(argc<10)throw std::invalid_argument("G21 requires real original source file set");
+        if(argc<8)throw std::invalid_argument("G21 requires real original source file set");
         paths.met_inp=argv[1];
         paths.geo_dat=argv[2];
         paths.surf_dat=argv[3];
@@ -45,9 +46,14 @@ int main(int argc,char** argv) {
         std::string station_flux_prefix,original_nearu_prefix,comp_original_prefix;
         std::string mixht_original_prefix,temp3d_original_prefix;
         std::string p6f_candidate_file,surfvar_two_pass_output,comp_third_surfvar_output;
+        bool real_one_one_fradj_test_only=false;
         for(int i=4;i<argc;++i) {
             const std::string arg=argv[i];
-            if(arg=="--output"||arg=="--source-stage"||
+            if(arg=="--real-one-ss-one-us-fradj-test-only") {
+                if(real_one_one_fradj_test_only)
+                    throw std::invalid_argument("G21 duplicate real 1SS1US diagnostic opt-in");
+                real_one_one_fradj_test_only=true;
+            } else if(arg=="--output"||arg=="--source-stage"||
                arg=="--slope-output"||arg=="--slope-stage"||
                arg=="--inter2-output"||arg=="--inter2-original-stage-prefix"||
                arg=="--diagi-similt-prefix"||arg=="--wind-tail-stage"||
@@ -85,7 +91,8 @@ int main(int argc,char** argv) {
             }
         }
         if(output_file.empty()||stage_file.empty()||
-           stage_file==output_file||paths.ordered_up_dat.size()<2||
+           stage_file==output_file||paths.ordered_up_dat.empty()||
+           (paths.ordered_up_dat.size()<2&&!real_one_one_fradj_test_only)||
            slope_output_file.empty()!=slope_stage_file.empty()||
            (!inter2_output_file.empty()&&slope_output_file.empty())||
            (!inter2_original_stage_prefix.empty()&&inter2_output_file.empty())||
@@ -132,6 +139,20 @@ int main(int argc,char** argv) {
                     if(outputs[i]==outputs[j])
                         throw std::invalid_argument("G21/G22 output filename collision");
         const auto source=cteas::calmet::p6g::g19_load_original_source_case(paths);
+        const bool real_one_one=(source.stations.surface.size()==1&&
+                                 source.stations.upper.size()==1);
+        if(real_one_one!=real_one_one_fradj_test_only)
+            throw std::invalid_argument(
+                "G21 1SS1US source FRADJ requires explicit test-only flag; "
+                "old multisite source may not opt into single-site mode");
+        if(real_one_one &&
+           (!slope_output_file.empty()||!inter2_output_file.empty()||
+            !diagi_similt_prefix.empty()||!wind_tail_stage.empty()||
+            !comp_original_prefix.empty()||!p6f_candidate_file.empty()||
+            !station_flux_prefix.empty()||!original_nearu_prefix.empty()))
+            throw std::invalid_argument(
+                "G21 true 1SS1US may only run uncommitted FRADJ, "
+                "not unverified G22/G23/G24/COMP physics");
         auto scheduler=source.make_scheduler();
         auto frame=scheduler.preview_next_hour();
         cteas::calmet::p6g::G18D2StationClockAuthority clocks;
@@ -1083,7 +1104,8 @@ int main(int argc,char** argv) {
                      <<" DAYTIME_CELLS="<<joined.elustr.daytime_cells
                      <<" G14_HOURS_COMMITTED=0 FULL_45_FIELD=NOT_ACCEPTED\n";
         }
-        std::cout<<"PASS_P6G_G21_FILE_SOURCE_SELECTED_FRADJ "
+        std::cout<<(real_one_one ? "PASS_P6G_G21_REAL_1SS1US_FRADJ_TEST_ONLY " :
+                   "PASS_P6G_G21_FILE_SOURCE_SELECTED_FRADJ ")
                  <<"GRID_CELLS="<<cells<<" UV_VALUES="<<cells*9*2
                  <<" FRADJ_CHANGED_COMPONENTS="<<selected.corrected_uv_values
                  <<" TWO_PASS_IAVET=1 HOURLY_COMMITTED=0 "
