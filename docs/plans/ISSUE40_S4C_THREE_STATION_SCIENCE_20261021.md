@@ -4,7 +4,7 @@ Date: 2026-10-21. Based on scientific accepted merged [PR #209](https://github.c
 
 ## Experimental station matrix
 
-Three controlled original-format source combinations: `3SS/3US`, `3SS/1US`, and `1SS/3US`, original 12×12×9 2024 cross-year source with 6 chronological model hours. G19 exporter writes an independent original-format SS3 station ID 583230, separate SURF record per hour, US3 station ID 58426 and unique UP3 soundings; original controls and station-specific positions are explicit, not aliases to other station arrays. Existing 1SS1US/C2 2SS2US inputs untouched. Extend previously independent original staging script to order SS1...SS3 and US1...US3 and each genuine UPn declaration; validate FORTRAN binary 176-byte control record and all 45 field labels per hour. The independently existing immutable P6E tolerance comparator remains sole numeric acceptance authority.
+Five controlled original-format source combinations: `3SS/3US`, `3SS/2US`, `2SS/3US`, `3SS/1US`, and `1SS/3US`, original 12×12×9 2024 cross-year source with 6 chronological model hours. G19 exporter writes an independent original-format SS3 station ID 583230, separate SURF record per hour, US3 station ID 58426 and unique UP3 soundings; original controls and station-specific positions are explicit, not aliases to other station arrays. Existing 1SS1US/C2 2SS2US inputs untouched. Extend previously independent original staging script to order SS1...SS3 and US1...US3 and each genuine UPn declaration; validate FORTRAN binary 176-byte control record and all 45 field labels per hour. The independently existing immutable P6E tolerance comparator remains sole numeric acceptance authority.
 
 ## Narrow physical modifications
 
