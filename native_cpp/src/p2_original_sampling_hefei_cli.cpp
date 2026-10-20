@@ -104,6 +104,28 @@ int main(int argc,char** argv) {
       need(stats.total_hits==hits.included &&
            stats.nonempty_cells+stats.missing_cells==40000 &&
            stats.fraction_fields==1520000, "P2C_HEFEI_STATS_CONSERVATION");
+      // Unrounded 38-class integer evidence for an independent original
+      // LFINAL=F Fortran HITS oracle; never infer hits from printed fractions.
+      std::ofstream csv(dest/"hits.csv",std::ios::binary);
+      need(bool(csv),"P2C_HEFEI_HITS_CREATE");
+      csv<<"i,j,samples";
+      for (const int id:kGlccUsgs92Classes) csv<<",cat"<<id;
+      csv<<"\\n";
+      for (std::size_t j=0;j<grid.ny;++j)
+        for (std::size_t i=0;i<grid.nx;++i) {
+          const auto cell=j*grid.nx+i;
+          csv<<i+1<<","<<j+1<<","<<hits.samples[cell];
+          std::uint64_t sum=0;
+          for (std::size_t k=0;k<38;++k) {
+            const auto n=hits.counts[cell*38+k];
+            sum+=n;
+            csv<<","<<n;
+          }
+          need(sum==hits.samples[cell],"P2C_HEFEI_HITS_CELL_MISMATCH");
+          csv<<"\\n";
+        }
+      csv.close();need(bool(csv),"P2C_HEFEI_HITS_CLOSE");
+      const auto hits_hash=sha256(dest/"hits.csv");
       const auto lu_hash=sha256(dest/"lu.dat");
       std::ofstream manifest(dest/"p2_original_sampling_manifest.json");
       need(bool(manifest),"P2C_HEFEI_MANIFEST_CREATE");
@@ -114,6 +136,7 @@ int main(int argc,char** argv) {
           << "  \"source_sha256\": \"" << kGlccSha << "\",\n"
           << "  \"original_vendor_source_sha256\": \"" << kOriginalSourceSha << "\",\n"
           << "  \"lu_dat_sha256\": \"" << lu_hash << "\",\n"
+          << "  \"hits_csv_sha256\": \"" << hits_hash << "\",\n"
           << "  \"utm_epsg\": 32650, \"nx\": 200, \"ny\": 200, \"mesh\": 10,\n"
           << "  \"xrefkm\": \"503.385\", \"yrefkm\": \"3523.769\",\n"
           << "  \"dgridkm\": 0.100, \"classes\": 38,\n"
