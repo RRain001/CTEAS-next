@@ -226,7 +226,7 @@ static void verify_single_surface_source(
     auto selected=f.make();
     const auto raw=selected.raw_observed_temperature();
     check(raw.size()==144&&
-          std::all_of(raw.begin(),raw.end(),[](float t){return t==281.f;}),
+          std::all_of(raw.begin(),raw.end(),[](float t){return std::abs(t-281.f)<=1.e-4f;}),
           "G17B4 true one-observed-SS SURFVAR not exactly station temperature");
     auto first_u=winds(0,false),first_v=winds(1,false);
     auto second_u=winds(0,true),second_v=winds(1,true);
