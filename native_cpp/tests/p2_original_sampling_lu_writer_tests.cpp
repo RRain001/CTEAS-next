@@ -36,6 +36,33 @@ int main() {
           "D11_F6_3_REAL4_FORMAT");
   require(result.find("Missing")!=std::string::npos,
           "D11_MISSING_FLAG");
+  // #160 C1: inland mode may only change UTM header, site comment and
+  // grid. The existing 52N Wolsong default must remain byte-equivalent.
+  require(result.find("  52N   ")!=std::string::npos &&
+          result.find("Produced by CTEAS C++ ORIGINAL_SAMPLING D11")!=std::string::npos,
+          "D11_WOLSONG_HEADER_DEFAULT_NOT_CHANGED");
+  auto inland=source;
+  inland.grid=P2Grid{503385.,3523769.,100.,2,1};
+  std::ostringstream inland_out;
+  const auto inland_stats=write_original_sampling_lu(
+      inland_out,inland,false,50,
+      "Produced by CTEAS C++ ORIGINAL_SAMPLING #160 (Hefei GLCC historical)",
+      "SHA-admitted historical GLCC; inland LCOAST=F; original parity NOT_RUN");
+  require(inland_stats.total_hits==3&&inland_stats.missing_cells==1&&
+          inland_stats.fraction_fields==76,
+          "P2C_INLAND_WRITER_INTEGER_ACCOUNTING");
+  require(inland_out.str().find("  50N   ")!=std::string::npos &&
+          inland_out.str().find("503.385")!=std::string::npos &&
+          inland_out.str().find("3523.769")!=std::string::npos &&
+          inland_out.str().find("0.333")!=std::string::npos &&
+          inland_out.str().find("Missing")!=std::string::npos,
+          "P2C_INLAND_UTM50_F63_AND_MISSING_CONTRACT");
+  rejects([&]{
+      std::ostringstream out;write_original_sampling_lu(out,inland,false,49);
+  },"P2C_REJECT_UNREVIEWED_ZONE");
+  rejects([&]{
+      std::ostringstream out;write_original_sampling_lu(out,source,true,50);
+  },"D11_REJECT_WOLSONG_UTM_HEADER_OVERRIDE");
   rejects([&]{
       std::ostringstream out;write_original_sampling_lu(out,source);
   },"D11_ONLY_VERIFIED_WOLSONG_DOMAIN_BY_DEFAULT");
