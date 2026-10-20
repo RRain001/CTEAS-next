@@ -33,13 +33,15 @@ def digest(path: Path) -> str:
     return h.hexdigest()
 
 
-def run(case_yaml: Path, native_binary: Path) -> dict:
+def run(case_yaml: Path, native_binary: Path, *, expect_24h_bracket_rejection: bool = False) -> dict:
     admission = admit_case(case_yaml)
     root = admission.case_path.parent
-    if (admission.research_begin, admission.research_end) != (
-        "20220601-010000", "20220601-070000"
-    ):
-        raise ValueError("S3-B6 requires original NOAA 00/12-bracketed six-hour Huoshan case")
+    admitted_window = (admission.research_begin, admission.research_end)
+    approved_window = (("20220601-000000", "20220602-000000")
+                       if expect_24h_bracket_rejection else
+                       ("20220601-010000", "20220601-070000"))
+    if admitted_window != approved_window:
+        raise ValueError("S3-B6 strict real NOAA 6h/24h source-case clock mismatch")
     join = root / "evidence/s3-b0-five-source-preflight.json"
     if join.is_symlink() or not join.is_file():
         raise ValueError("S3-B6 original five-source SHA admission not run")
@@ -55,7 +57,9 @@ def run(case_yaml: Path, native_binary: Path) -> dict:
             raise ValueError("S3-B6 previous five-producer same B0 SHA changed: " + key)
     if not native_binary.is_absolute() or native_binary.is_symlink() or not native_binary.is_file():
         raise ValueError("S3-B6 explicit native G19 source-only executable absent")
-    output = root / "evidence/s3-b6-g19-source-only.json"
+    output = root / ("evidence/s3-b7-g19-rejected-24h.json"
+                     if expect_24h_bracket_rejection else
+                     "evidence/s3-b6-g19-source-only.json")
     deck = root / "run/met/met.inp"
     if output.exists() or deck.exists() or output.is_symlink() or deck.is_symlink():
         raise ValueError("S3-B6 refuses old/previously staged MET inputs")
@@ -93,7 +97,45 @@ def run(case_yaml: Path, native_binary: Path) -> dict:
     deck.write_text(content, encoding="utf-8")
     p4_root, p5_root = root / "met/upperair", root / "met/surface/isd_raw"
     plan = prepare_g19(case_yaml, p4_root, p5_root, root, native_binary)
-    result = execute_source_preflight(plan)
+    try:
+        result = execute_source_preflight(plan)
+    except ContractError as exc:
+        if not expect_24h_bracket_rejection:
+            raise
+        # The exact actual original NOAA profile gap observed in the prior
+        # genuine 24h G19 run. Any other source, deck or parser failure remains
+        # an unaccepted failure, never a manufactured negative-case PASS.
+        expected = "P6G model hour lacks bracketing upper sounding"
+        if expected not in str(exc):
+            raise
+        verify_immutable(admission)
+        if json.loads(join.read_text()) != receipt:
+            raise ValueError("S3-B7 upstream five-source receipt changed during parser run")
+        negative = {
+            "status": "S3_B7_REAL_24H_G19_UPPER_BRACKET_REJECTED_EXPECTED",
+            "case_name": admission.case_name,
+            "research_begin": admission.research_begin,
+            "research_end": admission.research_end,
+            "case_yaml_sha256": admission.case_sha256,
+            "grid_cmn_sha256": admission.grid_sha256,
+            "research_time_sha256": admission.time_sha256,
+            "five_producer_receipt_sha256": digest(join),
+            "same_case_original_geo_published_sha256": digest(published_geo),
+            "met_deck_sha256": digest(deck),
+            "g19_native_executable_sha256": digest(native_binary),
+            "true_source_roles_sha256": plan["roles"],
+            "real_original_parser_error": expected,
+            "observed_error_full": str(exc)[-1200:],
+            "source_only_parsed": False,
+            "p6d_e_f_numerical_wind": "NOT_RUN",
+            "p7_numerical_diffusion": "NOT_RUN",
+            "g19_24h_science": "NOT_ACCEPTED",
+            "docker": "DEFERRED",
+        }
+        output.write_text(json.dumps(negative, ensure_ascii=False, indent=2, sort_keys=True)+"\n")
+        return negative
+    if expect_24h_bracket_rejection:
+        raise ValueError("S3-B7 24h negative unexpectedly accepted by real native G19")
     if not result.get("native_input_parsed") or result.get("model_executed"):
         raise ValueError("S3-B6 G19 native did not pass source-only semantics")
     if result["status"] != "P6_G19_DYNAMIC_FILE_INPUT_PARSED_NO_PHYSICS_EXECUTED":
@@ -136,18 +178,26 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case-yaml", type=Path, required=True)
     parser.add_argument("--native-g19", type=Path, required=True)
+    parser.add_argument("--expect-24h-bracket-rejection", action="store_true",
+                        help="Test the real 24h negative; accept ONLY the original missing-upper-bracket error")
     args = parser.parse_args()
     try:
-        report = run(args.case_yaml, args.native_g19)
+        report = run(args.case_yaml, args.native_g19,
+                     expect_24h_bracket_rejection=args.expect_24h_bracket_rejection)
     except (ValueError, OSError, KeyError, TypeError, ContractError, RuntimeError, yaml.YAMLError) as exc:
         print(json.dumps({"status": "S3_B6_REAL_G19_BLOCKED",
                           "reason": str(exc)[:1800]}, ensure_ascii=False), file=sys.stderr)
         return 2
-    print(json.dumps({"status": report["status"],
-                      "p4": report["p4_source_stations"],
-                      "p5": report["p5_source_stations"],
-                      "s3_final": report["complete_S3_final_science"]},
-                     ensure_ascii=False))
+    if args.expect_24h_bracket_rejection:
+        print(json.dumps({"status":report["status"],
+                          "reason":report["real_original_parser_error"],
+                          "g19_24h":report["g19_24h_science"]},ensure_ascii=False))
+    else:
+        print(json.dumps({"status": report["status"],
+                          "p4": report["p4_source_stations"],
+                          "p5": report["p5_source_stations"],
+                          "s3_final": report["complete_S3_final_science"]},
+                         ensure_ascii=False))
     return 0
 
 
