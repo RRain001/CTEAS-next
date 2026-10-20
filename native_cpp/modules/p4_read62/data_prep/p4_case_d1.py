@@ -13,6 +13,7 @@ from pathlib import Path
 
 import yaml
 
+from native_cpp.orchestration.case_admission import admit_case
 from native_cpp.orchestration.plan import CASE_ID, ContractError, child, mapping
 from native_cpp.orchestration.site_plan import _geography, _time
 
@@ -59,6 +60,12 @@ def admit_staged_case(case_root: Path, upperair_root: Path, archive_root: Path,
     for path in paths:
         if path.is_symlink() or not path.is_file():
             raise ContractError(f"staged immutable input missing or symlink: {path}")
+    # S2-D: the common strict B-0 validator owns YAML duplicate keys,
+    # raw grid precision/field uniqueness, CRS and case/grid/time agreement.
+    # Retain existing independent P4 station/stack centre and archive checks.
+    b0 = admit_case(paths[0])
+    if b0.case_path.parent.resolve(strict=True) != case:
+        raise ContractError("P4 isolated case differs from admitted B-0 root")
     cfg = yaml.safe_load(paths[0].read_text(encoding="utf-8"))
     cfg = mapping(cfg, "case.yaml")
     name = child(cfg, "case_name")
@@ -91,6 +98,10 @@ def admit_staged_case(case_root: Path, upperair_root: Path, archive_root: Path,
             or abs(float(lat.group(1)) - float(child(source[0], "latitude"))) > 1e-5):
         raise ContractError("P4 selector center differs from the physical stack")
     result = {str(path.relative_to(case)): sha256_file(path) for path in paths}
+    if (result["case.yaml"] != b0.case_sha256 or
+            result["grid/grid.cmn"] != b0.grid_sha256 or
+            result["grid/research_time"] != b0.time_sha256):
+        raise ContractError("P4 B-0 case/grid/time bytes changed during admission")
     result["case_root"] = str(case)
     result["upperair_root"] = str(output)
     return result
