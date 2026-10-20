@@ -1,0 +1,133 @@
+name: Issue160 C4-C5 Hefei real 20km 2022 GLC30m integer HITS and LU format science
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - data/landcover/glc_fcs30d/v1_2022/hefei20km/**
+      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
+      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
+      - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
+      - scripts/s2g/issue160_glc30m_independent_reference.py
+      - scripts/s2g/issue160_p3_lu_format_contract.py
+      - scripts/s2g/issue160_hefei20km_glc_acquire.py
+      - docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json
+      - .github/workflows/issue160-c4c5-hefei-20km-real-30m.yml
+  workflow_dispatch:
+concurrency:
+  group: issue160-hefei-real-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  authentic-hefei-inland-point-science:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout genuine Hefei20km 2022 source and current C4/C5 implementation
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+      - name: Install native compilation and independent Python geospatial libraries
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            g++-12 cmake libgdal-dev libssl-dev python3-numpy python3-gdal python3-rasterio python3-pyproj python3-pip
+          /usr/bin/python3 -m pip install --user --disable-pip-version-check shapely==2.0.7
+      - name: Admit exact genuine 20km source, frozen mapping and source metadata
+        run: |
+          set -euo pipefail
+          tif=data/landcover/glc_fcs30d/v1_2022/hefei20km/hefei_2022_30m_20km.tif
+          policy=docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json
+          echo "ee5cefc27827d84f0aa42d0e014e211fcfef67f2bffc43185d17897d840d2e58  $tif" | sha256sum -c -
+          echo "a5fa157f57feb1aa160dd96d920a22d267fea78c5828c6040fa95e86536544ed  $policy" | sha256sum -c -
+          /usr/bin/python3 -m scripts.s2g.issue160_hefei20km_glc_acquire verify
+          /usr/bin/python3 - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          p=Path("data/landcover/glc_fcs30d/v1_2022/hefei20km")
+          j=json.loads((p/"metadata.json").read_text())
+          assert j["sha256"]=="ee5cefc27827d84f0aa42d0e014e211fcfef67f2bffc43185d17897d840d2e58"
+          assert j["utm_epsg"]==32650 and j["year"]==2022 and j["band"]=="b23"
+          assert j["width"]==672 and j["height"]==672 and j["valid_pixel_count"]==451584
+          assert j["nodata_or_fill_count"]==0 and j["masked_pixel_count"]==0
+          assert j["source_glc210_pixel_count"]==35336
+          assert sum(j["all_35_classes_histogram"].values())==451584
+          assert j["repeat_download"]["pixels_equal"] is True
+          assert j["repeat_download"]["masks_equal"] is True
+          assert j["repeat_download"]["bytes_equal"] is True
+          assert j["license"]=="CC-BY-4.0"
+          print("P2C_HEFEI20KM_SOURCE_PIN_AND_PROVENANCE=PASS")
+          PY
+      - name: Compile C4 30m subpixel HITS producer and synthetic regression
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/issue160-hefei-native" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/issue160-hefei-native" --parallel 2 \
+            --target cteas_p2c_glc30m_sampling cteas_p2c_glc30m_sampling_tests
+          ctest --test-dir "$RUNNER_TEMP/issue160-hefei-native" --output-on-failure \
+            -R '^cteas_p2c_glc30m_synthetic_integer_conservation$'
+      - name: Produce true inland 30m GLAZAS-style 10x10 integer votes, HITS and LU.DAT
+        run: |
+          set -euo pipefail
+          timeout 1200 "$RUNNER_TEMP/issue160-hefei-native/cteas_p2c_glc30m_sampling" \
+            inland \
+            data/landcover/glc_fcs30d/v1_2022/hefei20km/hefei_2022_30m_20km.tif \
+            ee5cefc27827d84f0aa42d0e014e211fcfef67f2bffc43185d17897d840d2e58 \
+            docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            - "$RUNNER_TEMP/issue160-hefei-native-result"
+          test -s "$RUNNER_TEMP/issue160-hefei-native-result/hits.csv"
+          test -s "$RUNNER_TEMP/issue160-hefei-native-result/lu.dat"
+      - name: Independent NumPy point oracle - EXACT all 1,520,000 integer HITS, F6.3 and Missing
+        run: |
+          set -euo pipefail
+          timeout 1200 /usr/bin/python3 -m scripts.s2g.issue160_glc30m_independent_reference \
+            --site inland \
+            --tif data/landcover/glc_fcs30d/v1_2022/hefei20km/hefei_2022_30m_20km.tif \
+            --data-sha256 ee5cefc27827d84f0aa42d0e014e211fcfef67f2bffc43185d17897d840d2e58 \
+            --policy docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json \
+            --native "$RUNNER_TEMP/issue160-hefei-native-result" \
+            --report "$RUNNER_TEMP/issue160-hefei-independent-40k38.json"
+          echo 'P2C_HEFEI_C4_30M_INDEPENDENT_SCIENCE=PASS_ONLY_IF_ALL_ZERO_DIFF'
+      - name: Independently consume actual 200x200 38-class LU.DAT as P3 format-only
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m scripts.s2g.issue160_p3_lu_format_contract \
+            --site inland \
+            --lu "$RUNNER_TEMP/issue160-hefei-native-result/lu.dat" \
+            --manifest "$RUNNER_TEMP/issue160-hefei-native-result/p2c_glc30m_manifest.json" \
+            --out "$RUNNER_TEMP/issue160-hefei-p3-format-only.json"
+          echo 'P2C_HEFEI_C5_P3_LU_FORMAT=PASS_IF_CONSUMED P3_38TO14_MAKEGEO=OUT_OF_SCOPE_ISSUE46'
+      - name: Verify bounded scientific report statuses before PASS claim
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          a=json.loads((root/'issue160-hefei-independent-40k38.json').read_text())
+          b=json.loads((root/'issue160-hefei-p3-format-only.json').read_text())
+          assert a['status']=='P2C_30M_SAME_SOURCE_INDEPENDENT_40000X38_HITS_PASS_SCOPED'
+          assert a['integer_fields_compared']==1520000 and a['integer_mismatches']==0
+          assert a['F6_3_fields_compared']==1520000 and a['F6_3_mismatches']==0
+          assert a['missing_flag_mismatches']==0
+          assert a['water55_hits']==0
+          assert b['status']=='P2C_P3_LU_DAT_V2_1_FORMAT_ONLY_COMPATIBLE'
+          assert b['statistics']['fraction_fields']==1520000
+          assert b['statistics']['f55_positive_cells']==0
+          print('P2C_HEFEI_20KM_C4_C5_ACCEPTED_SCOPED: all integer/F6.3/Missing zero difference and real P3 LU v2.1 format')
+          PY
+      - name: Upload only SHA-identified manifests and comparison summary, not raster or LU bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue160-hefei20km-2022-glc30m-c4c5-real-science
+          path: |
+            ${{ runner.temp }}/issue160-hefei-native-result/p2c_glc30m_manifest.json
+            ${{ runner.temp }}/issue160-hefei-independent-40k38.json
+            ${{ runner.temp }}/issue160-hefei-p3-format-only.json
+          retention-days: 21
+          if-no-files-found: warn
