@@ -1011,3 +1011,25 @@ else()
   target_compile_options(cteas_p6g_surf_source_preflight PRIVATE
     -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-B1: isolated genuine G19->G14 source admission for a future unified
+# production actor. Not a WIND/COMP/P6F implementation or science result.
+add_executable(cteas_p6g_s4b1_source_admission
+               src/p6g_s4b1_source_admission_main.cpp)
+target_link_libraries(cteas_p6g_s4b1_source_admission PRIVATE cteas_p6a_contracts)
+add_executable(cteas_p6g_s4b1_admission_tests
+               tests/p6g_s4b1_admission_tests.cpp)
+target_link_libraries(cteas_p6g_s4b1_admission_tests PRIVATE cteas_p6a_contracts)
+foreach(s4b1_target cteas_p6g_s4b1_source_admission cteas_p6g_s4b1_admission_tests)
+  if(MSVC)
+    target_compile_options(${s4b1_target} PRIVATE /W4 /WX)
+  else()
+    target_compile_options(${s4b1_target} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endif()
+endforeach()
+add_test(NAME p6g_s4b1_independent_station_cardinality_source_admission
+         COMMAND cteas_p6g_s4b1_admission_tests)
+add_test(NAME p6g_s4b1_refuses_unaccepted_production_execute
+         COMMAND cteas_p6g_s4b1_source_admission --execute)
+set_tests_properties(p6g_s4b1_refuses_unaccepted_production_execute
+                     PROPERTIES WILL_FAIL TRUE)
