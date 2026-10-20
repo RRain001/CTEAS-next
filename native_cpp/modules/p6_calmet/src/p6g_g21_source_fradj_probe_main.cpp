@@ -47,11 +47,17 @@ int main(int argc,char** argv) {
         std::string station_flux_prefix,original_nearu_prefix,comp_original_prefix;
         std::string mixht_original_prefix,temp3d_original_prefix;
         std::string p6f_candidate_file,surfvar_two_pass_output,comp_third_surfvar_output;
+        std::string real_stheor_source_output;
         bool real_one_one_fradj_test_only=false;
         bool real_one_one_slope_test_only=false;
+        bool real_one_one_stheor_test_only=false;
         for(int i=4;i<argc;++i) {
             const std::string arg=argv[i];
-            if(arg=="--real-one-ss-one-us-slope-test-only") {
+            if(arg=="--real-one-ss-one-us-stheor-test-only") {
+                if(real_one_one_stheor_test_only)
+                    throw std::invalid_argument("G17C3 duplicate genuine one-site STHEOR opt-in");
+                real_one_one_stheor_test_only=true;
+            } else if(arg=="--real-one-ss-one-us-slope-test-only") {
                 if(real_one_one_slope_test_only)
                     throw std::invalid_argument("G22 duplicated real 1SS1US slope opt-in");
                 real_one_one_slope_test_only=true;
@@ -67,6 +73,7 @@ int main(int argc,char** argv) {
                arg=="--station-flux-prefix"||arg=="--nearu-prefix"||
                arg=="--comp-original-prefix"||arg=="--mixht-original-prefix"||
                arg=="--temp3d-original-prefix"||arg=="--p6f-candidate-file"||
+               arg=="--stheor-site-output"||
                arg=="--surfvar-two-pass-output"||
                arg=="--comp-third-surfvar-output") {
                 if(i+1>=argc||std::string(argv[i+1]).empty())
@@ -85,6 +92,7 @@ int main(int argc,char** argv) {
                                arg=="--nearu-prefix"?original_nearu_prefix:arg=="--comp-original-prefix"?comp_original_prefix:
                                arg=="--mixht-original-prefix"?mixht_original_prefix:
                                arg=="--temp3d-original-prefix"?temp3d_original_prefix:
+                               arg=="--stheor-site-output"?real_stheor_source_output:
                                arg=="--surfvar-two-pass-output"?surfvar_two_pass_output:
                                arg=="--comp-third-surfvar-output"?comp_third_surfvar_output:
                                p6f_candidate_file;
@@ -100,6 +108,7 @@ int main(int argc,char** argv) {
            stage_file==output_file||paths.ordered_up_dat.empty()||
            (paths.ordered_up_dat.size()<2&&!real_one_one_fradj_test_only)||
            slope_output_file.empty()!=slope_stage_file.empty()||
+           (!real_stheor_source_output.empty()&&slope_output_file.empty())||
            (!inter2_output_file.empty()&&slope_output_file.empty())||
            (!inter2_original_stage_prefix.empty()&&inter2_output_file.empty())||
            (!diagi_similt_prefix.empty()&&inter2_output_file.empty())||
@@ -115,6 +124,7 @@ int main(int argc,char** argv) {
             throw std::invalid_argument("G21/G22 requires independent stage/output file pairs");
         const std::vector<std::string> outputs={
             output_file,stage_file,slope_output_file,slope_stage_file,
+            real_stheor_source_output,
             inter2_output_file,
             inter2_original_stage_prefix.empty()?std::string{}:inter2_original_stage_prefix+".u.input",
             inter2_original_stage_prefix.empty()?std::string{}:inter2_original_stage_prefix+".v.input",
@@ -145,6 +155,11 @@ int main(int argc,char** argv) {
                     if(outputs[i]==outputs[j])
                         throw std::invalid_argument("G21/G22 output filename collision");
         const auto source=cteas::calmet::p6g::g19_load_original_source_case(paths);
+        if(real_one_one_stheor_test_only&&
+           (!real_one_one_slope_test_only||real_stheor_source_output.empty()))
+            throw std::invalid_argument("G17C3 genuine 1SS1US STHEOR requires G22 and separate output");
+        if(!real_one_one_stheor_test_only&&!real_stheor_source_output.empty())
+            throw std::invalid_argument("G17C3 cannot export station data without explicit source opt-in");
         if(real_one_one_slope_test_only&&!real_one_one_fradj_test_only)
             throw std::invalid_argument("G22 separate slope opt-in also requires G21 single-source opt-in");
         const bool real_one_one=(source.stations.surface.size()==1&&
@@ -160,6 +175,7 @@ int main(int argc,char** argv) {
              (slope_output_file.empty()||slope_stage_file.empty()))||
            (!real_one_one_slope_test_only && !slope_output_file.empty())||
            !inter2_output_file.empty()||
+           (!real_one_one_stheor_test_only && !real_stheor_source_output.empty())||
             !diagi_similt_prefix.empty()||!wind_tail_stage.empty()||
             !comp_original_prefix.empty()||!p6f_candidate_file.empty()||
             !station_flux_prefix.empty()||!original_nearu_prefix.empty()))
@@ -624,6 +640,66 @@ int main(int argc,char** argv) {
                     }
             csv22.flush();
             if(!csv22)throw std::runtime_error("G22 native SLOPE CSV failed");
+            if(!real_stheor_source_output.empty()) {
+                // Actual one-SS / one-US source-only STHEOR stage. Do not
+                // impersonate full G23 INTER2, do not create upper winds.
+                cteas::calmet::p6g::G17B4TwoPassSurfvar original_surfvar(
+                    frame.grid,frame.stations,source.surface,frame.surface,
+                    source.surface_controls);
+                original_surfvar.after_wind1_before_fradj(
+                    frame.input.end,first.u_mps,first.v_mps);
+                original_surfvar.after_fradj_before_heatfx(
+                    frame.input.end,selected.corrected_wind.u,
+                    selected.corrected_wind.v);
+                if(original_surfvar.first_temperature()!=selected.temperature_before_k||
+                   original_surfvar.final_temperature()!=selected.temperature_after_k)
+                    throw std::logic_error("G17C3 true source SURFVAR phase differs from accepted G21");
+                const auto controls=cteas::calmet::p6g::g23_stheor_original_readcf_controls(
+                    source,true);
+                const auto sites=cteas::calmet::p6g::selected_station_diagi_from_previous_comp(
+                    frame,original_surfvar,joined.heat,controls);
+                if(sites.size()!=1||sites.front().end!=frame.input.end||
+                   sites.front().surface_id!=source.stations.surface.front().id||
+                   sites.front().upper_id!=source.stations.upper.front().id||
+                   sites.front().levels_filled<1||sites.front().levels_filled>9)
+                    throw std::invalid_argument("G17C3 actual station result cardinality/identity invalid");
+                const auto& one=sites.front();
+                std::ofstream observed(real_stheor_source_output,std::ios::trunc);
+                if(!observed)
+                    throw std::runtime_error("G17C3 source-only station CSV not created");
+                observed<<std::setprecision(std::numeric_limits<float>::max_digits10);
+                observed<<"hour_end_utc_seconds,surface_id,upper_id,station_cell_0based,"
+                           "k_1based,diagi_u_mps,diagi_v_mps,present,"
+                           "station_qh_wm2,station_ustar_mps,station_el_m,"
+                           "mixhtst_zi_to_similt_m,mixhtst_ziconv_after_m,"
+                           "mixhtst_dptt_for_comp_k\n";
+                for(std::size_t k=0;k<9;++k) {
+                    const bool present=k<one.levels_filled;
+                    const float u=present?one.diagi_profile.u_mps[k]:999.f;
+                    const float v=present?one.diagi_profile.v_mps[k]:999.f;
+                    if(!std::isfinite(u)||!std::isfinite(v))
+                        throw std::invalid_argument("G17C3 observed station DIAGI U/V nonfinite");
+                    observed<<frame.input.end.time_since_epoch().count()<<","
+                            <<one.surface_id<<","<<one.upper_id<<","<<one.cell<<","
+                            <<(k+1)<<","<<u<<","<<v<<","<<int(present)<<","
+                            <<one.station_flux.sensible_wm2<<","
+                            <<one.station_flux.friction_velocity_mps<<","
+                            <<one.station_flux.monin_obukhov_m<<","
+                            <<one.station_mixing.zii_to_similt_m<<","
+                            <<one.station_mixing.ziconv_after_m<<","
+                            <<one.station_mixing.dptt_for_comp_k<<"\n";
+                }
+                observed.flush();
+                if(!observed)
+                    throw std::runtime_error("G17C3 real station source stage incomplete");
+                if(scheduler.completed_hours()!=0||clocks.has_published_hour())
+                    throw std::logic_error("G17C3 unverified real model hour was published");
+                std::cout<<"G17C3_REAL_ONE_SS_ONE_US_STHEOR_ELUSTR2_MIXHTST_DIAGI=PRODUCED_UNVERIFIED"
+                         <<" PROFILE_LEVELS="<<one.levels_filled
+                         <<" ORIGINAL_FORTRAN_STHEOR_NUMERICAL=NOT_RUN"
+                         <<" PREPDI_UPPER_INTER2_NOT_AUTO_ADMITTED=1"
+                         <<" G23_INTER2=NOT_RUN P6_MET45=NOT_RUN\n";
+            }
             if(!inter2_output_file.empty()) {
                 const auto station=cteas::calmet::p6g::g23_source_stheor_diagi_inter2(
                     frame,source,source_profiles,selected,joined,true);
