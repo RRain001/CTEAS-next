@@ -245,6 +245,29 @@ endif()
 add_test(NAME cteas_p2_original_sampling_lu_writer_synthetic
          COMMAND cteas_p2_original_sampling_lu_tests)
 
+# Issue #160 C4: 30m GLC_FCS30D source point-HITS application.
+# Uses user-selected JSON policy and GSHHG Full L1; NEVER historical GLCC
+# mapping and NEVER P2-B EXACT_AREA_V1 fractional area.
+add_library(cteas_p2_glc30m_point STATIC src/geo/glc30m_point_sampling.cpp)
+target_include_directories(cteas_p2_glc30m_point PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(cteas_p2_glc30m_point PUBLIC
+                      cteas_p2_original_sampling_recount GDAL::GDAL)
+add_executable(cteas_p2_glc30m_point_lu src/p2_glc30m_point_lu_cli.cpp)
+target_link_libraries(cteas_p2_glc30m_point_lu PRIVATE
+                      cteas_p2_glc30m_point GDAL::GDAL OpenSSL::Crypto)
+add_executable(cteas_p2_glc30m_point_tests tests/p2_glc30m_point_tests.cpp)
+target_link_libraries(cteas_p2_glc30m_point_tests PRIVATE cteas_p2_glc30m_point GDAL::GDAL)
+add_test(NAME cteas_p2_glc30m_point_synthetic COMMAND cteas_p2_glc30m_point_tests)
+foreach(tgt IN ITEMS cteas_p2_glc30m_point cteas_p2_glc30m_point_lu
+                     cteas_p2_glc30m_point_tests)
+  if(MSVC)
+    target_compile_options(${tgt} PRIVATE /W4 /WX)
+  else()
+    target_compile_options(${tgt} PRIVATE -Wall -Wextra -Wpedantic -Werror
+                           -ffp-contract=off)
+  endif()
+endforeach()
+
 # Issue #160 C1: Hefei inland historical GLCC original-style sampling.
 # Same canonical GLCC source, direct GLAZAS/LUGRID and original writer as
 # Wolsong D11, but with LCOAST=F and EPSG:32650. No modern GLC area method.
