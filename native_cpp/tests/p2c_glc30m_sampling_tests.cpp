@@ -70,17 +70,18 @@ int main(int argc,char** argv){
     const auto actual=sample_p2c_glc30m(tif,g,32650,policy,nullptr,10);
     // Independently counted from 30m source pixels: within 0..100m,
     // 33 of 40 subpoint offsets each axis remain in domain. First
-    // upper-left 10x10 masked; valid 52 forest: 20*33-100=560;
-    // valid 210 water: 13*33=429; 560+429=989 exact integer votes.
-    check(actual.hits.included==989&&actual.hits.samples[0]==989,
+    // upper-left 10x10 masked: only 3 y subpoints of that edge pixel
+    // are inside. Valid 52 forest: 20*33-30=630;
+    // valid 210 water: 13*33=429; 630+429=1059 exact integer votes.
+    check(actual.hits.included==1059&&actual.hits.samples[0]==1059,
           "P2C_INDEPENDENT_SYNTHETIC_SUBPOINT_HITS");
-    check(actual.hits.counts[category(42)]==560&&
+    check(actual.hits.counts[category(42)]==630&&
           actual.hits.counts[category(52)]==429&&
           actual.hits.counts[category(55)]==0,
           "P2C_GLC52_FOREST_VS_GLC210_INLAND_WATER");
     check(actual.water_land_hits==429&&actual.water_sea_hits==0,
           "P2C_INLAND_WATER_52_ONLY");
-    check(actual.hits.outside==511&&actual.hits.rejected_coast==0,
+    check(actual.hits.outside==441&&actual.hits.rejected_coast==0,
           "P2C_VALID_SOURCE_SUBPOINT_CONSERVATION");
     check(actual.masked_pixels==1 &&
           actual.source_pixel_histogram[52]==7 &&
