@@ -15,6 +15,8 @@ on:
       - native_cpp/orchestration/s3_huoshan_g19_source_only.py
       - engine/run_met/prepare_met.py
       - docs/plans/ISSUE42_S3_B6_HUOSHAN_REAL_G19_SOURCE_20261020.md
+      - native_cpp/orchestration/s3_huoshan_g19_negative_gates.py
+      - docs/plans/ISSUE42_S3_B7_ALTERNATE_REAL_NOAA_AND_NEGATIVE_20261020.md
       - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
       - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
   workflow_dispatch:
@@ -30,10 +32,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        period: [jan_48h, jun_24h, jun_6h]
+        period: [jan_48h, jun_24h, jun_6h, jun_6h_alt]
     env:
-      S3_RESEARCH_BEGIN: ${{ matrix.period == 'jan_48h' && '20220101-000000' || matrix.period == 'jun_6h' && '20220601-010000' || '20220601-000000' }}
-      S3_RESEARCH_END: ${{ matrix.period == 'jan_48h' && '20220103-000000' || matrix.period == 'jun_6h' && '20220601-070000' || '20220602-000000' }}
+      S3_RESEARCH_BEGIN: ${{ matrix.period == 'jan_48h' && '20220101-000000' || matrix.period == 'jun_6h' && '20220601-010000' || matrix.period == 'jun_6h_alt' && '20220601-020000' || '20220601-000000' }}
+      S3_RESEARCH_END: ${{ matrix.period == 'jan_48h' && '20220103-000000' || matrix.period == 'jun_6h' && '20220601-070000' || matrix.period == 'jun_6h_alt' && '20220601-080000' || '20220602-000000' }}
     steps:
       - name: Checkout true SRTM 90m and original GLCC via LFS
         uses: actions/checkout@v4
@@ -99,7 +101,8 @@ jobs:
           begin,end=os.environ["S3_RESEARCH_BEGIN"],os.environ["S3_RESEARCH_END"]
           assert (begin,end) in {("20220101-000000","20220103-000000"),
                                  ("20220601-000000","20220602-000000"),
-                                 ("20220601-010000","20220601-070000")}
+                                 ("20220601-010000","20220601-070000"),
+                                 ("20220601-020000","20220601-080000")}
           root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
           assert not root.exists()
           (root/"grid").mkdir(parents=True)
@@ -433,7 +436,7 @@ jobs:
           from native_cpp.orchestration.case_admission import admit_case,verify_immutable
           case=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
           b0=admit_case(case/"case.yaml")
-          assert (b0.research_begin,b0.research_end) in {("20220601-000000","20220602-000000"),("20220601-010000","20220601-070000")}
+          assert (b0.research_begin,b0.research_end) in {("20220601-000000","20220602-000000"),("20220601-010000","20220601-070000"),("20220601-020000","20220601-080000")}
           archive=Path(os.environ["RUNNER_TEMP"])/"s3-genuine-igra"
           archive.mkdir(exist_ok=False)
           sources={
@@ -503,13 +506,13 @@ jobs:
             --destination "$RUNNER_TEMP/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json"
           echo 'S3_B5_FIVE_TRUE_SOURCE_PRODUCTS=SHA_JOIN_ONLY_G19_NOT_RUN'
       - name: S3-B6 compile genuine C++ G19 actual-file-only parser
-        if: matrix.period == 'jun_6h'
+        if: matrix.period == 'jun_6h' || matrix.period == 'jun_6h_alt'
         run: |
           set -euo pipefail
           cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s3-g19" -DCMAKE_BUILD_TYPE=Release
           cmake --build "$RUNNER_TEMP/s3-g19" --parallel 2 --target cteas_p6g_g19_source_case_preflight
       - name: S3-B6 render existing original MET control from same case and execute native G19 source-only
-        if: matrix.period == 'jun_6h'
+        if: matrix.period == 'jun_6h' || matrix.period == 'jun_6h_alt'
         run: |
           set -euo pipefail
           /usr/bin/python3 -m native_cpp.orchestration.s3_huoshan_g19_source_only \
@@ -517,6 +520,24 @@ jobs:
             --native-g19 "$RUNNER_TEMP/s3-g19/cteas_p6g_g19_source_case_preflight"
           test -s "$RUNNER_TEMP/s3_huoshan_2022/evidence/s3-b6-g19-source-only.json"
           echo 'S3_B6_REAL_G19_INPUT_PARSER_PASS_IF_SOURCE_SCOPED_NO_P6_WIND'
+      - name: S3-B7 alternate actual UTC G19 positive plus three genuine fail-closed negatives
+        if: matrix.period == 'jun_6h_alt'
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 -m native_cpp.orchestration.s3_huoshan_g19_negative_gates \
+            --case-yaml "$RUNNER_TEMP/s3_huoshan_2022/case.yaml" \
+            --native-g19 "$RUNNER_TEMP/s3-g19/cteas_p6g_g19_source_case_preflight"
+          /usr/bin/python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"s3_huoshan_2022"
+          report=json.loads((root/"evidence/s3-b7-alt-clock-negative-evidence.json").read_text())
+          assert report["status"]=="S3_B7_REAL_ALT_UTC_G19_POSITIVE_AND_THREE_NEGATIVES_PASS_SCOPED"
+          assert report["utc"]==["20220601-020000","20220601-080000"]
+          assert len(report["true_fail_closed_negatives"])==3
+          assert report["original_source_recovery_after_mutation"]=="PASS"
+          print("S3_B7_ALT_REAL_NOAA_UTC_3_NEGATIVES_NATIVE_G19=PASS_SCOPED")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -534,6 +555,7 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/met/upperair/p4_d1a_annual_manifest.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b0-five-source-preflight.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b6-g19-source-only.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-b7-alt-clock-negative-evidence.json
             ${{ runner.temp }}/s3_huoshan_2022/met/surface/isd_raw/station_selection_2022.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
