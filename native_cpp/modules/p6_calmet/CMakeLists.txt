@@ -1052,3 +1052,18 @@ endif()
 add_test(NAME p6g_s4b2_no_implicit_production
          COMMAND cteas_p6g_s4b2_unified_selected --met missing.met)
 set_tests_properties(p6g_s4b2_no_implicit_production PROPERTIES WILL_FAIL TRUE)
+
+# S4-B4: read the frozen original C1 MET (143h), produce a separate 1h
+# original subset for independent P6E 45-field comparison. No native
+# forecast values are injected into this reference-only utility.
+add_executable(cteas_p6g_s4b4_extract_original_c1_first_hour
+               src/p6g_s4b4_original_c1_first_hour_main.cpp)
+target_link_libraries(cteas_p6g_s4b4_extract_original_c1_first_hour
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_s4b4_extract_original_c1_first_hour
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_s4b4_extract_original_c1_first_hour
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
