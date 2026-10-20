@@ -32,6 +32,12 @@ jobs:
         with:
           persist-credentials: false
           lfs: false
+      - name: Diagnose existing standalone P7 configure before full Docker build
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p7_calpuff \
+            -B "$RUNNER_TEMP/s1-p7-configure-diagnostic" \
+            -DCMAKE_BUILD_TYPE=Debug
       - name: Build production/runtime stage using existing portable builder
         run: |
           set -euo pipefail
