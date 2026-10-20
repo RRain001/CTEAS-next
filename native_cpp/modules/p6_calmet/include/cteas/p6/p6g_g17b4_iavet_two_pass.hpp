@@ -86,7 +86,10 @@ public:
            !std::isfinite(dgrid_m_)||dgrid_m_<=0.f||
            hour.end-hour.start!=std::chrono::hours{1}||
            hour.start<series.begin||hour.end>series.end||
-           station_set.surface.size()<2||station_set.surface.size()>6||
+           // One authentic virtual surface station can supply original observed
+           // IAVET=1: lower-level SURFVAR already supports exactly one
+           // observed station; retain all-land and source-option guards.
+           station_set.surface.empty()||station_set.surface.size()>6||
            series.station_ids.size()!=station_set.surface.size()||
            hour.by_station.size()!=station_set.surface.size()||
            controls_.source.iavet!=1||controls_.source.itprog!=0||
