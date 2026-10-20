@@ -27,7 +27,7 @@ SCIENCE = "docs/science_acceptance/C1_C2_143H_RERUN_20261017.md"
 # One occurrence of each precisely scoped source anchor is necessary.
 # The values are *facts to review*, not implicit permission to retain limits.
 ANCHORS = (
-    ("c1_hourly_binary", C1_WORKFLOW, r"cteas_p6_native_hourly_driver"),
+    ("c1_hourly_binary", C1_WORKFLOW, r'"\$RUNNER_TEMP/c1/p6d/cteas_p6_native_hourly_driver"'),
     ("c1_frozen_143h", C1_WORKFLOW, r'--hours 143 --emit-source-stage-trace'),
     ("c1_original_is_frozen", C1_WORKFLOW, r'C1_CURRENT_NATIVE_P6_143H_AND_STRICT_FIELD_GATE=PASS'),
     ("c1_driver_bound_143h", C1_DRIVER, r'o\.hours<1\|\|o\.hours>143'),
