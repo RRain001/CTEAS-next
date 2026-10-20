@@ -1,4 +1,4 @@
-name: Issue42 S3-B1 authentic Huoshan terrain GLCC and GEO same-case source
+name: Issue42 S3-B1/B2 authentic Huoshan true source and original MAKEGEO numerical science
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
@@ -9,6 +9,8 @@ on:
       - native_cpp/orchestration/case_admission.py
       - docs/plans/ISSUE42_S3_B1_HUOSHAN_REAL_SOURCE_20261020.md
       - scripts/s2g/issue42_s3_b1_true_srtm_window.py
+      - native_cpp/reference/compare_p3_makegeo_dynamic.py
+      - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,12 +27,22 @@ jobs:
         with:
           lfs: true
           persist-credentials: false
+      - name: Checkout exactly pinned original Fortran MAKEGEO separately from C++ build
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/MAKEGEO_V3.2_L110401
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
       - name: Install approved original native build and independent grid dependencies
         run: |
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
-            g++-12 cmake libgdal-dev libssl-dev python3-gdal python3-rasterio python3-numpy python3-yaml python3-pyproj
+            g++-12 gfortran cmake libgdal-dev libssl-dev python3-gdal python3-rasterio python3-numpy python3-yaml python3-pyproj
       - name: Admit genuine SHA-verified already tracked SRTM90 and 156MB GLCC
         run: |
           set -euo pipefail
@@ -211,6 +223,129 @@ jobs:
           out.write_text(json.dumps(evidence,sort_keys=True,indent=2)+"\n")
           print("S3_HUOSHAN_REAL_DEM_GLCC_10K_NATIVE_GEO_SOURCE_SHA_LINK=PASS_PRODUCED_UNVERIFIED")
           PY
+      - name: Independently compile unchanged SHA-pinned original Fortran MAKEGEO 3.2
+        run: |
+          set -euo pipefail
+          vendor="$PWD/original_cteas/engine/vendor/src/MAKEGEO_V3.2_L110401"
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          echo "8c4fb11db36d4b976b54f470b7a06ce4e38ab09e934951b0e2c613bddc34e347  $vendor/makegeo.for" | sha256sum -c -
+          stage="$RUNNER_TEMP/s3-huoshan-original-stage"
+          mkdir -p "$stage"
+          for file in "$vendor"/*; do
+            lower="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$stage/$lower"
+          done
+          gfortran -std=legacy -ffixed-line-length-72 \
+            -fno-automatic -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$stage" "$stage/makegeo.for" -o "$RUNNER_TEMP/s3-huoshan-original-makegeo"
+          test -x "$RUNNER_TEMP/s3-huoshan-original-makegeo"
+          sha256sum "$RUNNER_TEMP/s3-huoshan-original-makegeo"
+      - name: Run original unmodified MAKEGEO on exact same Huoshan true-source TERREL and GLCC LU
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          case=root/"s3_huoshan_2022"
+          work=root/"s3-huoshan-original-run"
+          work.mkdir()
+          for fn,p in (
+              ("lu.dat",case/"geo/ctgproc/p2a_case/lu/lu.dat"),
+              ("terrel.dat",case/"geo/makegeo/p3_case/terrel.dat"),
+          ):
+              assert p.is_file() and p.stat().st_size>1000
+              (work/fn).symlink_to(p)
+          control=(case/"geo/makegeo/p3_case/makegeo.inp").read_text()
+          for key,value in (
+              ("LUDAT","lu.dat"),("TERRDAT","terrel.dat"),
+              ("GEODAT","original_geo.dat"),("RUNLST","original_makegeo.lst")
+          ):
+              control,count=re.subn(rf"(!\s*{key}\s*=\s*)([^!]*)(!)",
+                                    lambda m:m.group(1)+value+" "+m.group(3),control)
+              assert count==1,(key,count)
+          (work/"makegeo.inp").write_text(control)
+          (work/"MAKEGEO.INP").symlink_to("makegeo.inp")
+          lu=(work/"lu.dat").read_text().splitlines()
+          assert len(lu)==10011,("not exactly 10000 real Huoshan 38-class LU rows",len(lu))
+          for index,line in enumerate(lu[11:]):
+              vals=line.split()
+              assert len(vals)==41,("original Fortran list-directed requires 2 indices+38 reals+marker",index,len(vals))
+              assert (int(vals[0]),int(vals[1]))==(index%100+1,index//100+1)
+              assert vals[40] in (".","Missing")
+              assert all(0<=float(x)<=1 for x in vals[2:40])
+          print("HUOSHAN_ORIGINAL_FORTRAN_10000_REAL_38CLASS_LU_SOURCE_ADMISSION=PASS")
+          PY
+          (
+            cd "$RUNNER_TEMP/s3-huoshan-original-run"
+            timeout 1800 "$RUNNER_TEMP/s3-huoshan-original-makegeo" > original_stdout.log 2>&1 || {
+              tail -n 80 original_stdout.log
+              test ! -f original_makegeo.lst || tail -n 80 original_makegeo.lst
+              exit 1
+            }
+            test -s original_geo.dat || { tail -n 80 original_stdout.log; exit 1; }
+            sha256sum original_geo.dat
+          )
+      - name: Independent original/C++ 10000-grid-times-eight selected physics numerical science
+        run: |
+          set -euo pipefail
+          native="$RUNNER_TEMP/s3_huoshan_2022/geo/makegeo/p3_case"
+          /usr/bin/python3 -m native_cpp.reference.compare_p3_makegeo_dynamic \
+            --original-geo "$RUNNER_TEMP/s3-huoshan-original-run/original_geo.dat" \
+            --cpp-csv "$native/p3.csv" --cpp-geo "$native/geo.dat" \
+            --report "$RUNNER_TEMP/s3-huoshan-original-geo-80k.json" \
+            --zone 50 --hem N --nx 100 --ny 100 \
+            --xrefkm 462.305 --yrefkm 3501.570 --dgridkm 0.100
+          /usr/bin/python3 - <<'PY'
+          import json,os,hashlib
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          proof=json.loads((root/"s3-huoshan-original-geo-80k.json").read_text())
+          case=root/"s3_huoshan_2022"
+          p2=json.loads((case/"evidence/p2.json").read_text())
+          p3=json.loads((case/"evidence/p3.json").read_text())
+          src=json.loads((case/"inputs/p1_srtm90_source_window.json").read_text())
+          digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert proof["status"]=="P3_NONHEFEI_ORIGINAL_MAKEGEO_PASS"
+          assert proof["failures"]==0 and proof["values_compared"]==80000
+          assert all(x["displayed_value_mismatches"]==0 and
+                     x["csv_outside_fixed_precision_tolerance"]==0
+                     for x in proof["metrics"].values())
+          assert proof["native_geo_sha256"]==p3["geo_dat_sha256"]
+          assert proof["native_csv_sha256"]==p3["p3_csv_sha256"]
+          assert proof["original_geo_sha256"]==digest(root/"s3-huoshan-original-run/original_geo.dat")
+          assert p3["p1_tif_sha256"]==src["cropped_source_sha256"]
+          assert p3["p2_lu_dat_sha256"]==p2["lu_dat_sha256"]
+          assert p3["case_yaml_sha256"]==p2["case_yaml_sha256"]
+          assert p3["grid_cmn_sha256"]==p2["grid_cmn_sha256"]
+          assert p3["research_time_sha256"]==p2["research_time_sha256"]
+          certificate={
+            "status":"S3_HUOSHAN_SELECTED_P3_ORIGINAL_MAKEGEO_80K_SCIENCE_PASS_SCOPED",
+            "site":"HUOSHAN_REAL_SOURCE_NOT_HEFEI_OR_WOLSONG",
+            "selected_original_source_ref":"RRain001/CTEAS@dfad99a78ed84d655e21411c9d25eb0d2583bf13",
+            "selected_original_makegeo_sha256":"8c4fb11db36d4b976b54f470b7a06ce4e38ab09e934951b0e2c613bddc34e347",
+            "source_srtm90_parent_sha256":src["parent_original_tif_sha256"],
+            "source_srtm90_window_sha256":src["cropped_source_sha256"],
+            "source_glcc_sha256":p2["source_img_sha256"],
+            "case_yaml_sha256":p3["case_yaml_sha256"],
+            "grid_cmn_sha256":p3["grid_cmn_sha256"],
+            "research_time_sha256":p3["research_time_sha256"],
+            "p2_lu_dat_sha256":p2["lu_dat_sha256"],
+            "native_terrel_sha256":p3["terrel_dat_sha256"],
+            "native_geo_sha256":p3["geo_dat_sha256"],
+            "original_geo_sha256":proof["original_geo_sha256"],
+            "original_comparison_report_sha256":digest(root/"s3-huoshan-original-geo-80k.json"),
+            "native_geo_fields_compared":80000,"numerical_errors":0,
+            "physical_scope":"SELECTED_ORIGINAL_NO_SNOW_38_TO_14_ONLY",
+            "P4_UP":"NOT_RUN","P5_SURF":"NOT_RUN","G19_SOURCE":"NOT_RUN",
+            "S3_REAL_P1_P5_STACK":"NOT_ACCEPTED","docker":"DEFERRED"
+          }
+          out=case/"evidence/s3-huoshan-original-p3-science.json"
+          assert not out.exists()
+          out.write_text(json.dumps(certificate,indent=2,sort_keys=True)+"\n")
+          print("S3_HUOSHAN_TRUE_ORIGINAL_MAKEGEO_80000_DISPLAYED_VALUES_ZERO_DIFF=PASS_SCOPED")
+          print("S3_P4_P5_G19=NOT_RUN")
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -220,6 +355,8 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/p2.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/p3.json
             ${{ runner.temp }}/s3_huoshan_2022/inputs/p1_srtm90_source_window.json
+            ${{ runner.temp }}/s3-huoshan-original-geo-80k.json
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-original-p3-science.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s3-huoshan-b1-real-terrel-glcc-geo.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/raw/p2_manifest.json
             ${{ runner.temp }}/s3_huoshan_2022/geo/ctgproc/p2a_case/lu/p2_d3_manifest.json
