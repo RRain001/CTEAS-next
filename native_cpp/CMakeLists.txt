@@ -140,7 +140,7 @@ target_link_libraries(cteas_p2_glcc_gen_test_driver PRIVATE cteas_p2_glcc_source
 
 # Issue #123 D3: opt-in coastal RECOUNT from immutable P2-A source mesh trace.
 # This deliberately links no production CLI; baseline GLCC and frozen
-# Wolsong EXACT_AREA_V1 remain unchanged.
+# P2-A and P2-C source-faithful production controls remain unchanged.
 add_library(cteas_p2_original_sampling_recount STATIC
             src/geo/ctgproc_original_sampling_recount.cpp)
 target_include_directories(cteas_p2_original_sampling_recount
