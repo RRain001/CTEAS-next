@@ -88,7 +88,12 @@ def independent_coast_geometry(bln:Path):
         cursor+=1+n
         require(coords[0]==coords[-1],"BLN_POLYGON_NOT_CLOSED")
         p=Polygon(coords)
-        require(p.is_valid and p.area>0,"BLN_GEOMETRY_NOT_VALID")
+        # Original COASTEXT clipping can yield a self-touching polygon.
+        # CTGPROC PNPOLY accepts its frozen *ring* rather than requiring
+        # a GEOS-valid polygon. Keep original vertex order unchanged;
+        # independently evaluate as GEOS predicate and require zero HITS
+        # difference, never silently buffer(0) or repair geometry.
+        require(p.area>0 and len(coords)>=4,"BLN_EMPTY_GEOMETRY")
         poly.append(p)
     require(len(poly)==1,"WOLSONG_REVIEWED_SINGLE_L1_POLYGON")
     # Prepared GEOS point membership differs algorithmically from REAL*4
