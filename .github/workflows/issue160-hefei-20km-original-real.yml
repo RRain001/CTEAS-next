@@ -1,0 +1,145 @@
+name: Issue160 C1 Hefei 20km original GLCC full integer and F6.3 science
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - scripts/s2g/issue160_hefei_glcc_science.py
+      - native_cpp/src/p2_original_sampling_hefei_cli.cpp
+      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
+      - native_cpp/CMakeLists.txt
+      - .github/workflows/issue160-hefei-20km-original-real.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authentic-original-hefei-200x200:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout real original source input (LFS required)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Checkout pinned original CTGPROC source
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout-cone-mode: true
+          lfs: false
+          persist-credentials: false
+      - name: Original runtime dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            gfortran g++-12 cmake libgdal-dev libssl-dev
+      - name: Pin both original 156MB input and original source SHA
+        run: |
+          set -euo pipefail
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          test "$(wc -c < eausgs2_0la.img)" -eq 156000000
+          echo "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  eausgs2_0la.img" | sha256sum -c -
+          echo "719abbd2327269bb0377208b3a7a0c74000b878efc756686023bbb2ef932f281  $vendor/ctgproc.for" | sha256sum -c -
+      - name: Independently build genuine CTGPROC with audited GNU I/O-only adapters
+        run: |
+          set -euo pipefail
+          vendor="$PWD/original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211"
+          stage="$RUNNER_TEMP/issue160-fortran-stage"
+          mkdir -p "$stage"
+          for file in "$vendor"/*; do
+            bn="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$stage/$bn"
+          done
+          rm "$stage/ctgproc.for" "$stage/params.ctg"
+          cp "$vendor/ctgproc.for" "$stage/ctgproc.for"
+          cp "$vendor/params.ctg" "$stage/params.ctg"
+          echo "28dc5877c6a70d74f7a0e136bdd4aa1777dc9cbab15c184e7f483f772cd266c6  $stage/params.ctg" | sha256sum -c -
+          python3 -m scripts.s2g.issue123_gfortran_eof_adapter \
+            --original-source "$vendor/ctgproc.for" \
+            --staged-source "$stage/ctgproc.for" \
+            --manifest "$RUNNER_TEMP/issue160-eof-adapter.json"
+          python3 -m scripts.s2g.issue123_gfortran_split_io_adapter \
+            --original-source "$vendor/ctgproc.for" \
+            --original-params "$vendor/params.ctg" \
+            --staged-source "$stage/ctgproc.for" \
+            --staged-params "$stage/params.ctg" \
+            --manifest "$RUNNER_TEMP/issue160-split-adapter.json"
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$stage" "$stage/ctgproc.for" \
+            -o "$RUNNER_TEMP/issue160-original-ctgproc"
+          sha256sum "$RUNNER_TEMP/issue160-original-ctgproc"
+          echo 'ADAPTED_IO_ONLY_ORIGINAL_BUILD=PASS_IF_THIS_STEP_PASSES'
+      - name: Compile native inland consumer and historical writer
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp -B "$RUNNER_TEMP/issue160-c1-native-build" \
+            -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/issue160-c1-native-build" --parallel 2 \
+            --target cteas_p2_original_sampling_hefei \
+              cteas_p2_original_sampling_lu_tests
+          ctest --test-dir "$RUNNER_TEMP/issue160-c1-native-build" \
+            -R '^cteas_p2_original_sampling_lu_writer_synthetic$' --output-on-failure
+          python3 -m py_compile scripts/s2g/issue160_hefei_glcc_science.py
+      - name: Generate frozen inland original LFINAL-F and LFINAL-T controls
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue160_hefei_glcc_science prepare \
+            --template original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.inp \
+            --original-source original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --glcc eausgs2_0la.img \
+            --out "$RUNNER_TEMP/issue160-c1-original"
+      - name: Execute actual original CTGPROC twice with identical inputs and only LFINAL differing
+        run: |
+          set -euo pipefail
+          (
+            cd "$RUNNER_TEMP/issue160-c1-original/original_hits"
+            timeout 1200 "$RUNNER_TEMP/issue160-original-ctgproc" > fortran.log 2>&1 || {
+              tail -n 40 fortran.log
+              exit 1
+            }
+            test -s lu.dat || { echo "P2C_ORIGINAL_HEFEI_LFINAL_F_NOT_PRODUCED"; exit 2; }
+          )
+          (
+            cd "$RUNNER_TEMP/issue160-c1-original/original_fractions"
+            timeout 1200 "$RUNNER_TEMP/issue160-original-ctgproc" > fortran.log 2>&1 || {
+              tail -n 40 fortran.log
+              exit 1
+            }
+            test -s lu.dat || { echo "P2C_ORIGINAL_HEFEI_LFINAL_T_NOT_PRODUCED"; exit 2; }
+          )
+          echo 'ORIGINAL_FORTRAN_BOTH_RUNS=COMPLETED_COMPARISON_PENDING'
+      - name: Produce native genuine GLCC 200x200 inland HITS CSV and LU.DAT
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/issue160-c1-native-build/cteas_p2_original_sampling_hefei" \
+            "$GITHUB_WORKSPACE/eausgs2_0la.img" \
+            "$RUNNER_TEMP/issue160-c1-native"
+      - name: Independent strict 1,520,000 HITS and F6.3 and all Missing comparison
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s2g.issue160_hefei_glcc_science compare \
+            --case "$RUNNER_TEMP/issue160-c1-original" \
+            --glcc "$GITHUB_WORKSPACE/eausgs2_0la.img" \
+            --original-source original_cteas/engine/vendor/src/CTGPROC_v7.0.0_L150211/ctgproc.for \
+            --native "$RUNNER_TEMP/issue160-c1-native" \
+            --out "$RUNNER_TEMP/issue160-c1-science.json"
+          echo 'P2C_C1_HEFEI_ORIGINAL_GLCC=PASS_IF_ALL_FIELDS_ZERO_DIFFERENCE GLC30M_SAMPLING=NOT_RUN'
+      - name: Preserve bounded SHA and mismatches report only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue160-c1-hefei-historical-glcc-original-science
+          path: |
+            ${{ runner.temp }}/issue160-c1-original/prepare.json
+            ${{ runner.temp }}/issue160-c1-native/p2_original_sampling_manifest.json
+            ${{ runner.temp }}/issue160-c1-science.json
+            ${{ runner.temp }}/issue160-eof-adapter.json
+            ${{ runner.temp }}/issue160-split-adapter.json
+          retention-days: 21
+          if-no-files-found: warn
