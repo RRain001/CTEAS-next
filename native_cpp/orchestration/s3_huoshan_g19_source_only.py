@@ -37,9 +37,9 @@ def run(case_yaml: Path, native_binary: Path) -> dict:
     admission = admit_case(case_yaml)
     root = admission.case_path.parent
     if (admission.research_begin, admission.research_end) != (
-        "20220601-000000", "20220602-000000"
+        "20220601-010000", "20220601-070000"
     ):
-        raise ValueError("S3-B6 requires exact original-science June Huoshan 2022 case")
+        raise ValueError("S3-B6 requires original NOAA 00/12-bracketed six-hour Huoshan case")
     join = root / "evidence/s3-b0-five-source-preflight.json"
     if join.is_symlink() or not join.is_file():
         raise ValueError("S3-B6 original five-source SHA admission not run")
