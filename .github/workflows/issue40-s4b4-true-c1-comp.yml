@@ -78,7 +78,7 @@ jobs:
           test -s "$frozen"
           echo 'S4B4_C1_ORIGINAL_FROZEN_143H_NOT_FRESHLY_RUN=YES'
           "$RUNNER_TEMP/b4/cteas_p6g_s4b4_extract_original_c1_first_hour" \
-            "$frozen" "$RUNNER_TEMP/b4-original-first-hour.dat"
+            "$frozen" "$RUNNER_TEMP/b4-original-first-hour.dat" 1
           "$RUNNER_TEMP/b4-p6e/p6e_calmet_dat21" compare \
             --reference "$RUNNER_TEMP/b4-original-first-hour.dat" \
             --candidate "$RUNNER_TEMP/b4-c1-first-hour-candidate.dat" \
@@ -90,6 +90,33 @@ jobs:
           assert d["intervals"]==1 and d["fields_per_hour"]==45
           assert d["total_exceedances"]==0, "C1 native 1h exceeds original tolerance"
           print("S4B4_C1_1H_FROZEN_ORIGINAL_VS_NEW_UNIFIED_45FIELDS=PASS_SCOPED")
+          PY
+      - name: Original C1 six-hour causal G14 and frozen CALMET 270-field parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --met "$c/run/met/met.inp" \
+            --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 143 --probe-prefix-hours 6 \
+            --out "$RUNNER_TEMP/b4-c1-six-hour-candidate.dat" \
+            | tee "$RUNNER_TEMP/b4-c1-six-hour-trace.log"
+          "$RUNNER_TEMP/b4/cteas_p6g_s4b4_extract_original_c1_first_hour" \
+            "$c/run/met/met.dat" "$RUNNER_TEMP/b4-original-six-hour.dat" 6
+          "$RUNNER_TEMP/b4-p6e/p6e_calmet_dat21" compare \
+            --reference "$RUNNER_TEMP/b4-original-six-hour.dat" \
+            --candidate "$RUNNER_TEMP/b4-c1-six-hour-candidate.dat" \
+            --out "$RUNNER_TEMP/b4-original-vs-native-six-hour-45-fields.json" \
+            > "$RUNNER_TEMP/b4-original-vs-native-six-hour.log"
+          python3 - "$RUNNER_TEMP/b4-original-vs-native-six-hour-45-fields.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["intervals"]==6 and d["fields_per_hour"]==45
+          assert d["total_exceedances"]==0
+          print("S4B4_C1_6H_FROZEN_ORIGINAL_VS_NEW_UNIFIED_270FIELDS=PASS_SCOPED")
           PY
       - name: Strictly refuse fabricated station, production mode and an invalid prefix
         shell: bash
@@ -123,5 +150,8 @@ jobs:
             ${{ runner.temp }}/b4-first-hour-sha256.txt
             ${{ runner.temp }}/b4-original-vs-native-first-hour-45-fields.json
             ${{ runner.temp }}/b4-original-vs-native-first-hour.log
+            ${{ runner.temp }}/b4-original-vs-native-six-hour-45-fields.json
+            ${{ runner.temp }}/b4-original-vs-native-six-hour.log
+            ${{ runner.temp }}/b4-c1-six-hour-trace.log
           if-no-files-found: warn
           retention-days: 14
