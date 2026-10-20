@@ -730,11 +730,13 @@ static void verify_source_staged_iavet(
     one_f.station_set.upper.resize(1);
     one_f.series.station_ids.resize(1);
     one_f.series.hourly.front().by_station.resize(1);
-    auto one_frame=frame;
-    one_frame.stations=one_f.station_set;
-    one_frame.surface=one_f.series.hourly.front();
-    one_frame.upper.resize(1);
-    one_frame.input.upper.resize(1);
+    auto one_slot=slot;
+    one_slot.upper.resize(1);
+    auto one_upper=upper;
+    one_upper.resize(1);
+    p6g::MultiHourFrame one_frame{
+        0,one_f.grid,one_f.station_set,one_f.series.hourly.front(),
+        one_slot,one_upper,&wind,prior,prior,{}};
     auto one_surface=one_f.make();
     const auto& initial_first=stages.wind_stages().first_guess;
     one_surface.after_wind1_before_fradj(
@@ -758,17 +760,23 @@ static void verify_source_staged_iavet(
           one_frame.previous.ziconv_m==prior.ziconv_m &&
           one_frame.previous.dptt_k==prior.dptt_k,
           "G17C3 actual-count 1SS1US selected STHEOR/MIXHTST/DIAGI failed");
-    auto bad_one_frame=one_frame;
-    bad_one_frame.stations.surface.clear();
+    auto empty_surface_deck=one_f.station_set;
+    empty_surface_deck.surface.clear();
+    p6g::MultiHourFrame empty_surface_frame{
+        0,one_f.grid,empty_surface_deck,one_f.series.hourly.front(),
+        one_slot,one_upper,&wind,prior,prior,{}};
     rejects([&]{
         (void)p6g::selected_station_diagi_from_previous_comp(
-            bad_one_frame,one_surface,one_heat,one_sc);
+            empty_surface_frame,one_surface,one_heat,one_sc);
     },"G17C3 admitted zero source surface stations");
-    bad_one_frame=one_frame;
-    bad_one_frame.stations.upper.clear();
+    auto empty_upper_deck=one_f.station_set;
+    empty_upper_deck.upper.clear();
+    p6g::MultiHourFrame empty_upper_frame{
+        0,one_f.grid,empty_upper_deck,one_f.series.hourly.front(),
+        one_slot,one_upper,&wind,prior,prior,{}};
     rejects([&]{
         (void)p6g::selected_station_diagi_from_previous_comp(
-            bad_one_frame,one_surface,one_heat,one_sc);
+            empty_upper_frame,one_surface,one_heat,one_sc);
     },"G17C3 admitted zero source upper stations");
     auto wrong_one_sc=one_sc;
     wrong_one_sc.upper_ordinal_for_surface={1};
@@ -776,17 +784,23 @@ static void verify_source_staged_iavet(
         (void)p6g::selected_station_diagi_from_previous_comp(
             one_frame,one_surface,one_heat,wrong_one_sc);
     },"G17C3 invented nonexistent single upper ordinal");
-    bad_one_frame=one_frame;
-    bad_one_frame.upper[0].soundings.front().end=one_frame.input.end+hours{2};
+    auto future_only_upper=one_upper;
+    future_only_upper[0].soundings.front().end=one_frame.input.end+hours{2};
+    p6g::MultiHourFrame future_only_frame{
+        0,one_f.grid,one_f.station_set,one_f.series.hourly.front(),
+        one_slot,future_only_upper,&wind,prior,prior,{}};
     rejects([&]{
         (void)p6g::selected_station_diagi_from_previous_comp(
-            bad_one_frame,one_surface,one_heat,one_sc);
+            future_only_frame,one_surface,one_heat,one_sc);
     },"G17C3 used future-only upper sounding for 1SS1US STHEOR");
-    bad_one_frame=one_frame;
-    bad_one_frame.surface.by_station[0].wind_valid=false;
+    auto missing_wind_hour=one_f.series.hourly.front();
+    missing_wind_hour.by_station[0].wind_valid=false;
+    p6g::MultiHourFrame missing_wind_frame{
+        0,one_f.grid,one_f.station_set,missing_wind_hour,
+        one_slot,one_upper,&wind,prior,prior,{}};
     rejects([&]{
         (void)p6g::selected_station_diagi_from_previous_comp(
-            bad_one_frame,one_surface,one_heat,one_sc);
+            missing_wind_frame,one_surface,one_heat,one_sc);
     },"G17C3 invented invalid single surface wind observation");
     p6g::G16ObservedProfiles single_columns;
     single_columns.end=initial_profiles.end;
