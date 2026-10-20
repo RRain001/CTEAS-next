@@ -31,7 +31,9 @@ jobs:
           repository: RRain001/CTEAS
           ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
           path: original_cteas
-          sparse-checkout: engine/vendor/src/CTGPROC_v7.0.0_L150211
+          sparse-checkout: |
+            engine/vendor/src/CTGPROC_v7.0.0_L150211
+            engine/vendor/src/MAKEGEO_V3.2_L110401
           sparse-checkout-cone-mode: true
           lfs: false
           persist-credentials: false
