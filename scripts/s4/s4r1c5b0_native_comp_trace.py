@@ -32,6 +32,7 @@ def verify(path: Path, nx: int, ny: int, hours: int) -> dict:
     first_epoch = None
     previous_post = None
     current_post = [None] * n
+    current_pre = [None] * n
     per_hour = [{"hour": h, "post_positive_ziconv": 0,
                  "post_positive_zi": 0, "changed_during_hour": 0}
                 for h in range(hours)]
@@ -64,13 +65,14 @@ def verify(path: Path, nx: int, ny: int, hours: int) -> dict:
                 raise ValueError("negative native mixing height")
             current_bits = tuple(bits(x) for x in values)
             if stage_number == 0:
+                current_pre[idx] = current_bits
                 if previous_post is not None and previous_post[idx] != current_bits:
                     raise ValueError(f"previous committed COMP state not carried at hour {hour}, cell {(i,j)}")
             else:
                 current_post[idx] = current_bits
                 per_hour[hour]["post_positive_ziconv"] += values[1] > 0
                 per_hour[hour]["post_positive_zi"] += values[0] > 0
-                if previous_post is not None and previous_post[idx] != current_bits:
+                if current_pre[idx] != current_bits:
                     per_hour[hour]["changed_during_hour"] += 1
             total += 1
             if total % (2 * n) == 0:
@@ -78,6 +80,7 @@ def verify(path: Path, nx: int, ny: int, hours: int) -> dict:
                     raise ValueError("incomplete native POST_COMP hour")
                 previous_post = current_post
                 current_post = [None] * n
+                current_pre = [None] * n
     if total != 2 * n * hours:
         raise ValueError(f"short native COMP state trace: {total} rows")
     result = {
@@ -113,7 +116,9 @@ def selftest() -> None:
     with tempfile.TemporaryDirectory() as d:
         trace = Path(d) / "trace.csv"
         trace.write_text("\n".join(lines) + "\n")
-        assert verify(trace, nx, ny, hours)["handoff_cell_pairs"] == 4
+        accepted = verify(trace, nx, ny, hours)
+        assert accepted["handoff_cell_pairs"] == 4
+        assert [x["changed_during_hour"] for x in accepted["hourly_diagnostics"]] == [4, 4]
         tampered = lines.copy()
         # Hour 2 PRE must equal hour 1 POST, not a zero or forged reset.
         target = 1 + 2 * nx * ny
