@@ -43,6 +43,9 @@ g40_real_source_water_shortwave(const G19SourceClockCase& source,
        source.stations.surface.size()!=source.surface.station_ids.size()||
        source.controls.noobs!=0)
         throw std::invalid_argument("G40 genuine observed source missing");
+    if(g18c1_source_integer(source.original_metinp,"MCLOUD")!=1)
+        throw std::invalid_argument(
+            "G40 source-radiation bridge requires original MCLOUD=1 station clouds");
     const auto gate=g38_selected_noow_water_hflux_source_only(
         grid,source.original_metinp,true);
     if(gate.original_water_cell_indices.empty())
@@ -68,14 +71,22 @@ g40_real_source_water_shortwave(const G19SourceClockCase& source,
         for(std::size_t s=0;s<hour.by_station.size();++s) {
             const auto& obs=hour.by_station[s];
             const auto& loc=source.stations.surface[s];
-            if(!obs.cloud_valid||!obs.temperature_valid||
-               !std::isfinite(obs.temperature_k)||
-               obs.temperature_k<180.f||obs.temperature_k>350.f||
+            // The real NOAA 583140 sparse station may lack a temperature
+            // hour. Original SURFVAR does NOT fabricate it: RDSN supplies
+            // 9999 and SURFVAR skips this station when interpolating T.
+            // The dense genuine 583210 station supplies the valid T field.
+            // Cloud is independently mandatory for MCLOUD=1 HEATFX and
+            // remains source-owned; never repair or synthesize it here.
+            if(!obs.cloud_valid||
+               (obs.temperature_valid&&(!std::isfinite(obs.temperature_k)||
+                obs.temperature_k<180.f||obs.temperature_k>350.f))||
                obs.opaque_cloud_tenths<0||obs.opaque_cloud_tenths>10)
-                throw std::invalid_argument("G40 missing observed cloud/temperature");
+                throw std::invalid_argument(
+                    "G40 missing original station cloud or invalid VALID observed T");
             clouds.push_back(obs.opaque_cloud_tenths);
             spatial.stations.push_back({loc.local_x_m,loc.local_y_m,
-                obs.temperature_k,obs.humidity_valid?obs.humidity_pct:9999});
+                obs.temperature_valid?obs.temperature_k:9999.f,
+                obs.humidity_valid?obs.humidity_pct:9999});
         }
         // Real measured SURFVAR interpolation provides a valid temperature
         // carrier for frozen HEATFX. QSW algebra never depends on temperature.
