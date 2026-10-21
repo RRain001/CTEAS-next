@@ -1,0 +1,193 @@
+name: Issue40 S4-F C1 fresh unmodified original 143h versus normal G26
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4f-c1-fresh-original-143h.yml'
+      - 'docs/plans/ISSUE40_S4F_C1_FRESH_ORIGINAL_G26_143H_20261021.md'
+      - 'native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  c1-fresh-vendor-143h-g26-science:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 105
+    steps:
+      - name: Checkout exact proposed native source and LFS C1 reference
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: true
+      - name: Restore independently pinned untouched CALMET 6.5.0 original
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Establish C1 frozen observed source and independent original code identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4f-c1-fresh"
+          mkdir -p "$root/evidence"
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          python3 scripts/migration/configure_external_assets.py --source-repo original-cteas
+          python3 scripts/migration/configure_external_assets.py --check
+          vendor=engine/vendor/src/CALMET_v6.5.0_L150223
+          test -s "$vendor/calmet.for"
+          test "$(git hash-object "$vendor/calmet.for")" = 437f43bb7f0e51a1919e56664663e1a046986ed0
+          for f in run/met/met.inp geo/makegeo/geo.dat run/smerge/surf.dat met/upperair/final/up_58424.dat run/met/met.dat; do
+            test -s "$c/$f"
+          done
+          echo 'b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat' | sha256sum -c -
+          sha256sum "$c/run/met/met.inp" "$c/geo/makegeo/geo.dat" \
+            "$c/run/smerge/surf.dat" "$c/met/upperair/final/up_58424.dat" \
+            "$c/run/met/met.dat" > "$root/evidence/source-sha256.txt"
+          sha256sum "$vendor/calmet.for" > "$root/evidence/unmodified-calmet-fortran-sha256.txt"
+          git rev-parse HEAD > "$root/evidence/native-checkout-sha.txt"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gfortran-11 g++-12 cmake
+      - name: Compile fresh separate unmodified original CALMET and original P6E comparator
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4f-c1-fresh"
+          vendor="$PWD/engine/vendor/src/CALMET_v6.5.0_L150223"
+          mkdir -p "$root/calmet-inc"
+          for input in "$vendor"/*; do
+            if test -f "$input"; then
+              short="$(basename "$input" | tr '[:upper:]' '[:lower:]')"
+              ln -s "$(realpath "$input")" "$root/calmet-inc/$short"
+            fi
+          done
+          gfortran-11 -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$root/calmet-inc" "$vendor/calmet.for" -o "$root/fresh-original-calmet.x"
+          test -x "$root/fresh-original-calmet.x"
+          sha256sum "$root/fresh-original-calmet.x" > "$root/evidence/fresh-original-binary-sha256.txt"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/native-build" --parallel 2 --target cteas_p6g_s4b2_unified_selected
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$root/p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p6e" --parallel 2 --target p6e_calmet_dat21
+      - name: Isolate frozen C1 full input set with original MET removed before vendor execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4f-c1-fresh"
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          cp -a "$c" "$root/independent-original-c1"
+          cmp "$c/run/met/met.inp" "$root/independent-original-c1/run/met/met.inp"
+          cmp "$c/geo/makegeo/geo.dat" "$root/independent-original-c1/geo/makegeo/geo.dat"
+          cmp "$c/run/smerge/surf.dat" "$root/independent-original-c1/run/smerge/surf.dat"
+          cmp "$c/met/upperair/final/up_58424.dat" "$root/independent-original-c1/met/upperair/final/up_58424.dat"
+          rm "$root/independent-original-c1/run/met/met.dat"
+          test ! -e "$root/independent-original-c1/run/met/met.dat"
+          echo 'S4F_C1_FRESH_ORIGINAL_INPUT_ISOLATED_AND_EMPTY_MET=PASS'
+      - name: Execute unchanged freshly compiled original CALMET 143h independently
+        shell: bash
+        timeout-minutes: 45
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4f-c1-fresh"
+          (cd "$root/independent-original-c1/run/met" && \
+           "$root/fresh-original-calmet.x" met.inp) \
+             > "$root/evidence/fresh-original-calmet.stdout" \
+             2> "$root/evidence/fresh-original-calmet.stderr" || {
+                tail -n 80 "$root/evidence/fresh-original-calmet.stdout"
+                tail -n 80 "$root/evidence/fresh-original-calmet.stderr"
+                exit 1
+             }
+          test -s "$root/independent-original-c1/run/met/met.dat"
+          test -s "$root/independent-original-c1/run/met/met.lst"
+          sha256sum "$root/independent-original-c1/run/met/met.dat" \
+            > "$root/evidence/fresh-original-met-sha256.txt"
+          echo 'S4F_C1_143H_FRESH_UNMODIFIED_FORTRAN_EXECUTION=PRODUCED_UNVERIFIED'
+      - name: Independently compute the SAME observed C1 143h through normal G26 adapter
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4f-c1-fresh"
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          bin="$root/native-build/cteas_p6g_s4b2_unified_selected"
+          "$bin" --selected-experimental --g26-normal-entry-trial \
+            --met "$c/run/met/met.inp" --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/run/smerge/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" \
+            --hours 143 --out "$root/normal-g26-143h.dat" \
+            > "$root/evidence/normal-g26-143h.log"
+          grep -F 'G26_NORMAL_ENTRY_TRIAL=YES' "$root/evidence/normal-g26-143h.log"
+          grep -F 'PRODUCTION_ADMISSION=NOT_ACCEPTED' "$root/evidence/normal-g26-143h.log"
+          test -s "$root/normal-g26-143h.dat"
+          sha256sum "$bin" "$root/normal-g26-143h.dat" \
+            > "$root/evidence/normal-g26-sha256.txt"
+      - name: Compare FRESH original against native and SHA frozen original with all 45 fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4f-c1-fresh"
+          frozen=project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat
+          fresh="$root/independent-original-c1/run/met/met.dat"
+          native="$root/normal-g26-143h.dat"
+          tool="$root/p6e/p6e_calmet_dat21"
+          "$tool" compare --reference "$fresh" --candidate "$native" \
+            --out "$root/evidence/fresh-original-vs-normal-g26-143h.json" \
+            > "$root/evidence/fresh-original-vs-normal-g26-143h.log"
+          "$tool" compare --reference "$frozen" --candidate "$fresh" \
+            --out "$root/evidence/frozen-original-vs-fresh-original-143h.json" \
+            > "$root/evidence/frozen-original-vs-fresh-original-143h.log"
+          "$tool" compare --reference "$frozen" --candidate "$native" \
+            --out "$root/evidence/frozen-original-vs-normal-g26-143h.json" \
+            > "$root/evidence/frozen-original-vs-normal-g26-143h.log"
+          python3 - "$root" <<'PY'
+          import json,pathlib,sys,hashlib
+          root=pathlib.Path(sys.argv[1]); out=root/"evidence"
+          files=("fresh-original-vs-normal-g26-143h",
+                 "frozen-original-vs-fresh-original-143h",
+                 "frozen-original-vs-normal-g26-143h")
+          receipts={}
+          for name in files:
+              r=json.loads((out/(name+".json")).read_text())
+              assert r["intervals"]==143 and r["fields_per_hour"]==45
+              assert len(r["fields"])==45 and r["total_exceedances"]==0
+              assert r["status"]=="PASS"
+              receipts[name]={"status":r["status"],"total_exceedances":r["total_exceedances"]}
+          fresh=root/"independent-original-c1/run/met/met.dat"
+          native=root/"normal-g26-143h.dat"
+          frozen=pathlib.Path("project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat")
+          def digest(path):
+              h=hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda:stream.read(1024*1024),b""):h.update(chunk)
+              return h.hexdigest()
+          assert digest(frozen)=="b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30"
+          receipt={
+              "status":"S4F_C1_143H_FRESH_ORIGINAL_VS_G26_6435_FIELDS_PASS_SCOPED",
+              "case":"real observed-source C1 Hefei 2022 1SS/1US NX50 NY50 NZ9 no rain",
+              "hours":143,"fields_per_hour":45,"field_hour_groups":6435,
+              "actual_independent_fortran_rerun":True,
+              "original_fortran_blob":"437f43bb7f0e51a1919e56664663e1a046986ed0",
+              "frozen_reference_sha256":digest(frozen),
+              "fresh_original_met_sha256":digest(fresh),
+              "normal_g26_met_sha256":digest(native),
+              "comparison_results":receipts,
+              "production_g26":"NOT_ACCEPTED","p7":"NOT_EVALUATED",
+              "scientific_options":"selected no-rain 9-layer CALMET only"}
+          (out/"c1-143h-fresh-original-g26-receipt.json").write_text(
+              json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("S4F_C1_143H_FRESH_ORIGINAL_AND_NORMAL_G26_ALL_6435_FIELD_GROUPS=PASS_SCOPED")
+          PY
+      - name: Retain signed source lineage and bounded scientific metrics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4f-g26-c1-143h-independent-fresh-original-science
+          path: |
+            ${{ runner.temp }}/s4f-c1-fresh/evidence/
+          retention-days: 21
+          if-no-files-found: warn
