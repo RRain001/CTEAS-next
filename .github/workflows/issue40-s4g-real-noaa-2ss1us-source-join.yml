@@ -69,6 +69,30 @@ jobs:
             --evidence-out "$root/p4-real-2022.json" > "$root/evidence/p4-run.log"
           grep -q 'G1BB1_REAL_NOAA_ANQING_NATIVE_P4_UP_SOURCE_PASS_SCOPED' "$root/evidence/p4-run.log"
           echo 'S4G_REAL_ANQING_UP=PRODUCED_SOURCE_ONLY'
+      - name: Diagnose retired NCEI ISD-Lite versus NOAA NODD real-source locations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from urllib.request import urlopen,Request
+          import hashlib
+          sources={
+            "NCEI_retired":"https://www.ncei.noaa.gov/pub/data/noaa/isd-lite/2022/583140-99999-2022.gz",
+            "NODD_flat":"https://noaa-isd-pds.s3.amazonaws.com/isd-lite/2022/583140-99999-2022.gz",
+            "NODD_data":"https://noaa-isd-pds.s3.amazonaws.com/isd-lite/data/2022/583140-99999-2022.gz",
+            "NODD_root":"https://noaa-isd-pds.s3.amazonaws.com/2022/583140-99999-2022.gz",
+          }
+          for label,url in sources.items():
+              try:
+                  with urlopen(Request(url,headers={"User-Agent":"cteas-s4g-noaa-observation-source-probe"}),timeout=16) as r:
+                      raw=r.read(300000)
+                      mime=r.headers.get("Content-Type","")
+                      print("S4G_NOAA_OFFICIAL_SOURCE",label,"status",r.status,
+                            "gzip",raw[:2]==b"\\x1f\\x8b","bytes",len(raw),
+                            "sha256",hashlib.sha256(raw).hexdigest() if raw[:2]==b"\\x1f\\x8b" else "NON_GZIP","type",mime)
+              except Exception as exc:
+                  print("S4G_NOAA_OFFICIAL_SOURCE",label,"error",str(exc)[:180])
+          PY
       - name: Actually reexecute real original NOAA two-station P5 and original Fortran SMERGE
         shell: bash
         run: |
