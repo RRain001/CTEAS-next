@@ -3,6 +3,7 @@
 // Dynamic station IDs, years, soundings and input hours. Frozen P6C reader
 // is unchanged; this adapter does not complete CALMET AA/BB COMP execution.
 #include "cteas/p6/read_upper.hpp"
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -168,20 +169,34 @@ inline std::vector<UpperSeries> read_upper_station_set(
     const std::vector<std::string>& files,
     const std::vector<int>& deck_station_ids,
     std::size_t max_soundings_per_station=100000,
-    bool allow_validated_archive_tail=false) {
-    // No arbitrary station-number ceiling: one original-format UP file per
-    // source US; hour and sounding allocation are independently bounded.
+    bool allow_validated_archive_tail=false,
+    std::size_t max_total_soundings=2000000) {
+    // One real UP file for every declared station; independent total
+    // sounding budget avoids N * per-station-limit unbounded allocation.
+    // This is a source-record budget, NOT a fixed number-of-stations cap
+    // or an estimate of peak memory usage.
     require_upper(!files.empty()&&files.size()==deck_station_ids.size(),
                   "UP.DAT station set size/identity mismatch");
+    require_upper(max_soundings_per_station>0&&max_total_soundings>0&&
+                  files.size()<=max_total_soundings,
+                  "UP.DAT source count exceeds aggregate sounding budget");
     std::set<int> seen;
     std::vector<UpperSeries> result;
     result.reserve(files.size());
+    std::size_t remaining=max_total_soundings;
     for(std::size_t i=0;i<files.size();++i){
         require_upper(seen.insert(deck_station_ids[i]).second,
                       "UP.DAT duplicate upper-air station in deck");
-        result.push_back(read_upper_dynamic(files[i],deck_station_ids[i],
-                                           max_soundings_per_station,24,
-                                           allow_validated_archive_tail));
+        require_upper(remaining>0,
+                      "UP.DAT aggregate sounding budget exhausted");
+        const auto station_budget=std::min(max_soundings_per_station,remaining);
+        auto source=read_upper_dynamic(files[i],deck_station_ids[i],
+                                       station_budget,24,
+                                       allow_validated_archive_tail);
+        require_upper(source.soundings.size()<=remaining,
+                      "UP.DAT aggregate sounding budget exceeded");
+        remaining-=source.soundings.size();
+        result.push_back(std::move(source));
     }
     return result;
 }
