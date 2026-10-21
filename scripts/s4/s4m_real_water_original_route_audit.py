@@ -50,9 +50,9 @@ def audit(vendor: Path, deck: Path, geo: Path) -> dict:
     if pinned != PINNED_BLOB:
         raise ValueError("original CALMET source identity changed")
     lines = vendor.read_text().splitlines()
-    comp_start = single_location(lines, r"^subroutine\\s+comp\\s*(?:\\(|$)", 1, len(lines))
+    comp_start = single_location(lines, r"^subroutine\s+comp\s*(?:\(|$)", 1, len(lines))
     next_sub = min(i for i, text in statement_lines(lines, comp_start + 1, len(lines))
-                   if re.match(r"^subroutine\\s+\\w+\\s*(?:\\(|$)", text))
+                   if re.match(r"^subroutine\s+\w+\s*(?:\(|$)", text))
     first_comp = statement_lines(lines, comp_start, next_sub - 1)
     heat = [i for i, text in first_comp if re.search(r"\bcall\s+heatfx\s*\(", text)]
     water = [i for i, text in first_comp if re.search(r"\bcall\s+water\s*\(", text)]
@@ -66,7 +66,7 @@ def audit(vendor: Path, deck: Path, geo: Path) -> dict:
     subwaterp = single_location(lines, r"^subroutine\s+waterp\s*\(", 1, len(lines))
     neutral_to = single_location(lines, r"if\s*\(\s*nowsta\s*\.eq\.\s*0\s*\)\s*go\s+to\s+1200",
                                  subwater, subwaterp)
-    labels = [i for i in range(subwater, subwaterp) if re.search(r"^\\s*1200\\s+continue\\s*$", lines[i - 1], re.I)]
+    labels = [i for i in range(subwater, subwaterp) if re.search(r"^\s*1200\s+continue\s*$", lines[i - 1], re.I)]
     if len(labels) != 1:
         raise ValueError("original WATER neutral fixed-form label 1200 missing")
     neutral_start = labels[0]
