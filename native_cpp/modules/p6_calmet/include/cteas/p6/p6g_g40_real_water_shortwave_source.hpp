@@ -20,6 +20,7 @@ struct G40WaterRadiationRecord {
     int one_based_i=0,one_based_j=0,utc_hour_end=0;
     int category=0,nearest_station_ordinal=0,cloud_tenths=0;
     float solar_sine=0.f,qsw_wm2=0.f,qh_water_wm2=0.f;
+    float observed_temperature_carrier_k=0.f;
 };
 struct G40SelectedOriginalWaterShortwave {
     std::vector<G40WaterRadiationRecord> rows;
@@ -116,7 +117,7 @@ g40_real_source_water_shortwave(const G19SourceClockCase& source,
                 utc_end,grid.landuse[k],s,
                 input.station_cloud[static_cast<std::size_t>(s-1)],
                 input.sun[k],heat.shortwave_wm2[k],
-                heat.sensible_wm2[k]});
+                heat.sensible_wm2[k],input.temp_k[k]});
         }
     }
     if(result.rows.size()!=gate.original_water_cell_indices.size()*
