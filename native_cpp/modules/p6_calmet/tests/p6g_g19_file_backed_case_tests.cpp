@@ -434,6 +434,37 @@ static void check_unbounded_original_source_cardinality(
                 static_cast<std::size_t>(std::numeric_limits<int>::max()),
                 static_cast<std::size_t>(nss*6-1));
         },"G19 refused to fail closed on SURF station-hours budget");
+        // S4-E: a true aggregate sounding budget is enforced across
+        // independent US files, rather than granting EACH US the complete
+        // limit. Positive at the exact source size, negative one record
+        // below it; no original observations are modified.
+        std::vector<int> actual_upper_ids;
+        actual_upper_ids.reserve(source.stations.upper.size());
+        std::size_t actual_sounding_count=0;
+        for(const auto& upper:source.upper) {
+            actual_upper_ids.push_back(upper.station_id);
+            check(upper.soundings.size()<=
+                      std::numeric_limits<std::size_t>::max()-actual_sounding_count,
+                  "G19 test aggregate sounding count overflow");
+            actual_sounding_count+=upper.soundings.size();
+        }
+        check(actual_sounding_count>=static_cast<std::size_t>(nus),
+              "G19 accepted missing per-site upper soundings");
+        const auto within_budget=p6g::read_upper_station_set(
+            paths.ordered_up_dat,actual_upper_ids,100000,true,
+            actual_sounding_count);
+        check(within_budget.size()==static_cast<std::size_t>(nus),
+              "G19 aggregate UP count exact-budget source rejected");
+        rejects([&]{
+            (void)p6g::read_upper_station_set(
+                paths.ordered_up_dat,actual_upper_ids,100000,true,
+                actual_sounding_count-1);
+        },"G19 accepted one UP sounding above total allocation budget");
+        rejects([&]{
+            (void)p6g::read_upper_station_set(
+                paths.ordered_up_dat,actual_upper_ids,100000,true,0);
+        },"G19 accepted zero total UP sounding budget");
+        // Source-only output does not imply any accepted G26 physics.
         // An incomplete G14 stage MUST NOT commit any source-derived hour.
         struct AbsentPhysics final:p6g::MultiHourPhysics {
             cteas::calmet::p6::NativeHourStageResult run(
@@ -581,10 +612,14 @@ int main(int argc,char** argv){
         check(argc==2,"G19 requires pinned original CALMET met.inp path");
         const auto original=read(argv[1]);
         check_one_us_two_ss_source_case(original);
-        // Independent cardinalities: 1/1, 1/7, 7/1, 7/7. Existing
-        // 2/1 and 2/2 coverage remains unmodified.
+        // Keep independent source provenance and aggregate budget checks
+        // for user-chosen 20/20 and strongly asymmetric 20/1 and 1/20,
+        // as well as earlier 1/7 / 7/1 baseline. This is INPUT SCIENCE
+        // admission only; original CALMET 45-field 20-site physics was
+        // independently accepted in merged PR #215.
         for(const auto& [nss,nus]:
-            std::vector<std::pair<int,int>>{{1,1},{1,7},{7,1},{7,7}})
+            std::vector<std::pair<int,int>>{
+                {1,1},{1,7},{7,1},{7,7},{20,1},{1,20},{20,20}})
             check_unbounded_original_source_cardinality(original,nss,nus);
         // The real single-station Hefei deck must not be promoted to a
         // two-surface/two-upper station scientific run.
