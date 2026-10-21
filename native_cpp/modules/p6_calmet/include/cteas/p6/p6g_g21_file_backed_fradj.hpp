@@ -6,6 +6,7 @@
 // This is TEST-ONLY partial stage physics: not a 17-stage or 45-field
 // production CALMET, and not yet independent full-case Fortran parity.
 #include "cteas/p6/p6g_g19_file_backed_case.hpp"
+#include "cteas/p6/p6g_g41_real_water_first_hour_source.hpp"
 #include "cteas/p6/p6g_g18b8_gamma_grid.hpp"
 #include "cteas/p6/p6g_terrain_hour.hpp"
 #include <chrono>
@@ -28,12 +29,14 @@ struct G21SelectedFradjFields {
 // Caller MUST pass source PREPDI/CGAMMA from G18E4 on this live G14 hour,
 // plus G20/G16's actual native WIND1. This function deliberately cannot
 // return a NativeHourStageResult or publish any prior-hour G14 state.
-inline G21SelectedFradjFields g21_selected_original_file_fradj(
+inline G21SelectedFradjFields g21_original_source_clock_fradj_kernel(
     const MultiHourFrame& live,
-    const G19FileBackedCase& source,
+    const G19SourceClockCase& source,
+    const G17B4SurfaceControls& surface_controls,
     const G18B4CGammaPrepared& source_cgamma,
     const Wind1MultiField& source_wind1,
-    bool explicitly_test_only) {
+    bool explicitly_test_only,
+    bool selected_water_reference_only) {
     const auto& grid=live.grid;
     const auto nx=static_cast<std::size_t>(grid.nx);
     const auto ny=static_cast<std::size_t>(grid.ny);
@@ -80,8 +83,15 @@ inline G21SelectedFradjFields g21_selected_original_file_fradj(
         throw std::invalid_argument("G21 unverified source IUPT fixed-station branch");
     const auto gamma=g18b8_source_gamma_from_hour(
         live,selected_choice,source_cgamma,true);
+    // Mixed GEO is authorized only through the separately typed G41
+    // reference case; ordinary G19 physics still takes the unchanged
+    // all-land constructor and fails closed on any WATER cell.
+    if(selected_water_reference_only)
+        (void)g38_selected_noow_water_hflux_source_only(
+            grid,source.original_metinp,true);
     G17B4TwoPassSurfvar two_pass(
-        grid,live.stations,source.surface,live.surface,source.surface_controls);
+        grid,live.stations,source.surface,live.surface,
+        surface_controls,selected_water_reference_only);
     two_pass.after_wind1_before_fradj(
         live.input.end,source_wind1.u_mps,source_wind1.v_mps);
     if(!two_pass.first_stage_wind_matches(
@@ -125,4 +135,37 @@ inline G21SelectedFradjFields g21_selected_original_file_fradj(
     out.corrected_wind=std::move(corrected);
     return out;
 }
+    
+// Existing all-land G19 downstream call signature preserved verbatim.
+// Its G17B4 default water rejection remains in force.
+inline G21SelectedFradjFields g21_selected_original_file_fradj(
+    const MultiHourFrame& live,
+    const G19FileBackedCase& source,
+    const G18B4CGammaPrepared& source_cgamma,
+    const Wind1MultiField& source_wind1,
+    bool explicitly_test_only) {
+    return g21_original_source_clock_fradj_kernel(
+        live,source,source.surface_controls,source_cgamma,source_wind1,
+        explicitly_test_only,false);
+}
+
+// New standalone first-hour real-WATER reference. Never accepts a weak
+// G19 source directly: only the G41 immutable original water control type.
+inline G21SelectedFradjFields g41_real_water_first_hour_native_fradj(
+    const MultiHourFrame& live,
+    const G41SelectedNoowWaterFirstHourSource& selected,
+    const G18B4CGammaPrepared& source_cgamma,
+    const Wind1MultiField& source_wind1,
+    bool explicitly_test_only) {
+    if(!explicitly_test_only||live.hour_index!=0||
+       selected.first_hour_native_wind1_fradj_ready||
+       selected.g24_native_final_wind_ready||
+       selected.g14_g26_production_ready)
+        throw std::invalid_argument(
+            "G41 first-hour WATER reference cannot promote G14/G24");
+    return g21_original_source_clock_fradj_kernel(
+        live,selected.source,selected.surface_controls,
+        source_cgamma,source_wind1,true,true);
+}
+
 } // namespace cteas::calmet::p6g
