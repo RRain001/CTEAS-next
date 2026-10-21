@@ -3,6 +3,7 @@
 // Source identity/options are checked by G19 before this bounded contract.
 // Station counts are independent. Larger physical capacity belongs to S5.
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <stdexcept>
 
@@ -33,6 +34,14 @@ struct S4B1AdmittedCase {
     std::size_t source_station_columns = 0;
     std::size_t source_station_hour_slots = 0;
     std::size_t wind_profile_scalars_per_component = 0;
+    // Exact raw hourly grid VALUE bytes required by this selected 45-field
+    // layout, not total serialized bytes or a peak resident-memory bound.
+    // The current S4-B2 CLI RETAINS all hours before whole-file serialization.
+    std::size_t one_hour_raw_field_bytes = 0;
+    std::size_t retained_raw_field_bytes = 0;
+    // Fortran sequential-unformatted record payload: 24-byte label/clock
+    // followed by NX*NY 4-byte values; marker is a signed int32 length.
+    std::size_t field_record_payload_bytes = 0;
 };
 
 inline std::size_t s4b1_checked_product(std::size_t a, std::size_t b) {
@@ -63,11 +72,38 @@ inline S4B1AdmittedCase s4b1_admit_source_only(const S4B1Admission& in) {
     const auto columns=s4b1_checked_sum(in.surface_stations,in.upper_stations);
     const auto station_hours=s4b1_checked_product(columns,in.hours);
     const auto profile_scalars=s4b1_checked_product(columns,in.nz);
+    // P6F original CALMET.DAT 2.1 stores IRLG in signed int32 and each
+    // field record has a signed-32-bit Fortran marker. Reject impossible
+    // selected-format layouts BEFORE creating any hourly physics buffers.
+    if(in.hours>static_cast<std::size_t>(
+            std::numeric_limits<std::int32_t>::max()))
+        throw std::invalid_argument("S4E selected P6F IRLG exceeds int32");
+    const auto raw_field_bytes=s4b1_checked_product(
+        cells,sizeof(std::uint32_t));
+    const auto record_bytes=s4b1_checked_sum(std::size_t{24},raw_field_bytes);
+    if(record_bytes>static_cast<std::size_t>(
+            std::numeric_limits<std::int32_t>::max()))
+        throw std::invalid_argument(
+            "S4E CALMET 2.1 per-field Fortran record exceeds int32");
+    const auto hour_bytes=s4b1_checked_product(raw_field_bytes,std::size_t{45});
+    const auto retained_bytes=s4b1_checked_product(hour_bytes,in.hours);
     S4B1AdmittedCase accepted{in,cells,45,records,false};
     accepted.source_station_columns=columns;
     accepted.source_station_hour_slots=station_hours;
     accepted.wind_profile_scalars_per_component=profile_scalars;
+    accepted.one_hour_raw_field_bytes=hour_bytes;
+    accepted.retained_raw_field_bytes=retained_bytes;
+    accepted.field_record_payload_bytes=record_bytes;
     return accepted;
+}
+
+ // Optional CALLER-OWNED resource budget. No hidden count cap and no default
+ // guessed RAM threshold; the selected CLI applies this before its time loop.
+inline void s4b1_require_retained_field_budget(
+    const S4B1AdmittedCase& admitted,std::size_t max_raw_bytes) {
+    if(max_raw_bytes==0||admitted.retained_raw_field_bytes>max_raw_bytes)
+        throw std::invalid_argument(
+            "S4E selected retained raw field bytes exceed caller budget");
 }
 
 } // namespace cteas::calmet::p6g

@@ -10,6 +10,8 @@ on:
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c6_selected_p6f_dataset.hpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b1_admission.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp'
       - '.github/workflows/issue40-s4d-twenty-station-original-science.yml'
       - 'docs/plans/ISSUE40_S4D_TWENTY_STATION_ACCEPTANCE_20261021.md'
       - 'native_cpp/modules/p6_calmet/reference/s4c_run_original_asymmetric_g19.py'

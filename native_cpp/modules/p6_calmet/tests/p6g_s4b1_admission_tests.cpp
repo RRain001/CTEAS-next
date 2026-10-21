@@ -2,6 +2,7 @@
 #include "cteas/p6/p6g_s4b1_admission.hpp"
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <limits>
@@ -47,8 +48,25 @@ int main() {
     const auto long_case = p6g::s4b1_admit_source_only(
         {50, 60, 9, 1, 2, 8784, true, true});
     if(long_case.cells_per_layer != 3000 ||
-       long_case.potential_field_records != 8784u * 45u)
-        throw std::runtime_error("S4-B1 long source dimensions regressed");
+       long_case.potential_field_records != 8784u * 45u ||
+       long_case.one_hour_raw_field_bytes!=3000u*45u*4u ||
+       long_case.retained_raw_field_bytes!=
+           std::size_t{8784}*3000u*45u*4u ||
+       long_case.field_record_payload_bytes!=24u+3000u*4u)
+        throw std::runtime_error("S4-B1 long source dimensions/bytes regressed");
+    // 100x100, 8760 hours is an exact RAW retained-field lower bound,
+    // not RSS, serialization size, disk usage, or approval for a year run.
+    const auto large=p6g::s4b1_admit_source_only(
+        {100,100,9,20,1,8760,true,true});
+    const auto expected=std::size_t{100}*100u*45u*4u*8760u;
+    if(large.retained_raw_field_bytes!=expected ||
+       large.one_hour_raw_field_bytes!=100u*100u*45u*4u ||
+       large.field_record_payload_bytes!=24u+100u*100u*4u)
+        throw std::runtime_error("S4E grid-hour raw output lower bound incorrect");
+    p6g::s4b1_require_retained_field_budget(large,expected);
+    p6g::s4b1_require_retained_field_budget(large,expected+1u);
+    must_reject([&]{p6g::s4b1_require_retained_field_budget(large,expected-1u);});
+    must_reject([&]{p6g::s4b1_require_retained_field_budget(large,0u);});
     must_reject([] { (void)p6g::s4b1_admit_source_only({12,12,9,0,1,6,true,true}); });
     must_reject([] { (void)p6g::s4b1_admit_source_only({12,12,9,1,0,6,true,true}); });
     must_reject([] { (void)p6g::s4b1_admit_source_only({1,12,9,1,1,6,true,true}); });
@@ -56,6 +74,16 @@ int main() {
     must_reject([] { (void)p6g::s4b1_admit_source_only({12,12,9,1,1,0,true,true}); });
     must_reject([] { (void)p6g::s4b1_admit_source_only({12,12,9,1,1,6,false,true}); });
     must_reject([] { (void)p6g::s4b1_admit_source_only({12,12,9,1,1,6,true,false}); });
+    // Correct software rejection rather than signed 32-bit Fortran
+    // record-marker truncation, IRLG truncation or size_t multiplication.
+    must_reject([] { (void)p6g::s4b1_admit_source_only(
+        {50000,50000,9,1,1,6,true,true}); });
+    must_reject([] { (void)p6g::s4b1_admit_source_only(
+        {12,12,9,1,1,
+         static_cast<std::size_t>(std::numeric_limits<std::int32_t>::max())+1,
+         true,true}); });
+    must_reject([] { (void)p6g::s4b1_admit_source_only(
+        {30000,30000,9,1,1,2000000000u,true,true}); });
     must_reject([] { (void)p6g::s4b1_checked_product(
         std::numeric_limits<std::size_t>::max(), 2); });
     must_reject([] { (void)p6g::s4b1_checked_sum(
@@ -68,5 +96,6 @@ int main() {
     must_reject([] { (void)p6g::s4b1_admit_source_only(
         {12,12,9,20,30,std::numeric_limits<std::size_t>::max()/45,true,true}); });
     std::cout << "S4B1_INDEPENDENT_1_TO_N_SS_US_ADMISSION=PASS_SOFTWARE_ONLY\n"
+              << "S4E_RETAINED_FIELD_BYTES_AND_FORTRAN_RECORD_GUARDS=PASS_SOFTWARE_ONLY\n"
               << "S4B1_UNIFIED_NATIVE_MET_45FIELD_SCIENCE=NOT_RUN\n";
 }
