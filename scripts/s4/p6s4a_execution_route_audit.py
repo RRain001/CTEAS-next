@@ -40,12 +40,19 @@ ANCHORS = (
     ("c2_fortran_native_45field", C2_WORKFLOW, r'--out "\$RUNNER_TEMP/p7-c2/original-vs-native-45field\.json"'),
     ("c2_fixed_two_two", C2_RUNNER, r'source\.stations\.surface\.size\(\)!=2\|\|source\.stations\.upper\.size\(\)!=2'),
     ("c2_fixed_grid", C2_RUNNER, r'source\.grid\.nx!=12\|\|source\.grid\.ny!=12'),
-    ("c2_g14_17stages", C2_SELECTED, r'if\(cursor_<12\) diagno_\.run_selected'),
-    ("c2_g14_comp", C2_SELECTED, r'else if\(cursor_<16\) comp_\.run_selected'),
+    ("c2_g14_17stages", C2_SELECTED, r'if\(cursor_<12\) \{'),
+    ("c2_g14_comp", C2_SELECTED, r'\} else if\(cursor_<16\) \{'),
+    ("c2_g14_selected_diagno_kept", C2_SELECTED, r'diagno_\.run_selected\(stage,frame,true\)'),
+    ("c2_g14_selected_comp_kept", C2_SELECTED, r'comp_\.run_selected\(stage,frame,true\)'),
+    ("c2_g14_opt_in_trial_diagno", C2_SELECTED, r'const auto status=diagno_\.run\(stage,frame\)'),
+    ("c2_g14_opt_in_trial_comp", C2_SELECTED, r'const auto status=comp_\.run\(stage,frame\)'),
     ("c2_p6f", C2_SELECTED, r'const auto records=p6g::g18c5_selected_p6f_fields'),
     ("c2_g26_diag", C2_SELECTED, r'p6g::G26SourceFileBackedG14DiagnoBridge diagno_'),
     ("c2_g26b_comp", C2_SELECTED, r'p6g::G26BSourceFileBackedCompBridge comp_'),
-    ("c2_diag_production_disabled", C2_DIAGNO, r'return \{p6::NativeHourSource::Unknown,false\};'),
+    ("c2_diag_production_disabled", C2_DIAGNO, r'if\(!normal_trial_\)return \{p6::NativeHourSource::Unknown,false\};'),
+    ("c2_comp_production_disabled", C2_COMP, r'if\(!normal_trial_\)return \{p6::NativeHourSource::Unknown,false\};'),
+    ("c2_diag_trial_exact_selected", C2_DIAGNO, r'^\s*run_selected\(stage,frame,true\);'),
+    ("c2_comp_trial_exact_selected", C2_COMP, r'^\s*run_selected\(stage,frame,true\);'),
     ("c2_selected_wind1", C2_DIAGNO, r'g20_file_backed_source_wind1_profiles\(frame,true\)'),
     ("c2_selected_fradj", C2_DIAGNO, r'g21_selected_original_file_fradj\('),
     ("c2_selected_slope", C2_DIAGNO, r'g22_selected_source_thermal_slope\('),
@@ -115,6 +122,22 @@ def negative_self_test(repo: Path):
             raise ValueError("drift-negative rejected a different assertion") from exc
     else:
         raise ValueError("S4A source inventory silently accepted changed C2 gate")
+    # S4-F production entry stays fail-closed if the explicit trial
+    # is absent. A future accidental broad run() enablement must be detected.
+    src_path = C2_DIAGNO
+    original = (repo / src_path).read_text(encoding="utf-8")
+    guard = "if(!normal_trial_)return {p6::NativeHourSource::Unknown,false};"
+    if original.count(guard) != 1:
+        raise ValueError("cannot prove G26 normal production guard provenance")
+    try:
+        audit(repo, injected={src_path: original.replace(
+            guard,"if(false)return {p6::NativeHourSource::Unknown,false};")})
+    except ValueError as exc:
+        if "c2_diag_production_disabled" not in str(exc):
+            raise ValueError("G26 authorization-negative rejected an unrelated fact") from exc
+    else:
+        raise ValueError("S4A audit silently accepted G26 production bypass")
+    print("S4F_G26_UNAUTHORIZED_NORMAL_PRODUCTION_DRIFT_NEGATIVE=PASS")
     if good["fact_count"] < 35:
         raise ValueError("S4A source inventory unexpectedly truncated")
     print("S4A_C1_C2_CHANGED_CASE_GATE_NEGATIVE=PASS")

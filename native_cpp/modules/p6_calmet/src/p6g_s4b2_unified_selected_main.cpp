@@ -24,6 +24,7 @@ struct S4B2Options {
     std::size_t probe_prefix_hours=0;
     std::size_t max_retained_field_bytes=0;
     bool experimental=false;
+    bool g26_normal_entry_trial=false;
 };
 
 static S4B2Options parse_args(int argc, char** argv) {
@@ -33,6 +34,12 @@ static S4B2Options parse_args(int argc, char** argv) {
         if (key=="--selected-experimental") {
             if(o.experimental)throw std::invalid_argument("duplicate experimental flag");
             o.experimental=true;
+            continue;
+        }
+        if (key=="--g26-normal-entry-trial") {
+            if(o.g26_normal_entry_trial)
+                throw std::invalid_argument("duplicate G26 normal entry trial flag");
+            o.g26_normal_entry_trial=true;
             continue;
         }
         if(i+1>=argc)throw std::invalid_argument("S4B2 key missing argument");
@@ -78,7 +85,7 @@ static S4B2Options parse_args(int argc, char** argv) {
             "S4B2 experimental ONLY: --selected-experimental --met met.inp "
             "--geo GEO.DAT --surf SURF.DAT --up UP1.DAT [--up UP2.DAT ...] "
             "--hours N [--probe-prefix-hours K] [--max-retained-field-bytes N] "
-            "--out candidate-met.dat; no production mode");
+            "[--g26-normal-entry-trial] --out candidate-met.dat; no production mode");
     if(o.probe_prefix_hours>o.hours)
         throw std::invalid_argument("S4B3 prefix exceeds complete declared G14 hours");
     return o;
@@ -130,7 +137,7 @@ int main(int argc, char** argv) {
                     if(live.hour_index!=hour||scheduler.completed_hours()!=hour)
                         throw std::logic_error("S4B2 duplicated/omitted real source hour");
                     auto current=std::make_unique<G34BSelectedOnlyHour>(
-                        scheduler,clocks,source);
+                        scheduler,clocks,source,opt.g26_normal_entry_trial);
                     active=current.get();
                     return current;
                 },
@@ -218,6 +225,7 @@ int main(int argc, char** argv) {
                  <<p6g::s4b1_checked_product(
                      admission.one_hour_raw_field_bytes,executed_hours)
                  <<" VENDOR_CALMET_PARITY=NOT_RUN"
+                 <<" G26_NORMAL_ENTRY_TRIAL="<<(opt.g26_normal_entry_trial?"YES":"NO")
                  <<" PRODUCTION_ADMISSION=NOT_ACCEPTED\n";
         return 0;
     } catch(const std::exception& e) {

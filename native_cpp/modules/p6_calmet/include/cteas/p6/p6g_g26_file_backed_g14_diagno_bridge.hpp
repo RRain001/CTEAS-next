@@ -27,15 +27,21 @@ public:
     G26SourceFileBackedG14DiagnoBridge(
         const UnifiedMultistationHourlyScheduler& owner,
         G18D2StationClockAuthority& clocks,
-        const G19FileBackedCase& source)
+        const G19FileBackedCase& source,
+        bool explicitly_opt_in_normal_trial=false)
         :owner_(owner),clocks_(clocks),source_(source),
-         prepdi_(owner,clocks,source.original_metinp) {}
+         prepdi_(owner,clocks,source.original_metinp),
+         normal_trial_(explicitly_opt_in_normal_trial) {}
 
     [[nodiscard]] p6::NativeHourStageResult run(
-        p6::NativeHourStage, MultiHourFrame&) override {
-        // Never allow caller to mistake *selected* composite kernels
-        // for production-accepted original G14+COMP+P6F.
-        return {p6::NativeHourSource::Unknown,false};
+        p6::NativeHourStage stage, MultiHourFrame& frame) override {
+        // S4-F: TRIAL ONLY. Default production remains fail-closed.
+        // On a separately opt-in source G14 trial, use EXACT selected
+        // physical stages and all existing source/clock preconditions.
+        // No independent production approval is implied by this bridge.
+        if(!normal_trial_)return {p6::NativeHourSource::Unknown,false};
+        run_selected(stage,frame,true);
+        return {p6::NativeHourSource::NativeCpp,true};
     }
 
     void run_selected(p6::NativeHourStage stage,MultiHourFrame& frame,
@@ -244,6 +250,7 @@ private:
     G18D2StationClockAuthority& clocks_;
     const G19FileBackedCase& source_;
     G18E4SelectedPrepdiStageAdapter prepdi_;
+    bool normal_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds source_end_{};

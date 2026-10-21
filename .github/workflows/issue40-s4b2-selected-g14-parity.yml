@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
       - "native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp"
       - "native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp"
       - "native_cpp/modules/p6_calmet/CMakeLists.txt"
@@ -91,6 +93,31 @@ jobs:
           fi
           test ! -e "$RUNNER_TEMP/s4e-zero-budget.dat"
           echo "S4E_SELECTED_G14_OPTIONAL_BYTE_BUDGET=PASS_SOFTWARE_ONLY"
+      - name: S4-F opt-in normal G26 DIAGNO and COMP entry must be byte-identical to accepted G14
+        shell: bash
+        run: |
+          set -euo pipefail
+          x="$RUNNER_TEMP/s4b2-source"
+          b="$RUNNER_TEMP/s4b2-build/cteas_p6g_s4b2_unified_selected"
+          "$b" --selected-experimental --g26-normal-entry-trial \
+            --met "$x/met.inp" --geo "$x/GEO.DAT" --surf "$x/SURF.DAT" \
+            --up "$x/UP1.DAT" --up "$x/UP2.DAT" --hours 6 \
+            --out "$RUNNER_TEMP/s4f-g26-trial.dat" \
+            > "$RUNNER_TEMP/s4f-g26-trial.log"
+          grep -F 'G26_NORMAL_ENTRY_TRIAL=YES' "$RUNNER_TEMP/s4f-g26-trial.log"
+          grep -F 'PRODUCTION_ADMISSION=NOT_ACCEPTED' "$RUNNER_TEMP/s4f-g26-trial.log"
+          cmp "$RUNNER_TEMP/s4f-g26-trial.dat" "$RUNNER_TEMP/s4b2-old-c2.dat"
+          cmp "$RUNNER_TEMP/s4f-g26-trial.dat" "$RUNNER_TEMP/s4b2-new-candidate.dat"
+          sha256sum "$RUNNER_TEMP/s4f-g26-trial.dat" "$RUNNER_TEMP/s4b2-new-candidate.dat" \
+            > "$RUNNER_TEMP/s4f-g26-trial-sha256.txt"
+          if "$b" --g26-normal-entry-trial --met "$x/met.inp" \
+            --geo "$x/GEO.DAT" --surf "$x/SURF.DAT" \
+            --up "$x/UP1.DAT" --up "$x/UP2.DAT" --hours 6 \
+            --out "$RUNNER_TEMP/s4f-g26-unauthorized.dat"; then
+            echo "::error::S4-F normal G26 trial bypassed opt-in experimental admission"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/s4f-g26-unauthorized.dat"
+          echo 'S4F_G26_NORMAL_ENTRY_17STAGE_SELECTED_C2_6H=BYTE_IDENTICAL_TRIAL_ONLY'
       - name: Reject missing/or unauthorized source and partial clocks
         shell: bash
         run: |
@@ -121,5 +148,7 @@ jobs:
             ${{ runner.temp }}/s4b2-source-sha256.txt
             ${{ runner.temp }}/s4b2-old-trace.txt
             ${{ runner.temp }}/s4b2-new-trace.txt
+            ${{ runner.temp }}/s4f-g26-trial.log
+            ${{ runner.temp }}/s4f-g26-trial-sha256.txt
           if-no-files-found: error
           retention-days: 14
