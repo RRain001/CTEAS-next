@@ -88,8 +88,8 @@ jobs:
                       raw=r.read(300000)
                       mime=r.headers.get("Content-Type","")
                       print("S4G_NOAA_OFFICIAL_SOURCE",label,"status",r.status,
-                            "gzip",raw[:2]==b"\\x1f\\x8b","bytes",len(raw),
-                            "sha256",hashlib.sha256(raw).hexdigest() if raw[:2]==b"\\x1f\\x8b" else "NON_GZIP","type",mime)
+                            "gzip",raw[:2]==b"\x1f\x8b","bytes",len(raw),
+                            "sha256",hashlib.sha256(raw).hexdigest() if raw[:2]==b"\x1f\x8b" else "NON_GZIP","type",mime)
               except Exception as exc:
                   print("S4G_NOAA_OFFICIAL_SOURCE",label,"error",str(exc)[:180])
           PY
