@@ -163,7 +163,27 @@ def p5_check(root: Path) -> dict:
         "--stack-lon", f"{stack_lon:.9f}", "--timeout", "45", "--retries", "1",
     ]
     with patch.object(sys, "argv", argv):
-        assert p5.main() == 0
+        try:
+            assert p5.main() == 0
+        except SystemExit as exc:
+            # The upstream selector writes the factual per-candidate source
+            # decisions into short-lived scratch; preserve only bounded
+            # failure reasons, never silently fill missing real NOAA hours.
+            report = raw / "download_report_2022.json"
+            if report.is_file():
+                record = json.loads(report.read_text(encoding="utf-8"))
+                reasons = [{
+                    "sid": row["sid"],
+                    "full": row.get("raw_annual_coverage"),
+                    "lite": row.get("isd_lite_wind_original_hour_coverage"),
+                    "full_success": row.get("full_isd_download_success"),
+                    "lite_success": row.get("isd_lite_wind_download_success"),
+                } for row in record.get("candidates", [])]
+                raise RuntimeError(
+                    "S4G_ACTUAL_NOAA_P5_REDOWNLOAD_BLOCKED " +
+                    json.dumps(reasons, ensure_ascii=False, sort_keys=True)
+                ) from exc
+            raise
     yearly = []
     for year in YEARS:
         m = json.loads((raw / f"station_selection_{year}.json").read_text())
