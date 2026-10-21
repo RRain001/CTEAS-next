@@ -5,6 +5,7 @@
 #include <exception>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <utility>
 
 namespace p6g = cteas::calmet::p6g;
@@ -12,7 +13,7 @@ namespace p6g = cteas::calmet::p6g;
 template<class Fn> void must_reject(Fn&& fn) {
     bool threw = false;
     try { fn(); } catch (const std::exception&) { threw = true; }
-    assert(threw);
+    if(!threw) throw std::runtime_error("S4-E invalid source shape was accepted");
 }
 
 int main() {
@@ -36,10 +37,11 @@ int main() {
         {350,99},{400,150}}) {
         const auto x=p6g::s4b1_admit_source_only(
             {12,12,9,ss,us,6,true,true});
-        assert(x.source_station_columns==ss+us);
-        assert(x.source_station_hour_slots==6*(ss+us));
-        assert(x.wind_profile_scalars_per_component==9*(ss+us));
-        assert(!x.native_physics_accepted);
+        if(x.source_station_columns!=ss+us ||
+           x.source_station_hour_slots!=6*(ss+us) ||
+           x.wind_profile_scalars_per_component!=9*(ss+us) ||
+           x.native_physics_accepted)
+            throw std::runtime_error("S4-E source shape budget disagrees with actual station inputs");
     }
     const auto long_case = p6g::s4b1_admit_source_only(
         {50, 60, 9, 1, 2, 8784, true, true});
