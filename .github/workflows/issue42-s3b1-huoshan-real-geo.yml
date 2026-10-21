@@ -1019,7 +1019,7 @@ jobs:
               "production_g26":"NOT_ACCEPTED",
           }
           (ev/"s4e-huoshan-measured-resource.json").write_text(
-              json.dumps(result,indent=2,sort_keys=True)+"\\n")
+              json.dumps(result,indent=2,sort_keys=True)+"\n")
           print("S4E_REAL_HUOSHAN_100X100_NATIVE_PEAK_RSS=PASS_MEASURED",
                 "one_hour_kib=",measurements[0]["process_peak_rss_kib"],
                 "six_hour_kib=",measurements[1]["process_peak_rss_kib"])
