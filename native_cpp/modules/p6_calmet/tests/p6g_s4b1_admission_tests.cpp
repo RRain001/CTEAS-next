@@ -5,6 +5,7 @@
 #include <exception>
 #include <iostream>
 #include <limits>
+#include <utility>
 
 namespace p6g = cteas::calmet::p6g;
 
@@ -27,6 +28,19 @@ int main() {
             assert(!admitted.native_physics_accepted);
         }
     }
+    // The user-selected 20-station numerical gate is a science coverage
+    // target, not a physical array cap. Independently budget 20+20 and
+    // the asymmetric 20+1 / 1+20 source shapes with the SAME contract.
+    for(const auto [ss,us]:{
+        std::pair<std::size_t,std::size_t>{20,20},{20,1},{1,20},
+        {350,99},{400,150}}) {
+        const auto x=p6g::s4b1_admit_source_only(
+            {12,12,9,ss,us,6,true,true});
+        assert(x.source_station_columns==ss+us);
+        assert(x.source_station_hour_slots==6*(ss+us));
+        assert(x.wind_profile_scalars_per_component==9*(ss+us));
+        assert(!x.native_physics_accepted);
+    }
     const auto long_case = p6g::s4b1_admit_source_only(
         {50, 60, 9, 1, 2, 8784, true, true});
     assert(long_case.cells_per_layer == 3000);
@@ -40,6 +54,12 @@ int main() {
     must_reject([] { (void)p6g::s4b1_admit_source_only({12,12,9,1,1,6,true,false}); });
     must_reject([] { (void)p6g::s4b1_checked_product(
         std::numeric_limits<std::size_t>::max(), 2); });
+    must_reject([] { (void)p6g::s4b1_checked_sum(
+        std::numeric_limits<std::size_t>::max(), 1); });
+    must_reject([] { (void)p6g::s4b1_admit_source_only(
+        {12,12,9,std::numeric_limits<std::size_t>::max(),1,6,true,true}); });
+    must_reject([] { (void)p6g::s4b1_admit_source_only(
+        {12,12,9,20,20,std::numeric_limits<std::size_t>::max(),true,true}); });
     std::cout << "S4B1_INDEPENDENT_1_TO_N_SS_US_ADMISSION=PASS_SOFTWARE_ONLY\n"
               << "S4B1_UNIFIED_NATIVE_MET_45FIELD_SCIENCE=NOT_RUN\n";
 }
