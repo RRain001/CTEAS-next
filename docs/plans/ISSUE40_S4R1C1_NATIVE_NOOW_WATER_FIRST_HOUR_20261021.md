@@ -20,3 +20,9 @@ G21 source kernel is extracted once with an explicit `selected_water_reference_o
 ## Scope truth
 
 `G41_FIRST_REAL_HOUR_NATIVE_G20_G21_G39` may be marked `PASS_SCOPED` **only if** all exact-head workflow software/scientific checks pass. A software-only compile success is `PASS_SOFTWARE` and must not become full P6 acceptance. The authoritative P6 Issue #40 remains open and P7 #36 blocked.
+
+## Actual NOAA first-hour failure and source-owned remediation
+
+The first full genuine-source Actions attempt `39570627483` stopped at `G20 unsupported missing/calm original surface wind`. This is a real observed data condition, not a compiler problem or an allowable opportunity to invent a wind. Pinned original CALMET WIND1 lines 36114–36126 explicitly skip similarity extrapolation on EDITL-missing SS and create physically zero profiles for valid calm; lines 36239–36242 suppress missing surface station bulk weight, then preserve source BIAS/ICALM and valid upper station weight logic. Existing frozen G9 C++ `multi_station_wind1_firstguess` already implements masked-zero bulk weights and calm reweighting, but G20/G16 default adapters refused such stations before reaching it.
+
+Follow-up adds `g41_original_noow_water_source_profiles` as a typed test-only G20 source-map wrapper; missing original SS gets `present=0` on every layer, calm valid SS keeps `present=1` with exact zero wind. The separate G42 source type invokes the **unchanged** G9 numerical kernel, uses a zero *inactive storage carrier* only for `present=0`, and verifies no missing station is advertised as valid. The existing G20 original signature retains its former missing/calm refusal, and G16 remains unchanged. Its output feeds G41 G21 FRADJ. No weakening of G19FileBackedCase/G26 and no synthetic meteorological observation. This remains scientifically `NOT_ACCEPTED` until a successful real-original comparison across all 63 water cells for first-hour WIND1/FRADJ.
