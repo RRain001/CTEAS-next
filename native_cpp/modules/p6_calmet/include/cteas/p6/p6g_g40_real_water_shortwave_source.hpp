@@ -43,9 +43,12 @@ g40_real_source_water_shortwave(const G19SourceClockCase& source,
        source.stations.surface.size()!=source.surface.station_ids.size()||
        source.controls.noobs!=0)
         throw std::invalid_argument("G40 genuine observed source missing");
-    if(g18c1_source_integer(source.original_metinp,"MCLOUD")!=1)
+    // Original input deck configures ICLOUD; MCLOUD is an INTERNAL
+    // vendor runtime flag, not a met.inp setting. The authentic B0
+    // ICLOUD=0 branch uses original station cloud in HEATFX (MCLOUD<=1).
+    if(g18c1_source_integer(source.original_metinp,"ICLOUD")!=0)
         throw std::invalid_argument(
-            "G40 source-radiation bridge requires original MCLOUD=1 station clouds");
+            "G40 source shortwave only accepts original ICLOUD=0 station clouds");
     const auto gate=g38_selected_noow_water_hflux_source_only(
         grid,source.original_metinp,true);
     if(gate.original_water_cell_indices.empty())
