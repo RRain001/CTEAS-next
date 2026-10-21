@@ -38,7 +38,7 @@ jobs:
           import json,sys
           d=json.load(open(sys.argv[1]))
           assert d["status"]=="S4A_C1_C2_SOURCE_EXECUTION_ROUTE_AUDIT_PASS_SCOPED"
-          assert d["fact_count"]==37
+          assert d["fact_count"]==44
           assert len(d["source_files"])==11
           assert d["original_calmet_fresh_C1"] is False
           assert d["original_calmet_fresh_C2"] is True
@@ -46,7 +46,14 @@ jobs:
           assert d["c1_c2_cross_runner_numerical_identity_proven"] is False
           assert d["physics_formulas_modified"] is False
           assert d["source_level_only"] is True
-          assert len({x["key"] for x in d["facts"]})==37
+          assert len({x["key"] for x in d["facts"]})==44
+          required={
+            "c2_g14_selected_diagno_kept","c2_g14_selected_comp_kept",
+            "c2_g14_opt_in_trial_diagno","c2_g14_opt_in_trial_comp",
+            "c2_diag_production_disabled","c2_comp_production_disabled",
+            "c2_diag_trial_exact_selected","c2_comp_trial_exact_selected",
+          }
+          assert required.issubset({x["key"] for x in d["facts"]})
           print("S4A_EXACT_SOURCE_ONLY_C1_C2_EXECUTION_ROUTE=PASS_SCOPED")
           print("S4A_C1_C2_SHARED_PRODUCTION=NOT_ACCEPTED C1_C2_ORIGINAL_NEW_RUNNER_NUMERIC=NOT_RUN")
           PY
