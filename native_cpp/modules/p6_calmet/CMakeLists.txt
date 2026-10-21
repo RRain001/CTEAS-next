@@ -1099,3 +1099,17 @@ else()
 endif()
 add_test(NAME p6g_g36_test_only_original_water_zi_negative_guards
          COMMAND cteas_p6g_g36_original_nowsta0_water_zi --self-test)
+
+# S4-Q: original CALMET real WATER U10/V10 source alias and SETCOM FCORI.
+# STRICT TEST ONLY; not a native wind solution or water G14/G26 admission.
+add_executable(cteas_p6g_g37_original_water_fcori_ws10
+               src/p6g_g37_original_water_fcori_ws10_main.cpp)
+target_link_libraries(cteas_p6g_g37_original_water_fcori_ws10 PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g37_original_water_fcori_ws10 PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g37_original_water_fcori_ws10 PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME p6g_g37_original_water_fcori_ws10_invalid_source_guards
+         COMMAND cteas_p6g_g37_original_water_fcori_ws10 --self-test)
