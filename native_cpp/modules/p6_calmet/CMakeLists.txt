@@ -1204,3 +1204,18 @@ else()
   target_compile_options(cteas_p6g_g44_real_missfc_thermal_first_hour
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c4a only: six actual consecutive source hours of 2SS+1US WIND1
+# with P5 missing/calm masks. No prior-ZICONV model-state or G21/G39
+# multi-hour physical admission, no G24, full 45-field G26 or P7.
+add_executable(cteas_p6g_g45_six_hour_water_wind1
+               src/p6g_g45_six_hour_water_wind1_main.cpp)
+target_link_libraries(cteas_p6g_g45_six_hour_water_wind1
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g45_six_hour_water_wind1
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g45_six_hour_water_wind1
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
