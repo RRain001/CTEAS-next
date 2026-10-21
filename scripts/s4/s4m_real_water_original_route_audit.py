@@ -50,9 +50,9 @@ def audit(vendor: Path, deck: Path, geo: Path) -> dict:
     if pinned != PINNED_BLOB:
         raise ValueError("original CALMET source identity changed")
     lines = vendor.read_text().splitlines()
-    comp_start = single_location(lines, r"^subroutine\s+comp\s*\(", 1, len(lines))
+    comp_start = single_location(lines, r"^subroutine\\s+comp\\s*(?:\\(|$)", 1, len(lines))
     next_sub = min(i for i, text in statement_lines(lines, comp_start + 1, len(lines))
-                   if re.match(r"^subroutine\s+\w+\s*\(", text))
+                   if re.match(r"^subroutine\\s+\\w+\\s*(?:\\(|$)", text))
     first_comp = statement_lines(lines, comp_start, next_sub - 1)
     heat = [i for i, text in first_comp if re.search(r"\bcall\s+heatfx\s*\(", text)]
     water = [i for i, text in first_comp if re.search(r"\bcall\s+water\s*\(", text)]
