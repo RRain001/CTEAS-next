@@ -1175,3 +1175,17 @@ else()
   target_compile_options(cteas_p6g_g41_real_water_first_hour
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c2: original COMP MISSFC model-local nonwind replacement ONLY,
+# source-owned raw P5 SURF remains byte-identical and never overwritten.
+add_executable(cteas_p6g_g43_original_comp_missfc_source
+               src/p6g_g43_original_comp_missfc_source_main.cpp)
+target_link_libraries(cteas_p6g_g43_original_comp_missfc_source
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g43_original_comp_missfc_source
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g43_original_comp_missfc_source
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
