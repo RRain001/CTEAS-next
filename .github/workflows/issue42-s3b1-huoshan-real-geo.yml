@@ -900,7 +900,9 @@ jobs:
           set -euo pipefail
           c="$RUNNER_TEMP/s3_huoshan_2022"
           test -s "$c/evidence/s3-b6-g19-source-only.json"
-          "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
+          /usr/bin/time -f '%M %e %U %S' \
+            -o "$c/evidence/s4e-huoshan-1h-native-gnu-time.txt" \
+            "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
             --selected-experimental --met "$c/run/met/met.inp" \
             --geo "$c/geo/makegeo/geo.dat" \
             --surf "$c/met/surface/final/surf.dat" \
@@ -918,7 +920,9 @@ jobs:
         run: |
           set -euo pipefail
           c="$RUNNER_TEMP/s3_huoshan_2022"
-          "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
+          /usr/bin/time -f '%M %e %U %S' \
+            -o "$c/evidence/s4e-huoshan-6h-native-gnu-time.txt" \
+            "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
             --selected-experimental --met "$c/run/met/met.inp" \
             --geo "$c/geo/makegeo/geo.dat" \
             --surf "$c/met/surface/final/surf.dat" \
@@ -967,6 +971,59 @@ jobs:
             "True fresh original Huoshan 45-field comparison failed")
           print("S4D_TRUE_HUOSHAN_6H_270_FIELDS_FRESH_ORIGINAL_NUMERIC=PASS_SCOPED")
           PY
+          /usr/bin/python3 - "$c" "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" <<'PY'
+          import hashlib,json,math,pathlib,sys
+          c=pathlib.Path(sys.argv[1])
+          binary=pathlib.Path(sys.argv[2])
+          ev=c/"evidence"
+          proof=json.loads((ev/"s4d-huoshan-6h-original-vs-native.json").read_text())
+          assert proof["status"]=="PASS" and proof["total_exceedances"]==0
+          assert proof["intervals"]==6 and proof["fields_per_hour"]==45
+          def sha(path):
+              h=hashlib.sha256()
+              with path.open("rb") as f:
+                  for part in iter(lambda:f.read(1024*1024),b""):
+                      h.update(part)
+              return h.hexdigest()
+          files={
+              "met":c/"run/met/met.inp",
+              "geo":c/"geo/makegeo/geo.dat",
+              "surf":c/"met/surface/final/surf.dat",
+              "up":c/"met/upperair/final/up_58424.dat",
+          }
+          measurements=[]
+          for n,label in ((1,"1h"),(6,"6h")):
+              words=(ev/f"s4e-huoshan-{label}-native-gnu-time.txt").read_text().split()
+              assert len(words)==4
+              peak=int(words[0]); wall,usr,syscpu=map(float,words[1:])
+              assert peak>0 and all(math.isfinite(q) and q>=0 for q in (wall,usr,syscpu))
+              out=ev/f"s4c-real-native-{'first' if n==1 else 'six'}-hour-met.dat"
+              measurements.append({
+                  "hours":n,"process_peak_rss_kib":peak,
+                  "process_peak_rss_mib":peak/1024,
+                  "wall_seconds":wall,"user_cpu_seconds":usr,
+                  "system_cpu_seconds":syscpu,
+                  "native_met_bytes":out.stat().st_size,
+                  "native_met_sha256":sha(out),
+                  "raw_field_bytes_lower_bound":100*100*45*4*n,
+              })
+          result={
+              "status":"S4E_REAL_HUOSHAN_100X100_G14_RSS_PASS_MEASURED",
+              "scope":"real NOAA observed Huoshan, 1SS1US 100x100x9 selected G14, 1h and 6h",
+              "science":"fresh unmodified original CALMET vs native 45 fields/hour PASS_SCOPED zero exceedances",
+              "source_sha256":{name:sha(file) for name,file in files.items()},
+              "native_binary_sha256":sha(binary),
+              "original_comparator_json_sha256":sha(ev/"s4d-huoshan-6h-original-vs-native.json"),
+              "measurements":measurements,
+              "limitations":"GNU time process RSS only, not analytic peak RAM bound, no pre-processing or Fortran peak, not year-long or multi-site measured NOAA",
+              "production_g26":"NOT_ACCEPTED",
+          }
+          (ev/"s4e-huoshan-measured-resource.json").write_text(
+              json.dumps(result,indent=2,sort_keys=True)+"\n")
+          print("S4E_REAL_HUOSHAN_100X100_NATIVE_PEAK_RSS=PASS_MEASURED",
+                "one_hour_kib=",measurements[0]["process_peak_rss_kib"],
+                "six_hour_kib=",measurements[1]["process_peak_rss_kib"])
+          PY
       - name: Upload only bounded SHA lineage and real product metadata not source bytes
         if: always()
         uses: actions/upload-artifact@v4
@@ -996,6 +1053,9 @@ jobs:
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-first-hour-trace.log
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-native-six-hour-sha256.txt
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4c-real-six-hour-trace.log
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4e-huoshan-1h-native-gnu-time.txt
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4e-huoshan-6h-native-gnu-time.txt
+            ${{ runner.temp }}/s3_huoshan_2022/evidence/s4e-huoshan-measured-resource.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original-standalone-trace.log
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original/s4d-original-provenance.json
             ${{ runner.temp }}/s3_huoshan_2022/evidence/s4d-original/compiler-stderr.log
