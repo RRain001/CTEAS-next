@@ -21,6 +21,9 @@ on:
       - native_cpp/modules/p6_calmet/src/p6g_g20_source_wind1_probe_main.cpp
       - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b1_admission.hpp
       - native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp
+      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp
+      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp
+      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp
       - docs/plans/ISSUE40_S4_P6B1_REAL_1SS1US_WIND1_20261020.md
       - native_cpp/modules/p6_calmet/reference/compare_g20_real_huoshan_1ss1us_original_wind1.py
       - docs/plans/ISSUE40_S4_P6B1_ORIGINAL_VENDOR_180K_20261020.md
@@ -935,6 +938,20 @@ jobs:
             > "$c/evidence/s4c-real-native-six-hour-sha256.txt"
           echo 'S4C_TRUE_HUOSHAN_6H_NATIVE_270_FIELDS=PRODUCED_UNVERIFIED'
           echo 'S4C_ORIGINAL_CALMET_NEW_SITE_NUMERIC=NOT_RUN'
+          "$RUNNER_TEMP/s3-g19/cteas_p6g_s4b2_unified_selected" \
+            --selected-experimental --g26-normal-entry-trial \
+            --met "$c/run/met/met.inp" --geo "$c/geo/makegeo/geo.dat" \
+            --surf "$c/met/surface/final/surf.dat" \
+            --up "$c/met/upperair/final/up_58424.dat" --hours 6 \
+            --out "$c/evidence/s4f-huoshan-g26-normal-trial.dat" \
+            > "$c/evidence/s4f-huoshan-g26-normal-trial.log"
+          cmp "$c/evidence/s4c-real-native-six-hour-met.dat" \
+              "$c/evidence/s4f-huoshan-g26-normal-trial.dat"
+          grep -F 'G26_NORMAL_ENTRY_TRIAL=YES' "$c/evidence/s4f-huoshan-g26-normal-trial.log"
+          grep -F 'PRODUCTION_ADMISSION=NOT_ACCEPTED' "$c/evidence/s4f-huoshan-g26-normal-trial.log"
+          sha256sum "$c/evidence/s4f-huoshan-g26-normal-trial.dat" \
+            > "$c/evidence/s4f-huoshan-g26-normal-trial-sha256.txt"
+          echo 'S4F_REAL_NOAA_100X100_NORMAL_G26_TRIAL_6H=BYTE_IDENTICAL_TRIAL_ONLY'
       - name: S4-D independently FRESH compile and run pinned unchanged original CALMET on SAME true Huoshan source
         if: matrix.period == 'jun_6h'
         shell: bash
