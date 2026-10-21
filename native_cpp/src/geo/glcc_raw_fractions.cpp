@@ -37,9 +37,10 @@ void validate_grid(P2Grid g,int epsg,int mesh) {
           g.nx*g.ny<=250000,"P2_GLCC_GRID_BUDGET");
   require(std::isfinite(g.x0_m+g.nx*g.dx_m)&&std::isfinite(g.y0_m+g.ny*g.dx_m),
           "P2_GLCC_GRID_OVERFLOW");
-  // Nine-point source-window selection + 1.5km buffer is scoped to bounded
-  // regional footprints; larger domains require separate coverage review.
-  require(g.nx*g.dx_m<=50000.&&g.ny*g.dx_m<=50000.,"P2_GLCC_UNREVIEWED_LARGE_DOMAIN");
+  // Larger footprints cannot inherit the nine-point-window assumption
+  // unexamined. window_from_grid performs a dense independent 5-km
+  // projection coverage audit BEFORE any source pixels are processed.
+  // Existing 250000-cell and source-pixel/mesh budgets remain unchanged.
 }
 std::pair<double,double> laea_forward(double lon,double lat) {
   const double lam=lon*kPi/180.,phi=lat*kPi/180.;
@@ -80,7 +81,30 @@ GlccWindow window_from_grid(P2Grid grid,OGRCoordinateTransformation* to_geograph
   }
   require(lo_max-lo_min<180.,"P2_GLCC_ANTIMERIDIAN_UNSUPPORTED");
   // Same 3x3 UTM-to-LAEA plus 1.5km margin as Python source-only reference.
+  // On footprints above the formerly certified 50km side length, audit
+  // independently projected samples spanning the WHOLE rectangle at <=5km
+  // spacing against the unchanged nine-point window. Reject if an
+  // extreme is not contained. This is source-custody validation ONLY:
+  // it never changes grid sampling, original 20x20 pixel subpoints,
+  // original GLCC 24->38 categories or the selected physical algorithm.
   constexpr double buffer=1.5;
+  if(grid.nx*grid.dx_m>50000.||grid.ny*grid.dx_m>50000.) {
+    const auto nxi=static_cast<std::size_t>(std::ceil(grid.nx*grid.dx_m/5000.));
+    const auto nyi=static_cast<std::size_t>(std::ceil(grid.ny*grid.dx_m/5000.));
+    require(nxi>0&&nyi>0&&nxi<=512&&nyi<=512,
+            "P2_GLCC_LARGE_DOMAIN_PROJECTION_AUDIT_BUDGET");
+    for(std::size_t ii=0;ii<=nxi;++ii)for(std::size_t jj=0;jj<=nyi;++jj) {
+      double lon=x0+(x1-x0)*double(ii)/double(nxi);
+      double lat=y0+(y1-y0)*double(jj)/double(nyi);
+      require(to_geographic->Transform(1,&lon,&lat)!=0,
+              "P2_GLCC_LARGE_DOMAIN_AUDIT_PROJECTION_FAILED");
+      const auto [projected_x,projected_y]=laea_forward(lon,lat);
+      require(std::isfinite(projected_x)&&std::isfinite(projected_y)&&
+              projected_x>=minx-buffer&&projected_x<=maxx+buffer&&
+              projected_y>=miny-buffer&&projected_y<=maxy+buffer,
+              "P2_GLCC_LARGE_DOMAIN_SOURCE_WINDOW_UNCOVERED");
+    }
+  }
   const int i0=static_cast<int>(std::floor((minx-buffer+8000.)))+1;
   const int i1=static_cast<int>(std::ceil ((maxx+buffer+8000.)));
   const int j0=static_cast<int>(std::floor((miny-buffer+5499.)))+1;
@@ -121,7 +145,18 @@ GlccRawResult compute_glcc_raw_selected(const std::string& path,P2Grid grid,int 
   auto to_utm=transform(sphere,utm);
   const GlccWindow win=window_from_grid(grid,to_geo.get());
   const std::uint64_t pixels=std::uint64_t(win.i1-win.i0+1)*(win.j1-win.j0+1);
-  require(pixels<=3000000ULL/std::uint64_t(mesh*mesh),"P2_GLCC_MESH_POINT_BUDGET");
+  // The pre-existing 3M-point historical budget is unchanged for already
+  // accepted <=50km domains. A *larger* true regional source is separately
+  // admitted only after the dense full-domain projected window containment
+  // audit above, with a still bounded 5M original subpoint traversal budget.
+  // This is a resource preflight only, not an altered MESHGLAZ or cell bin.
+  const bool independently_audited_regional_grid =
+      grid.nx*grid.dx_m>50000.||grid.ny*grid.dx_m>50000.;
+  constexpr std::uint64_t kExistingMeshBudget=3000000ULL;
+  constexpr std::uint64_t kAuditedRegionalMeshBudget=5000000ULL;
+  const auto mesh_budget=independently_audited_regional_grid
+      ?kAuditedRegionalMeshBudget:kExistingMeshBudget;
+  require(pixels<=mesh_budget/std::uint64_t(mesh*mesh),"P2_GLCC_MESH_POINT_BUDGET");
   const std::size_t ncell=grid.nx*grid.ny;
   GlccRawResult out{grid,epsg,mesh,win,
      std::vector<std::uint32_t>(ncell*kGlccUsgs92Classes.size(),0),
