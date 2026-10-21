@@ -94,6 +94,15 @@ jobs:
             | tee "$RUNNER_TEMP/s4c-six-hour-trace.txt"
           test -s "$RUNNER_TEMP/s4c-first-hour-candidate.dat"
           test -s "$RUNNER_TEMP/s4c-six-hour-candidate.dat"
+          "$b" "${args[@]}" --g26-normal-entry-trial --hours 6 --probe-prefix-hours 1 \
+            --out "$RUNNER_TEMP/s4f-first-hour-trial.dat" > "$RUNNER_TEMP/s4f-first-hour.log"
+          "$b" "${args[@]}" --g26-normal-entry-trial --hours 6 \
+            --out "$RUNNER_TEMP/s4f-six-hour-trial.dat" > "$RUNNER_TEMP/s4f-six-hour.log"
+          cmp "$RUNNER_TEMP/s4c-first-hour-candidate.dat" "$RUNNER_TEMP/s4f-first-hour-trial.dat"
+          cmp "$RUNNER_TEMP/s4c-six-hour-candidate.dat" "$RUNNER_TEMP/s4f-six-hour-trial.dat"
+          grep -F 'G26_NORMAL_ENTRY_TRIAL=YES' "$RUNNER_TEMP/s4f-six-hour.log"
+          grep -F 'PRODUCTION_ADMISSION=NOT_ACCEPTED' "$RUNNER_TEMP/s4f-six-hour.log"
+          echo "S4F_G26_NORMAL_ENTRY_20_STATION_1H_6H=BYTE_IDENTICAL_TRIAL_ONLY SS=$NS US=$NU"
           sha256sum "$RUNNER_TEMP/s4c-first-hour-candidate.dat" \
                     "$RUNNER_TEMP/s4c-six-hour-candidate.dat" \
             | tee "$RUNNER_TEMP/s4c-output-hash.txt"
