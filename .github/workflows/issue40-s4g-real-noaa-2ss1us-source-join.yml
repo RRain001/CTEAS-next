@@ -1,0 +1,127 @@
+name: Issue40 S4-G real NOAA 2SS 1US shared-grid source join
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4g-real-noaa-2ss1us-source-join.yml'
+      - 'scripts/s4/s4g_real_noaa_2ss1us_input_join.py'
+      - 'scripts/s2g/real_noaa_native_p4_up.py'
+      - 'scripts/s2g/issue56_real_noaa_p5_case.py'
+      - 'docs/plans/ISSUE40_S4G_REAL_NOAA_2SS1US_SOURCE_PAIR_20261021.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authentic-source-only-coadmission:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
+    steps:
+      - name: Checkout exact tested source and original data
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Independently restore pinned vendor only in scratch
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Install genuine NOAA P4/P5 observational producers and source readers
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4g"
+          mkdir -p "$root/evidence"
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          git rev-parse HEAD > "$root/evidence/checkout-sha.txt"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gfortran-11 cmake g++
+          python3 -m pip install --disable-pip-version-check 'numpy>=1.23,<3' 'pandas>=1.5,<3' 'PyYAML>=6,<7'
+          cmake -S native_cpp/modules/p4_read62 -B "$root/p4" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p4" --parallel 2 --target cteas_p4_read62
+          cmake -S native_cpp/modules/p5_smerge -B "$root/p5" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p5" --parallel 2 --target cteas_p5_smerge
+          cmake -S native_cpp/modules/p6_calmet -B "$root/source" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/source" --parallel 2 \
+            --target cteas_p6g_up_source_preflight cteas_p6g_surf_source_preflight
+          src="$GITHUB_WORKSPACE/original-cteas/engine/vendor/src/SMERGE_v5.7.0_L121203"
+          test -s "$src/SMERGE.FOR"
+          mkdir -p "$root/original-smerge-includes"
+          for item in "$src"/*; do
+            name="$(basename "$item" | tr '[:upper:]' '[:lower:]')"
+            test -e "$root/original-smerge-includes/$name" || ln -s "$item" "$root/original-smerge-includes/$name"
+          done
+          gfortran-11 -O0 -std=legacy -fno-automatic -fno-align-commons \
+            -fallow-argument-mismatch -ffixed-line-length-none \
+            -I"$root/original-smerge-includes" "$src/SMERGE.FOR" \
+            -o "$root/original-smerge.x"
+          sha256sum "$src/SMERGE.FOR" "$root/original-smerge.x" \
+            > "$root/evidence/vendor-source-and-binary-sha.txt"
+      - name: Actually reexecute original NOAA P4 Anqing 2022 and independent UP parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4g"
+          python3 -m scripts.s2g.real_noaa_native_p4_up \
+            --year 2022 \
+            --native-p4-bin "$root/p4/cteas_p4_read62" \
+            --native-up-preflight-bin "$root/source/cteas_p6g_up_source_preflight" \
+            --evidence-out "$root/p4-real-2022.json" > "$root/evidence/p4-run.log"
+          grep -q 'G1BB1_REAL_NOAA_ANQING_NATIVE_P4_UP_SOURCE_PASS_SCOPED' "$root/evidence/p4-run.log"
+          echo 'S4G_REAL_ANQING_UP=PRODUCED_SOURCE_ONLY'
+      - name: Actually reexecute real original NOAA two-station P5 and original Fortran SMERGE
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4g"
+          python3 -u -m scripts.s2g.issue56_real_noaa_p5_case \
+            --native-p5-bin "$root/p5/cteas_p5_smerge" \
+            --native-surf-preflight-bin "$root/source/cteas_p6g_surf_source_preflight" \
+            --original-smerge-bin "$root/original-smerge.x" \
+            --scenario year2022 --evidence-out "$root/p5-real-2022.json" \
+            > "$root/evidence/p5-run.log"
+          grep -q 'ISSUE56_REAL_NOAA_ORIGINAL_NATIVE_BYTE_PARITY_SCOPED_PASS' "$root/evidence/p5-run.log"
+          echo 'S4G_REAL_HUOSHAN_XINQIAO_SURF=PRODUCED_SOURCE_ONLY'
+      - name: Independently join SAME original grid, station identity, UTC and binary lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4g"
+          python3 -m scripts.s4.s4g_real_noaa_2ss1us_input_join \
+            --p4 "$root/p4-real-2022.json" --p5 "$root/p5-real-2022.json" \
+            --out "$root/evidence/s4g-source-pair-join.json" \
+            | tee "$root/evidence/s4g-join.log"
+          grep -q 'S4G_REAL_NOAA_2SS1US_SOURCE_PAIR=PASS_SCOPED_NO_GEO_G19_P6' "$root/evidence/s4g-join.log"
+          python3 - "$root" <<'PY'
+          from copy import deepcopy
+          import json,pathlib,sys
+          from scripts.s4.s4g_real_noaa_2ss1us_input_join import coadmit
+          root=pathlib.Path(sys.argv[1])
+          p4=json.loads((root/"p4-real-2022.json").read_text())
+          p5=json.loads((root/"p5-real-2022.json").read_text())
+          receipt=coadmit(p4,p5)
+          assert receipt["status"]=="S4G_REAL_NOAA_2SS1US_INDEPENDENT_INPUT_PAIR_PASS_SOURCE_ONLY"
+          assert not receipt["production_admission"]
+          for label,corrupt in [
+            ("bad_grid",lambda a,b: a.update(grid_cmn_sha256="0"*64)),
+            ("wrong_wmo",lambda a,b: a.update(wmo="58425")),
+            ("fabricated_second_surface",lambda a,b: b["scenarios"][0]["p5_to_issue42_d4_source_handoff"]["annual_noaa_selections"][0]["stations"][0].update(relocated=True)),
+            ("wrong_calendar",lambda a,b: b["scenarios"][0]["p5_to_issue42_d4_source_handoff"].update(research_end_utc="20220601-020000")),
+            ("fake_full_p6",lambda a,b: b.update(P6_NUMERICAL="PASS")),
+          ]:
+            a,b=deepcopy(p4),deepcopy(p5)
+            corrupt(a,b)
+            try: coadmit(a,b)
+            except (ValueError,TypeError,KeyError): pass
+            else: raise AssertionError("S4G negative failed closed: "+label)
+          print("S4G_REAL_NOAA_2SS1US_SOURCE_JOIN_FIVE_NEGATIVES=PASS")
+          PY
+      - name: Preserve verified bounded source receipts without NOAA raw files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4g-real-noaa-2ss1us-input-pair-source-only
+          path: |
+            ${{ runner.temp }}/s4g/evidence/
+          retention-days: 21
+          if-no-files-found: warn
