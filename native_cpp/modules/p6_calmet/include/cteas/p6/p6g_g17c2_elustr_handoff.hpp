@@ -23,6 +23,9 @@ struct G17C2SelectedElustrResult {
     std::chrono::sys_seconds end{};
     std::vector<float> qh_wm2,ustar_mps,el_m;
     std::size_t stable_cells=0,daytime_cells=0;
+    // Original ELUSTR skips water: its USTAR/EL are computed only later
+    // by WATER, not by this intermediate DIAGNO adapter.
+    bool water_state_pending_original_WATER=false;
     [[nodiscard]] G17SlopeHeatSource selected_slope_fixture(
         const G17CSelectedHeatResult& heat) const {
         if(end!=heat.end||qh_wm2.size()!=heat.temperature_k.size())
@@ -40,7 +43,8 @@ inline G17C2SelectedElustrResult selected_iavet1_elustr_after_heatfx(
     const G17CSelectedHeatResult& heat,
     const p6::WindUV& genuine_post_fradj_wind,
     const G17C2SelectedElustrControls& controls,
-    bool original_comp_third_pass=false) {
+    bool original_comp_third_pass=false,
+    bool explicitly_selected_water_reference_only=false) {
     if(!controls.explicitly_test_only||
        controls.ipsifcn<0||controls.ipsifcn>1||
        !std::isfinite(controls.zm_m)||controls.zm_m<=0.f||
@@ -93,8 +97,14 @@ inline G17C2SelectedElustrResult selected_iavet1_elustr_after_heatfx(
     out.ustar_mps.assign(n,0.f);
     out.el_m.assign(n,0.f);
     for(std::size_t k=0;k<n;++k) {
-        if(grid.landuse[k]>=grid.iwat1&&grid.landuse[k]<=grid.iwat2)
-            throw std::invalid_argument("G17C2 water ELUSTR not source-accepted");
+        if(grid.landuse[k]>=grid.iwat1&&grid.landuse[k]<=grid.iwat2) {
+            if(!explicitly_selected_water_reference_only)
+                throw std::invalid_argument("G17C2 water ELUSTR not source-accepted");
+            if(!std::isfinite(out.qh_wm2[k])||out.qh_wm2[k]!=0.f)
+                throw std::invalid_argument("G17C2 water QH must remain selected neutral zero");
+            out.water_state_pending_original_WATER=true;
+            continue;  // Original ELUSTR does not write water USTAR/EL.
+        }
         if(!std::isfinite(grid.z0_m[k])||grid.z0_m[k]<=0.f||
            grid.z0_m[k]>=controls.zm_m||
            !std::isfinite(out.qh_wm2[k])||
@@ -137,6 +147,8 @@ inline G17C2SelectedElustrResult selected_iavet1_elustr_after_heatfx(
     day.initial_el.assign(n,-9.9e9f);
     const auto day_out=p6e::elustr_daytime(day);
     for(std::size_t k=0;k<n;++k) {
+        if(grid.landuse[k]>=grid.iwat1&&grid.landuse[k]<=grid.iwat2)
+            continue;  // Preserve original ELUSTR water skip.
         if(heat.sensible_heat_wm2[k]<0.f) {
             out.qh_wm2[k]=stable_out.qh_wm2[k];
             out.ustar_mps[k]=stable_out.ustar_ms[k];
