@@ -1,0 +1,123 @@
+name: Issue40 S4-L original water HEATFX QH source and independent 24-mode numeric
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4l-original-water-heatfx-qh-source-audit.yml'
+      - 'scripts/s4/s4l_original_water_qh_static_trace.py'
+      - 'docs/plans/ISSUE40_S4L_ORIGINAL_WATER_QH_SOURCE_20261021.md'
+      - 'native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/heatfx.hpp'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-water-heatfx-original-science:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact proposed CTEAS-next source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout immutable unmodified CALMET source and independent original Fortran comparator
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          persist-credentials: false
+          path: original-cteas
+          sparse-checkout: |
+            engine/vendor/src/CALMET_v6.5.0_L150223
+            native_cpp/modules/p6_calmet/p6e/reference/compare_original_heatfx.py
+          sparse-checkout-cone-mode: false
+      - name: Install original Fortran compiler and C++ build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gfortran-11 cmake g++-11
+          root="$RUNNER_TEMP/s4l-water-qh"
+          mkdir -p "$root"
+          git rev-parse HEAD > "$root/cteas-next-exact-head.txt"
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          vendor=original-cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+          test "$(git hash-object "$vendor")" = 437f43bb7f0e51a1919e56664663e1a046986ed0
+          sha256sum "$vendor" > "$root/unmodified-calmet-sha256.txt"
+      - name: Discover actual original water QH call sites without pretending to know its lifetime
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4l-water-qh"
+          python3 scripts/s4/s4l_original_water_qh_static_trace.py \
+            --vendor original-cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --out "$root/source-lifetime-audit.json" | tee "$root/console-source-trace.txt"
+          grep -F 'S4L_QH_WATER_ORIGINAL_SOURCE_PINNED=PASS_SOURCE_ONLY' "$root/console-source-trace.txt"
+      - name: Build exactly selected existing native P6E source HEATFX and its software tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4l-water-qh"
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$root/p6e" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-11
+          cmake --build "$root/p6e" --parallel 2 \
+            --target p6e_heatfx_reference p6e_heatfx_tests
+          "$root/p6e/p6e_heatfx_tests"
+          sha256sum "$root/p6e/p6e_heatfx_reference" > "$root/current-native-heatfx-binary-sha256.txt"
+      - name: Recompile extracted unmodified original Fortran HEATFX and compare both water fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4l-water-qh"
+          python3 original-cteas/native_cpp/modules/p6_calmet/p6e/reference/compare_original_heatfx.py \
+            --vendor original-cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            --cpp "$root/p6e/p6e_heatfx_reference" \
+            --out "$root/unmodified-original-heatfx-vs-native.json" \
+            > "$root/heatfx-original-independent-comparison.log"
+          python3 - "$root" <<'PY'
+          import json,pathlib,sys
+          r=pathlib.Path(sys.argv[1])
+          a=json.loads((r/"source-lifetime-audit.json").read_text())
+          v=json.loads((r/"unmodified-original-heatfx-vs-native.json").read_text())
+          assert a["status"]=="S4L_PINNED_FORTRAN_QH_SOURCE_LIFETIME_AUDIT_PASS_SCOPED"
+          assert a["original_git_blob"]==v["original_git_blob"]=="437f43bb7f0e51a1919e56664663e1a046986ed0"
+          assert a["original_sha256"]==v["original_sha256"]
+          assert v["status"]=="PASS" and v["exceedances"]==0
+          assert v["cases"]==24 and v["cells"]==480 and v["flux_components_compared"]==960
+          assert v["water_cells"]>0 and v["land_cells"]>0 and v["land_night_cells"]>0
+          assert a["real_water_qh_initialization_and_previous_hour_provenance"]=="UNRESOLVED"
+          assert a["original_vs_cpp_real_hour_water_downstream_elustr_45_fields"]=="NOT_RUN"
+          receipt={
+            "status":"S4L_UNMODIFIED_ORIGINAL_WATER_HEATFX_QSW_QH_24_CASE_SOURCE_PARITY_PASS_SCOPED",
+            "original_full_calmet_fortran_git_blob":a["original_git_blob"],
+            "original_full_calmet_fortran_sha256":a["original_sha256"],
+            "cases":24,"original_replayed_cells":480,
+            "original_vs_native_QSW_QH_compared":960,
+            "water_cells_tested":v["water_cells"],
+            "night_land_cells_tested":v["land_night_cells"],
+            "abs_tolerance_W_m2":v["frozen_abs_tolerance_wm2"],
+            "rel_tolerance":v["frozen_rel_tolerance"],
+            "exceedances":0,
+            "water_QH_prerequisite":"BEFORE_HEATFX_WATER_QH_MUST_HAVE_ORIGINAL_PROVENANCE",
+            "water_initialization_and_interhour_ELUSTR_state":"NOT_ESTABLISHED",
+            "genuine_2SS_1US_2022_water_science_45_fields":"NOT_RUN",
+            "g26_normal_production":"NOT_ACCEPTED",
+            "P7":"NOT_RUN",
+          }
+          (r/"s4l-water-qh-source-science-receipt.json").write_text(
+            json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("S4L_ORIGINAL_HEATFX_WATER_QSW_QH_960_VALUES_ZERO_EXCEEDANCES=PASS_SCOPED")
+          print("S4L_WATER_QH_REAL_2022_PRIOR_STATE_AND_ELUSTR=UNRESOLVED")
+          PY
+      - name: Retain bounded source provenance and scalar science, no vendor raw source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4l-original-water-qh-heatfx-scoped-science
+          path: |
+            ${{ runner.temp }}/s4l-water-qh/cteas-next-exact-head.txt
+            ${{ runner.temp }}/s4l-water-qh/unmodified-calmet-sha256.txt
+            ${{ runner.temp }}/s4l-water-qh/current-native-heatfx-binary-sha256.txt
+            ${{ runner.temp }}/s4l-water-qh/source-lifetime-audit.json
+            ${{ runner.temp }}/s4l-water-qh/unmodified-original-heatfx-vs-native.json
+            ${{ runner.temp }}/s4l-water-qh/s4l-water-qh-source-science-receipt.json
+          retention-days: 21
+          if-no-files-found: warn
