@@ -28,12 +28,23 @@ struct S4B1AdmittedCase {
     std::size_t potential_field_records = 0;
     // No physical publication authority is assigned until B2/B3 science.
     bool native_physics_accepted = false;
+    // S4-E checked *logical source shapes*, NOT a measured RAM budget or
+    // proof of production execution. All counts remain source-dependent.
+    std::size_t source_station_columns = 0;
+    std::size_t source_station_hour_slots = 0;
+    std::size_t wind_profile_scalars_per_component = 0;
 };
 
 inline std::size_t s4b1_checked_product(std::size_t a, std::size_t b) {
     if (b != 0 && a > std::numeric_limits<std::size_t>::max() / b)
         throw std::invalid_argument("S4B1 dimensions overflow");
     return a * b;
+}
+
+inline std::size_t s4b1_checked_sum(std::size_t a,std::size_t b) {
+    if(a>std::numeric_limits<std::size_t>::max()-b)
+        throw std::invalid_argument("S4E source station cardinality overflow");
+    return a+b;
 }
 
 inline S4B1AdmittedCase s4b1_admit_source_only(const S4B1Admission& in) {
@@ -46,7 +57,17 @@ inline S4B1AdmittedCase s4b1_admit_source_only(const S4B1Admission& in) {
     const auto cells = s4b1_checked_product(in.nx, in.ny);
     (void)s4b1_checked_product(cells, in.nz);
     const auto records = s4b1_checked_product(in.hours, std::size_t{45});
-    return {in, cells, 45, records, false};
+    // First reject impossible source array extents before a future
+    // production path tries to allocate per-station/per-hour buffers.
+    // 9 levels is the *currently selected* P6 path, not global CALMET NZ.
+    const auto columns=s4b1_checked_sum(in.surface_stations,in.upper_stations);
+    const auto station_hours=s4b1_checked_product(columns,in.hours);
+    const auto profile_scalars=s4b1_checked_product(columns,in.nz);
+    S4B1AdmittedCase accepted{in,cells,45,records,false};
+    accepted.source_station_columns=columns;
+    accepted.source_station_hour_slots=station_hours;
+    accepted.wind_profile_scalars_per_component=profile_scalars;
+    return accepted;
 }
 
 } // namespace cteas::calmet::p6g
