@@ -1161,3 +1161,17 @@ else()
   target_compile_options(cteas_p6g_g40_real_water_shortwave_source
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c1 authentic no-OW WATER source-only first-hour G20/G21/G39.
+# It does not execute/produce native G24, COMP, P6F or a G14 commit.
+add_executable(cteas_p6g_g41_real_water_first_hour
+               src/p6g_g41_real_water_first_hour_main.cpp)
+target_link_libraries(cteas_p6g_g41_real_water_first_hour
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g41_real_water_first_hour
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g41_real_water_first_hour
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
