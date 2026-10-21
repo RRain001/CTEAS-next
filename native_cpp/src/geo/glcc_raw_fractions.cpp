@@ -145,7 +145,18 @@ GlccRawResult compute_glcc_raw_selected(const std::string& path,P2Grid grid,int 
   auto to_utm=transform(sphere,utm);
   const GlccWindow win=window_from_grid(grid,to_geo.get());
   const std::uint64_t pixels=std::uint64_t(win.i1-win.i0+1)*(win.j1-win.j0+1);
-  require(pixels<=3000000ULL/std::uint64_t(mesh*mesh),"P2_GLCC_MESH_POINT_BUDGET");
+  // The pre-existing 3M-point historical budget is unchanged for already
+  // accepted <=50km domains. A *larger* true regional source is separately
+  // admitted only after the dense full-domain projected window containment
+  // audit above, with a still bounded 5M original subpoint traversal budget.
+  // This is a resource preflight only, not an altered MESHGLAZ or cell bin.
+  const bool independently_audited_regional_grid =
+      grid.nx*grid.dx_m>50000.||grid.ny*grid.dx_m>50000.;
+  constexpr std::uint64_t kExistingMeshBudget=3000000ULL;
+  constexpr std::uint64_t kAuditedRegionalMeshBudget=5000000ULL;
+  const auto mesh_budget=independently_audited_regional_grid
+      ?kAuditedRegionalMeshBudget:kExistingMeshBudget;
+  require(pixels<=mesh_budget/std::uint64_t(mesh*mesh),"P2_GLCC_MESH_POINT_BUDGET");
   const std::size_t ncell=grid.nx*grid.ny;
   GlccRawResult out{grid,epsg,mesh,win,
      std::vector<std::uint32_t>(ncell*kGlccUsgs92Classes.size(),0),
