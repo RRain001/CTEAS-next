@@ -48,7 +48,8 @@ g41_load_selected_noow_water_first_hour_source(
        out.water_heat_source.original_water_cell_indices.empty())
         throw std::invalid_argument(
             "G41 selected original physical path not supported for water");
-    const auto first=s.make_scheduler().preview_next_hour();
+    auto independent_clock=s.make_scheduler();
+    const auto first=independent_clock.preview_next_hour();
     if(first.hour_index!=0||first.input.end!=s.surface.hourly.front().end||
        first.surface.by_station.size()!=s.stations.surface.size())
         throw std::logic_error("G41 G19 first real hour detached");
