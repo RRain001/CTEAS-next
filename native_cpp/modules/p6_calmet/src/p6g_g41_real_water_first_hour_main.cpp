@@ -71,13 +71,15 @@ int main(int argc,char** argv) {
            twice.final_temperature()!=fradj.temperature_after_k)
             throw std::logic_error(
                 "G41 G39 second SURFVAR detached from actual native G21 FRADJ");
-        // The P5 user-defined sparse AUXILIARY retains genuine missing
-        // nonwind variables. Original AIRDEN has no missing-pressure gate
-        // (RHO=0.3484321*PRES(NEARS)/TEMP2D), so feeding 9999 mb to
-        // production density is a distinct, UNVERIFIED physics problem.
-        // Never fill pressure, turn missing into zero, or quietly bypass
-        // the G17B production-safe density guard. The G20/G21 selected
-        // WIND1/FRADJ/AVETMP stages do not consume AIRDEN at all.
+        // P5's sparse AUXILIARY legitimately preserves missing nonwind
+        // input values. Original CALMET COMP calls MISSFC (calmet.for
+        // L3986) BEFORE DIAGNO (L4511), replacing missing station
+        // pressure/temperature with nearest valid source station via
+        // RREPLAC/CMPD2 (L9918-29 / L9972-83). AIRDEN itself then uses
+        // the resolved PRES(NEARS). G41 first-hour source clock has not
+        // reconstructed MISSFC, so G39 must NOT receive raw 9999 and
+        // MUST remain unaccepted. G20/G21 SURFVAR stages consume no
+        // station pressure and are scientifically compared separately.
         std::size_t pressure_missing=0;
         std::size_t temperature_missing=0;
         for(std::size_t ss=0;ss<frame.surface.by_station.size();++ss) {
