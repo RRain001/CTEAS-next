@@ -8,6 +8,9 @@ on:
       - "native_cpp/modules/p6_calmet/CMakeLists.txt"
       - ".github/workflows/issue40-s4b2-selected-g14-parity.yml"
       - "docs/plans/ISSUE40_S4B2_G14_SHARED_PHYSICAL_HOUR_20261020.md"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp"
+      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c_iavet1_heat_handoff.hpp"
+      - "native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/surfvar_multistation.hpp"
   workflow_dispatch:
 permissions:
   contents: read
