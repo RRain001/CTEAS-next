@@ -77,12 +77,18 @@ class G26BSourceFileBackedCompBridge final : public MultiHourPhysics {
 public:
     G26BSourceFileBackedCompBridge(
         const G26SourceFileBackedG14DiagnoBridge& diagno,
-        const G19FileBackedCase& source)
-        :diagno_(diagno),source_(source) {}
+        const G19FileBackedCase& source,
+        bool explicitly_opt_in_normal_trial=false)
+        :diagno_(diagno),source_(source),
+         normal_trial_(explicitly_opt_in_normal_trial) {}
 
     [[nodiscard]] p6::NativeHourStageResult run(
-        p6::NativeHourStage,MultiHourFrame&) override {
-        return {p6::NativeHourSource::Unknown,false};
+        p6::NativeHourStage stage,MultiHourFrame& frame) override {
+        // S4-F scoped normal-call trial, not an accepted production path.
+        // Reuse exactly the same G26B COMP arithmetic and source checks.
+        if(!normal_trial_)return {p6::NativeHourSource::Unknown,false};
+        run_selected(stage,frame,true);
+        return {p6::NativeHourSource::NativeCpp,true};
     }
 
     void run_selected(p6::NativeHourStage stage,MultiHourFrame& frame,
@@ -259,6 +265,7 @@ private:
     const G26SourceFileBackedG14DiagnoBridge& diagno_;
     const G19FileBackedCase& source_;
     std::optional<G18D4SelectedCompStageAdapter> comp_;
+    bool normal_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds end_{};
