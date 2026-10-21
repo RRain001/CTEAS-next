@@ -1,11 +1,11 @@
-// S4-R1c1: first real NOAA water hour, G20 WIND1 -> G21 FRADJ ->
-// 2 original SURFVAR passes -> G39 HEATFX/ELUSTR (water pending).
+// S4-R1c1: first real NOAA water hour, G42 WIND1 -> G21 FRADJ ->
+// two original SURFVAR passes; stop before G39 AIRDEN/ELUSTR when
+// genuinely sparse auxiliary site pressure is missing. G39 not accepted.
 // Strictly source-only: do not emit or commit G14/P6F/COMP, nor use any
 // original Fortran MET.DAT or instrumental oracle as an input.
 #include "cteas/p6/p6g_g41_real_water_first_hour_source.hpp"
 #include "cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp"
 #include "cteas/p6/p6g_g21_file_backed_fradj.hpp"
-#include "cteas/p6/p6g_g39_selected_water_thermal_reference.hpp"
 #include "cteas/p6/p6g_g18d2_station_clock_transaction.hpp"
 #include <cmath>
 #include <exception>
@@ -71,37 +71,54 @@ int main(int argc,char** argv) {
            twice.final_temperature()!=fradj.temperature_after_k)
             throw std::logic_error(
                 "G41 G39 second SURFVAR detached from actual native G21 FRADJ");
-        const float zm=0.5f*(
-            source.controls.zface_m[0]+source.controls.zface_m[1]);
-        const auto thermal=p6g::g39_original_noow_water_postfradj_thermal_reference(
-            source.grid,source.stations,frame.surface,twice,
-            fradj.corrected_wind,source.original_metinp,zm,true);
-        if(thermal.selected_original_water_cells!=
-           water.water_heat_source.original_water_cell_indices.size()||
-           thermal.water_ustar_el_zi_ready||thermal.g22_g24_wind_ready||
-           thermal.g14_g26_production_ready||
+        // The P5 user-defined sparse AUXILIARY retains genuine missing
+        // nonwind variables. Original AIRDEN has no missing-pressure gate
+        // (RHO=0.3484321*PRES(NEARS)/TEMP2D), so feeding 9999 mb to
+        // production density is a distinct, UNVERIFIED physics problem.
+        // Never fill pressure, turn missing into zero, or quietly bypass
+        // the G17B production-safe density guard. The G20/G21 selected
+        // WIND1/FRADJ/AVETMP stages do not consume AIRDEN at all.
+        std::size_t pressure_missing=0;
+        std::size_t temperature_missing=0;
+        for(std::size_t ss=0;ss<frame.surface.by_station.size();++ss) {
+            const auto& obs=frame.surface.by_station[ss];
+            if(!obs.pressure_valid) {
+                ++pressure_missing;
+                std::cerr<<"S4R1C1_SOURCE_NOAA_PRESSURE_MISSING_STATION="
+                         <<frame.stations.surface[ss].id<<"\n";
+            }
+            if(!obs.temperature_valid) {
+                ++temperature_missing;
+                std::cerr<<"S4R1C1_SOURCE_NOAA_TEMPERATURE_MISSING_STATION="
+                         <<frame.stations.surface[ss].id<<"\n";
+            }
+        }
+        std::cerr<<"S4R1C1_G39_AIRDEN_ANCILLARY_PRESSURE_MISSING="
+                 <<pressure_missing
+                 <<" TEMPERATURE_MISSING="<<temperature_missing<<"\n";
+        if(!twice.second_ready()||
+           water.water_heat_source.original_water_cell_indices.size()!=63||
            scheduler.completed_hours()!=0||clocks.has_published_hour())
-            throw std::logic_error("G41 physically unaccepted hour was published");
+            throw std::logic_error(
+                "G41 unverified WATER first-hour physics was committed");
         const auto epoch=frame.input.end.time_since_epoch().count();
         std::cout<<std::setprecision(std::numeric_limits<float>::max_digits10);
         std::cout<<"i,j,hour_end_utc_seconds,landuse,pre_temp_k,post_temp_k,"
-                    "sinalpc,qsw_wm2,qh_water_wm2,wind1_u_mps,wind1_v_mps,"
-                    "fradj_u_mps,fradj_v_mps\n";
+                    "wind1_u_mps,wind1_v_mps,fradj_u_mps,fradj_v_mps\n";
         for(const auto k:water.water_heat_source.original_water_cell_indices) {
-            if(thermal.heat.sensible_heat_wm2[k]!=0.f||
-               thermal.elustr.qh_wm2[k]!=0.f||
-               !std::isfinite(thermal.heat.shortwave_wm2[k])||
-               !std::isfinite(fradj.temperature_after_k[k]))
+            if(!std::isfinite(fradj.temperature_after_k[k])||
+               !std::isfinite(fradj.temperature_before_k[k])||
+               !std::isfinite(wind1.u_mps[k])||
+               !std::isfinite(wind1.v_mps[k])||
+               !std::isfinite(fradj.corrected_wind.u[k])||
+               !std::isfinite(fradj.corrected_wind.v[k]))
                 throw std::logic_error(
-                    "G41 selected source original WATER placeholder invalid");
+                    "G41 native source WATER wind or temperature invalid");
             std::cout<<k%static_cast<std::size_t>(source.grid.nx)+1<<','
                      <<k/static_cast<std::size_t>(source.grid.nx)+1<<','
                      <<epoch<<','<<source.grid.landuse[k]<<','
                      <<fradj.temperature_before_k[k]<<','
                      <<fradj.temperature_after_k[k]<<','
-                     <<thermal.heat.sun_sine[k]<<','
-                     <<thermal.heat.shortwave_wm2[k]<<','
-                     <<thermal.elustr.qh_wm2[k]<<','
                      <<wind1.u_mps[k]<<','<<wind1.v_mps[k]<<','
                      <<fradj.corrected_wind.u[k]<<','
                      <<fradj.corrected_wind.v[k]<<'\n';
