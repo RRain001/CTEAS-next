@@ -98,6 +98,12 @@ jobs:
             > "$root/native-143h.log"
           test -s "$root/native-1h-prefix.dat"
           test -s "$root/native-143h.dat"
+          "$b" "${args[@]}" --g26-normal-entry-trial --out "$root/g26-normal-trial-143h.dat" \
+            > "$root/g26-normal-trial-143h.log"
+          cmp "$root/native-143h.dat" "$root/g26-normal-trial-143h.dat"
+          grep -F 'G26_NORMAL_ENTRY_TRIAL=YES' "$root/g26-normal-trial-143h.log"
+          grep -F 'PRODUCTION_ADMISSION=NOT_ACCEPTED' "$root/g26-normal-trial-143h.log"
+          echo 'S4F_C2_143H_NORMAL_G26_DIAGNO_COMP=BYTE_IDENTICAL_TRIAL_ONLY'
           sha256sum "$b" "$root/native-1h-prefix.dat" "$root/native-143h.dat" \
             > "$root/native-binary-output-sha256.txt"
       - name: Hard-gate fresh original 143h × 45 fields and THEN seal measured resource receipt
