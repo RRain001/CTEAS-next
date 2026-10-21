@@ -1,0 +1,168 @@
+name: Issue40 S4-E C2 143h selected G14 true original and process RSS
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4e-c2-143h-native-rss.yml'
+      - 'docs/plans/ISSUE40_S4E_C2_143H_RSS_20261021.md'
+      - 'native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b1_admission.hpp'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  c2-143h-real-physical-runtime:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout tested C++ source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout independently frozen unmodified original
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original-cteas
+          persist-credentials: false
+      - name: Restore approved original CALMET without modifying Fortran
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C original-cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          python3 scripts/migration/configure_external_assets.py --source-repo original-cteas
+          python3 scripts/migration/configure_external_assets.py --check
+          test -s engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends g++-12 gfortran-11 gfortran cmake
+          mkdir -p "$RUNNER_TEMP/c2-s4e/source"
+          git rev-parse HEAD > "$RUNNER_TEMP/c2-s4e/exact-head.txt"
+          sha256sum engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for \
+            > "$RUNNER_TEMP/c2-s4e/original-fortran-sha256.txt"
+      - name: Compile unchanged source producer selected G14 and independent 45-field comparator
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/c2-s4e/build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/c2-s4e/build" --parallel 2 --target \
+            cteas_p6g_g19_file_backed_case_tests \
+            cteas_p6g_g21_source_fradj_probe \
+            cteas_p6g_s4b2_unified_selected
+          cmake -S native_cpp/modules/p6_calmet/p6e -B "$RUNNER_TEMP/c2-s4e/p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/c2-s4e/p6e" --parallel 2 --target p6e_calmet_dat21
+      - name: Export exactly 143h same original-format controlled 2SS 2US source
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/c2-s4e"
+          "$root/build/cteas_p6g_g19_file_backed_case_tests" \
+            --export-case project/cases/hefei5km_2022_reference_case_20261011/run/met/met.inp \
+            "$root/source" --fradj-stress --daylight-first-hour --hours 143
+          test "$(grep -c '^ 6201 ' "$root/source/UP1.DAT")" -eq 15
+          test "$(grep -c '^ 6201 ' "$root/source/UP2.DAT")" -eq 15
+          sha256sum "$root/source/"{met.inp,GEO.DAT,SURF.DAT,UP1.DAT,UP2.DAT} \
+            > "$root/source-sha256.txt"
+          "$root/build/cteas_p6g_g21_source_fradj_probe" \
+            "$root/source/met.inp" "$root/source/GEO.DAT" \
+            "$root/source/SURF.DAT" "$root/source/UP1.DAT" "$root/source/UP2.DAT" \
+            --output "$root/g35-first-hour-native.csv" \
+            --source-stage "$root/g35-first-hour-stage.dat"
+      - name: Execute freshly compiled independent unchanged original CALMET 143h
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/c2-s4e"
+          python3 native_cpp/modules/p6_calmet/reference/g31_run_literal_original_calmet_multisite.py \
+            --mode Release --hours 143 --source "$root/source" \
+            --source-clock "$root/g35-first-hour-native.csv" \
+            --out "$root/original"
+          test -s "$root/original/original-met.dat"
+      - name: Measure selected G14 native 1h prefix and full 143h WITHOUT physical changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/c2-s4e"
+          x="$root/source"
+          b="$root/build/cteas_p6g_s4b2_unified_selected"
+          args=(--selected-experimental --met "$x/met.inp" --geo "$x/GEO.DAT"
+                --surf "$x/SURF.DAT" --up "$x/UP1.DAT" --up "$x/UP2.DAT"
+                --hours 143)
+          /usr/bin/time -f '%M %e %U %S' -o "$root/native-1h-time.txt" \
+            "$b" "${args[@]}" --probe-prefix-hours 1 \
+            --out "$root/native-1h-prefix.dat" > "$root/native-1h.log"
+          /usr/bin/time -f '%M %e %U %S' -o "$root/native-143h-time.txt" \
+            "$b" "${args[@]}" --out "$root/native-143h.dat" \
+            > "$root/native-143h.log"
+          test -s "$root/native-1h-prefix.dat"
+          test -s "$root/native-143h.dat"
+          sha256sum "$b" "$root/native-1h-prefix.dat" "$root/native-143h.dat" \
+            > "$root/native-binary-output-sha256.txt"
+      - name: Hard-gate fresh original 143h × 45 fields and THEN seal measured resource receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/c2-s4e"
+          "$root/p6e/p6e_calmet_dat21" compare \
+            --reference "$root/original/original-met.dat" \
+            --candidate "$root/native-143h.dat" \
+            --out "$root/fresh-original-vs-native-143h.json" \
+            > "$root/fresh-original-vs-native-143h.log"
+          python3 - "$root" <<'PY'
+          import hashlib,json,math,pathlib,sys
+          root=pathlib.Path(sys.argv[1])
+          proof=json.loads((root/"fresh-original-vs-native-143h.json").read_text())
+          assert proof["intervals"]==143 and proof["fields_per_hour"]==45
+          assert len(proof["fields"])==45
+          assert proof["total_exceedances"]==0 and proof["status"]=="PASS"
+          def sha(p):
+              h=hashlib.sha256()
+              with p.open("rb") as f:
+                  for data in iter(lambda:f.read(1024*1024),b""):
+                      h.update(data)
+              return h.hexdigest()
+          stats=[]
+          for n,label in ((1,"1h"),(143,"143h")):
+              vals=(root/f"native-{label}-time.txt").read_text().split()
+              assert len(vals)==4
+              rss=int(vals[0]); wall,user,system=map(float,vals[1:])
+              assert rss>0 and all(math.isfinite(x) and x>=0 for x in (wall,user,system))
+              met=root/("native-1h-prefix.dat" if n==1 else "native-143h.dat")
+              stats.append(dict(hours=n,peak_rss_kib=rss,peak_rss_mib=rss/1024,
+                                wall_seconds=wall,user_cpu_seconds=user,
+                                system_cpu_seconds=system,met_sha256=sha(met),
+                                met_bytes=met.stat().st_size,
+                                raw_45_field_value_lower_bound_bytes=12*12*45*4*n))
+          receipt=dict(
+              status="S4E_C2_143H_SELECTED_G14_PROCESS_RSS_PASS_MEASURED",
+              input_type="controlled synthetic original-format (NOT real 143h NOAA observations)",
+              source_sha256={p.name:sha(p) for p in (root/"source").iterdir() if p.is_file()},
+              native_binary_sha256=sha(root/"build/cteas_p6g_s4b2_unified_selected"),
+              independent_fortran_met_sha256=sha(root/"original/original-met.dat"),
+              comparator_json_sha256=sha(root/"fresh-original-vs-native-143h.json"),
+              original_45_field_science="PASS_SCOPED_143H_ALL_6435_FIELD_GROUPS_ZERO_EXCEEDANCES",
+              measurements=stats,
+              production_g26="NOT_ACCEPTED",p7="NOT_EVALUATED",
+              limitations="single Linux process peak RSS sample, excludes preproc and vendor, not year or global memory budget")
+          (root/"measured-143h-resource.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n")
+          print("S4E_C2_REAL_143H_G14_MEASURED_PROCESS_RSS=PASS",
+                "rss_1h_kib=",stats[0]["peak_rss_kib"],
+                "rss_143h_kib=",stats[1]["peak_rss_kib"])
+          print("S4E_C2_FRESH_ORIGINAL_143H_6435_FIELDS=PASS_SCOPED")
+          PY
+      - name: Retain only SHA, bounded resource and comparator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4e-c2-143h-rss-and-original-science
+          path: |
+            ${{ runner.temp }}/c2-s4e/exact-head.txt
+            ${{ runner.temp }}/c2-s4e/original-fortran-sha256.txt
+            ${{ runner.temp }}/c2-s4e/source-sha256.txt
+            ${{ runner.temp }}/c2-s4e/native-binary-output-sha256.txt
+            ${{ runner.temp }}/c2-s4e/native-1h-time.txt
+            ${{ runner.temp }}/c2-s4e/native-143h-time.txt
+            ${{ runner.temp }}/c2-s4e/measured-143h-resource.json
+            ${{ runner.temp }}/c2-s4e/fresh-original-vs-native-143h.json
+            ${{ runner.temp }}/c2-s4e/fresh-original-vs-native-143h.log
+          retention-days: 21
+          if-no-files-found: warn
