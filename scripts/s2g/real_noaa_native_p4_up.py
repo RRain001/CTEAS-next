@@ -201,6 +201,8 @@ def run(native_p4: Path, native_up_reader: Path, year: int) -> dict:
             return {
                 "status": "G1BB1_REAL_NOAA_ANQING_NATIVE_P4_UP_SOURCE_PASS_SCOPED",
                 "case": "non-Hefei Huoshan/Xinqiao-centred WGS84 UTM50N",
+                "grid_cmn_sha256": digest(grid_path),
+                "grid_origin_km": [f"{grid.xrefkm:.3f}", f"{grid.yrefkm:.3f}"],
                 "source_provenance": "unaltered archived authentic NOAA IGRA POR",
                 "source_station": ORIGINAL_STATION, "wmo": WMO,
                 "source_lat": st["source_lat"], "source_lon": st["source_lon"],
