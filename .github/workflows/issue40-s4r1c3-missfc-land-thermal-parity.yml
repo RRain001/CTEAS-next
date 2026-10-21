@@ -5,6 +5,12 @@ on:
       - '.github/workflows/issue40-s4r1c1-real-water-diagno-first-hour.yml'
       - '.github/workflows/issue40-s4r1c2-comp-missfc-parity.yml'
       - '.github/workflows/issue40-s4r1c3-missfc-land-thermal-parity.yml'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g22_file_backed_thermal_slope.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g47_real_water_post_slope.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g47_real_water_post_slope_main.cpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'scripts/s4/s4r1c6_real_noaa_post_slope_reference.py'
+      - 'docs/plans/ISSUE40_S4R1C6_REAL_WATER_POST_SLOPE_20261021.md'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g44_real_missfc_thermal_first_hour.hpp'
       - 'native_cpp/modules/p6_calmet/src/p6g_g44_real_missfc_thermal_first_hour_main.cpp'
       - 'scripts/s4/s4r1c3_real_missfc_land_heat_reference.py'
@@ -1002,6 +1008,83 @@ jobs:
             "$root/evidence/firsthour-real-thermal-parity.log"
           cp "$scratch/run/met/s4r1c3-original-firsthour-after-elustr.txt" \
             "$root/evidence/scratch-original-6970-firsthour-thermal.txt"
+      - name: Run same validated C++ G44 heat into original G22 SLOPE on real 6970 x 9 WATER and LAND
+        shell: bash
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c6"
+          mkdir -p "$root/evidence"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/native" --parallel 2 \
+            --target cteas_p6g_g47_real_water_post_slope
+          bin="$root/native/cteas_p6g_g47_real_water_post_slope"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --selected-real-slope-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            > "$root/evidence/native-firsthour-6970x9-post-slope.csv" \
+            2> "$root/evidence/native-slope-stderr.log" || {
+              cat "$root/evidence/native-slope-stderr.log"; exit 1
+            }
+          test "$(wc -l < "$root/evidence/native-firsthour-6970x9-post-slope.csv")" -eq 62731
+          grep -F 'S4R1C6_REAL_NOAA_6970X9_POST_SLOPE_PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-slope-stderr.log"
+          sha256sum "$bin" > "$root/evidence/native-g47-binary-sha256.txt"
+      - name: Independently compile SHA-pinned original CALMET post-SLOPE first-hour writer
+        shell: bash
+        timeout-minutes: 16
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c6"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          /usr/bin/python3 -m scripts.s4.s4r1c6_real_noaa_post_slope_reference prepare \
+            --vendor "$vendor" --dest "$root/real-water-original-slope-scratch.for" \
+            --receipt "$root/evidence/sha-pinned-original-post-slope-receipt.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/real-water-original-slope-scratch.for" \
+            -o "$root/original-firsthour-after-slope.x"
+          sha256sum "$root/original-firsthour-after-slope.x" \
+            > "$root/evidence/original-g47-scratch-binary-sha256.txt"
+      - name: Independently verify all 125460 native vs original U V post-SLOPE values
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c6"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-only-post-slope"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c6-original-firsthour-post-slope.txt"
+          (cd "$scratch/run/met" && "$root/original-firsthour-after-slope.x" met.inp) \
+            > "$root/evidence/original-after-slope.stdout" \
+            2> "$root/evidence/original-after-slope.stderr" || {
+              tail -n 60 "$root/evidence/original-after-slope.stdout"
+              tail -n 60 "$root/evidence/original-after-slope.stderr"
+              exit 1
+            }
+          test -s "$scratch/run/met/s4r1c6-original-firsthour-post-slope.txt"
+          /usr/bin/python3 -m scripts.s4.s4r1c6_real_noaa_post_slope_reference verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --baseline-met "$baseline/run/met/met.dat" \
+            --scratch-met "$scratch/run/met/met.dat" \
+            --original-trace "$scratch/run/met/s4r1c6-original-firsthour-post-slope.txt" \
+            --native-csv "$root/evidence/native-firsthour-6970x9-post-slope.csv" \
+            --report "$root/evidence/independent-real-post-slope-science.json" \
+            | tee "$root/evidence/independent-original-native-post-slope.log"
+          grep -Fx 'S4R1C6_REAL_NOAA_FIRSTHOUR_9_LEVEL_SLOPE_ORIGINAL_NATIVE=PASS_SCOPED' \
+            "$root/evidence/independent-original-native-post-slope.log"
+          grep -Fx 'S4R1C6_UNMODIFIED_ORIGINAL_6H45_MET=BYTE_IDENTICAL' \
+            "$root/evidence/independent-original-native-post-slope.log"
+          grep -Fx 'S4R1C6_G23_G24_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-original-native-post-slope.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1014,6 +1097,7 @@ jobs:
             ${{ runner.temp }}/s4r1c1/evidence/
             ${{ runner.temp }}/s4r1c2/evidence/
             ${{ runner.temp }}/s4r1c3/evidence/
+            ${{ runner.temp }}/s4r1c6/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
