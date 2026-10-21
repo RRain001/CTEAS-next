@@ -74,7 +74,8 @@ public:
                        const StationSet& station_set,
                        const SurfaceSeries& series,
                        const SurfaceHour& hour,
-                       G17B4SurfaceControls controls)
+                       G17B4SurfaceControls controls,
+                       bool explicitly_selected_water_reference_only=false)
         : controls_(std::move(controls)), end_(hour.end),
           nx_(static_cast<std::size_t>(grid.nx)),
           ny_(static_cast<std::size_t>(grid.ny)),
@@ -99,7 +100,8 @@ public:
            controls_.source.irhprog!=0||controls_.source.npsta!=0)
             throw std::invalid_argument("G17B4 source two-pass SURFVAR scope invalid");
         for(int land: grid.landuse) {
-            if(land>=grid.iwat1&&land<=grid.iwat2)
+            if(land>=grid.iwat1&&land<=grid.iwat2 &&
+               !explicitly_selected_water_reference_only)
                 throw std::invalid_argument(
                     "G17B4 IAVET=1 selected all-land kernel: water branch not yet accepted");
         }

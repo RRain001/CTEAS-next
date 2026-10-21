@@ -1129,3 +1129,20 @@ else()
 endif()
 add_test(NAME p6g_g38_selected_water_hflux_no_production_guards
          COMMAND cteas_p6g_g38_selected_water_hflux_source --self-test)
+
+# S4-R1a: source-scoped no-OW water SURFVAR -> HEATFX -> ELUSTR only.
+# Existing all-land G17B4/G17C1/G17C2 default water refusal unchanged.
+# Original WATER USTAR/EL/ZI, G24 wind and G14/G26 remain NOT_ACCEPTED.
+add_executable(cteas_p6g_g39_selected_water_thermal_reference
+               src/p6g_g39_selected_water_thermal_reference_main.cpp)
+target_link_libraries(cteas_p6g_g39_selected_water_thermal_reference
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g39_selected_water_thermal_reference
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g39_selected_water_thermal_reference
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME p6g_g39_selected_water_thermal_source_and_production_denial
+         COMMAND cteas_p6g_g39_selected_water_thermal_reference --self-test)

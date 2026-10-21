@@ -38,7 +38,8 @@ inline G17CSelectedHeatResult selected_iavet1_heat_after_fradj(
     const GeoGrid& grid,const StationSet& stations,const SurfaceHour& hour,
     const G17B4TwoPassSurfvar& source,
     const G17CSelectedHeatInputs& fixture,
-    bool original_comp_third_pass=false) {
+    bool original_comp_third_pass=false,
+    bool explicitly_selected_water_reference_only=false) {
     using namespace std::chrono;
     if(!fixture.explicitly_test_only||
        !source.first_ready()||!source.second_ready()||
@@ -66,9 +67,16 @@ inline G17CSelectedHeatResult selected_iavet1_heat_after_fradj(
        grid.bowen.size()!=n||grid.hcg.size()!=n||
        grid.qf.size()!=n||fixture.initial_water_qh_wm2.size()!=n)
         throw std::invalid_argument("G17C source GEO/HEATFX field mismatch");
-    for(int land:grid.landuse)
-        if(land>=grid.iwat1&&land<=grid.iwat2)
-            throw std::invalid_argument("G17C water IAVET=1 branch not accepted");
+    for(std::size_t k=0;k<n;++k)
+        if(grid.landuse[k]>=grid.iwat1&&grid.landuse[k]<=grid.iwat2) {
+            if(!explicitly_selected_water_reference_only)
+                throw std::invalid_argument("G17C water IAVET=1 branch not accepted");
+            // Original selected neutral WATER ends each hour at QH=0;
+            // HEATFX itself skips the water QH write. This contract must
+            // never admit arbitrary caller-injected water buoyancy heat.
+            if(fixture.initial_water_qh_wm2[k]!=0.f)
+                throw std::invalid_argument("G17C unverified nonzero water prior QH");
+        }
     std::vector<int> clouds;
     clouds.reserve(stations.surface.size());
     for(const auto& obs:hour.by_station) {
