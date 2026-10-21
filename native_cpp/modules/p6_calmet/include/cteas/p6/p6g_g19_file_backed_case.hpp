@@ -30,13 +30,23 @@ struct G19SourceFilePaths {
     std::vector<std::string> ordered_up_dat;
 };
 
-struct G19FileBackedCase {
+// Structural source/clock contract: deliberately cannot be implicitly
+// promoted to the G14/G26 physics-ready case. Water GEO is legal here.
+struct G19SourceClockCase {
     std::string original_metinp;
     GeoGrid grid;
     StationSet stations;
     SurfaceSeries surface;
     std::vector<UpperSeries> upper;
     OriginalWindControls controls;
+    [[nodiscard]] UnifiedMultistationHourlyScheduler make_scheduler() const {
+        return {grid,stations,surface,upper,controls};
+    }
+};
+
+// Physics-ready admission is a DISTINCT, stronger type. Every old
+// g19_load_original_source_case() caller retains the same water HFLUX guard.
+struct G19FileBackedCase : G19SourceClockCase {
     // Source-selected physical INPUTS, not completed source physics:
     // original SETCOM nearest US ordinal for every STHEOR surface site,
     // original READCF IAVET/AVETMP and default HFLUX coefficients.
@@ -45,11 +55,6 @@ struct G19FileBackedCase {
     G17B4SurfaceControls surface_controls;
     G17CSelectedHeatInputs heat_inputs;
 
-    // This intentionally creates only an input/clock authority.
-    // It supplies NO native multistation physics or accepted P6F output.
-    [[nodiscard]] UnifiedMultistationHourlyScheduler make_scheduler() const {
-        return {grid,stations,surface,upper,controls};
-    }
 };
 
 inline double g19_read_real_control(
@@ -85,7 +90,9 @@ inline GeoGridSpec g19_source_grid_spec(const std::string& original_deck) {
     return {nx,ny,zone,hemisphere.front(),origin_x,origin_y,dx};
 }
 
-inline G19FileBackedCase g19_load_original_source_case(
+// Literal READCF/GEO/SURF/UP and all modeled-hour brackets only.
+// Never calls HEATFX, HFLUX, STHEOR or emits P6 meteorology.
+inline G19SourceClockCase g19_load_source_clock_only(
     const G19SourceFilePaths& paths) {
     if(paths.met_inp.empty()||paths.geo_dat.empty()||
        paths.surf_dat.empty()||paths.ordered_up_dat.empty())
@@ -93,7 +100,7 @@ inline G19FileBackedCase g19_load_original_source_case(
     std::ifstream met(paths.met_inp);
     if(!met)
         throw std::runtime_error("G19 original met.inp not found");
-    G19FileBackedCase result;
+    G19SourceClockCase result;
     result.original_metinp.assign(
         std::istreambuf_iterator<char>(met),std::istreambuf_iterator<char>());
     if(result.original_metinp.empty())
@@ -136,6 +143,24 @@ inline G19FileBackedCase g19_load_original_source_case(
     // modeled interval. Accept only a strictly increasing, bounded trailing
     // archive in G19; the existing strict standalone reader stays unchanged.
     result.upper=read_upper_station_set(paths.ordered_up_dat,us,100000,true);
+
+    // Validate real ordered source hours independently of any thermal,
+    // water, or station-to-grid PHYSICS readiness assertion.
+    const auto input_clock=result.make_scheduler();
+    if(input_clock.planned_hours()!=result.surface.hourly.size()||
+       !input_clock.has_original_controls())
+        throw std::logic_error(
+            "G19 source-only clock authority rejected actual source interval");
+    return result;
+}
+
+// Existing production/test-selected admission, unchanged physical branch:
+// source-only case is NOT implicitly convertible to G19FileBackedCase.
+inline G19FileBackedCase g19_load_original_source_case(
+    const G19SourceFilePaths& paths) {
+    auto input=g19_load_source_clock_only(paths);
+    G19FileBackedCase result;
+    static_cast<G19SourceClockCase&>(result)=std::move(input);
 
     // G19B source science admission. The current selected DIAGNO and
     // P6E kernels are verified ONLY for the original nearest-US IUPT=-1,
