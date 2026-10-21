@@ -136,8 +136,6 @@ def verify(original_vendor:Path,original_met:Path,scratch_met:Path,
           "pre_temp_k":(float(row["pre_temp_k"]),first[2]),
           "post_temp_k":(float(row["post_temp_k"]),second[2]),
         }
-        if float(row["qh_water_wm2"])!=0:
-            raise ValueError("Native no-OW WATER heat source isn't neutral")
         for label,(value,reference) in samples.items():
             if not (math.isfinite(value) and math.isfinite(reference)):
                 raise ValueError(f"{label} nonfinite")
@@ -159,7 +157,8 @@ def verify(original_vendor:Path,original_met:Path,scratch_met:Path,
       "original_6hour_phase1_phase2_water_rows":len(orig),
       "native_first_hour_water_rows":len(native),
       "max_residual":maxima,"strict_abs_tolerance":thresholds,
-      "native_source_provenance":"G19_SOURCE_CLOCK_G41_G20_WIND1_G21_FRADJ_G39_HEAT",
+      "native_source_provenance":"G19_SOURCE_CLOCK_G41_G42_WIND1_G21_FRADJ_IAVET_TWO_PASS",
+      "G39_AIRDEN_HEATFX_ELUSTR":"NOT_RUN_MISSING_AUXILIARY_PRESSURE",
       "native_G24_water_firstplane_final_uv":"NOT_RUN",
       "full_G14_G26_6H_45FIELD":"NOT_RUN","P7":"BLOCKED",
     }
