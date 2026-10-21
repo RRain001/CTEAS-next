@@ -1084,3 +1084,18 @@ else()
 endif()
 add_test(NAME p6g_g35_test_only_original_water_neutral_negative_guards
          COMMAND cteas_p6g_g35_original_nowsta0_water_reference --self-test)
+
+# S4-P: source-restricted ZI/ZIMECH original WATER neutral mixing-height
+# scalar NUMERICAL REFERENCE ONLY. G19/G14/G26 still do not call this.
+add_executable(cteas_p6g_g36_original_nowsta0_water_zi
+               src/p6g_g36_original_noow_water_zi_main.cpp)
+target_link_libraries(cteas_p6g_g36_original_nowsta0_water_zi PRIVATE
+                      cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g36_original_nowsta0_water_zi PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g36_original_nowsta0_water_zi PRIVATE
+                         -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME p6g_g36_test_only_original_water_zi_negative_guards
+         COMMAND cteas_p6g_g36_original_nowsta0_water_zi --self-test)
