@@ -22,6 +22,7 @@ struct S4B2Options {
     std::vector<std::string> up;
     std::size_t hours=0;
     std::size_t probe_prefix_hours=0;
+    std::size_t max_retained_field_bytes=0;
     bool experimental=false;
 };
 
@@ -51,6 +52,17 @@ static S4B2Options parse_args(int argc, char** argv) {
             o.probe_prefix_hours=static_cast<std::size_t>(parsed);
             if(parsed!=o.probe_prefix_hours)throw std::invalid_argument("S4B3 probe hours overflow");
         }
+        else if(key=="--max-retained-field-bytes" && o.max_retained_field_bytes==0) {
+            if(value[0]=='-')
+                throw std::invalid_argument("S4E invalid retained field byte budget");
+            std::size_t consumed=0;
+            const auto parsed=std::stoull(value,&consumed);
+            if(consumed!=value.size()||parsed==0)
+                throw std::invalid_argument("S4E invalid retained field byte budget");
+            o.max_retained_field_bytes=static_cast<std::size_t>(parsed);
+            if(parsed!=o.max_retained_field_bytes)
+                throw std::invalid_argument("S4E retained field byte budget overflow");
+        }
         else if(key=="--hours" && o.hours==0) {
             std::size_t consumed=0;
             const auto parsed=std::stoull(value,&consumed);
@@ -65,7 +77,8 @@ static S4B2Options parse_args(int argc, char** argv) {
         throw std::invalid_argument(
             "S4B2 experimental ONLY: --selected-experimental --met met.inp "
             "--geo GEO.DAT --surf SURF.DAT --up UP1.DAT [--up UP2.DAT ...] "
-            "--hours N [--probe-prefix-hours K] --out candidate-met.dat; no production mode");
+            "--hours N [--probe-prefix-hours K] [--max-retained-field-bytes N] "
+            "--out candidate-met.dat; no production mode");
     if(o.probe_prefix_hours>o.hours)
         throw std::invalid_argument("S4B3 prefix exceeds complete declared G14 hours");
     return o;
@@ -94,6 +107,17 @@ int main(int argc, char** argv) {
             scheduler.planned_hours(),true,true
         });
         const auto executed_hours=opt.probe_prefix_hours>0?opt.probe_prefix_hours:opt.hours;
+        // S4-E bounded staging authority: the selected CLI retains all
+        // emitted 45-field hours in memory before whole-file serialization.
+        // This is only a RAW field-value lower bound, NOT a peak RSS cap.
+        // Budget applies to emitted hours when this is a prefix probe.
+        if(opt.max_retained_field_bytes!=0) {
+            const auto raw=p6g::s4b1_checked_product(
+                admission.one_hour_raw_field_bytes,executed_hours);
+            if(raw>opt.max_retained_field_bytes)
+                throw std::invalid_argument(
+                    "S4E source selected G14 output exceeds caller raw field byte budget");
+        }
         p6g::G18D2StationClockAuthority clocks;
         std::optional<cteas::p6f::Calmet21File> all_hours;
         for(std::size_t hour=0;hour<executed_hours;++hour) {
@@ -190,6 +214,9 @@ int main(int argc, char** argv) {
                  <<" NX="<<admission.input.nx
                  <<" NY="<<admission.input.ny
                  <<" FIELDS="<<executed_hours*45
+                 <<" RETAINED_RAW_FIELD_BYTES_MIN="
+                 <<p6g::s4b1_checked_product(
+                     admission.one_hour_raw_field_bytes,executed_hours)
                  <<" VENDOR_CALMET_PARITY=NOT_RUN"
                  <<" PRODUCTION_ADMISSION=NOT_ACCEPTED\n";
         return 0;
