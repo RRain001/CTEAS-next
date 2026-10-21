@@ -8,6 +8,14 @@ Date: 2026-10-21. Follows merged #224 genuine C1 143h independently rerun origin
 
 The genuine two **observed**, **physically inside-grid** NOAA surface stations `58314099999` (Huoshan, IFSTN `583140`, sparse secondary) and `58321099999` (Luogang/Xinqiao, IFSTN `583210`, primary) are in the much larger `426.590,3464.125` km 1-km-resolution grid used by existing Issue #56. **Never reuse the 100×100 Huoshan GEO to run that two-SS SURF.** The known original P5 2022 June 24h case contains 32 populated / 16 missing station-hours of 48 total (P5 original/native raw SMERGE exactly byte-matched); *two stations selected* does not mean *two simultaneous observed wind records every hour*.
 
+## Observed input failure and accepted transport correction
+
+On exact PR head `c45bd32a` [Actions #39539231560](https://github.com/RRain001/CTEAS-next/actions/runs/39539231560) actually reran genuine 2022 P4 successfully but P5 2022 authentic Huoshan `58314099999` raw ISD-Lite download **blocked**: old NCEI `https://www.ncei.noaa.gov/pub/data/noaa/isd-lite/2022/583140-99999-2022.gz` returned HTTP 200 `text/html` of 32,357 bytes, **not gzip**; full ISD `2828/8760` original hourly records were valid and Luogang both full/lite `8692/8760` passed. Never treat HTML as weather data.
+
+Exact source-diagnostic Actions on the same GitHub network probed NOAA's new **official** ISD-Lite NODD object `https://noaa-isd-pds.s3.amazonaws.com/isd-lite/data/2022/583140-99999-2022.gz`: HTTP 200, genuine gzip signature, 31,406 bytes, SHA256 `3acfe06fba95763e59153e4a9478c24fce260b16c0e9d0f221ecd53fdf0b841e`. The other guessed S3 paths returned 404 and were not adopted. The P5 original ISD-Lite download **transport BASE_URL only** was updated to this published NODD path; all same-source independent reader, observation-coverage, original SMERGE, native SMERGE, sparse secondary, cloud-fallback and station metadata algorithms stay unchanged. The official NOAA service-migration notice is <https://www.nesdis.noaa.gov/news/service-location-change-integrated-surface-data-global-hourly> (2026-06-23; former NCEI service retired 2026-07-31).
+
+No source science passes until the NODD transport and original/native genuine NOAA data run **again** with the final source SHA and returns strict same-case evidence, including authentic raw 2022 Huoshan ISD-Lite provenance and no synthetic substitutions.
+
 ## Actual new source-only test
 
 GitHub Actions executes the already existing authentic-source producer pipelines without source-data invention:
