@@ -56,7 +56,7 @@ g35_selected_original_nowsta0_water_reference(
     // not the atmospheric sensible heat-flux calculation of HEATFX land.
     const float wt=0.f;
     constexpr float rhocp=1195.2f;
-    out.wt_kmps=wt;
+    out.wt_kelvin_mps=wt;
     out.qh_buoyancy_wm2=wt*rhocp;
     out.wstar_mps=0.f;
     out.pgt=4;  // EL > 25, original WATER classified PGT D.
