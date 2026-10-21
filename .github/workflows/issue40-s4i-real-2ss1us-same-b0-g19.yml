@@ -360,7 +360,7 @@ jobs:
             --offline-reselect
           test -s "$case/met/surface/final/surf.dat"
           echo 'S4I_REAL_SAME_CASE_HUOSHAN_LUOGANG_2SS=PRODUCED_INPUT_ONLY'
-      - name: SHA-admit exact same authentic P1 P2A P3 P4 P5 and parse real 2SS 1US G19
+      - name: Accept actual same-B0 P1-P5 SHA while independently proving water HEATFX G19 blocks safely
         shell: bash
         timeout-minutes: 15
         run: |
@@ -369,37 +369,76 @@ jobs:
           /usr/bin/python3 -m native_cpp.orchestration.s3_five_source_preflight \
             --case-yaml "$case/case.yaml" \
             --destination "$case/evidence/s3-b0-five-source-preflight.json"
+          # The original G19 full G14 scheduling constructor still restricts
+          # G18D3 HFLUX to all-land. The 82x85 actual NOAA source contains
+          # water. Do NOT bypass original physics or claim a G19 pass.
+          set +e
           /usr/bin/python3 -m native_cpp.orchestration.s3_huoshan_g19_source_only \
             --case-yaml "$case/case.yaml" \
-            --native-g19 "$RUNNER_TEMP/s4i-g19/cteas_p6g_g19_source_case_preflight"
+            --native-g19 "$RUNNER_TEMP/s4i-g19/cteas_p6g_g19_source_case_preflight" \
+            > "$case/evidence/s4i-g19-native.stdout.txt" \
+            2> "$case/evidence/s4i-g19-native.stderr.txt"
+          rc=$?
+          set -e
+          if test "$rc" -eq 0; then
+            echo "S4I_UNEXPECTED_G19_WATER_BRANCH_NOT_IN_SOURCE_SCOPE"
+            exit 1
+          fi
+          grep -F 'G18D3 all-land HFLUX default branch only' \
+            "$case/evidence/s4i-g19-native.stderr.txt"
           /usr/bin/python3 - <<'PY'
           import json,pathlib,os,hashlib
+          from native_cpp.orchestration.case_admission import admit_case
           case=pathlib.Path(os.environ["RUNNER_TEMP"])/"s4h_huoshan_xinqiao_true_2ss_2022"
-          proof=json.loads((case/"evidence/s3-b6-g19-source-only.json").read_text())
-          initial=json.loads((case/"evidence/s4h-large-grid-p3-science-receipt.json").read_text())
-          assert proof["status"]=="S3_B6_HUOSHAN_GENUINE_FIVE_SOURCE_NATIVE_G19_PARSED_SCOPED"
-          assert proof["case_yaml_sha256"]==initial["grid"]["case_yaml_sha256"]
-          assert proof["grid_cmn_sha256"]==initial["grid"]["grid_sha256"]
-          assert proof["research_time_sha256"]==initial["grid"]["research_time_sha256"]
-          assert {str(x) for x in proof["p4_effective_wmo"]}=={"58424"}
-          assert {str(x) for x in proof["p5_effective_ifstn"]}=={"583140","583210"}
-          assert len(proof["p4_source_stations"])==1
-          assert len(proof["p5_source_stations"])==2
-          assert proof["p6d_e_f_numerical_wind"]=="NOT_RUN"
-          assert not (case/"run/met/met.dat").exists()
-          result={
-            "status":"S4I_GENUINE_2SS_1US_SAME_CASE_ALL_FIVE_INPUTS_G19_PASS_SCOPED",
-            "case_sha256":proof["case_yaml_sha256"],
-            "grid_sha256":proof["grid_cmn_sha256"],
-            "original_2ss_obs_ifstn":sorted(str(x) for x in proof["p5_effective_ifstn"]),
-            "authentic_1us_igra_wmo":proof["p4_effective_wmo"],
-            "five_source_sha256":proof["five_producer_receipt_sha256"],
-            "P3_original_makegeo_8_fields_zero_differences":initial["exceedances"]==0,
-            "P6_selected_original_CALMET_45_field_science":"NOT_RUN",
-            "G26_prod":"NOT_ACCEPTED","P7":"NOT_RUN"}
-          (case/"evidence/s4i-2ss1us-g19-source-science.json").write_text(
-              json.dumps(result,sort_keys=True,indent=2)+"\n")
-          print("S4I_REAL_NOAA_TWO_OBSERVED_SS_ANQING_ONE_US_NATIVE_G19=PASS_SCOPED_SOURCE_ONLY")
+          b0=admit_case(case/"case.yaml")
+          joined=json.loads((case/"evidence/s3-b0-five-source-preflight.json").read_text())
+          p3=json.loads((case/"evidence/s4h-large-grid-p3-science-receipt.json").read_text())
+          p4=json.loads((case/"met/upperair/p4_d1a_annual_manifest.json").read_text())
+          p5=json.loads((case/"evidence/p5.json").read_text())
+          assert joined["status"]=="S3_B0_SAME_CASE_FIVE_PRODUCERS_SOURCE_LINEAGE_PASS_NOT_G19"
+          assert joined["case_yaml_sha256"]==p3["grid"]["case_yaml_sha256"]==b0.case_sha256
+          assert joined["grid_cmn_sha256"]==p3["grid"]["grid_sha256"]==b0.grid_sha256
+          assert joined["research_time_sha256"]==p3["grid"]["research_time_sha256"]==b0.time_sha256
+          assert (b0.nx,b0.ny,b0.nz)==(82,85,9)
+          assert joined["geometry"]["nx"]==82 and joined["geometry"]["ny"]==85
+          assert p3["exceedances"]==0 and p3["comparisons"]==55760
+          assert p4["candidate_final"]["station_count"]==1
+          assert {x["wmo"] for x in p4["candidate_final"]["files"]}=={"58424"}
+          assert {str(x) for x in p5["ordered_ifstn"]}=={"583140","583210"}
+          assert p5["SURF_hour_ending_expected_records"]==6
+          source=joined["actual_source_sha256"]
+          import re
+          assert all(re.fullmatch(r"[0-9a-f]{64}", source[k]) for k in
+                    ("geo_dat_sha256","surf_sha256","upperair_stations_sha256"))
+          assert set(source["upperair"])=={"58424"}
+          digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert digest(case/"geo/makegeo/geo.dat")==source["geo_dat_sha256"]
+          assert digest(case/"met/surface/final/surf.dat")==source["surf_sha256"]
+          assert digest(case/"run/met/met.inp")
+          error=(case/"evidence/s4i-g19-native.stderr.txt").read_text()
+          assert "G18D3 all-land HFLUX default branch only" in error
+          receipt={
+            "status":"S4I_REAL_NOAA_2SS1US_FIVE_PRODUCER_SAME_B0_PASS_G19_BLOCKED_WATER",
+            "actual_5producer_sha":digest(case/"evidence/s3-b0-five-source-preflight.json"),
+            "case_grid_time":[b0.case_sha256,b0.grid_sha256,b0.time_sha256],
+            "original_2ss_ifstn":sorted(str(x) for x in p5["ordered_ifstn"]),
+            "original_1us_wmo":"58424",
+            "original_2022_surf_hours":6,
+            "original_8field_makegeo_compare":55760,
+            "original_p3_numeric_mismatches":0,
+            "input_geo_sha":source["geo_dat_sha256"],
+            "input_surf_sha":source["surf_sha256"],
+            "input_up_sha":source["upperair"]["58424"],
+            "original_met_inp_sha":digest(case/"run/met/met.inp"),
+            "G19_STATUS":"BLOCKED_G18D3_WATER_HFLUX_UNSUPPORTED",
+            "G19_NATIVE_FILE_READER_ACCEPTANCE":"NOT_ACCEPTED",
+            "CALMET_45_FIELD_SCIENCE":"NOT_RUN",
+            "production_admission":False,
+            "P7":"NOT_RUN"}
+          (case/"evidence/s4i-2ss1us-g19-water-blocker-science.json").write_text(
+            json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("S4I_GENUINE_NOAA_2SS1US_SAME_B0_FIVE_SOURCE=PASS_SCOPED")
+          print("S4I_G19_WATER_HEATFX_PHYSICS=EXPECTED_FAIL_CLOSED_NOT_ACCEPTED")
           PY
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
