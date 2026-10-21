@@ -1146,3 +1146,18 @@ else()
 endif()
 add_test(NAME p6g_g39_selected_water_thermal_source_and_production_denial
          COMMAND cteas_p6g_g39_selected_water_thermal_reference --self-test)
+
+# S4-R1b authentic 82x85 NOAA no-OW WATER: native-only QSW input
+# radiation and preserved water QH, independent original scratch comparison.
+# Source-only CLI; no full G22/G24/G26 stage promotion.
+add_executable(cteas_p6g_g40_real_water_shortwave_source
+               src/p6g_g40_real_water_shortwave_source_main.cpp)
+target_link_libraries(cteas_p6g_g40_real_water_shortwave_source
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g40_real_water_shortwave_source
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g40_real_water_shortwave_source
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
