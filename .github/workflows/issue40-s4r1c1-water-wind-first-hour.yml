@@ -1,0 +1,46 @@
+name: Issue40 S4-R1c1 real-WATER G20/G21/G39 source-only build guards
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4r1c1-water-wind-first-hour.yml'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g41_real_water_first_hour_source.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g21_file_backed_fradj.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g41_real_water_first_hour_main.cpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'docs/plans/ISSUE40_S4R1C1_NATIVE_NOOW_WATER_FIRST_HOUR_20261021.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-type-gates-no-water-production:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Strict Release compile new first-hour and accepted existing land G19/G21
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4r1c1" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$RUNNER_TEMP/s4r1c1" --parallel 2 \
+            --target cteas_p6g_g41_real_water_first_hour \
+                     cteas_p6g_g39_selected_water_thermal_reference \
+                     cteas_p6g_g19_file_backed_case_tests
+      - name: Assert unauthorized G41 invocation fails and existing original G19 all-land science remains frozen
+        shell: bash
+        run: |
+          set -euo pipefail
+          if "$RUNNER_TEMP/s4r1c1/cteas_p6g_g41_real_water_first_hour" > /tmp/g41-wrong.log 2>&1; then
+            echo "G41 accidentally admits default production"; exit 2
+          fi
+          if "$RUNNER_TEMP/s4r1c1/cteas_p6g_g41_real_water_first_hour" \
+               --selected-noow-water-first-hour > /tmp/g41-missing.log 2>&1; then
+            echo "G41 accepted missing NOAA source files"; exit 2
+          fi
+          "$RUNNER_TEMP/s4r1c1/cteas_p6g_g39_selected_water_thermal_reference" \
+            --self-test | tee /tmp/g41-water-regression.log
+          grep -Fx 'S4R1A_SELECTED_WATER_SURFVAR_HEATFX_ELUSTR_GUARDS=PASS' /tmp/g41-water-regression.log
+          echo 'S4R1C1_COMPILE_AND_WATER_PRODUCTION_DENIAL=PASS'
