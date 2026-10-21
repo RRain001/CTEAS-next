@@ -17,16 +17,30 @@ class G34BSelectedOnlyHour final : public p6g::MultiHourPhysics {
 public:
     G34BSelectedOnlyHour(const p6g::UnifiedMultistationHourlyScheduler& owner,
                          p6g::G18D2StationClockAuthority& clocks,
-                         const p6g::G19FileBackedCase& source)
-        :source_(source),diagno_(owner,clocks,source),comp_(diagno_,source) {}
+                         const p6g::G19FileBackedCase& source,
+                         bool normal_entry_trial=false)
+        :source_(source),
+         diagno_(owner,clocks,source,normal_entry_trial),
+         comp_(diagno_,source,normal_entry_trial),
+         normal_entry_trial_(normal_entry_trial) {}
 
     p6::NativeHourStageResult run(p6::NativeHourStage stage,
                                   p6g::MultiHourFrame& frame) override {
         if(cursor_>=17||stage!=p6::kHefeiOriginalStageOrder[cursor_])
             throw std::logic_error("G34B native stage skipped/reordered");
-        if(cursor_<12) diagno_.run_selected(stage,frame,true);
-        else if(cursor_<16) comp_.run_selected(stage,frame,true);
-        else {
+        if(cursor_<12) {
+            if(normal_entry_trial_) {
+                const auto status=diagno_.run(stage,frame);
+                if(!status.completed||status.source!=p6::NativeHourSource::NativeCpp)
+                    throw std::logic_error("S4F normal G26 DIAGNO trial returned no native stage");
+            } else diagno_.run_selected(stage,frame,true);
+        } else if(cursor_<16) {
+            if(normal_entry_trial_) {
+                const auto status=comp_.run(stage,frame);
+                if(!status.completed||status.source!=p6::NativeHourSource::NativeCpp)
+                    throw std::logic_error("S4F normal G26 COMP trial returned no native stage");
+            } else comp_.run_selected(stage,frame,true);
+        } else {
             const auto& candidate=comp_.selected_p6f_candidate(frame);
             const auto& heat=comp_.source_comp_heat_for_p6f(frame);
             const bool single_site_source_audit=
@@ -71,5 +85,6 @@ private:
     p6g::G26BSourceFileBackedCompBridge comp_;
     std::size_t cursor_=0;
     std::optional<cteas::p6f::Calmet21File> output_;
+    bool normal_entry_trial_=false;
 };
 
