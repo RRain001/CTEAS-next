@@ -19,4 +19,18 @@ After measuring native candidate, independently check out pinned, unchanged orig
 
 Use actual measured baseline to plan worst-case and stress tests with substantially longer valid simulations, then implement **explicit audited resource budget policy** for G19/G14, including memory exhaustion fail-closed and physically supported meteorological missing-data paths, before enabling normal G26. Continue using genuine independently observed multi-site station data as a separate science requirement. G26 normal `run()` remains unsupported here; P7, Docker and precipitation remain out of scope.
 
-**Result**: `NOT_RUN` until exact-head workflow is completed.
+## Executed CI: measured native process RSS and fresh original science
+
+[Actions run #39529868662](https://github.com/RRain001/CTEAS-next/actions/runs/39529868662) **3/3 jobs SUCCESS** from PR source `cc2bcbe5c395ec69055604c7d53354dbf18e580c`. These values are raw **Linux GNU time measured peak RSS** for the actual **small 12×12×9, six-hour selected executable**; they are not analytical memory upper bounds, not a measured year-long simulation and not general multi-site production metrics.
+
+| Source sites | G14 1h RSS (MiB) | G14 1h wall (s) | G14 6h RSS (MiB) | G14 6h wall (s) |
+|---|---:|---:|---:|---:|
+| 20SS / 20US | 5.375 | 0.13 | 5.500 | 0.39 |
+| 20SS / 1US | 5.250 | 0.15 | 5.625 | 0.55 |
+| 1SS / 20US | 5.250 | 0.09 | 5.625 | 0.38 |
+
+Evidence jobs: [20SS/20US #118993039589](https://github.com/RRain001/CTEAS-next/actions/runs/39529868662/job/118993039589), [20SS/1US #118993039715](https://github.com/RRain001/CTEAS-next/actions/runs/39529868662/job/118993039715), [1SS/20US #118993039731](https://github.com/RRain001/CTEAS-next/actions/runs/39529868662/job/118993039731). Each job uploads its machine-readable `s4e-measured-resource.json`, raw GNU time records, actual original source SHA256 and native MET output SHA256. The same CI job independently rebuilt and reran **unchanged original CALMET 6.5.0** and checked 45 fields for *each of 1 and 6 hours* with existing P6E thresholds, **PASS_SCOPED, zero exceedances**.
+
+The standalone resource parser initially labels its value `PRODUCED_UNVERIFIED_until_original_comparison` because instrumentation is executed first. The separate independent original-CALMET comparison following it in the same successful job establishes the final scoped science result. These RSS numbers do **not** justify a production memory cap or an extrapolation to 100×100 grids, 143 h or 1 year.
+
+**Final classification for this source/CI only:** `S4E_MEASURED_SOURCE_SELECTED_20_SITE_PROCESS_RSS=PASS_MEASURED`, `S4D_ORIGINAL_45_FIELD_1H_AND_6H=PASS_SCOPED`, `G26_PRODUCTION=NOT_ACCEPTED`.
