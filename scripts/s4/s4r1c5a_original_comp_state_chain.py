@@ -29,8 +29,8 @@ def source_lines(path: Path) -> list[str]:
     rows = path.read_text().splitlines()
     anchors = {
         4511: "      call diagno(nhrze,nhrind,gamma,um,vm,nowsta,zowsta,",
-        4715: "          call avemix(nx,ny,mnmdav,hafang,dgrid,u(1,1,ilevzi),",
-        4717: "       endif",
+        4715: "         call avemix(nx,ny,mnmdav,hafang,dgrid,u(1,1,ilevzi),",
+        4717: "      endif",
         4719: "c",
     }
     for ln, expected in anchors.items():
