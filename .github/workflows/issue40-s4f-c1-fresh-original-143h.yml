@@ -8,6 +8,7 @@ on:
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g22_file_backed_thermal_slope.hpp'
   workflow_dispatch:
 permissions:
   contents: read
