@@ -97,8 +97,8 @@ def verify(vendor:Path,geo:Path,deck:Path,baseline:Path,instrumented:Path,
             raise ValueError("nonfinite source original water mixing state")
         if not(0<f<1.e-2 and 0<constw<=10 and 0<zmin<=zi<=zmax):
             raise ValueError("unphysical original water source FCORI or mixed-height bounds")
-        if zic!=0 or zold!=zmin:
-            raise ValueError("original selected MIXHMC WT=0 branch ziconv/zicold differs")
+        if zic!=0 or zold!=0:
+            raise ValueError("original selected MIXHMC WT=0 branch must collapse ZICONV/ZICOLD to zero")
         if not math.isclose(zi,max(zmin,min(zmax,zmech)),rel_tol=2e-6,abs_tol=2e-4):
             raise ValueError("original selected water ZI mechanical height clamp mismatch")
         if (i,j) not in previous[h] or not math.isclose(
