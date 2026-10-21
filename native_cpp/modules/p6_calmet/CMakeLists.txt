@@ -1219,3 +1219,17 @@ else()
   target_compile_options(cteas_p6g_g45_six_hour_water_wind1
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c4b: independent original/native 6970-cell first-hour WIND1,
+# FRADJ + 2x SURFVAR fields; no G14 historical state/G24/G26/P7.
+add_executable(cteas_p6g_g46_real_allgrid_g21_firsthour
+               src/p6g_g46_real_allgrid_g21_firsthour_main.cpp)
+target_link_libraries(cteas_p6g_g46_real_allgrid_g21_firsthour
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g46_real_allgrid_g21_firsthour
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g46_real_allgrid_g21_firsthour
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
