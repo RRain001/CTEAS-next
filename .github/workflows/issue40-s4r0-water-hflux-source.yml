@@ -1,0 +1,51 @@
+name: Issue40 S4-R0 original-water HFLUX source guard (not DIAGNO)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4r0-water-hflux-source.yml'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g38_selected_noow_water_hflux_source.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g38_selected_water_hflux_source_main.cpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'docs/plans/ISSUE40_S4R0_WATER_DIAGNO_DEPENDENCY_GATE_20261021.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  strictly-test-only-water-hflux-source-guard:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build source control tests without original/vendor inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4r0-build" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$RUNNER_TEMP/s4r0-build" --parallel 2 \
+            --target cteas_p6g_g38_selected_water_hflux_source \
+                     cteas_p6g_g37_original_water_fcori_ws10
+      - name: Require negative scientific authorization tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/s4r0-build/cteas_p6g_g38_selected_water_hflux_source" --self-test \
+            | tee "$RUNNER_TEMP/s4r0-guard.log"
+          grep -Fx 'S4R0_SELECTED_WATER_HFLUX_SOURCE_NEGATIVE_GATES=PASS' \
+            "$RUNNER_TEMP/s4r0-guard.log"
+          grep -Fx 'S4R0_NATIVE_WATER_G24_63X6=NOT_RUN' "$RUNNER_TEMP/s4r0-guard.log"
+          grep -Fx 'S4R0_NATIVE_45_FIELD_G14_G26=NOT_RUN' "$RUNNER_TEMP/s4r0-guard.log"
+          grep -Fx 'S4R0_G26_PRODUCTION=NOT_ACCEPTED' "$RUNNER_TEMP/s4r0-guard.log"
+          "$RUNNER_TEMP/s4r0-build/cteas_p6g_g37_original_water_fcori_ws10" --self-test
+          ctest --test-dir "$RUNNER_TEMP/s4r0-build" --output-on-failure \
+            -R 'p6g_g3(7|8)_'
+      - name: Retain scoped provenance only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4r0-source-contract-no-physics
+          path: ${{ runner.temp }}/s4r0-guard.log
+          if-no-files-found: warn
+          retention-days: 14
