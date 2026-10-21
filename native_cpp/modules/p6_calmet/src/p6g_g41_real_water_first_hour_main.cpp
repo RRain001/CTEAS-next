@@ -3,7 +3,7 @@
 // Strictly source-only: do not emit or commit G14/P6F/COMP, nor use any
 // original Fortran MET.DAT or instrumental oracle as an input.
 #include "cteas/p6/p6g_g41_real_water_first_hour_source.hpp"
-#include "cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp"
+#include "cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp"
 #include "cteas/p6/p6g_g21_file_backed_fradj.hpp"
 #include "cteas/p6/p6g_g39_selected_water_thermal_reference.hpp"
 #include "cteas/p6/p6g_g18d2_station_clock_transaction.hpp"
@@ -39,14 +39,17 @@ int main(int argc,char** argv) {
         p6g::G18D2StationClockAuthority clocks;
         const auto prepared=clocks.prepare_selected(
             scheduler,source.original_metinp,true);
-        const auto profiles=p6g::g20_file_backed_source_wind1_profiles(
-            frame,true);
-        p6g::G16SelectedWindPhysics native(profiles);
-        const auto stage=native.run(
-            p6::NativeHourStage::DiagnoWind1,frame);
-        if(!stage.completed||stage.source!=p6::NativeHourSource::NativeCpp)
-            throw std::logic_error("G41 native first wind not completed");
-        const auto& wind1=native.selected_result().first_guess;
+        // A genuinely missing station in the original source is NOT a
+        // made-up zero-wind measurement. G42 preserves source present=0
+        // and delegates REAL*4 BIAS/ICALM/1/r² weights to frozen G9.
+        const auto native=p6g::g42_selected_real_water_missing_wind1(
+            frame,water,true);
+        if(native.g14_g26_production_ready)
+            throw std::logic_error("G42 promoted unaccepted WATER source");
+        const auto& wind1=native.native_firstguess;
+        std::cerr<<"S4R1C1_SOURCE_NOAA_MISSING_SURFACE_COUNT="
+                 <<native.missing_observed_surface_sites
+                 <<" CALM_COUNT="<<native.calm_observed_surface_sites<<"\n";
         const auto fradj=p6g::g41_real_water_first_hour_native_fradj(
             frame,water,prepared.cgamma,wind1,true);
         const auto n=static_cast<std::size_t>(source.grid.nx)*
