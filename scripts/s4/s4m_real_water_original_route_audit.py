@@ -66,7 +66,10 @@ def audit(vendor: Path, deck: Path, geo: Path) -> dict:
     subwaterp = single_location(lines, r"^subroutine\s+waterp\s*\(", 1, len(lines))
     neutral_to = single_location(lines, r"if\s*\(\s*nowsta\s*\.eq\.\s*0\s*\)\s*go\s+to\s+1200",
                                  subwater, subwaterp)
-    neutral_start = single_location(lines, r"^1200\s+continue", subwater, subwaterp)
+    labels = [i for i in range(subwater, subwaterp) if re.search(r"^\\s*1200\\s+continue\\s*$", lines[i - 1], re.I)]
+    if len(labels) != 1:
+        raise ValueError("original WATER neutral fixed-form label 1200 missing")
+    neutral_start = labels[0]
     neutral_wt_zero = single_location(lines, r"^wt\s*=\s*0\.", neutral_start, subwaterp)
     water_assign = single_location(lines, r"^qh\s*\(\s*i\s*,\s*j\s*\)\s*=\s*wt\s*\*\s*rhocp",
                                    subwater, subwaterp)
