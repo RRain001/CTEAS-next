@@ -1233,3 +1233,16 @@ else()
   target_compile_options(cteas_p6g_g46_real_allgrid_g21_firsthour
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c6 genuine NOAA first-hour post-ELUSTR original SLOPE, all grid
+# nine levels. Source-only research gate, NOT G23/G24/G26/P7 admission.
+add_executable(cteas_p6g_g47_real_water_post_slope
+               src/p6g_g47_real_water_post_slope_main.cpp)
+target_link_libraries(cteas_p6g_g47_real_water_post_slope
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g47_real_water_post_slope PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g47_real_water_post_slope
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
