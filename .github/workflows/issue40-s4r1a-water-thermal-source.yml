@@ -1,0 +1,58 @@
+name: Issue40 S4-R1a selected WATER thermal source-only adapter
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4r1a-water-thermal-source.yml'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c_iavet1_heat_handoff.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c2_elustr_handoff.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g39_selected_water_thermal_reference.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g39_selected_water_thermal_reference_main.cpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'docs/plans/ISSUE40_S4R1A_WATER_THERMAL_REFERENCE_20261021.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  water-thermal-source-scope-no-production:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Strict Release C++ builds including accepted source adapters
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4r1a" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$RUNNER_TEMP/s4r1a" --parallel 2 \
+            --target cteas_p6g_g39_selected_water_thermal_reference \
+                     cteas_p6g_g38_selected_water_hflux_source \
+                     cteas_p6g_g17b4_iavet_two_pass_tests \
+                     cteas_p6g_g19_file_backed_case_tests
+      - name: Test selected water interfaces and existing all-land source refusal
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/s4r1a/cteas_p6g_g39_selected_water_thermal_reference" \
+            --self-test | tee "$RUNNER_TEMP/s4r1a-scoped.log"
+          grep -Fx 'S4R1A_SELECTED_WATER_SURFVAR_HEATFX_ELUSTR_GUARDS=PASS' \
+            "$RUNNER_TEMP/s4r1a-scoped.log"
+          grep -Fx 'S4R1A_VENDOR_63X6_THERMAL_NUMERIC=NOT_RUN' \
+            "$RUNNER_TEMP/s4r1a-scoped.log"
+          grep -Fx 'S4R1A_NATIVE_G24_WATER_WIND=NOT_RUN' \
+            "$RUNNER_TEMP/s4r1a-scoped.log"
+          grep -Fx 'S4R1A_G26_PRODUCTION=NOT_ACCEPTED' \
+            "$RUNNER_TEMP/s4r1a-scoped.log"
+          ctest --test-dir "$RUNNER_TEMP/s4r1a" --output-on-failure \
+            -R 'p6g_g(38|39)_'
+      - name: Preserve status-only evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4r1a-thermal-source-only-no-g14
+          path: ${{ runner.temp }}/s4r1a-scoped.log
+          if-no-files-found: warn
+          retention-days: 14
