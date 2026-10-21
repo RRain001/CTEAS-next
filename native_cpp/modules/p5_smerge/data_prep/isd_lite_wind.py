@@ -14,7 +14,10 @@ import hashlib
 from pathlib import Path
 from urllib import error, request
 
-BASE_URL = "https://www.ncei.noaa.gov/pub/data/noaa/isd-lite"
+# NOAA/NCEI retired the legacy ISD-Lite HTTPS endpoint in July 2026.
+# Exact genuine NOAA NODD gzip verified in S4G Actions; this is source
+# transport only and DOES NOT change observation parsing or fill policy.
+BASE_URL = "https://noaa-isd-pds.s3.amazonaws.com/isd-lite/data"
 
 
 @dataclass(frozen=True)
