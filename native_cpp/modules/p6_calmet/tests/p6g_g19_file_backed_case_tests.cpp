@@ -129,12 +129,16 @@ static void upper_sounding(std::ostream& out,int station,sys_seconds at){
            <<"/"<<std::setw(5)<<temp<<"/"<<std::setw(3)<<wd
            <<"/"<<std::setw(3)<<ws;
     };
-    if(station>=58427&&station<=58431) {
+    if(station>=58427&&station<=58522) {
         // US4+ have distinct controlled wind levels; source ID offset
         // variant is separately checked by independent original Fortran.
         const int ordinal=station-58427;
-        row(1000,120,280.f,125+ordinal*11,62-ordinal*3);
-        row(500,5500,259.8f,225+ordinal*8,38+ordinal*2);
+        // Controlled variation must stay physically representable even if
+        // the vendor's mxus=99 capacity is probed in future runs.
+        row(1000,120,280.f,125+(ordinal%12)*11,
+            62-(ordinal%12)*3);
+        row(500,5500,259.8f,225+(ordinal%12)*8,
+            38+(ordinal%12)*2);
     } else {
         row(1000,120,280.f,90,50);
         row(500,5500,259.8f,180,45);
@@ -301,10 +305,10 @@ static void source_cardinality_surface_file(
             // Distinct fourth-station measurements expose accidental
             // positional aliasing while retaining the existing 1..3 baseline.
             if(i>=3) {
-                // SS4+ are not duplicated: each has a unique hourly
-                // wind speed and direction, including former SS4 baseline.
+                // SS4+ each has station-distinct winds; bound direction
+                // and speed under the original meteorological conventions.
                 out<<std::fixed<<std::setprecision(1)
-                   <<6.0+0.5*(i-3)<<" "<<215.0+12.0*(i-3)
+                   <<6.0+0.5*(i-3)<<" "<<215.0+12.0*((i-3)%12)
                    <<" 722 5 285 70 1008.1 0\n";
             } else out<<"4.0 170.0 722 5 285 70 1008.1 0\n";
         }
@@ -339,13 +343,21 @@ static std::string source_cardinality_deck(
         result=replace_one(std::move(result),key,value);
     std::ostringstream out;
     out<<std::fixed<<std::setprecision(3);
-    for(int i=1;i<nss;++i)
+    for(int i=1;i<nss;++i) {
+        // Keep accepted sites 1..8 invariant; after that place stations
+        // on independent legal source coordinates *inside* the 12x12 grid.
+        const int xord=i<8?i:(i%8);
+        const int yord=i<8?i:((i%8)+(i/8));
         out<<"! SS"<<i+1<<" = 'SS"<<i+1<<"' "<<583210+10*i+id_offset
-           <<" "<<513.385+10*i<<" "<<3533.769+10*i
+           <<" "<<513.385+10*xord<<" "<<3533.769+10*yord
            <<" 0 10.0 !\n";
-    for(int i=1;i<nus;++i)
+    }
+    for(int i=1;i<nus;++i) {
+        const int xord=i<8?i:(i%8);
+        const int yord=i<8?i:((i%8)+(i/8));
         out<<"! US"<<i+1<<" = 'US"<<i+1<<"' "<<58424+i+id_offset
-           <<" "<<513.384+10*i<<" "<<3533.772+10*i<<" 0 !\n";
+           <<" "<<513.384+10*xord<<" "<<3533.772+10*yord<<" 0 !\n";
+    }
     return result+out.str();
 }
 
@@ -474,9 +486,9 @@ int main(int argc,char** argv){
                 else if(arg=="--stations"&&!stations_option&&i+2<argc) {
                     export_ss=std::stoi(argv[++i]);
                     export_us=std::stoi(argv[++i]);
-                    if(export_ss<1||export_ss>8||export_us<1||export_us>8)
+                    if(export_ss<1||export_ss>350||export_us<1||export_us>99)
                         throw std::invalid_argument(
-                            "S4C bounded 12x12 original-vendor TEST SOURCE permits 1..8 SS/US");
+                            "S4C ORIGINAL-VENDOR TEST SOURCE exceeds pinned mxss=350/mxus=99 capacity");
                     stations_option=true;
                 }
                 else if(arg=="--hours"&&!hours_option&&i+1<argc) {

@@ -50,10 +50,10 @@ inline G17CSelectedHeatResult selected_iavet1_heat_after_fradj(
        !std::isfinite(grid.grid_km)||grid.grid_km<=0.f||
        !std::isfinite(grid.xorigin_km)||!std::isfinite(grid.yorigin_km)||
        grid.hemisphere!='N'||grid.zone<1||grid.zone>60||
-       // Original source-selected one-SS all-land HEATFX is well-defined:
-       // G17B4 now accepts one *observed* station and SETCOM/AIRDEN use
-       // actual source-order indices; still forbid zero SS and >6.
-       stations.surface.empty()||stations.surface.size()>6||
+       // The source-selected all-land HEATFX path uses station-owned
+       // source arrays, SETCOM NEARS and per-site observed cloud values.
+       // Its former >6 test-fixture gate is not original physics.
+       stations.surface.empty()||
        hour.by_station.size()!=stations.surface.size())
         throw std::invalid_argument("G17C source-hour/IAVET=1 selected heat scope");
     const auto nx=static_cast<std::size_t>(grid.nx);

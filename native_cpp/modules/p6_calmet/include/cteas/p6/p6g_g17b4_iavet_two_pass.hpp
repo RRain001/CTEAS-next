@@ -89,7 +89,10 @@ public:
            // One authentic virtual surface station can supply original observed
            // IAVET=1: lower-level SURFVAR already supports exactly one
            // observed station; retain all-land and source-option guards.
-           station_set.surface.empty()||station_set.surface.size()>6||
+           // Station arrays and observed-temperature interpolation are
+           // input-owned vectors. The former >6 was a G17B4 test-fixture
+           // count limit, not part of the accepted CALMET SURFVAR equation.
+           station_set.surface.empty()||
            series.station_ids.size()!=station_set.surface.size()||
            hour.by_station.size()!=station_set.surface.size()||
            controls_.source.iavet!=1||controls_.source.itprog!=0||

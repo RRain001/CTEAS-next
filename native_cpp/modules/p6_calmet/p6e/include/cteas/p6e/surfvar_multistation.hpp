@@ -59,7 +59,10 @@ inline SurfvarMultistationResult surfvar_multistation(const SurfvarMultistationI
        !std::isfinite(x.dgrid_m)||x.dgrid_m<=0.f||
        !std::isfinite(x.trad_grid)||x.trad_grid<0.f||
        (x.irad!=1&&x.irad!=2)||x.numts<=0||
-       x.stations.empty()||x.stations.size()>6)
+       // No hard station-count cap: selected source data owns station
+       // cardinality; checked grid sizing and available memory bound runs.
+       // Preserve original SURFVAR pairwise selection-sort and REAL4 sums.
+       x.stations.empty())
         throw std::invalid_argument("SURFVAR selected multistation control invalid");
     bool valid_temp=false;
     for(const auto& s:x.stations){
