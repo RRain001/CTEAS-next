@@ -1,0 +1,1118 @@
+name: Issue40 S4-R1c4b independent real NOAA 6970-cell first-hour G42 G21 source parity
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4r1c1-real-water-diagno-first-hour.yml'
+      - '.github/workflows/issue40-s4r1c2-comp-missfc-parity.yml'
+      - '.github/workflows/issue40-s4r1c4b-real-noaa-6970-g21.yml'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g46_real_allgrid_g21_firsthour_main.cpp'
+      - 'scripts/s4/s4r1c4b_real_allgrid_firsthour_g21.py'
+      - 'docs/plans/ISSUE40_S4R1C4B_ALLGRID_FIRSTHOUR_G21_20261021.md'
+      - '.github/workflows/issue40-s4r1c3-missfc-land-thermal-parity.yml'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g44_real_missfc_thermal_first_hour.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g44_real_missfc_thermal_first_hour_main.cpp'
+      - 'scripts/s4/s4r1c3_real_missfc_land_heat_reference.py'
+      - 'docs/plans/ISSUE40_S4R1C3_REAL_MISSFC_LAND_THERMAL_20261021.md'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g43_comp_missfc_source.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g43_original_comp_missfc_source_main.cpp'
+      - 'scripts/s4/s4r1c2_original_comp_missfc_reference.py'
+      - 'docs/plans/ISSUE40_S4R1C2_COMP_MISSFC_SOURCE_20261021.md'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g41_real_water_first_hour_source.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g21_file_backed_fradj.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g41_real_water_first_hour_main.cpp'
+      - 'scripts/s4/s4r1c1_original_water_first_hour_diagno.py'
+      - 'docs/plans/ISSUE40_S4R1C1_NATIVE_NOOW_WATER_FIRST_HOUR_20261021.md'
+      - '.github/workflows/issue40-s4r1b-real-water-qsw-parity.yml'
+      - 'scripts/s4/s4r1b_real_water_heatfx_reference.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g40_real_water_shortwave_source.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g40_real_water_shortwave_source_main.cpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'docs/plans/ISSUE40_S4R1B_REAL_WATER_SHORTWAVE_63X6_20261021.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  actual-two-observed-surface-site-original-geo:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
+    steps:
+      - name: Checkout authenticated original SRTM and GLCC with LFS
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Checkout pinned untouched independent Fortran MAKEGEO source
+        uses: actions/checkout@v4
+        with:
+          repository: RRain001/CTEAS
+          ref: dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          path: original_cteas
+          sparse-checkout: |
+            engine/vendor/src/MAKEGEO_V3.2_L110401
+            engine/vendor/src/CALMET_v6.5.0_L150223
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+      - name: Install native executors and reference raster/geographic packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            g++-12 gfortran cmake libgdal-dev libssl-dev \
+            python3-gdal python3-rasterio python3-numpy python3-yaml python3-pyproj python3-pandas
+          git rev-parse HEAD > "$RUNNER_TEMP/s4h-checkout-sha.txt"
+          srtm=calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif
+          glcc=eausgs2_0la.img
+          echo "913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4  $srtm" | sha256sum -c -
+          echo "4f2a1977d141e2040da4d36ec6a4826c5c960c84686eaf10f226f388cb3ab90a  $glcc" | sha256sum -c -
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          vendor=original_cteas/engine/vendor/src/MAKEGEO_V3.2_L110401
+          echo "8c4fb11db36d4b976b54f470b7a06ce4e38ab09e934951b0e2c613bddc34e347  $vendor/makegeo.for" | sha256sum -c -
+          cmake -S native_cpp/p1 -B "$RUNNER_TEMP/s4h-p1" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4h-p1" --parallel 2 --target cteas_p1_terrain_case
+          cmake -S native_cpp -B "$RUNNER_TEMP/s4h-p2" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4h-p2" --parallel 2 --target cteas_p2_glcc_raw cteas_p2_glcc_lu_dat
+          cmake -S native_cpp/p3 -B "$RUNNER_TEMP/s4h-p3" -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4h-p3" --parallel 2 --target cteas_p12_to_p3_dat cteas_p3_makegeo
+      - name: Generate exact authentic two-observed-SS NOAA site B0 from original catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import json,os,pathlib,yaml
+          from native_cpp.modules.p5_smerge.data_prep import download_isd_by_grid as p5
+          from native_cpp.modules.p4_read62.data_prep import download_igra as p4
+          from scripts.s3f.verify_real_noaa_2022_2023_station_selection import generate_grid,P5_STATIONS
+          from native_cpp.orchestration.case_admission import admit_case
+          from engine.run_met.station_grid import load_strict_utm_grid
+          from scripts.s2g.issue56_real_noaa_p5_case import _case_dict
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"s4h_huoshan_xinqiao_true_2ss_2022"
+          assert not root.exists()
+          history=p5.parse_history_txt(pathlib.Path("engine/resources/isd/isd-history.txt"))
+          selected={s.sid:s for s in history if s.sid in P5_STATIONS}
+          assert set(selected)==set(P5_STATIONS)
+          coords=[(selected[sid].lat,selected[sid].lon) for sid in P5_STATIONS]
+          grid_path,center,_=generate_grid(root/"grid",coords)
+          grid=load_strict_utm_grid(grid_path)
+          assert grid.iutmzn==50 and grid.lsohem=="N" and grid.nz==9
+          assert (f"{grid.xrefkm:.3f}",f"{grid.yrefkm:.3f}")==("426.590","3464.125")
+          assert grid.dgridkm==1.0 and 0<grid.nx<=500 and 0<grid.ny<=500
+          from native_cpp.modules.p5_smerge.data_prep.download_isd_by_grid import station_in_utm_grid
+          in_domain=[s.sid for s in history if station_in_utm_grid(s,grid)
+                     and p5.covers_interval(s.begin,s.end,__import__("datetime").datetime(2022,1,1),
+                                             __import__("datetime").datetime(2022,12,31,23))]
+          assert set(in_domain)==set(P5_STATIONS),(in_domain,grid.nx,grid.ny)
+          lat=sum(c[0] for c in coords)/2
+          lon=sum(c[1] for c in coords)/2
+          upper=p4.load_station_list(pathlib.Path("engine/resources/igra/igra2-station-list.txt"))
+          inside,outside=p4.candidate_groups(upper,lat,lon,grid,2022)
+          assert not inside and outside and outside[0]["id"]=="CHM00058424", (inside,outside[:2])
+          begin,end="20220601-010000","20220601-070000"
+          (root/"grid/research_time").write_text(f"BEGIN: {begin}\nEND: {end}\n")
+          case=_case_dict(root.name,grid,lat,lon,begin,end)
+          (root/"case.yaml").write_text(yaml.safe_dump(case,sort_keys=False))
+          approved=admit_case(root/"case.yaml")
+          assert approved.grid_sha256==__import__("hashlib").sha256(grid_path.read_bytes()).hexdigest()
+          assert (approved.nx,approved.ny)==(grid.nx,grid.ny)
+          assert approved.research_begin==begin and approved.research_end==end
+          (root/"evidence").mkdir()
+          proof={"status":"S4H_REAL_2SS_NOAA_CATALOG_B0_SAME_GRID",
+                 "grid_sha256":approved.grid_sha256,
+                 "case_yaml_sha256":approved.case_sha256,
+                 "research_time_sha256":approved.time_sha256,
+                 "grid_origin_km":["426.590","3464.125"],
+                 "nx":grid.nx,"ny":grid.ny,"nz":grid.nz,"spacing_km":grid.dgridkm,
+                 "true_surface_source_station_ids":list(P5_STATIONS),
+                 "upper_real_noaa_source":"CHM00058424",
+                 "upper_original_site_role":"OUTSIDE_DOMAIN_VIRTUAL_SOURCE",
+                 "observed_surface_site_role":"TWO_DISTINCT_PHYSICAL_IN_GRID",
+                 "time_begin_utc":begin,"time_end_utc":end,
+                 "P6_G19":"NOT_RUN","P6_FIELD45":"NOT_RUN"}
+          (root/"evidence/b0-real-station-grid.json").write_text(json.dumps(proof,indent=2)+"\n")
+          print("S4H_AUTHENTIC_TWO_OBSERVED_SURFACE_GRID_B0=PASS NX",grid.nx,"NY",grid.ny,"NGRID",grid.nx*grid.ny)
+          PY
+      - name: Generate real P2A original historical GLCC 38-class LU for same B0
+        shell: bash
+        timeout-minutes: 30
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m native_cpp.orchestration.p2a_case_producer \
+            --case-yaml "$case/case.yaml" \
+            --glcc-img "$PWD/eausgs2_0la.img" \
+            --raw-bin "$RUNNER_TEMP/s4h-p2/cteas_p2_glcc_raw" \
+            --lu-bin "$RUNNER_TEMP/s4h-p2/cteas_p2_glcc_lu_dat"
+      - name: Crop original SHA-pinned 90m SRTM into bounded lossless large-grid pixel window
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m scripts.s2g.issue42_s3_b1_true_srtm_window \
+            --case-yaml "$case/case.yaml" \
+            --original-tif "$PWD/calpuff_terrain_and_landuse_data/china_srtm/srtm_60_06.tif" \
+            --original-sha256 913a082c79df74ff4189fec9d94b678618b395a6fb0a64ee94e14c532362eae4 \
+            --cropped-tif "$case/inputs/p1_srtm90_source_window.tif" \
+            --manifest "$case/inputs/p1_srtm90_source_window.json"
+          /usr/bin/python3 - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json"
+          a=json.loads(p.read_text())
+          assert a["status"]=="TRUE_SOURCE_WINDOW_PIXEL_IDENTITY_PASS_NOT_P1_SCIENCE"
+          assert a["window_pixel_count"]<=5_000_000 and a["valid_source_pixels"]>0
+          print("S4H_REAL_LARGER_GRID_SOURCE_PIXEL_WINDOW=PASS PIXELS",a["window_pixel_count"])
+          PY
+      - name: Reuse actual native P1 TERREL plus P2A LU to produce genuinely new large-grid GEO
+        shell: bash
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          tif_sha="$(/usr/bin/python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["cropped_source_sha256"])' "$case/inputs/p1_srtm90_source_window.json")"
+          /usr/bin/python3 -m native_cpp.orchestration.p3_case_handoff \
+            --case-yaml "$case/case.yaml" \
+            --p1-tif "$case/inputs/p1_srtm90_source_window.tif" \
+            --p1-tif-sha256 "$tif_sha" \
+            --p1-bin "$RUNNER_TEMP/s4h-p1/cteas_p1_terrain_case" \
+            --dat-bin "$RUNNER_TEMP/s4h-p3/cteas_p12_to_p3_dat" \
+            --p3-bin "$RUNNER_TEMP/s4h-p3/cteas_p3_makegeo" --p2-kind A
+          test -s "$case/geo/makegeo/p3_case/geo.dat"
+      - name: Freshly compile unmodified SHA-pinned original MAKEGEO 3.2 Fortran
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4h"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/MAKEGEO_V3.2_L110401"
+          mkdir -p "$root/vendor-includes"
+          for file in "$vendor"/*; do
+            lower="$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+            ln -s "$file" "$root/vendor-includes/$lower"
+          done
+          gfortran -std=legacy -ffixed-line-length-72 -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$root/vendor-includes" "$root/vendor-includes/makegeo.for" \
+            -o "$root/original-makegeo.x"
+          sha256sum "$root/original-makegeo.x" > "$root/original-makegeo-bin-sha256.txt"
+      - name: Independently rerun original MAKEGEO against identical new large-grid LU TERREL and deck
+        shell: bash
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import os,re,pathlib
+          from native_cpp.orchestration.case_admission import admit_case
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])
+          case=root/"s4h_huoshan_xinqiao_true_2ss_2022"
+          approved=admit_case(case/"case.yaml")
+          work=root/"s4h/original-makegeo-run"
+          work.mkdir(parents=True)
+          for name,p in [
+            ("lu.dat",case/"geo/ctgproc/p2a_case/lu/lu.dat"),
+            ("terrel.dat",case/"geo/makegeo/p3_case/terrel.dat"),
+          ]:
+            assert p.stat().st_size>1000
+            (work/name).symlink_to(p)
+          original=(case/"geo/makegeo/p3_case/makegeo.inp").read_text()
+          for key,value in (
+            ("LUDAT","lu.dat"),("TERRDAT","terrel.dat"),
+            ("GEODAT","original_geo.dat"),("RUNLST","original_makegeo.lst")
+          ):
+            original,count=re.subn(rf"(!\s*{key}\s*=\s*)([^!]*)(!)",
+                                   lambda m:m.group(1)+value+" "+m.group(3),original)
+            assert count==1,(key,count)
+          (work/"makegeo.inp").write_text(original)
+          (work/"MAKEGEO.INP").symlink_to("makegeo.inp")
+          lu=(work/"lu.dat").read_text().splitlines()
+          assert len(lu)==approved.nx*approved.ny+11,(len(lu),approved.nx,approved.ny)
+          for idx,line in enumerate(lu[11:]):
+            vals=line.split()
+            assert len(vals)==41 and (int(vals[0]),int(vals[1]))==(
+                   idx%approved.nx+1,idx//approved.nx+1)
+            assert vals[40] in (".","Missing")
+          print("S4H_REAL_TWO_SS_ORIGINAL_FORTRAN_DYNAMIC_LU_38CLASS_SOURCE=PASS",
+                approved.nx*approved.ny)
+          PY
+          (
+            cd "$RUNNER_TEMP/s4h/original-makegeo-run"
+            timeout 1200 "$RUNNER_TEMP/s4h/original-makegeo.x" \
+              > original_stdout.log 2>&1 || {
+              tail -n 80 original_stdout.log
+              test ! -f original_makegeo.lst || tail -n 80 original_makegeo.lst
+              exit 1
+            }
+            test -s original_geo.dat
+          )
+      - name: Independently compare every real-grid cell eight original physical MAKEGEO fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          native="$case/geo/makegeo/p3_case"
+          /usr/bin/python3 - "$case" "$native" <<'PY'
+          import pathlib,subprocess,sys,json,hashlib
+          from native_cpp.orchestration.case_admission import admit_case
+          case,native=map(pathlib.Path,sys.argv[1:])
+          approved=admit_case(case/"case.yaml")
+          root=case.parent
+          report=case/"evidence/s4h-original-p3-compare.json"
+          args=["/usr/bin/python3","-m","native_cpp.reference.compare_p3_makegeo_dynamic",
+                "--original-geo",str(root/"s4h/original-makegeo-run/original_geo.dat"),
+                "--cpp-csv",str(native/"p3.csv"),"--cpp-geo",str(native/"geo.dat"),
+                "--report",str(report),"--zone",str(approved.utm_zone),
+                "--hem",approved.hemisphere,"--nx",str(approved.nx),
+                "--ny",str(approved.ny),"--xrefkm",approved.xrefkm_text,
+                "--yrefkm",approved.yrefkm_text,
+                "--dgridkm",f"{approved.dgridkm:.3f}"]
+          subprocess.run(args,check=True)
+          proof=json.loads(report.read_text())
+          p2=json.loads((case/"evidence/p2.json").read_text())
+          p3=json.loads((case/"evidence/p3.json").read_text())
+          source=json.loads((case/"inputs/p1_srtm90_source_window.json").read_text())
+          b0=json.loads((case/"evidence/b0-real-station-grid.json").read_text())
+          assert proof["status"]=="P3_NONHEFEI_ORIGINAL_MAKEGEO_PASS"
+          assert proof["failures"]==0 and proof["values_compared"]==8*approved.nx*approved.ny
+          assert all(m["displayed_value_mismatches"]==0 and
+                     m["csv_outside_fixed_precision_tolerance"]==0
+                     for m in proof["metrics"].values())
+          assert p3["grid_cmn_sha256"]==p2["grid_cmn_sha256"]==b0["grid_sha256"]
+          assert p3["research_time_sha256"]==p2["research_time_sha256"]==b0["research_time_sha256"]
+          assert p3["case_yaml_sha256"]==p2["case_yaml_sha256"]==b0["case_yaml_sha256"]
+          assert p3["p1_tif_sha256"]==source["cropped_source_sha256"]
+          assert p3["p2_lu_dat_sha256"]==p2["lu_dat_sha256"]
+          assert p3["geo_dat_sha256"]==proof["native_geo_sha256"]
+          receipt={"status":"S4H_REAL_TWO_SS_SOURCE_GRID_P1_P2A_P3_ORIGINAL_MAKEGEO_PASS_SCOPED",
+                   "grid":b0,"physics_scope":"SELECTED_ORIGINAL_NO_SNOW_38_TO_14",
+                   "comparisons":proof["values_compared"],"grid_cells":approved.nx*approved.ny,
+                   "fields_per_cell":8,"exceedances":proof["failures"],
+                   "original_vendor_ref":"CTEAS@dfad99a78ed84d655e21411c9d25eb0d2583bf13",
+                   "original_makegeo_fortran_sha256":"8c4fb11db36d4b976b54f470b7a06ce4e38ab09e934951b0e2c613bddc34e347",
+                   "original_geo_sha256":proof["original_geo_sha256"],
+                   "native_geo_sha256":proof["native_geo_sha256"],
+                   "input_parent_srtm90_sha256":source["parent_original_tif_sha256"],
+                   "input_original_glcc_sha256":p2["source_img_sha256"],
+                   "P4_P5_SAME_CASE_JOINT":"NOT_RUN","G19_FULL_SOURCE":"NOT_RUN",
+                   "P6_ORIGINAL_CALMET_45_FIELD":"NOT_RUN","P7":"NOT_RUN",
+                   "production_admission":False}
+          (case/"evidence/s4h-large-grid-p3-science-receipt.json").write_text(
+                 json.dumps(receipt,indent=2,sort_keys=True)+"\n")
+          print("S4H_REAL_2SS_GRID_FRESH_ORIGINAL_MAKEGEO_FIELDS_PASS_SCOPED",
+                "CELLS",approved.nx*approved.ny,"COMPARED",proof["values_compared"],
+                "EXCEEDANCES",proof["failures"])
+          PY
+      - name: Build existing P4 P5 real NOAA producers and G19 original-format source reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p4_read62 -B "$RUNNER_TEMP/s4i-p4" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4i-p4" --parallel 2 --target cteas_p4_read62
+          cmake -S native_cpp/modules/p5_smerge -B "$RUNNER_TEMP/s4i-p5" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4i-p5" --parallel 2 --target cteas_p5_smerge
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4i-g19" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4i-g19" --parallel 2 --target cteas_p6g_g19_source_case_preflight
+      - name: Re-acquire and preserve genuine 2022 NOAA 2SS and archived Anqing IGRA in SAME 82x85 B0
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 - <<'PY'
+          import hashlib,json,os,pathlib,shutil
+          from scripts.s3f.verify_real_noaa_2022_2023_station_selection import p5_check,P5_STATIONS
+          from scripts.s2g.real_noaa_native_p4_up import ORIGINAL_NOAA
+          from native_cpp.modules.p5_smerge.data_prep.isd_lite_wind import filename
+          from native_cpp.orchestration.case_admission import admit_case,verify_immutable
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])
+          case=root/"s4h_huoshan_xinqiao_true_2ss_2022"
+          b0=admit_case(case/"case.yaml")
+          source_root=root/"s4i-real-observed-sources"
+          original_proof=p5_check(source_root/"s3f_genuine_p5")
+          src=source_root/"s3f_genuine_p5"
+          assert (src/"grid/grid.cmn").read_bytes()==(case/"grid/grid.cmn").read_bytes()
+          assert original_proof["grid_origin_km"]==["426.590","3464.125"]
+          dig=lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+          assert ORIGINAL_NOAA.is_file() and not ORIGINAL_NOAA.is_symlink()
+          assert dig(ORIGINAL_NOAA)=="1ac0405bf9376f8d34e01621328fa17f5f0de600afbcbf9614247ee59fbb76fb"
+          archive=root/"s4i-original-igra"
+          archive.mkdir()
+          shutil.copyfile(ORIGINAL_NOAA,archive/ORIGINAL_NOAA.name)
+          assert dig(archive/ORIGINAL_NOAA.name)==dig(ORIGINAL_NOAA)
+          roles={"up_original_anqing":{"sha256":dig(ORIGINAL_NOAA)}}
+          for sid in P5_STATIONS:
+            for rel in (f"{sid}-2022.csv","isd_lite/"+filename(sid,2022)):
+              frm=src/"surface"/rel
+              dst=case/"met/surface/isd_raw"/rel
+              assert frm.is_file() and not frm.is_symlink()
+              dst.parent.mkdir(parents=True,exist_ok=True)
+              assert not dst.exists()
+              shutil.copyfile(frm,dst)
+              assert dig(frm)==dig(dst)
+              roles["original_noaa_"+rel]={"sha256":dig(dst),"bytes":dst.stat().st_size}
+          roles["b0"]={"case":b0.case_sha256,"grid":b0.grid_sha256,
+                       "time":b0.time_sha256}
+          roles["real_two_ss_original_annual_counts"]=original_proof["yearly"]
+          (case/"evidence/s4i-real-noaa-raw-custody.json").write_text(
+              json.dumps(roles,sort_keys=True,indent=2)+"\n")
+          verify_immutable(b0)
+          print("S4I_TRUE_BOTH_REAL_NOAA_SURFACE_RAW_AND_ANQING_ARCHIVED_UP_SHA=PASS")
+          PY
+      - name: Produce true original NOAA Anqing P4 UP on same 82x85 original model B0
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m native_cpp.modules.p4_read62.data_prep.run_cpp_pipeline \
+            --case-root "$case" --upperair-root "$case/met/upperair" \
+            --offline-archive-root "$RUNNER_TEMP/s4i-original-igra" \
+            --cpp-bin "$RUNNER_TEMP/s4i-p4/cteas_p4_read62" \
+            --candidate-final --execute
+          test -s "$case/met/upperair/p4_d1a_annual_manifest.json"
+          echo 'S4I_REAL_SAME_CASE_ANQING_1US=PRODUCED_INPUT_ONLY'
+      - name: Produce both observed actual NOAA surface station SMERGE files same case
+        shell: bash
+        timeout-minutes: 30
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m native_cpp.modules.p5_smerge.data_prep.p5_case_producer \
+            --case-yaml "$case/case.yaml" \
+            --history-file "$GITHUB_WORKSPACE/engine/resources/isd/isd-history.txt" \
+            --native-cpp-bin "$RUNNER_TEMP/s4i-p5/cteas_p5_smerge" \
+            --offline-reselect
+          test -s "$case/met/surface/final/surf.dat"
+          echo 'S4I_REAL_SAME_CASE_HUOSHAN_LUOGANG_2SS=PRODUCED_INPUT_ONLY'
+      - name: Accept actual same-B0 P1-P5 SHA while independently proving water HEATFX G19 blocks safely
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m native_cpp.orchestration.s3_five_source_preflight \
+            --case-yaml "$case/case.yaml" \
+            --destination "$case/evidence/s3-b0-five-source-preflight.json"
+          # The original G19 full G14 scheduling constructor still restricts
+          # G18D3 HFLUX to all-land. The 82x85 actual NOAA source contains
+          # water. Do NOT bypass original physics or claim a G19 pass.
+          set +e
+          /usr/bin/python3 -m native_cpp.orchestration.s3_huoshan_g19_source_only \
+            --case-yaml "$case/case.yaml" \
+            --native-g19 "$RUNNER_TEMP/s4i-g19/cteas_p6g_g19_source_case_preflight" \
+            > "$case/evidence/s4i-g19-native.stdout.txt" \
+            2> "$case/evidence/s4i-g19-native.stderr.txt"
+          rc=$?
+          set -e
+          if test "$rc" -eq 0; then
+            echo "S4I_UNEXPECTED_G19_WATER_BRANCH_NOT_IN_SOURCE_SCOPE"
+            exit 1
+          fi
+          grep -F 'G18D3 all-land HFLUX default branch only' \
+            "$case/evidence/s4i-g19-native.stderr.txt"
+          /usr/bin/python3 - <<'PY'
+          import json,pathlib,os,hashlib
+          from native_cpp.orchestration.case_admission import admit_case
+          case=pathlib.Path(os.environ["RUNNER_TEMP"])/"s4h_huoshan_xinqiao_true_2ss_2022"
+          b0=admit_case(case/"case.yaml")
+          joined=json.loads((case/"evidence/s3-b0-five-source-preflight.json").read_text())
+          p3=json.loads((case/"evidence/s4h-large-grid-p3-science-receipt.json").read_text())
+          p4=json.loads((case/"met/upperair/p4_d1a_annual_manifest.json").read_text())
+          p5=json.loads((case/"evidence/p5.json").read_text())
+          assert joined["status"]=="S3_B0_SAME_CASE_FIVE_PRODUCERS_SOURCE_LINEAGE_PASS_NOT_G19"
+          assert joined["case_yaml_sha256"]==p3["grid"]["case_yaml_sha256"]==b0.case_sha256
+          assert joined["grid_cmn_sha256"]==p3["grid"]["grid_sha256"]==b0.grid_sha256
+          assert joined["research_time_sha256"]==p3["grid"]["research_time_sha256"]==b0.time_sha256
+          assert (b0.nx,b0.ny)==(82,85) and p3["grid"]["nz"]==9
+          assert joined["geometry"]["nx"]==82 and joined["geometry"]["ny"]==85
+          assert p3["exceedances"]==0 and p3["comparisons"]==55760
+          assert p4["candidate_final"]["station_count"]==1
+          assert {x["wmo"] for x in p4["candidate_final"]["files"]}=={"58424"}
+          assert {str(x) for x in p5["ordered_ifstn"]}=={"583140","583210"}
+          assert p5["SURF_hour_ending_expected_records"]==6
+          source=joined["actual_source_sha256"]
+          import re
+          assert all(re.fullmatch(r"[0-9a-f]{64}", source[k]) for k in
+                    ("geo_dat_sha256","surf_sha256","upperair_stations_sha256"))
+          assert set(source["upperair"])=={"58424"}
+          digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert digest(case/"geo/makegeo/geo.dat")==source["geo_dat_sha256"]
+          assert digest(case/"met/surface/final/surf.dat")==source["surf_sha256"]
+          assert digest(case/"run/met/met.inp")
+          error=(case/"evidence/s4i-g19-native.stderr.txt").read_text()
+          assert "G18D3 all-land HFLUX default branch only" in error
+          receipt={
+            "status":"S4I_REAL_NOAA_2SS1US_FIVE_PRODUCER_SAME_B0_PASS_G19_BLOCKED_WATER",
+            "actual_5producer_sha":digest(case/"evidence/s3-b0-five-source-preflight.json"),
+            "case_grid_time":[b0.case_sha256,b0.grid_sha256,b0.time_sha256],
+            "original_2ss_ifstn":sorted(str(x) for x in p5["ordered_ifstn"]),
+            "original_1us_wmo":"58424",
+            "original_2022_surf_hours":6,
+            "original_8field_makegeo_compare":55760,
+            "original_p3_numeric_mismatches":0,
+            "input_geo_sha":source["geo_dat_sha256"],
+            "input_surf_sha":source["surf_sha256"],
+            "input_up_sha":source["upperair"]["58424"],
+            "original_met_inp_sha":digest(case/"run/met/met.inp"),
+            "G19_STATUS":"BLOCKED_G18D3_WATER_HFLUX_UNSUPPORTED",
+            "G19_NATIVE_FILE_READER_ACCEPTANCE":"NOT_ACCEPTED",
+            "CALMET_45_FIELD_SCIENCE":"NOT_RUN",
+            "production_admission":False,
+            "P7":"NOT_RUN"}
+          (case/"evidence/s4i-2ss1us-g19-water-blocker-science.json").write_text(
+            json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("S4I_GENUINE_NOAA_2SS1US_SAME_B0_FIVE_SOURCE=PASS_SCOPED")
+          print("S4I_G19_WATER_HEATFX_PHYSICS=EXPECTED_FAIL_CLOSED_NOT_ACCEPTED")
+          PY
+      - name: Independently establish selected unmodified WATER or WATERP physical source route on genuine same B0
+        shell: bash
+        run: |
+          set -euo pipefail
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          test -s "$case/run/met/met.inp"
+          test -s "$case/geo/makegeo/geo.dat"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          python3 -m scripts.s4.s4m_real_water_original_route_audit \
+            --vendor "$vendor" \
+            --met "$case/run/met/met.inp" \
+            --geo "$case/geo/makegeo/geo.dat" \
+            --out "$case/evidence/s4m-original-water-route.json" \
+            | tee "$case/evidence/s4m-original-water-route.log"
+          grep -F 'S4M_REAL_NOAA_2SS1US_ORIGINAL_WATER_NOWSTA0_ROUTE=PASS_SOURCE_SCOPED' \
+            "$case/evidence/s4m-original-water-route.log"
+          grep -F 'S4M_NATIVE_WATER_HEATFX_ELUSTR_PARITY=NOT_RUN' \
+            "$case/evidence/s4m-original-water-route.log"
+      - name: Independently compile unmodified original CALMET 6.5.0 on the same actual 2SS 1US observations
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4j"
+          mkdir -p "$root/evidence" "$root/vendor-includes"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223"
+          test "$(git -C original_cteas rev-parse HEAD)" = dfad99a78ed84d655e21411c9d25eb0d2583bf13
+          test -s "$vendor/calmet.for"
+          test "$(git hash-object "$vendor/calmet.for")" = 437f43bb7f0e51a1919e56664663e1a046986ed0
+          for original in "$vendor"/*; do
+            if test -f "$original"; then
+              name="$(basename "$original" | tr '[:upper:]' '[:lower:]')"
+              test -e "$root/vendor-includes/$name" || ln -s "$(realpath "$original")" "$root/vendor-includes/$name"
+            fi
+          done
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$root/vendor-includes" "$vendor/calmet.for" -o "$root/original-calmet.x"
+          test -x "$root/original-calmet.x"
+          sha256sum "$vendor/calmet.for" "$root/original-calmet.x" \
+            > "$root/evidence/vendor-fortran-and-executable-sha256.txt"
+          echo 'S4J_REAL_WATER_SITE_UNMODIFIED_CALMET_FORTRAN_RECOMPILED=PASS'
+      - name: Stage source-identical independent vendor case with no native or historical MET fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4j"
+          native="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          test -s "$native/evidence/s4i-2ss1us-g19-water-blocker-science.json"
+          test -s "$native/evidence/s3-b0-five-source-preflight.json"
+          test -s "$native/run/met/met.inp"
+          test ! -e "$native/run/met/met.dat"
+          original="$root/original-real-two-ss-case"
+          test ! -e "$original"
+          cp -a "$native" "$original"
+          # Independently recompute real existing original input SHA; never
+          # import a historical MET.DAT or a previous C++ meteorology artifact.
+          test ! -e "$original/run/met/met.dat"
+          for f in geo/makegeo/geo.dat run/met/met.inp \
+                   met/surface/final/surf.dat met/upperair/final/up_58424.dat \
+                   met/surface/final/stations.csv met/upperair/final/stations.csv \
+                   grid/grid.cmn grid/research_time; do
+            test -s "$native/$f"
+            cmp "$native/$f" "$original/$f"
+          done
+          sha256sum "$original/geo/makegeo/geo.dat" "$original/run/met/met.inp" \
+            "$original/met/surface/final/surf.dat" \
+            "$original/met/upperair/final/up_58424.dat" \
+            "$original/grid/grid.cmn" \
+            > "$root/evidence/independent-original-input-sha256.txt"
+          echo 'S4J_REAL_2SS_1US_ORIGINAL_FORTRAN_SAME_INPUT_EMPTY_MET=PASS'
+      - name: Actually execute fresh untouched original Fortran CALMET with genuine water GEO for six hours
+        shell: bash
+        timeout-minutes: 45
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4j"
+          original="$root/original-real-two-ss-case"
+          (cd "$original/run/met" && "$root/original-calmet.x" met.inp) \
+            > "$root/evidence/original-calmet.stdout" \
+            2> "$root/evidence/original-calmet.stderr" || {
+              tail -n 70 "$root/evidence/original-calmet.stdout"
+              tail -n 70 "$root/evidence/original-calmet.stderr"
+              if test -s "$original/run/met/met.lst"; then tail -n 70 "$original/run/met/met.lst"; fi
+              exit 1
+            }
+          test -s "$original/run/met/met.dat"
+          sha256sum "$original/run/met/met.dat" \
+            > "$root/evidence/fresh-original-calmet-dat-sha256.txt"
+          echo 'S4J_REAL_2SS_1US_WATER_UNMODIFIED_ORIGINAL_CALMET=PRODUCED_UNVERIFIED'
+      - name: Independently decode full native-format vendor 45-field x six-hour scientific baseline
+        shell: bash
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4j"
+          cmake -S native_cpp/modules/p6_calmet/p6e \
+            -B "$root/p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$root/p6e" --parallel 2 --target p6e_calmet_dat21
+          original="$root/original-real-two-ss-case/run/met/met.dat"
+          "$root/p6e/p6e_calmet_dat21" check --file "$original" \
+            --out "$root/evidence/real-water-original-calmet-45field-check.json" \
+            > "$root/evidence/original-calmet-reader-stdout.txt"
+          python3 - "$root" <<'PY'
+          import hashlib,json,pathlib,sys
+          from native_cpp.reference.compare_p3_makegeo_dynamic import parse_geo
+          root=pathlib.Path(sys.argv[1])
+          evid=root/"evidence"
+          d=json.loads((evid/"real-water-original-calmet-45field-check.json").read_text())
+          h=d["header"]
+          assert (h["nx"],h["ny"],h["nz"])==(82,85,9)
+          assert (h["nssta"],h["nusta"])==(2,1)
+          assert d["intervals"]==6 and d["fields_per_hour"]==45 and d["cells"]==6970
+          labels=d["hourly_labels"]
+          assert len(labels)==45 and len(set(labels))==45
+          fields=d["field_inventory"]
+          assert len(fields)==45 and all("label" in f for f in fields)
+          assert all(f["values"]+f["missing"]==6970*6 for f in fields)
+          native=pathlib.Path(__import__("os").environ["RUNNER_TEMP"])/"s4h_huoshan_xinqiao_true_2ss_2022"
+          geo=parse_geo(native/"geo/makegeo/geo.dat",nx=82,ny=85,zone=50,
+                        hem="N",x0=426.590,y0=3464.125,dx=1.)
+          water=sum(h["iwat1"]<=v<=h["iwat2"] for v in geo["category"])
+          assert water>0 and water<6970
+          native_input=json.loads((native/"evidence/s4i-2ss1us-g19-water-blocker-science.json").read_text())
+          assert native_input["G19_STATUS"]=="BLOCKED_G18D3_WATER_HFLUX_UNSUPPORTED"
+          def sha(p):
+              digest=hashlib.sha256()
+              with p.open("rb") as stream:
+                  for data in iter(lambda:stream.read(1048576),b""): digest.update(data)
+              return digest.hexdigest()
+          assert sha(native/"geo/makegeo/geo.dat")==native_input["input_geo_sha"]
+          assert sha(native/"met/surface/final/surf.dat")==native_input["input_surf_sha"]
+          assert sha(native/"met/upperair/final/up_58424.dat")==native_input["input_up_sha"]
+          assert sha(native/"run/met/met.inp")==native_input["original_met_inp_sha"]
+          report={
+            "status":"S4J_REAL_2SS_1US_WATER_FRESH_UNMODIFIED_ORIGINAL_CALMET_SIX_HOUR_REFERENCE_PRODUCED",
+            "source_case":"genuine independently observed NOAA 2022-06-01 01-07 UTC",
+            "genuine_surface_ifstn":["583140","583210"],
+            "genuine_upper_wmo":["58424"],"nx":82,"ny":85,"nz":9,
+            "water_grid_cells":water,"land_grid_cells":6970-water,
+            "water_category_range":[h["iwat1"],h["iwat2"]],
+            "actual_original_vendor_rerun":True,
+            "original_fortran_git_blob":"437f43bb7f0e51a1919e56664663e1a046986ed0",
+            "fresh_original_calmet_sha256":sha(root/"original-real-two-ss-case/run/met/met.dat"),
+            "source_geo_sha256":native_input["input_geo_sha"],
+            "source_surf_sha256":native_input["input_surf_sha"],
+            "source_up_sha256":native_input["input_up_sha"],
+            "source_deck_sha256":native_input["original_met_inp_sha"],
+            "hours":6,"fields_per_hour":45,"field_hour_groups":270,
+            "field_cell_values":6*45*6970,
+            "actual_original_dataset_decoder":d.get("status","UNKNOWN"),
+            "g19_native_source_admission":"BLOCKED_G18D3_WATER_HEATFX_UNSUPPORTED",
+            "native_CPP_45field_parity":"NOT_RUN",
+            "production_G26":"NOT_ACCEPTED","P7":"NOT_RUN",
+          }
+          (evid/"s4j-water-original-fortran-baseline-receipt.json").write_text(
+               json.dumps(report,sort_keys=True,indent=2)+"\n")
+          print("S4J_REAL_2SS_1US_82x85_SIX_HOUR_FRESH_ORIGINAL_CALMET_270_FIELD_GROUPS=PASS_SCOPED_ORIGINAL_ONLY")
+          print("S4J_NATIVE_G19_WATER_HEATFX_AND_G26_45FIELD_SCIENCE=NOT_ACCEPTED")
+          PY
+      - name: SHA-pin untouched original and instrument ONLY reference Fortran WATER in scratch
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4n"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          mkdir -p "$root/evidence"
+          /usr/bin/python3 -m scripts.s4.s4n_real_water_63cells_original_probe prepare \
+            --vendor "$vendor" \
+            --out "$root/calmet-water-probe.for" \
+            --receipt "$root/evidence/reference-only-precise-source-patch.json"
+          # Pin *both* original and separate reference-only instrumented binary.
+          test "$(git hash-object "$vendor")" = 437f43bb7f0e51a1919e56664663e1a046986ed0
+          test -s "$root/calmet-water-probe.for"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" "$root/calmet-water-probe.for" \
+            -o "$root/calmet-instrumented-reference-only.x"
+          test -x "$root/calmet-instrumented-reference-only.x"
+          sha256sum "$root/calmet-instrumented-reference-only.x" \
+            > "$root/evidence/instrumented-original-binary-sha256.txt"
+      - name: Reexecute SAME authentic NOAA source in isolated instrumented original and verify every water cell-hour
+        shell: bash
+        timeout-minutes: 30
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4n"
+          original="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          probe="$root/instrumented-original-case"
+          test -s "$original/run/met/met.dat"
+          test ! -e "$probe"
+          cp -a "$original" "$probe"
+          rm -f "$probe/run/met/met.dat" "$probe/run/met/met.lst" \
+                "$probe/run/met/s4n-original-water-states.txt"
+          (cd "$probe/run/met" && "$root/calmet-instrumented-reference-only.x" met.inp) \
+            > "$root/evidence/instrumented-original.stdout" \
+            2> "$root/evidence/instrumented-original.stderr" || {
+              tail -n 45 "$root/evidence/instrumented-original.stdout"
+              tail -n 45 "$root/evidence/instrumented-original.stderr"
+              tail -n 45 "$probe/run/met/met.lst" || :
+              exit 1
+            }
+          test -s "$probe/run/met/met.dat"
+          test -s "$probe/run/met/s4n-original-water-states.txt"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m scripts.s4.s4n_real_water_63cells_original_probe verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --geo "$case/geo/makegeo/geo.dat" \
+            --met "$case/run/met/met.inp" \
+            --baseline "$original/run/met/met.dat" \
+            --instrumented "$probe/run/met/met.dat" \
+            --trace "$probe/run/met/s4n-original-water-states.txt" \
+            --receipt "$root/evidence/reference-only-precise-source-patch.json" \
+            --out "$root/evidence/original-63-water-cells-sixhour-physics.json" \
+            | tee "$root/evidence/independent-water-science-stdout.txt"
+          grep -Fx 'S4N_TRUE_NOAA_ORIGINAL_63_WATER_CELLS_X_6H=378_VALUES_PASS_SCOPED' \
+            "$root/evidence/independent-water-science-stdout.txt"
+          grep -Fx 'S4N_INSTRUMENTED_CALMET_45_FIELDS_BYTE_IDENTICAL_UNMODIFIED=PASS' \
+            "$root/evidence/independent-water-science-stdout.txt"
+          grep -Fx 'S4N_CPP_WATER_PHYSICS_AND_G26_45_FIELDS=NOT_RUN' \
+            "$root/evidence/independent-water-science-stdout.txt"
+          cp "$probe/run/met/s4n-original-water-states.txt" \
+            "$root/evidence/real-63x6-water-original-numeric-states.txt"
+      - name: SHA-pin original HEATFX and instrument only scratch-water DIAGNO QSW and prior QH
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1b"
+          mkdir -p "$root/evidence"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          test "$(git hash-object "$vendor")" = 437f43bb7f0e51a1919e56664663e1a046986ed0
+          /usr/bin/python3 -m scripts.s4.s4r1b_real_water_heatfx_reference prepare \
+            --vendor "$vendor" --out "$root/original-water-heatfx-source-copy.for" \
+            --receipt "$root/evidence/s4r1b-original-immutable-source-receipt.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/original-water-heatfx-source-copy.for" \
+            -o "$root/original-diagno-heatfx-reference-only.x"
+          sha256sum "$root/original-diagno-heatfx-reference-only.x" \
+            > "$root/evidence/original-instrumented-executable-sha256.txt"
+      - name: Execute same authentic six-hour original with HEATFX-only reference probe
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1b"
+          pristine="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/heatfx-instrumented-original"
+          test ! -e "$scratch"
+          cp -a "$pristine" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1b-original-water-heatfx.txt"
+          (cd "$scratch/run/met" && "$root/original-diagno-heatfx-reference-only.x" met.inp) \
+            > "$root/evidence/source-reference.stdout" \
+            2> "$root/evidence/source-reference.stderr" || {
+              tail -n 90 "$root/evidence/source-reference.stdout"
+              tail -n 90 "$root/evidence/source-reference.stderr"
+              exit 1
+            }
+          test -s "$scratch/run/met/met.dat"
+          test -s "$scratch/run/met/s4r1b-original-water-heatfx.txt"
+          cmp "$pristine/run/met/met.dat" "$scratch/run/met/met.dat"
+          cp "$scratch/run/met/s4r1b-original-water-heatfx.txt" \
+             "$root/evidence/original-heatfx-water-63x6.txt"
+          sha256sum "$scratch/run/met/met.dat" \
+            > "$root/evidence/unchanged-original-calmet-sha256.txt"
+      - name: Calculate genuine NOAA WATER solar and HEATFX via independent C++ G19/G40
+        shell: bash
+        timeout-minutes: 16
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1b"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/native" --parallel 2 \
+            --target cteas_p6g_g40_real_water_shortwave_source
+          bin="$root/native/cteas_p6g_g40_real_water_shortwave_source"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --real-source-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            > "$root/evidence/native-g40-water-63x6.txt"
+          test "$(wc -l < "$root/evidence/native-g40-water-63x6.txt")" -eq 378
+          sha256sum "$bin" > "$root/evidence/native-g40-executable-sha256.txt"
+          /usr/bin/python3 -m scripts.s4.s4r1b_real_water_heatfx_reference verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --deck "$case/run/met/met.inp" \
+            --geo "$case/geo/makegeo/geo.dat" \
+            --original-met "$RUNNER_TEMP/s4j/original-real-two-ss-case/run/met/met.dat" \
+            --instrumented-met "$root/heatfx-instrumented-original/run/met/met.dat" \
+            --original-trace "$root/evidence/original-heatfx-water-63x6.txt" \
+            --cpp-trace "$root/evidence/native-g40-water-63x6.txt" \
+            --result "$root/evidence/real-noaa-original-native-water-shortwave.json" \
+            | tee "$root/evidence/real-noaa-water-shortwave-result.log"
+          grep -Fx 'S4R1B_REAL_NOAA_63x6_WATER_QSW_QH_NATIVE_VS_ORIGINAL=PASS_SCOPED' \
+            "$root/evidence/real-noaa-water-shortwave-result.log"
+          grep -Fx 'S4R1B_ORIGINAL_VENDOR_ALL_45_FIELDS_BYTE_IDENTICAL=PASS' \
+            "$root/evidence/real-noaa-water-shortwave-result.log"
+          grep -Fx 'S4R1B_G24_NATIVE_WATER_WIND_AND_G26_45FIELDS=NOT_RUN' \
+            "$root/evidence/real-noaa-water-shortwave-result.log"
+      - name: Independently execute actual native G41 first WATER hour without original Fortran fields
+        shell: bash
+        timeout-minutes: 16
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c1"
+          mkdir -p "$root/evidence"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/native" --parallel 2 \
+            --target cteas_p6g_g41_real_water_first_hour
+          bin="$root/native/cteas_p6g_g41_real_water_first_hour"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --selected-noow-water-first-hour \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            > "$root/evidence/native-first-hour-63-water-wind1-fradj-thermal.csv"
+          test "$(wc -l < "$root/evidence/native-first-hour-63-water-wind1-fradj-thermal.csv")" -eq 64
+          sha256sum "$bin" > "$root/evidence/actual-native-g41-binary-sha256.txt"
+          echo 'S4R1C1_NATIVE_FIRST_REAL_NOAA_63_WATER_CELLS=PRODUCED_UNVERIFIED'
+      - name: Pin original DIAGNO first and second SURFVAR and first-plane U/V in scratch only
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c1"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          /usr/bin/python3 -m scripts.s4.s4r1c1_original_water_first_hour_diagno prepare \
+            --vendor "$vendor" --out "$root/only-original-water-diagno-scratch.for" \
+            --receipt "$root/evidence/original-source-diagno-patch-sha.json"
+          test "$(git hash-object "$vendor")" = 437f43bb7f0e51a1919e56664663e1a046986ed0
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/only-original-water-diagno-scratch.for" \
+            -o "$root/original-water-diagno-only.x"
+          sha256sum "$root/original-water-diagno-only.x" \
+            > "$root/evidence/original-instrument-only-binary-sha256.txt"
+      - name: Execute original vendor water first-second DIAGNO with same 2SS1US six-hour source
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c1"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-only-water-diagno"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c1-original-water-diagno-firsthour.txt"
+          (cd "$scratch/run/met" && "$root/original-water-diagno-only.x" met.inp) \
+            > "$root/evidence/original-scratch.stdout" \
+            2> "$root/evidence/original-scratch.stderr" || {
+              tail -n 50 "$root/evidence/original-scratch.stdout"
+              tail -n 50 "$root/evidence/original-scratch.stderr"
+              test ! -s "$scratch/run/met/met.lst" || tail -n 50 "$scratch/run/met/met.lst"
+              exit 1
+            }
+          test -s "$scratch/run/met/met.dat"
+          test -s "$scratch/run/met/s4r1c1-original-water-diagno-firsthour.txt"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m scripts.s4.s4r1c1_original_water_first_hour_diagno verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --original-met "$baseline/run/met/met.dat" \
+            --scratch-met "$scratch/run/met/met.dat" \
+            --geo "$case/geo/makegeo/geo.dat" \
+            --deck "$case/run/met/met.inp" \
+            --fortran-trace "$scratch/run/met/s4r1c1-original-water-diagno-firsthour.txt" \
+            --native-csv "$root/evidence/native-first-hour-63-water-wind1-fradj-thermal.csv" \
+            --output "$root/evidence/real-original-native-63-first-hour-wind1-fradj-residuals.json" \
+            | tee "$root/evidence/original-vs-native-63-wind1-fradj.log"
+          grep -Fx 'S4R1C1_TRUE_NOAA_63_WATER_FIRST_HOUR_NATIVE_WIND1_FRADJ_TEMP=PASS_SCOPED' \
+            "$root/evidence/original-vs-native-63-wind1-fradj.log"
+          grep -Fx 'S4R1C1_ORIGINAL_6H_45_FIELDS_UNTOUCHED=BYTE_IDENTICAL' \
+            "$root/evidence/original-vs-native-63-wind1-fradj.log"
+          grep -Fx 'S4R1C1_FULL_NATIVE_G24_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/original-vs-native-63-wind1-fradj.log"
+          cp "$scratch/run/met/s4r1c1-original-water-diagno-firsthour.txt" \
+            "$root/evidence/original-water-six-hour-two-pass-wind.txt"
+      - name: Compile and run G43 actual sparse original COMP MISSFC on six independent NOAA source hours
+        shell: bash
+        timeout-minutes: 16
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c2"
+          mkdir -p "$root/evidence"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/native" --parallel 2 \
+            --target cteas_p6g_g43_original_comp_missfc_source
+          bin="$root/native/cteas_p6g_g43_original_comp_missfc_source"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --original-comp-missfc-source-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            > "$root/evidence/native-6h-original-comp-missfc-raw-resolved.txt" \
+            2> "$root/evidence/native-comp-missfc-raw-resolved.log"
+          test "$(wc -l < "$root/evidence/native-6h-original-comp-missfc-raw-resolved.txt")" -eq 25
+          sha256sum "$bin" > "$root/evidence/g43-native-binary-sha256.txt"
+      - name: Instrument only pinned original COMP MISSFC before and after original call
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c2"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          /usr/bin/python3 -m scripts.s4.s4r1c2_original_comp_missfc_reference prepare \
+            --vendor "$vendor" --dest "$root/real-original-comp-missfc-scratch.for" \
+            --receipt "$root/evidence/original-missfc-scratch-source-receipt.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/real-original-comp-missfc-scratch.for" \
+            -o "$root/real-original-comp-missfc-scratch.x"
+          sha256sum "$root/real-original-comp-missfc-scratch.x" \
+            > "$root/evidence/original-missfc-binary-sha256.txt"
+      - name: Verify genuine 24 original vs native 2SSx6h model-local MISSFC records and unchanged original 45 fields
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c2"
+          pristine="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/comp-missfc-original-only"
+          test -s "$pristine/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$pristine" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c2-original-comp-missfc-raw-vs-resolved.txt"
+          (cd "$scratch/run/met" && "$root/real-original-comp-missfc-scratch.x" met.inp) \
+            > "$root/evidence/original-comp-missfc-scratch.stdout" \
+            2> "$root/evidence/original-comp-missfc-scratch.stderr" || {
+              tail -n 65 "$root/evidence/original-comp-missfc-scratch.stdout"
+              tail -n 65 "$root/evidence/original-comp-missfc-scratch.stderr"
+              test ! -s "$scratch/run/met/met.lst" || tail -n 65 "$scratch/run/met/met.lst"
+              exit 1
+            }
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m scripts.s4.s4r1c2_original_comp_missfc_reference verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --baseline "$pristine/run/met/met.dat" \
+            --scratch "$scratch/run/met/met.dat" \
+            --deck "$case/run/met/met.inp" \
+            --surf "$case/met/surface/final/surf.dat" \
+            --fortran "$scratch/run/met/s4r1c2-original-comp-missfc-raw-vs-resolved.txt" \
+            --native "$root/evidence/native-6h-original-comp-missfc-raw-resolved.txt" \
+            --report "$root/evidence/real-noaa-2ss6h-missfc-independent-science.json" \
+            | tee "$root/evidence/original-native-missfc-numeric.log"
+          grep -Fx 'S4R1C2_ORIGINAL_NATIVE_2SSX6H_COMP_MISSFC=PASS_SCOPED' \
+            "$root/evidence/original-native-missfc-numeric.log"
+          grep -Fx 'S4R1C2_ORIGINAL_45_FIELDS_BYTE_IDENTICAL=PASS' \
+            "$root/evidence/original-native-missfc-numeric.log"
+          grep -Fx 'S4R1C2_P5_SPARSE_WIND_UNCHANGED=PASS' \
+            "$root/evidence/original-native-missfc-numeric.log"
+          cp "$scratch/run/met/s4r1c2-original-comp-missfc-raw-vs-resolved.txt" \
+            "$root/evidence/real-vendor-comp-missfc-2ss6h-trace.txt"
+      - name: Run genuine first-hour C++ G44 after original model-local G43 MISSFC, never mutate P5
+        shell: bash
+        timeout-minutes: 22
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c3"
+          mkdir -p "$root/evidence"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/native" --parallel 2 \
+            --target cteas_p6g_g44_real_missfc_thermal_first_hour
+          bin="$root/native/cteas_p6g_g44_real_missfc_thermal_first_hour"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --selected-real-missfc-thermal-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            > "$root/evidence/native-first-hour-6970-mesh-after-missfc-thermal.csv" \
+            2> "$root/evidence/native-g44-stderr.log" || {
+              cat "$root/evidence/native-g44-stderr.log"
+              exit 1
+            }
+          test "$(wc -l < "$root/evidence/native-first-hour-6970-mesh-after-missfc-thermal.csv")" -eq 6971
+          grep -F 'S4R1C3_REAL_NOAA_G43_MISSFC_G39_NATIVE_FIRST_HOUR_PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g44-stderr.log"
+          sha256sum "$bin" > "$root/evidence/native-g44-binary-sha256.txt"
+      - name: Independently instrument and compile scratch-only original CALMET first-hour AIRDEN/ELUSTR
+        shell: bash
+        timeout-minutes: 14
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c3"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          /usr/bin/python3 -m scripts.s4.s4r1c3_real_missfc_land_heat_reference prepare \
+            --vendor "$vendor" --dest "$root/first-hour-heat-scratch.for" \
+            --receipt "$root/evidence/original-after-elustr-source-receipt.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/first-hour-heat-scratch.for" \
+            -o "$root/first-hour-original-airden-elustr.x"
+          sha256sum "$root/first-hour-original-airden-elustr.x" \
+            > "$root/evidence/fortran-firsthour-heat-binary-sha256.txt"
+      - name: Compare original true first-hour 6907 land and 63 water HEATFX/AIRDEN/ELUSTR native fields
+        shell: bash
+        timeout-minutes: 30
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c3"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/scratch-only-real-first-hour-thermal"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c3-original-firsthour-after-elustr.txt"
+          (cd "$scratch/run/met" && "$root/first-hour-original-airden-elustr.x" met.inp) \
+            > "$root/evidence/scratch-original-after-elustr.stdout" \
+            2> "$root/evidence/scratch-original-after-elustr.stderr" || {
+              tail -n 60 "$root/evidence/scratch-original-after-elustr.stdout"
+              tail -n 60 "$root/evidence/scratch-original-after-elustr.stderr"
+              test ! -s "$scratch/run/met/met.lst" || tail -n 60 "$scratch/run/met/met.lst"
+              exit 1
+            }
+          test -s "$scratch/run/met/s4r1c3-original-firsthour-after-elustr.txt"
+          test -s "$scratch/run/met/met.dat"
+          /usr/bin/python3 -m scripts.s4.s4r1c3_real_missfc_land_heat_reference verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --original-met "$baseline/run/met/met.dat" \
+            --scratch-met "$scratch/run/met/met.dat" \
+            --original-trace "$scratch/run/met/s4r1c3-original-firsthour-after-elustr.txt" \
+            --native-csv "$root/evidence/native-first-hour-6970-mesh-after-missfc-thermal.csv" \
+            --report "$root/evidence/real-original-native-6970-firsthour-thermal-science.json" \
+            | tee "$root/evidence/firsthour-real-thermal-parity.log"
+          grep -Fx 'S4R1C3_REAL_NOAA_FIRSTHOUR_HEAT_AIRDEN_ELUSTR=PASS_SCOPED' \
+            "$root/evidence/firsthour-real-thermal-parity.log"
+          grep -Fx 'S4R1C3_ORIGINAL_6H_45_FIELDS=BYTE_IDENTICAL' \
+            "$root/evidence/firsthour-real-thermal-parity.log"
+          grep -Fx 'S4R1C3_WATER_USTAR_EL_G24_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/firsthour-real-thermal-parity.log"
+          cp "$scratch/run/met/s4r1c3-original-firsthour-after-elustr.txt" \
+            "$root/evidence/scratch-original-6970-firsthour-thermal.txt"
+      - name: Compile genuinely source-owned G46 all-grid first-hour WIND1 FRADJ two-pass SURFVAR exporter
+        shell: bash
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c4b"
+          mkdir -p "$root/evidence"
+          cmake -S native_cpp/modules/p6_calmet -B "$root/native" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$root/native" --parallel 2 \
+            --target cteas_p6g_g46_real_allgrid_g21_firsthour
+          bin="$root/native/cteas_p6g_g46_real_allgrid_g21_firsthour"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          # Unselected callers and missing-source callers must fail closed.
+          if "$bin" > "$root/evidence/g46-default-denial.log" 2>&1; then
+            echo "G46 unauthorized default production"; exit 2
+          fi
+          "$bin" --original-noow-full-grid-first-hour-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            > "$root/evidence/native-real-6970-firsthour-g21-uv-temp.csv" \
+            2> "$root/evidence/native-g46-source-stderr.log" || {
+              cat "$root/evidence/native-g46-source-stderr.log"
+              exit 2
+            }
+          test "$(wc -l < "$root/evidence/native-real-6970-firsthour-g21-uv-temp.csv")" -eq 6971
+          grep -F 'S4R1C4B_NATIVE_6970_G42_G21_UNCOMMITTED=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g46-source-stderr.log"
+          sha256sum "$bin" > "$root/evidence/actual-g46-native-binary-sha256.txt"
+      - name: Independent SHA-pinned untouched original first-hour full-grid two SURFVAR WIND1 FRADJ stages
+        shell: bash
+        timeout-minutes: 17
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c4b"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          /usr/bin/python3 -m scripts.s4.s4r1c4b_real_allgrid_firsthour_g21 prepare \
+            --vendor "$vendor" --dest "$root/original-6970-firsthour-diagno.for" \
+            --receipt "$root/evidence/vendor-diagno-firsthour-original-blob-sha.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/original-6970-firsthour-diagno.for" \
+            -o "$root/original-6970-firsthour-diagno.x"
+          test -x "$root/original-6970-firsthour-diagno.x"
+          sha256sum "$root/original-6970-firsthour-diagno.x" \
+            > "$root/evidence/real-original-fortran-6970-firsthour-binary-sha256.txt"
+      - name: Pair original versus C++ real 6970 first-hour land-and-water U V TEMP independent numeric gate
+        shell: bash
+        timeout-minutes: 32
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c4b"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-only-6970-two-surfvar"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c4b-original-6970-firsthour-two-surfvar.txt"
+          (cd "$scratch/run/met" && "$root/original-6970-firsthour-diagno.x" met.inp) \
+            > "$root/evidence/scratch-original-diagno.stdout" \
+            2> "$root/evidence/scratch-original-diagno.stderr" || {
+              tail -n 65 "$root/evidence/scratch-original-diagno.stdout"
+              tail -n 65 "$root/evidence/scratch-original-diagno.stderr"
+              test ! -s "$scratch/run/met/met.lst" || tail -n 65 "$scratch/run/met/met.lst"
+              exit 1
+            }
+          test -s "$scratch/run/met/met.dat"
+          test -s "$scratch/run/met/s4r1c4b-original-6970-firsthour-two-surfvar.txt"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          /usr/bin/python3 -m scripts.s4.s4r1c4b_real_allgrid_firsthour_g21 verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --original-met "$baseline/run/met/met.dat" \
+            --scratch-met "$scratch/run/met/met.dat" \
+            --original-trace "$scratch/run/met/s4r1c4b-original-6970-firsthour-two-surfvar.txt" \
+            --native-csv "$root/evidence/native-real-6970-firsthour-g21-uv-temp.csv" \
+            --report "$root/evidence/independent-original-native-6970-firsthour-G21-residuals.json" \
+            --geo "$case/geo/makegeo/geo.dat" \
+            --deck "$case/run/met/met.inp" \
+            --surf "$case/met/surface/final/surf.dat" \
+            --up "$case/met/upperair/final/up_58424.dat" \
+            | tee "$root/evidence/independent-original-6970-firsthour-parity.log"
+          grep -Fx 'S4R1C4B_REAL_NOAA_G42_G21_6970_FIRST_HOUR_NATIVE_ORIGINAL=PASS_SCOPED' \
+            "$root/evidence/independent-original-6970-firsthour-parity.log"
+          grep -Fx 'S4R1C4B_UNMODIFIED_6H_45FIELD_ORIGINAL_REFERENCE=BYTE_IDENTICAL' \
+            "$root/evidence/independent-original-6970-firsthour-parity.log"
+          grep -Fx 'S4R1C4B_6H_NATIVE_STATE_G24_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-original-6970-firsthour-parity.log"
+          cp "$scratch/run/met/s4r1c4b-original-6970-firsthour-two-surfvar.txt" \
+            "$root/evidence/scratch-original-6970-firsthour-two-stages.txt"
+      - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4r1c4b-g42-g21-6970-firsthour-original-native
+          path: |
+            ${{ runner.temp }}/s4h-checkout-sha.txt
+            ${{ runner.temp }}/s4n/evidence/
+            ${{ runner.temp }}/s4r1b/evidence/
+            ${{ runner.temp }}/s4r1c1/evidence/
+            ${{ runner.temp }}/s4r1c2/evidence/
+            ${{ runner.temp }}/s4r1c3/evidence/
+            ${{ runner.temp }}/s4r1c4b/evidence/
+            ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
+            ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
+            ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
+          retention-days: 21
+          if-no-files-found: warn
