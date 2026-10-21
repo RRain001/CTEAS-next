@@ -1067,3 +1067,20 @@ else()
   target_compile_options(cteas_p6g_s4b4_extract_original_c1_first_hour
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-O: ONLY a narrow original WATER/NOWSTA=0 reference-numeric slice
+# on 63 observed water cells x six original hours. It does NOT compute ZI,
+# admit native G14/G26, or weaken the old G18D3 all-land physics gate.
+add_executable(cteas_p6g_g35_original_nowsta0_water_reference
+               src/p6g_g35_original_noow_water_reference_main.cpp)
+target_link_libraries(cteas_p6g_g35_original_nowsta0_water_reference
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g35_original_nowsta0_water_reference
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g35_original_nowsta0_water_reference
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME p6g_g35_test_only_original_water_neutral_negative_guards
+         COMMAND cteas_p6g_g35_original_nowsta0_water_reference --self-test)
