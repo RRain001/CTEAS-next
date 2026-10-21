@@ -22,7 +22,7 @@ struct G35SelectedWaterNeutralControls {
 };
 struct G35SelectedWaterNeutralResult {
     float roughness_m{},ustar_mps{},el_m{},qh_buoyancy_wm2{},
-          wt_kmps{},wstar_mps{};
+          wt_kelvin_mps{},wstar_mps{};
     int pgt{};
     bool zi_ziconv_physics_ready=false;
     bool g14_g26_physics_ready=false;
