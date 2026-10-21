@@ -57,7 +57,7 @@ jobs:
           set -euo pipefail
           root="$RUNNER_TEMP/s4l-water-qh"
           cmake -S native_cpp/modules/p6_calmet/p6e -B "$root/p6e" \
-            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-11
+            -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-11
           cmake --build "$root/p6e" --parallel 2 \
             --target p6e_heatfx_reference p6e_heatfx_tests
           "$root/p6e/p6e_heatfx_tests"
