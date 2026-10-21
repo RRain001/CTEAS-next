@@ -5,6 +5,7 @@
 // or synthetic wind columns. This explicitly selected scope is NOT a
 // complete multistation DIAGNO/COMP production physics implementation.
 #include "cteas/p6/p6g_g16_staged_wind.hpp"
+#include "cteas/p6/p6g_g41_real_water_first_hour_source.hpp"
 #include "cteas/p6/p6g_g18d7_source_station_cell.hpp"
 #include "cteas/p6/similt_profile.hpp"
 #include "cteas/p6/vertical_wind_average.hpp"
@@ -17,8 +18,9 @@
 #include <vector>
 
 namespace cteas::calmet::p6g {
-inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
-    const MultiHourFrame& frame,bool explicitly_test_only) {
+inline G16ObservedProfiles g20_source_wind1_profiles_kernel(
+    const MultiHourFrame& frame,bool explicitly_test_only,
+    bool allow_original_missing_or_calm_water_source_only) {
     const auto& grid=frame.grid;
     const auto& stations=frame.stations;
     const auto& surface=frame.surface;
@@ -52,16 +54,40 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
     for(std::size_t s=0;s<ns;++s) {
         const auto& st=stations.surface[s];
         const auto& obs=surface.by_station[s];
-        if(!obs.wind_valid||!std::isfinite(obs.wind_speed_mps)||
-           !std::isfinite(obs.wind_direction_deg)||
-           obs.wind_speed_mps<1.e-4f||obs.wind_speed_mps>=998.99f||
-           obs.wind_direction_deg<0.f||obs.wind_direction_deg>360.f)
-            throw std::invalid_argument(
-                "G20 unsupported missing/calm original surface wind");
+        // Source coordinates and LAND station ownership are checked before
+        // handling any missing/calm hourly wind; no missing SS is allowed
+        // to bypass the original SETCOM/DIAGI station geometry gate.
         const auto cell=g18d7_source_diagi_station_cell(grid,st);
         if(grid.landuse[cell]>=grid.iwat1&&
            grid.landuse[cell]<=grid.iwat2)
             throw std::invalid_argument("G20 water-site SIMILT not accepted");
+        // Pinned original WIND1 calmet.for L36114-36126 skips SIMILT for
+        // EDITL-missing surface winds; its L36239-42 assigns zero bulk
+        // weight. Retain zero inert carrier values WITH validity=0, never
+        // turn them into observed calm. G42 is the sole typed consumer.
+        if(!obs.wind_valid) {
+            if(!allow_original_missing_or_calm_water_source_only)
+                throw std::invalid_argument(
+                    "G20 unsupported missing/calm original surface wind");
+            for(std::size_t k=0;k<9;++k)
+                profiles.wind1_present[k*total+s]=0U;
+            continue;
+        }
+        if(!std::isfinite(obs.wind_speed_mps)||
+           !std::isfinite(obs.wind_direction_deg)||
+           obs.wind_speed_mps<0.f||obs.wind_speed_mps>=998.99f||
+           obs.wind_direction_deg<0.f||obs.wind_direction_deg>360.f)
+            throw std::invalid_argument(
+                "G20 invalid actual observed source wind");
+        if(obs.wind_speed_mps<1.e-4f) {
+            if(!allow_original_missing_or_calm_water_source_only)
+                throw std::invalid_argument(
+                    "G20 unsupported missing/calm original surface wind");
+            // Valid physical calm, unlike truly absent data. Original
+            // WIND1 sets USTMP/VSTMP zero at every layer and ICALM=0
+            // removes only its k>1 weight later, in the frozen G9 kernel.
+            continue;
+        }
         double latitude=0.,longitude=0.;
         cteas::p6e::utm_north_to_latlon_deg(
             projection,static_cast<double>(st.utm_x_km)*1000.0,
@@ -197,4 +223,27 @@ inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
     }
     return profiles;
 }
+
+// Accepted all-land users keep their unchanged public G20 interface and
+// missing/calm refusal; no post-acceptance physics drift.
+inline G16ObservedProfiles g20_file_backed_source_wind1_profiles(
+    const MultiHourFrame& frame,bool explicitly_test_only) {
+    return g20_source_wind1_profiles_kernel(frame,explicitly_test_only,false);
+}
+
+// A separate type-level mixed-WATER source gate. Validity masks implement
+// original WIND1's zero-weight missing SS, not guessed wind observations.
+inline G16ObservedProfiles g41_original_noow_water_source_profiles(
+    const MultiHourFrame& frame,
+    const G41SelectedNoowWaterFirstHourSource& water,
+    bool explicitly_test_only) {
+    if(!explicitly_test_only||frame.hour_index!=0||
+       frame.grid.landuse!=water.source.grid.landuse||
+       frame.stations.surface.size()!=water.source.stations.surface.size()||
+       frame.stations.upper.size()!=water.source.stations.upper.size()||
+       frame.input.end!=water.source.surface.hourly.front().end)
+        throw std::invalid_argument("G41 native source missing-wind scope mismatch");
+    return g20_source_wind1_profiles_kernel(frame,true,true);
+}
+
 } // namespace cteas::calmet::p6g
