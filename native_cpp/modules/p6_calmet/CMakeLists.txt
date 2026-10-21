@@ -1113,3 +1113,19 @@ else()
 endif()
 add_test(NAME p6g_g37_original_water_fcori_ws10_invalid_source_guards
          COMMAND cteas_p6g_g37_original_water_fcori_ws10 --self-test)
+
+# S4-R0: selected original no-overwater-observations HEATFX source
+# admission ONLY. Original G18D3 all-land G14/G26 remains fail-closed.
+add_executable(cteas_p6g_g38_selected_water_hflux_source
+               src/p6g_g38_selected_water_hflux_source_main.cpp)
+target_link_libraries(cteas_p6g_g38_selected_water_hflux_source
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g38_selected_water_hflux_source
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g38_selected_water_hflux_source
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME p6g_g38_selected_water_hflux_no_production_guards
+         COMMAND cteas_p6g_g38_selected_water_hflux_source --self-test)
