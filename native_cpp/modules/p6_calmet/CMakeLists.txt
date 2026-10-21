@@ -1189,3 +1189,18 @@ else()
   target_compile_options(cteas_p6g_g43_original_comp_missfc_source
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c3 authentic 2SS/1US/63-WATER NOAA, G43 model-internal
+# original MISSFC -> real G21 SURFVAR/FRADJ -> G39 HEATFX/AIRDEN/ELUSTR
+# first-hour science ONLY, not original WATER USTAR/EL, G24/G26 or P7.
+add_executable(cteas_p6g_g44_real_missfc_thermal_first_hour
+               src/p6g_g44_real_missfc_thermal_first_hour_main.cpp)
+target_link_libraries(cteas_p6g_g44_real_missfc_thermal_first_hour
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g44_real_missfc_thermal_first_hour
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g44_real_missfc_thermal_first_hour
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
