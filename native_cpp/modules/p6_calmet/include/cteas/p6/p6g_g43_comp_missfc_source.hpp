@@ -33,7 +33,8 @@ inline G43OriginalMissfcHour g43_original_comp_missfc_source_only(
     if(!explicitly_test_only||source.g14_g26_production_ready||
        source.g24_native_final_wind_ready||
        source.source.stations.surface.empty()||
-       g18c1_source_integer(source.source.original_metinp,"MCLOUD")!=1||
+       (g18c1_source_integer(source.source.original_metinp,"ICLOUD")!=0 &&
+        g18c1_source_integer(source.source.original_metinp,"ICLOUD")!=1)||
        source.surface_controls.source.itprog!=0||
        hour.end-hour.start!=std::chrono::hours{1})
         throw std::invalid_argument(
