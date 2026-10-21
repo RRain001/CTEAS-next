@@ -20,16 +20,33 @@ struct G42SelectedWaterWind1 {
     bool g14_g26_production_ready=false;
 };
 
-inline G42SelectedWaterWind1 g42_selected_real_water_missing_wind1(
+// Private selected-source WIND1 kernel: WIND1 alone is memoryless and
+// reads current-hour SURF/PREPDI source, never previous ZICONV. Only G45
+// may opt into later-hour forensic export. G21/G39/G14 are NOT widened.
+inline G42SelectedWaterWind1 g42_selected_real_water_missing_wind1_kernel(
     const MultiHourFrame& frame,
     const G41SelectedNoowWaterFirstHourSource& selected,
-    bool explicitly_test_only) {
-    if(!explicitly_test_only||frame.hour_index!=0||
-       frame.input.end!=selected.source.surface.hourly.front().end)
-        throw std::invalid_argument("G42 source-native WIND1 is first-hour only");
+    bool explicitly_test_only,bool selected_six_hour_wind1_reference_only) {
+    const auto h=frame.hour_index;
+    const auto& source=selected.source;
+    if(!explicitly_test_only||h>=source.surface.hourly.size()||
+       (!selected_six_hour_wind1_reference_only&&h!=0)||
+       source.surface.hourly.size()!=6||
+       frame.input.end!=source.surface.hourly[h].end||
+       &frame.surface!=&source.surface.hourly[h]||
+       &frame.grid!=&source.grid||
+       &frame.stations!=&source.stations||
+       &frame.upper!=&source.upper||
+       frame.source_controls!=&source.controls||
+       frame.input.end-frame.surface.start!=std::chrono::hours{1}||
+       selected.g14_g26_production_ready||
+       selected.g24_native_final_wind_ready)
+        throw std::invalid_argument(
+            "G42 cannot use detached/forged G45 source hour for WIND1");
     G42SelectedWaterWind1 out;
-    out.source_profiles=g41_original_noow_water_source_profiles(
-        frame,selected,true);
+    out.source_profiles=selected_six_hour_wind1_reference_only?
+        g20_source_wind1_profiles_kernel(frame,true,true):
+        g41_original_noow_water_source_profiles(frame,selected,true);
     const auto& profiles=out.source_profiles;
     const auto ns=frame.stations.surface.size();
     const auto nu=frame.stations.upper.size();
@@ -103,5 +120,15 @@ inline G42SelectedWaterWind1 g42_selected_real_water_missing_wind1(
        out.native_firstguess.v_mps.size()!=9*cells)
         throw std::logic_error("G42 incomplete native first guess");
     return out;
+}
+
+// Frozen old G41 first-hour entry point, still rejects every h>0.
+// A caller cannot opt into six-hour WIND1 without the separate G45 type.
+inline G42SelectedWaterWind1 g42_selected_real_water_missing_wind1(
+    const MultiHourFrame& frame,
+    const G41SelectedNoowWaterFirstHourSource& selected,
+    bool explicitly_test_only) {
+    return g42_selected_real_water_missing_wind1_kernel(
+        frame,selected,explicitly_test_only,false);
 }
 } // namespace cteas::calmet::p6g
