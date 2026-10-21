@@ -27,7 +27,8 @@ int main(int argc,char** argv) {
             std::cout<<r.one_based_i<<' '<<r.one_based_j<<' '<<r.utc_hour_end
                      <<' '<<r.category<<' '<<r.nearest_station_ordinal
                      <<' '<<r.cloud_tenths<<' '<<r.solar_sine<<' '
-                     <<r.qsw_wm2<<' '<<r.qh_water_wm2<<'\n';
+                     <<r.qsw_wm2<<' '<<r.qh_water_wm2<<' '
+                     <<r.observed_temperature_carrier_k<<'\n';
         return 0;
     } catch(const std::exception& e) {
         std::cerr<<"S4R1B_FAIL_CLOSED "<<e.what()<<'\n';
