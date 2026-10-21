@@ -33,11 +33,15 @@ inline G42SelectedWaterWind1 g42_selected_real_water_missing_wind1_kernel(
        (!selected_six_hour_wind1_reference_only&&h!=0)||
        source.surface.hourly.size()!=6||
        frame.input.end!=source.surface.hourly[h].end||
-       &frame.surface!=&source.surface.hourly[h]||
-       &frame.grid!=&source.grid||
-       &frame.stations!=&source.stations||
-       &frame.upper!=&source.upper||
-       frame.source_controls!=&source.controls||
+       // The original G41 first-hour scheduler rightly owns deep copies of
+       // GEO/SS/SURF/UP. Identity is mandatory ONLY for G45's *detached*
+       // six-hour read-only source frames, not for accepted G41 physics.
+       (selected_six_hour_wind1_reference_only&&
+        (&frame.surface!=&source.surface.hourly[h]||
+         &frame.grid!=&source.grid||
+         &frame.stations!=&source.stations||
+         &frame.upper!=&source.upper||
+         frame.source_controls!=&source.controls))||
        frame.input.end-frame.surface.start!=std::chrono::hours{1}||
        selected.g14_g26_production_ready||
        selected.g24_native_final_wind_ready)
