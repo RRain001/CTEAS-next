@@ -453,7 +453,7 @@ jobs:
           test -s "$case/run/met/met.inp"
           test -s "$case/geo/makegeo/geo.dat"
           vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
-          python3 scripts/s4/s4m_real_water_original_route_audit.py \
+          python3 -m scripts.s4.s4m_real_water_original_route_audit \
             --vendor "$vendor" \
             --met "$case/run/met/met.inp" \
             --geo "$case/geo/makegeo/geo.dat" \
