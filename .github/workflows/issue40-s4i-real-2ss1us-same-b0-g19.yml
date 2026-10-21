@@ -399,7 +399,7 @@ jobs:
           assert joined["case_yaml_sha256"]==p3["grid"]["case_yaml_sha256"]==b0.case_sha256
           assert joined["grid_cmn_sha256"]==p3["grid"]["grid_sha256"]==b0.grid_sha256
           assert joined["research_time_sha256"]==p3["grid"]["research_time_sha256"]==b0.time_sha256
-          assert (b0.nx,b0.ny,b0.nz)==(82,85,9)
+          assert (b0.nx,b0.ny)==(82,85) and p3["grid"]["nz"]==9
           assert joined["geometry"]["nx"]==82 and joined["geometry"]["ny"]==85
           assert p3["exceedances"]==0 and p3["comparisons"]==55760
           assert p4["candidate_final"]["station_count"]==1
