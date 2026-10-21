@@ -612,10 +612,14 @@ int main(int argc,char** argv){
         check(argc==2,"G19 requires pinned original CALMET met.inp path");
         const auto original=read(argv[1]);
         check_one_us_two_ss_source_case(original);
-        // Independent cardinalities: 1/1, 1/7, 7/1, 7/7. Existing
-        // 2/1 and 2/2 coverage remains unmodified.
+        // Keep independent source provenance and aggregate budget checks
+        // for user-chosen 20/20 and strongly asymmetric 20/1 and 1/20,
+        // as well as earlier 1/7 / 7/1 baseline. This is INPUT SCIENCE
+        // admission only; original CALMET 45-field 20-site physics was
+        // independently accepted in merged PR #215.
         for(const auto& [nss,nus]:
-            std::vector<std::pair<int,int>>{{1,1},{1,7},{7,1},{7,7}})
+            std::vector<std::pair<int,int>>{
+                {1,1},{1,7},{7,1},{7,7},{20,1},{1,20},{20,20}})
             check_unbounded_original_source_cardinality(original,nss,nus);
         // The real single-station Hefei deck must not be promoted to a
         // two-surface/two-upper station scientific run.
