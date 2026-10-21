@@ -6,6 +6,13 @@
 #include "cteas/p6/p6g_s4b2_selected_hour.hpp"
 #include "cteas/p6/p6g_s4b1_admission.hpp"
 #include <cstddef>
+#include <bit>
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -18,7 +25,7 @@
 #include <vector>
 
 struct S4B2Options {
-    std::string met, geo, surf, output;
+    std::string met, geo, surf, output, native_comp_trace;
     std::vector<std::string> up;
     std::size_t hours=0;
     std::size_t probe_prefix_hours=0;
@@ -50,6 +57,7 @@ static S4B2Options parse_args(int argc, char** argv) {
         else if(key=="--surf" && o.surf.empty())o.surf=value;
         else if(key=="--up")o.up.push_back(value);
         else if(key=="--out" && o.output.empty())o.output=value;
+        else if(key=="--native-comp-trace" && o.native_comp_trace.empty())o.native_comp_trace=value;
         else if(key=="--probe-prefix-hours" && o.probe_prefix_hours==0) {
             if(value[0]=='-')throw std::invalid_argument("S4B3 invalid probe hours");
             std::size_t consumed=0;
@@ -85,10 +93,62 @@ static S4B2Options parse_args(int argc, char** argv) {
             "S4B2 experimental ONLY: --selected-experimental --met met.inp "
             "--geo GEO.DAT --surf SURF.DAT --up UP1.DAT [--up UP2.DAT ...] "
             "--hours N [--probe-prefix-hours K] [--max-retained-field-bytes N] "
-            "[--g26-normal-entry-trial] --out candidate-met.dat; no production mode");
+            "[--g26-normal-entry-trial] [--native-comp-trace native-state.csv] "
+            "--out candidate-met.dat; no production mode");
     if(o.probe_prefix_hours>o.hours)
         throw std::invalid_argument("S4B3 prefix exceeds complete declared G14 hours");
     return o;
+}
+
+
+// S4-R1c5b0: an OBSERVATION of an already completed native G14 transaction.
+// Neither array here can ever be passed back into the solver. Keeping the
+// 17-stage actor unchanged is essential for the C1/C2 scientific baseline.
+static void append_committed_native_comp_trace(
+    std::ostringstream& trace,std::size_t hour,std::int64_t end_epoch,
+    std::size_t nx,std::size_t ny,const p6::NativeGridMemory& pre,
+    const p6::NativeGridMemory& post) {
+    const auto n=nx*ny;
+    const auto check=[n](const p6::NativeGridMemory& m) {
+        if(m.zi_m.size()!=n||m.ziconv_m.size()!=n||m.dptt_k.size()!=n)
+            throw std::logic_error("R1c5b0 native state extent mismatch");
+        for(std::size_t k=0;k<n;++k)
+            if(!std::isfinite(m.zi_m[k])||!std::isfinite(m.ziconv_m[k])||
+               !std::isfinite(m.dptt_k[k])||
+               m.zi_m[k]<0.f||m.ziconv_m[k]<0.f)
+                throw std::logic_error("R1c5b0 nonfinite or negative native COMP state");
+    };
+    check(pre);
+    check(post);
+    const auto emit=[&](const char* stage,const p6::NativeGridMemory& state) {
+        for(std::size_t j=0;j<ny;++j)
+            for(std::size_t i=0;i<nx;++i) {
+                const auto k=j*nx+i;
+                trace<<hour<<','<<end_epoch<<','<<stage<<','
+                     <<i+1<<','<<j+1<<','<<std::hexfloat
+                     <<state.zi_m[k]<<','<<state.ziconv_m[k]<<','
+                     <<state.dptt_k[k]<<std::defaultfloat<<'\n';
+            }
+    };
+    emit("PRE_DIAGNO",pre);
+    emit("POST_COMP",post);
+}
+static void require_exact_native_state_carry(
+    const p6::NativeGridMemory& prior_post,
+    const p6::NativeGridMemory& current_pre) {
+    const auto equal_bits=[](const std::vector<float>& a,
+                             const std::vector<float>& b) {
+        if(a.size()!=b.size())return false;
+        for(std::size_t i=0;i<a.size();++i)
+            if(std::bit_cast<std::uint32_t>(a[i])!=
+               std::bit_cast<std::uint32_t>(b[i]))return false;
+        return true;
+    };
+    if(!equal_bits(prior_post.zi_m,current_pre.zi_m)||
+       !equal_bits(prior_post.ziconv_m,current_pre.ziconv_m)||
+       !equal_bits(prior_post.dptt_k,current_pre.dptt_k))
+        throw std::logic_error(
+            "R1c5b0 prior committed native ZI/ZICONV/DPTT not carried into next G14 hour");
 }
 
 int main(int argc, char** argv) {
@@ -96,6 +156,17 @@ int main(int argc, char** argv) {
         const auto opt=parse_args(argc,argv);
         if(std::filesystem::exists(opt.output))
             throw std::invalid_argument("S4B2 refuses to overwrite existing output");
+        if(!opt.native_comp_trace.empty()) {
+            const std::filesystem::path trace_path(opt.native_comp_trace);
+            const std::filesystem::path out_path(opt.output);
+            auto trace_staging=trace_path;
+            trace_staging+=".s4b2-staging";
+            if(trace_path.lexically_normal()==out_path.lexically_normal()||
+               std::filesystem::exists(trace_path)||
+               std::filesystem::exists(trace_staging))
+                throw std::invalid_argument(
+                    "R1c5b0 refuses occupied/equal native trace path");
+        }
         const p6g::G19SourceFilePaths paths{
             opt.met,opt.geo,opt.surf,opt.up
         };
@@ -125,9 +196,25 @@ int main(int argc, char** argv) {
                 throw std::invalid_argument(
                     "S4E source selected G14 output exceeds caller raw field byte budget");
         }
+        // Trace is explicitly six-hour bounded evidence, not an unrelated
+        // 143h file/field retention expansion (that work belongs to S5).
+        if(!opt.native_comp_trace.empty() &&
+           (executed_hours!=6||admission.input.nx*admission.input.ny>10000))
+            throw std::invalid_argument(
+                "R1c5b0 native COMP trace limited to six hours and <=10000 cells");
+        std::ostringstream native_trace;
+        p6::NativeGridMemory last_native_post;
+        if(!opt.native_comp_trace.empty())
+            native_trace<<"hour_index,end_epoch_s,stage,i,j,zi_m,ziconv_m,dptt_k\n";
         p6g::G18D2StationClockAuthority clocks;
         std::optional<cteas::p6f::Calmet21File> all_hours;
         for(std::size_t hour=0;hour<executed_hours;++hour) {
+            p6::NativeGridMemory before_native_comp;
+            if(!opt.native_comp_trace.empty()) {
+                before_native_comp=scheduler.committed_memory();
+                if(hour>0)require_exact_native_state_carry(
+                    last_native_post,before_native_comp);
+            }
             std::optional<cteas::p6f::Calmet21File> accepted;
             G34BSelectedOnlyHour* active=nullptr;
             bool published=false;
@@ -162,6 +249,22 @@ int main(int argc, char** argv) {
             if(!published||!accepted||scheduler.completed_hours()!=hour+1||
                !clocks.has_published_hour())
                 throw std::runtime_error("S4B2 AA/BB/CGAMMA/COMP commit incomplete");
+            if(!opt.native_comp_trace.empty()) {
+                const auto& post=scheduler.committed_memory();
+                const auto end=source.surface.hourly.at(hour).end;
+                if(source.surface.hourly.at(hour).start+
+                      std::chrono::hours{1}!=end||
+                   (hour>0&&
+                    source.surface.hourly.at(hour-1).end!=
+                      source.surface.hourly.at(hour).start))
+                    throw std::logic_error(
+                        "R1c5b0 native COMP source chronology discontinuity");
+                append_committed_native_comp_trace(
+                    native_trace,hour,end.time_since_epoch().count(),
+                    admission.input.nx,admission.input.ny,
+                    before_native_comp,post);
+                last_native_post=post;
+            }
             if(!all_hours)all_hours=std::move(accepted);
             else {
                 auto& combined=*all_hours;
@@ -210,8 +313,40 @@ int main(int argc, char** argv) {
                 throw std::runtime_error("S4B2 incomplete candidate MET write");
             }
         }
-        try {std::filesystem::rename(staging,target);}
-        catch(...) {std::filesystem::remove(staging);throw;}
+        std::filesystem::path trace_staging;
+        if(!opt.native_comp_trace.empty()) {
+            trace_staging=std::filesystem::path(opt.native_comp_trace);
+            trace_staging+=".s4b2-staging";
+            std::ofstream evidence(trace_staging,std::ios::binary|std::ios::trunc);
+            if(!evidence) {
+                std::filesystem::remove(staging);
+                throw std::runtime_error("R1c5b0 cannot stage native state trace");
+            }
+            const auto data=native_trace.str();
+            evidence.write(data.data(),static_cast<std::streamsize>(data.size()));
+            evidence.flush();
+            if(!evidence) {
+                evidence.close();
+                std::filesystem::remove(trace_staging);
+                std::filesystem::remove(staging);
+                throw std::runtime_error("R1c5b0 incomplete native state trace");
+            }
+        }
+        try {
+            std::filesystem::rename(staging,target);
+            if(!opt.native_comp_trace.empty())
+                std::filesystem::rename(trace_staging,opt.native_comp_trace);
+        }catch(...) {
+            std::filesystem::remove(staging);
+            if(!trace_staging.empty())std::filesystem::remove(trace_staging);
+            if(!opt.native_comp_trace.empty())std::filesystem::remove(target);
+            throw;
+        }
+        if(!opt.native_comp_trace.empty())
+            std::cout<<"S4R1C5B0_NATIVE_G14_POSTCOMP_STATE_TRACE=PRODUCED_UNVERIFIED"
+                     <<" HOURS="<<executed_hours
+                     <<" SOURCE="<<"NATIVE_CPP_ONLY"
+                     <<" ORIGINAL_6H_PARITY=NOT_RUN\n";
         std::cout<<"S4B2_SELECTED_G14_17_STAGE_CANDIDATE=PRODUCED_UNVERIFIED"
                  <<" HOURS="<<executed_hours
                  <<" DECLARED_SOURCE_HOURS="<<admission.input.hours

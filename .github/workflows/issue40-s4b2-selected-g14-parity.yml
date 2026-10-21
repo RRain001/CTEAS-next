@@ -6,6 +6,8 @@ on:
       - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
       - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
       - "native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp"
+      - "scripts/s4/s4r1c5b0_native_comp_trace.py"
+      - "docs/plans/ISSUE40_S4R1C5B0_NATIVE_G14_COMP_TRACE_20261021.md"
       - "native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp"
       - "native_cpp/modules/p6_calmet/CMakeLists.txt"
       - ".github/workflows/issue40-s4b2-selected-g14-parity.yml"
@@ -61,13 +63,35 @@ jobs:
           "$RUNNER_TEMP/s4b2-build/cteas_p6g_s4b2_unified_selected" \
             --selected-experimental --met "$x/met.inp" --geo "$x/GEO.DAT" \
             --surf "$x/SURF.DAT" --up "$x/UP1.DAT" --up "$x/UP2.DAT" \
-            --hours 6 --out "$RUNNER_TEMP/s4b2-new-candidate.dat" \
+            --hours 6 --native-comp-trace "$RUNNER_TEMP/s4b2-native-comp.csv" \
+            --out "$RUNNER_TEMP/s4b2-new-candidate.dat" \
             | tee "$RUNNER_TEMP/s4b2-new-trace.txt"
           cmp "$RUNNER_TEMP/s4b2-old-c2.dat" "$RUNNER_TEMP/s4b2-new-candidate.dat"
           sha256sum "$RUNNER_TEMP/s4b2-old-c2.dat" "$RUNNER_TEMP/s4b2-new-candidate.dat"
           echo "S4B2_C2_6H_270_FIELDS_OLD_VS_SHARED_NATIVE=BYTE_IDENTICAL"
           echo "S4B2_ORIGINAL_VENDOR_FRESH_RERUN=NOT_RUN"
           echo "S4B2_C1_SINGLE_STATION_SCIENCE=NOT_RUN"
+      - name: Verify six committed native G14 hours and deliberately corrupt memory chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/s4/s4r1c5b0_native_comp_trace.py selftest
+          python3 scripts/s4/s4r1c5b0_native_comp_trace.py verify \
+            --trace "$RUNNER_TEMP/s4b2-native-comp.csv" \
+            --nx 12 --ny 12 --hours 6 \
+            --report "$RUNNER_TEMP/s4b2-native-comp-audit.json"
+          test "$(wc -l < "$RUNNER_TEMP/s4b2-native-comp.csv")" -eq 1729
+          python3 - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"s4b2-native-comp-audit.json"
+          r=json.loads(p.read_text())
+          assert r["status"]=="PASS_SOFTWARE_CAUSAL_STATE_TRACE_ONLY"
+          assert r["rows"]==1728 and r["handoff_cell_pairs"]==720
+          assert r["native_original_45_field_parity"]=="NOT_RUN"
+          print("S4R1C5B0_G14_C2_SIX_HOUR_COMMIT_TRACE=PASS_SOFTWARE_ONLY")
+          PY
+          # No native-original water science is claimed. MET bytes remain
+          # checked against the unchanged old C2 executable above.
       - name: Reject undersized raw-field budget BEFORE first G14 hour; retain exact accepted bytes
         shell: bash
         run: |
@@ -148,6 +172,8 @@ jobs:
             ${{ runner.temp }}/s4b2-source-sha256.txt
             ${{ runner.temp }}/s4b2-old-trace.txt
             ${{ runner.temp }}/s4b2-new-trace.txt
+            ${{ runner.temp }}/s4b2-native-comp.csv
+            ${{ runner.temp }}/s4b2-native-comp-audit.json
             ${{ runner.temp }}/s4f-g26-trial.log
             ${{ runner.temp }}/s4f-g26-trial-sha256.txt
           if-no-files-found: error
