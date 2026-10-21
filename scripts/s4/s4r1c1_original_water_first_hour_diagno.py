@@ -42,18 +42,22 @@ def prepare(vendor:Path,out:Path,receipt:Path)->None:
     # and FRADJ + SECOND SURFVAR is finished immediately before 5672.
     # Water-only records prevent a 82x85 source trace becoming enormous.
     def probe(phase:int)->list[str]:
+        # Two snippets coexist in one Fortran compilation unit. Each
+        # FORMAT must have its own statement label; duplicate 9877 is
+        # an invalid original-source instrumentation, not a physics fault.
+        fmt = 9876 + phase
         return [
           f"      open(unit=95,file='{TRACE}',",
           "     1     status='unknown',position='append',action='write')",
           "      do j=1,ny",
           "      do i=1,nx",
           "      if(ilandu(i,j).ge.iwat1.and.ilandu(i,j).le.iwat2)then",
-          f"      write(95,9877) i,j,nhrz,{phase},ug(i,j,1),vg(i,j,1),",
+          f"      write(95,{fmt}) i,j,nhrz,{phase},ug(i,j,1),vg(i,j,1),",
           "     1              temp2d(i,j)",
           "      endif",
           "      enddo",
           "      enddo",
-          " 9877 format(4(i6,1x),3(es23.15,1x))",
+          f" {fmt} format(4(i6,1x),3(es23.15,1x))",
           "      close(unit=95)",
         ]
     mods={5613:probe(1),5672:probe(2)}
