@@ -1,0 +1,138 @@
+name: Issue40 S4-F genuine C1 143h normal G26 trial versus selected and frozen original
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4f-c1-143h-g26-normal-trial.yml'
+      - 'docs/plans/ISSUE40_S4F_C1_143H_NORMAL_TRIAL_20261021.md'
+      - 'native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-observed-c1-143h-normal-entry:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    steps:
+      - name: Checkout exact candidate source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: true
+      - name: Pin actual C1 source and independent frozen Fortran reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/s4f-c1"
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          test -s "$c/run/met/met.inp"
+          test -s "$c/geo/makegeo/geo.dat"
+          test -s "$c/run/smerge/surf.dat"
+          test -s "$c/met/upperair/final/up_58424.dat"
+          test -s "$c/run/met/met.dat"
+          echo 'b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  project/cases/hefei5km_2022_reference_case_20261011/run/met/met.dat' | sha256sum -c -
+          sha256sum "$c/run/met/met.inp" "$c/geo/makegeo/geo.dat" \
+            "$c/run/smerge/surf.dat" "$c/met/upperair/final/up_58424.dat" \
+            "$c/run/met/met.dat" > "$RUNNER_TEMP/s4f-c1/c1-source-sha256.txt"
+          git rev-parse HEAD > "$RUNNER_TEMP/s4f-c1/check-out-sha.txt"
+          echo 'S4F_C1_143H_REFERENCE_KIND=FROZEN_ORIGINAL_NOT_FRESH_VENDOR'
+      - name: Build exactly the pre-existing G14 selected actor and original P6E comparator
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4f-c1/build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4f-c1/build" --parallel 2 \
+            --target cteas_p6g_s4b2_unified_selected
+          cmake -S native_cpp/modules/p6_calmet/p6e \
+            -B "$RUNNER_TEMP/s4f-c1/p6e" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/s4f-c1/p6e" --parallel 2 --target p6e_calmet_dat21
+      - name: Run original-format real C1 143h on BOTH stage-call routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          root="$RUNNER_TEMP/s4f-c1"
+          bin="$root/build/cteas_p6g_s4b2_unified_selected"
+          args=(--selected-experimental --met "$c/run/met/met.inp" \
+                --geo "$c/geo/makegeo/geo.dat" \
+                --surf "$c/run/smerge/surf.dat" \
+                --up "$c/met/upperair/final/up_58424.dat" --hours 143)
+          /usr/bin/time -f '%M %e %U %S' -o "$root/selected-time.txt" \
+            "$bin" "${args[@]}" --out "$root/selected-143h.dat" \
+            > "$root/selected-143h.log"
+          /usr/bin/time -f '%M %e %U %S' -o "$root/normal-trial-time.txt" \
+            "$bin" "${args[@]}" --g26-normal-entry-trial \
+            --out "$root/normal-trial-143h.dat" > "$root/normal-trial-143h.log"
+          grep -F 'G26_NORMAL_ENTRY_TRIAL=YES' "$root/normal-trial-143h.log"
+          grep -F 'PRODUCTION_ADMISSION=NOT_ACCEPTED' "$root/normal-trial-143h.log"
+          grep -F 'HOURS=143' "$root/normal-trial-143h.log"
+          cmp "$root/selected-143h.dat" "$root/normal-trial-143h.dat"
+          sha256sum "$bin" "$root/selected-143h.dat" "$root/normal-trial-143h.dat" \
+            > "$root/bin-and-generated-sha256.txt"
+          echo 'S4F_C1_ACTUAL_OBS_143H_G26_NORMAL_VS_SELECTED=BYTE_IDENTICAL_TRIAL_ONLY'
+      - name: Independently compare ALL C1 143 times 45 fields with frozen original baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=project/cases/hefei5km_2022_reference_case_20261011
+          root="$RUNNER_TEMP/s4f-c1"
+          "$root/p6e/p6e_calmet_dat21" compare \
+            --reference "$c/run/met/met.dat" \
+            --candidate "$root/normal-trial-143h.dat" \
+            --out "$root/c1-frozen-original-vs-normal-trial-143h.json" \
+            > "$root/c1-frozen-original-vs-normal-trial-143h.log"
+          python3 - "$root" <<'PY'
+          import hashlib,json,pathlib,sys
+          root=pathlib.Path(sys.argv[1])
+          d=json.loads((root/"c1-frozen-original-vs-normal-trial-143h.json").read_text())
+          assert d["status"]=="PASS" and d["total_exceedances"]==0
+          assert d["intervals"]==143 and d["fields_per_hour"]==45 and len(d["fields"])==45
+          def digest(p):
+              h=hashlib.sha256()
+              with p.open("rb") as f:
+                  for chunk in iter(lambda:f.read(1048576),b""):
+                      h.update(chunk)
+              return h.hexdigest()
+          root_of_repo=pathlib.Path("project/cases/hefei5km_2022_reference_case_20261011")
+          original=root_of_repo/"run/met/met.dat"
+          assert digest(original)=="b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30"
+          times={}
+          for name in ("selected","normal-trial"):
+              vals=(root/(name+"-time.txt")).read_text().split()
+              assert len(vals)==4 and int(vals[0])>0
+              times[name]={"peak_rss_kib":int(vals[0]),"elapsed_seconds":float(vals[1])}
+          receipt={
+              "status":"S4F_C1_143H_G26_NORMAL_TRIAL_FROZEN_ORIGINAL_PASS_SCOPED",
+              "reference_kind":"frozen exact original CALMET.DAT C1 sha256; original Fortran NOT rerun",
+              "field_hour_groups":6435,"field_per_hour":45,"hours":143,
+              "total_exceedances":0,
+              "normal_equals_selected_sha256":digest(root/"normal-trial-143h.dat"),
+              "frozen_original_sha256":digest(original),
+              "normal_G26_production_admission":"NOT_ACCEPTED",
+              "measured_linux_process_peak_rss":times,
+          }
+          (root/"c1-143h-g26-normal-trial-receipt.json").write_text(
+              json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("S4F_C1_143H_G26_NORMAL_AND_SELECTED_FROZEN_ORIGINAL_6435=PASS_SCOPED")
+          print("S4F_C1_143H_REAL_FRESH_ORIGINAL_FORTRAN=NOT_RUN")
+          PY
+      - name: Upload only bounded SHA lineage and numeric acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-s4f-c1-143h-g26-trial-frozen-original
+          path: |
+            ${{ runner.temp }}/s4f-c1/check-out-sha.txt
+            ${{ runner.temp }}/s4f-c1/c1-source-sha256.txt
+            ${{ runner.temp }}/s4f-c1/bin-and-generated-sha256.txt
+            ${{ runner.temp }}/s4f-c1/selected-time.txt
+            ${{ runner.temp }}/s4f-c1/normal-trial-time.txt
+            ${{ runner.temp }}/s4f-c1/selected-143h.log
+            ${{ runner.temp }}/s4f-c1/normal-trial-143h.log
+            ${{ runner.temp }}/s4f-c1/c1-frozen-original-vs-normal-trial-143h.json
+            ${{ runner.temp }}/s4f-c1/c1-frozen-original-vs-normal-trial-143h.log
+            ${{ runner.temp }}/s4f-c1/c1-143h-g26-normal-trial-receipt.json
+          retention-days: 21
+          if-no-files-found: warn
