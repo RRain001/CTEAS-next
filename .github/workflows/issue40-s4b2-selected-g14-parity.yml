@@ -66,6 +66,31 @@ jobs:
           echo "S4B2_C2_6H_270_FIELDS_OLD_VS_SHARED_NATIVE=BYTE_IDENTICAL"
           echo "S4B2_ORIGINAL_VENDOR_FRESH_RERUN=NOT_RUN"
           echo "S4B2_C1_SINGLE_STATION_SCIENCE=NOT_RUN"
+      - name: Reject undersized raw-field budget BEFORE first G14 hour; retain exact accepted bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          x="$RUNNER_TEMP/s4b2-source"
+          b="$RUNNER_TEMP/s4b2-build/cteas_p6g_s4b2_unified_selected"
+          args=(--selected-experimental --met "$x/met.inp" --geo "$x/GEO.DAT"
+                --surf "$x/SURF.DAT" --up "$x/UP1.DAT" --up "$x/UP2.DAT"
+                --hours 6)
+          # Exact raw payload lower bound: 12*12*45*4*6 = 155520 bytes.
+          if "$b" "${args[@]}" --max-retained-field-bytes 155519 \
+              --out "$RUNNER_TEMP/s4e-denied-under-budget.dat" > "$RUNNER_TEMP/s4e-denial.log" 2>&1; then
+            echo "::error::S4-E ignored caller budget"; exit 1
+          fi
+          grep -F 'S4E source selected G14 output exceeds caller raw field byte budget' "$RUNNER_TEMP/s4e-denial.log"
+          test ! -e "$RUNNER_TEMP/s4e-denied-under-budget.dat"
+          "$b" "${args[@]}" --max-retained-field-bytes 155520 \
+            --out "$RUNNER_TEMP/s4e-exact-budget.dat" | tee "$RUNNER_TEMP/s4e-exact-budget-trace.txt"
+          cmp "$RUNNER_TEMP/s4b2-old-c2.dat" "$RUNNER_TEMP/s4e-exact-budget.dat"
+          if "$b" "${args[@]}" --max-retained-field-bytes 0 \
+              --out "$RUNNER_TEMP/s4e-zero-budget.dat"; then
+            echo "::error::S4-E accepted zero budget"; exit 1
+          fi
+          test ! -e "$RUNNER_TEMP/s4e-zero-budget.dat"
+          echo "S4E_SELECTED_G14_OPTIONAL_BYTE_BUDGET=PASS_SOFTWARE_ONLY"
       - name: Reject missing/or unauthorized source and partial clocks
         shell: bash
         run: |
