@@ -1388,3 +1388,15 @@ else()
   target_compile_options(cteas_p6g_g57_real_p6f_43
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8j: authentic mixed-water firsthour original IPGT/IRH 2 integer fields.
+add_executable(cteas_p6g_g58_real_noaa_ipgt_irh
+               src/p6g_g58_real_noaa_ipgt_irh_main.cpp)
+target_link_libraries(cteas_p6g_g58_real_noaa_ipgt_irh
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g58_real_noaa_ipgt_irh PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g58_real_noaa_ipgt_irh
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
