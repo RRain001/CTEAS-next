@@ -77,7 +77,7 @@ def compare(original:Path,receipt:Path,native:Path,native_log:Path,
     # No inference about DPTT acceptance: the source tracing currently
     # includes only ZI and ZICONV, not native/Fortran DPTT parity.
     result_all={
-        "status":("PASS_SCOPED_REAL_NOAA_NATIVE_MIXHT_BEFORE_AVEMIX"
+        "status":("PASS_SCOPED_REAL_NOAA_NATIVE_MIXHT_AND_AVEMIX"
                   if above==0 else
                   "FAIL_REAL_NOAA_NATIVE_LAND_MIXHT_NUMERIC"),
         "case":"2022-06-01_01-02_UTC_true_2SS_1US_82x85x9",
