@@ -20,6 +20,8 @@ struct G54NativeLandMixhtCandidate {
     std::chrono::sys_seconds end{};
     std::vector<float> zi_before_avemix_m,ziconv_before_avemix_m,dptt_before_avemix_k;
     std::vector<float> comp_third_heat_k,comp_third_qh_wm2;
+    std::vector<float> zi_after_avemix_m,ziconv_after_avemix_m;
+    bool native_avemix_candidate_unverified=false;
     std::size_t actual_land_count=0,actual_water_count=0;
     std::size_t source_valid_diagi_count=0,source_missing_diagi_count=0;
     bool sparse_first_hour_research_only=false;
@@ -167,9 +169,6 @@ inline G54NativeLandMixhtCandidate g54_real_noaa_firsthour_land_mixht(
            seen[site.cell]++||
            !std::isfinite(site.station_mixing.dptt_for_comp_k))
             throw std::invalid_argument("G54 valid sparse station DPTT rejected");
-        const auto site_index=static_cast<std::size_t>(
-            &site-&accepted.native_valid_station.front());
-        (void)site_index;
         mix.initial_dptt[site.cell]=site.station_mixing.dptt_for_comp_k;
     }
     const auto physical=p6e::mixht_observed_mc(mix);
@@ -183,8 +182,28 @@ inline G54NativeLandMixhtCandidate g54_real_noaa_firsthour_land_mixht(
            physical.ziconv[w.source_index]!=w.mixing.ziconv_m)
             throw std::logic_error("G54 true LAND MIXHT changed WATER ZI");
     }
+    // Original source AVEMIX over the combined WATER+LAND native MIXHT
+    // fields; the result is unverified until independently compared.
+    const auto avectrl=g18c1_parse_original_avemix(
+        source.source.original_metinp);
+    const auto start=static_cast<std::size_t>(avectrl.ilevzi-1)*n;
+    if(start+n>final.u_mps.size()||start+n>final.v_mps.size())
+        throw std::invalid_argument("G54 original ILEVZI source wind invalid");
+    const std::vector<float> level_u(final.u_mps.begin()+start,
+                                     final.u_mps.begin()+start+n);
+    const std::vector<float> level_v(final.v_mps.begin()+start,
+                                     final.v_mps.begin()+start+n);
+    const auto averaged=g18c1_original_avemix_rebuild(
+        geo.nx,geo.ny,avectrl.mnmdav,avectrl.hafang_deg,
+        geo.grid_km*1000.f,level_u,level_v,physical.zi,
+        physical.ziconv);
+    if(averaged.zi_m.size()!=n||averaged.ziconv_m.size()!=n)
+        throw std::logic_error("G54 AVEMIX full real GEO not assembled");
     G54NativeLandMixhtCandidate out;
     out.end=frame.input.end;
+    out.zi_after_avemix_m=averaged.zi_m;
+    out.ziconv_after_avemix_m=averaged.ziconv_m;
+    out.native_avemix_candidate_unverified=true;
     out.zi_before_avemix_m=physical.zi;
     out.ziconv_before_avemix_m=physical.ziconv;
     out.dptt_before_avemix_k=physical.dptt;
