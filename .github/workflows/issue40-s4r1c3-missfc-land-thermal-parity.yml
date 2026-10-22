@@ -43,6 +43,8 @@ on:
       - 'native_cpp/modules/p6_calmet/src/p6g_g58_real_noaa_ipgt_irh_main.cpp'
       - 'scripts/s4/s4r1c8j_compare_noaa_ipgt_irh.py'
       - 'scripts/s4/s4r1c8l_firsthour_postcomp_memory.py'
+      - 'scripts/s4/s4r1c8m_original_dptt_common.py'
+      - 'docs/plans/ISSUE40_S4R1C8M_ORIGINAL_DPTT_SIXHOUR_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8L_FIRSTHOUR_POSTCOMP_MEMORY_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8J_NATIVE_NOAA_IPGT_IRH_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8I_NATIVE_FIRSTHOUR_43_REAL_P6F_20261022.md'
@@ -2059,6 +2061,68 @@ jobs:
             "$root/evidence/independent-real-noaa-firsthour-native-memory.log"
           grep -Fx 'S4R1C8L_NEXT_HOUR_G14_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-real-noaa-firsthour-native-memory.log"
+      - name: SHA-pin sixhour original CALMET hidden DPTT COMMON and compare native G54 firsthour
+        shell: bash
+        timeout-minutes: 50
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8m"
+          mkdir -p "$root/evidence"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          pristine="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-dptt-source-writeonly-run"
+          python3 -m scripts.s4.s4r1c8m_original_dptt_common selftest
+          python3 -m scripts.s4.s4r1c8m_original_dptt_common prepare \
+            --vendor "$vendor" \
+            --destination "$root/source-dptt-writeonly.for" \
+            --receipt "$root/evidence/source-dptt-writeonly.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/source-dptt-writeonly.for" \
+            -o "$root/source-dptt-writeonly.x"
+          sha256sum "$root/source-dptt-writeonly.x" \
+            > "$root/evidence/source-dptt-binary-sha256.txt"
+          test -s "$pristine/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$pristine" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+            "$scratch/run/met/s4r1c8m-original-dptt-common.bin"
+          (cd "$scratch/run/met" && "$root/source-dptt-writeonly.x" met.inp) \
+            > "$root/evidence/source-original-dptt-stdout.log" \
+            2> "$root/evidence/source-original-dptt-stderr.log" || {
+              tail -n 70 "$root/evidence/source-original-dptt-stdout.log"
+              tail -n 70 "$root/evidence/source-original-dptt-stderr.log"
+              exit 1
+            }
+          python3 -m scripts.s4.s4r1c8m_original_dptt_common verify \
+            --vendor "$vendor" \
+            --pristine "$pristine/run/met/met.dat" \
+            --scratch "$scratch/run/met/met.dat" \
+            --trace "$scratch/run/met/s4r1c8m-original-dptt-common.bin" \
+            --report "$root/evidence/independent-original-sixhour-dptt-common.json" \
+            | tee "$root/evidence/independent-original-sixhour-dptt-common.log"
+          grep -Fx 'S4R1C8M_ORIGINAL_6H_DPTT=PASS_SOURCE_ORIGINAL_SIXHOUR_DPTT_COMMON_HANDOFF' \
+            "$root/evidence/independent-original-sixhour-dptt-common.log"
+          grep -Fx 'S4R1C8M_ORIGINAL_DPTT_HANDOFF_NONIDENTICAL=0' \
+            "$root/evidence/independent-original-sixhour-dptt-common.log"
+          grep -Fx 'S4R1C8M_ORIGINAL_6H45_MET=BYTE_IDENTICAL' \
+            "$root/evidence/independent-original-sixhour-dptt-common.log"
+          python3 -m scripts.s4.s4r1c8m_original_dptt_common compare \
+            --original-trace "$scratch/run/met/s4r1c8m-original-dptt-common.bin" \
+            --original-receipt "$root/evidence/independent-original-sixhour-dptt-common.json" \
+            --original-met "$pristine/run/met/met.dat" \
+            --native-g54 "$RUNNER_TEMP/s4r1c8f/native-real-firsthour-mixht-avemix.bin" \
+            --native-g54-receipt "$RUNNER_TEMP/s4r1c8f/evidence/independent-native-original-mixht-avemix.json" \
+            --g60-receipt "$RUNNER_TEMP/s4r1c8l/evidence/independent-real-noaa-firsthour-native-memory.json" \
+            --report "$root/evidence/independent-original-native-firsthour-dptt.json" \
+            | tee "$root/evidence/independent-original-native-firsthour-dptt.log"
+          grep -Fx 'S4R1C8M_NATIVE_DPTT=PASS_FIRSTHOUR_SOURCE_NATIVE_DPTT_COMMON_PARITY' \
+            "$root/evidence/independent-original-native-firsthour-dptt.log"
+          grep -Fx 'S4R1C8M_DPTT_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-original-native-firsthour-dptt.log"
+          grep -Fx 'S4R1C8M_G14_6H_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-original-native-firsthour-dptt.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -2088,6 +2152,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8j/evidence/
             ${{ runner.temp }}/s4r1c8k/evidence/
             ${{ runner.temp }}/s4r1c8l/evidence/
+            ${{ runner.temp }}/s4r1c8m/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
