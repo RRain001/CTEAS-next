@@ -49,8 +49,16 @@ struct G16WindStages {
 };
 class G16SelectedWindPhysics final : public MultiHourPhysics {
 public:
-    explicit G16SelectedWindPhysics(G16ObservedProfiles profiles)
-        : profiles_(std::move(profiles)) {}
+    // Source-only WIND1 opt-in reuses the same selected G9 kernel as G42.
+    // The inactive zero-speed carrier for a missing SURF is NEVER marked
+    // observed; all nine station presence flags must remain zero. This
+    // does not authorize INTER2, G14/COMP, G26 or production CALMET.
+    explicit G16SelectedWindPhysics(
+        G16ObservedProfiles profiles,
+        bool explicitly_original_sparse_wind1_reference_only=false)
+        : profiles_(std::move(profiles)),
+          source_sparse_wind1_optin_(
+              explicitly_original_sparse_wind1_reference_only) {}
 
     const G16WindStages& selected_result() const noexcept {return stage_;}
     // Explicit post-SLOPE handoff is an independent physical requirement.
@@ -195,9 +203,33 @@ private:
         input.present=profiles_.wind1_present;
         for(std::size_t i=0;i<ns;++i){
             const auto& obs=hour.surface.by_station[i];
-            if(!obs.wind_valid||!std::isfinite(obs.wind_speed_mps))
-                throw std::invalid_argument("G16 missing original SURF wind for WIND1");
-            input.surface_speeds_mps.push_back(obs.wind_speed_mps);
+            if(!obs.wind_valid) {
+                if(!source_sparse_wind1_optin_)
+                    throw std::invalid_argument(
+                        "G16 missing original SURF wind requires explicit source-only scope");
+                // Original WIND1 skips EDITL-missing SS (calmet.for
+                // L36114–36126) and uses zero interpolation weight.
+                // G20/G42 keep the missing station's exact ordinal,
+                // zero *inactive* G9 input carrier and present=0 on ALL
+                // levels. Reject contradictory source profiles.
+                for(std::size_t k=0;k<9;++k) {
+                    const auto pos=k*total+i;
+                    if(profiles_.wind1_present[pos]!=0U||
+                       profiles_.wind1_u_mps[pos]!=0.f||
+                       profiles_.wind1_v_mps[pos]!=0.f)
+                        throw std::invalid_argument(
+                            "G16 missing source wind falsely marked observed");
+                }
+                input.surface_speeds_mps.push_back(0.f);
+            } else {
+                if(!std::isfinite(obs.wind_speed_mps)||
+                   obs.wind_speed_mps<0.f||
+                   (source_sparse_wind1_optin_&&
+                    obs.wind_speed_mps>=998.99f))
+                    throw std::invalid_argument(
+                        "G16 invalid observed source SURF speed");
+                input.surface_speeds_mps.push_back(obs.wind_speed_mps);
+            }
             input.station_x_m.push_back(hour.stations.surface[i].local_x_m);
             input.station_y_m.push_back(hour.stations.surface[i].local_y_m);
         }
@@ -284,5 +316,6 @@ private:
     std::optional<G16PostSlopeFields> corrected_;
     bool diagi_refreshed_=false;
     std::size_t surface_count_=0;
+    bool source_sparse_wind1_optin_=false;
 };
 } // namespace cteas::calmet::p6g

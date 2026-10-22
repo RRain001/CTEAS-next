@@ -15,6 +15,7 @@ struct G48RealSparseStheor {
     std::size_t original_surface_station_count=0;
     std::size_t missing_wind_skipped=0;
     bool source_p5_raw_wind_unchanged=false;
+    bool native_shared_g16_sparse_wind1_equal_to_g42=false;
     bool native_g23_inter2_or_g26_ready=false;
 };
 
@@ -47,7 +48,7 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
             throw std::logic_error("G48 illegally replaced raw wind/precip");
     }
     auto scheduler=selected.source.make_scheduler();
-    const auto frame=scheduler.preview_next_hour();
+    auto frame=scheduler.preview_next_hour();
     if(frame.hour_index!=0||
        frame.input.end!=g47.end||
        frame.input.end!=g47.thermal.native_heat.heat.end||
@@ -55,6 +56,39 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
         throw std::logic_error("G48 cross-source NOAA first-hour clock drift");
     const auto& original_wind1=
         g47.thermal.native_wind1.native_firstguess;
+    // The same source-owned G20/G42 profiles drive BOTH G42 and the
+    // existing shared G16 physics, with original missing SS validity
+    // unchanged. G16's default production-like entry must fail closed;
+    // explicit research source admission must reproduce frozen G42 WIND1
+    // elementwise on all real 82x85x9 U/V without an original-wind oracle.
+    G16SelectedWindPhysics unmarked(
+        g47.thermal.native_wind1.source_profiles);
+    bool default_denied=false;
+    try {
+        auto untouched=frame;
+        (void)unmarked.run(p6::NativeHourStage::DiagnoWind1,untouched);
+    }catch(const std::invalid_argument&) {
+        default_denied=true;
+    }
+    if(!default_denied)
+        throw std::logic_error(
+            "G48 G16 unmarked original-missing SURF falsely entered WIND1");
+    G16SelectedWindPhysics shared(
+        g47.thermal.native_wind1.source_profiles,true);
+    const auto accepted=shared.run(
+        p6::NativeHourStage::DiagnoWind1,frame);
+    if(!accepted.completed||
+       accepted.source!=p6::NativeHourSource::NativeCpp||
+       !shared.selected_result().wind1_complete)
+        throw std::logic_error("G48 shared source-only G16 WIND1 not executed");
+    const auto& g16=shared.selected_result().first_guess;
+    if(g16.nx!=original_wind1.nx||
+       g16.ny!=original_wind1.ny||
+       g16.nz!=original_wind1.nz||
+       g16.u_mps!=original_wind1.u_mps||
+       g16.v_mps!=original_wind1.v_mps)
+        throw std::logic_error(
+            "G48 shared G16 WIND1 does not equal independently source-validated G42");
     const auto& fradj=g47.thermal.native_fradj.corrected_wind;
     G17B4TwoPassSurfvar twice(
         selected.source.grid,selected.source.stations,
@@ -94,6 +128,7 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
         throw std::logic_error(
             "G48 real first-hour original sparse STHEOR count/identity mismatch");
     result.source_p5_raw_wind_unchanged=true;
+    result.native_shared_g16_sparse_wind1_equal_to_g42=true;
     return result;
 }
 } // namespace cteas::calmet::p6g
