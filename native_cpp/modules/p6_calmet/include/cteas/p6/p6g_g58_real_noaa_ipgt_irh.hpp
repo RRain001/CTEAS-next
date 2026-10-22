@@ -31,7 +31,7 @@ inline G58RealNoaaIntegerOutput g58_source_noaa_p6f_ipgt_irh(
     const auto physical=g57_noaa_real_43_output_fields(paths,true);
     const auto mixed=g54_real_noaa_firsthour_land_mixht(paths,true);
     auto src=g41_load_selected_noow_water_first_hour_source(paths,true);
-    const auto raw=src.source.surface.hourly.front();
+    const auto& raw=src.source.surface.hourly.front();
     const auto resolved=g43_original_comp_missfc_source_only(src,raw,true);
     if(!resolved.source_comp_missfc_complete||
        resolved.G14_G26_production_accepted||
