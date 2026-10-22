@@ -18,6 +18,9 @@ on:
       - 'scripts/s4/s4r1c8b_original_real_comp_third_surfvar.py'
       - 'scripts/s4/s4r1c8b_compare_real_comp_third.py'
       - 'native_cpp/modules/p6_calmet/src/p6g_g51_real_noaa_comp_third_main.cpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g52_real_water_comp_partition.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g52_real_water_comp_partition_main.cpp'
+      - 'docs/plans/ISSUE40_S4R1C8C_REAL_WATER_G26B_PARTITION_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8B_COMP_THIRD_NOAA_20261022.md'
       - 'native_cpp/modules/p6_calmet/src/p6g_g50_real_noaa_g24_tail_main.cpp'
       - 'docs/plans/ISSUE40_S4R1C8A_G24_REAL_NOAA_20261022.md'
@@ -1492,6 +1495,28 @@ jobs:
             "$root/evidence/independent-original-native-comp-third.log"
           grep -Fx 'S4R1C8B_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-original-native-comp-third.log"
+      - name: Validate real original G41 LAND WATER COMP source ownership without admitting G26
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8c"
+          mkdir -p "$root/evidence"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g52_real_water_comp_partition
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g52_real_water_comp_partition"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --authentic-noaa-water-comp-source-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            | tee "$root/evidence/g52-real-original-comp-source-partition.log"
+          grep -Fx 'S4R1C8C_REAL_NOAA_WATER_COMP_SOURCE_PARTITION=PASS LAND=6907 WATER=63 SS=2 US=1' \
+            "$root/evidence/g52-real-original-comp-source-partition.log"
+          grep -Fx 'S4R1C8C_RECLASSIFY_MISSING_ORDINALS_AND_PRODUCTION_FALSE=PASS' \
+            "$root/evidence/g52-real-original-comp-source-partition.log"
+          grep -Fx 'S4R1C8C_WATER_MIXHT_AVEMIX_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/g52-real-original-comp-source-partition.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1511,6 +1536,7 @@ jobs:
             ${{ runner.temp }}/s4r1c7f/evidence/
             ${{ runner.temp }}/s4r1c8a/evidence/
             ${{ runner.temp }}/s4r1c8b/evidence/
+            ${{ runner.temp }}/s4r1c8c/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
