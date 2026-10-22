@@ -97,9 +97,7 @@ def compare(original:Path,receipt:Path,native:Path,native_log:Path,report:Path)-
         if (row["pgt"]!=4 or row["ziconv"]!=0 or row["zicold"]!=0 or
             row["zimech"]<0 or row["fcori"]<2.5e-5):
             violations.append({"field":"native_source_contract","i":i,"j":j})
-    nbad=sum(v["above_tolerance"] for v in fields.values())+len(violations) - min(
-        sum(v["above_tolerance"] for v in fields.values()),len(violations))
-    # Real score, not diagnostics list length: cap the printed examples only.
+    # Count all actual exceedances; diagnostic violation listing may be capped.
     nbad=sum(v["above_tolerance"] for v in fields.values())+sum(
         v.get("field")=="native_source_contract" for v in violations)
     result={
