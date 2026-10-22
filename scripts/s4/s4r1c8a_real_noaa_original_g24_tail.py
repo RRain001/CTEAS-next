@@ -32,7 +32,7 @@ c --- S4-R1c8a write only: original DIAGNO tail after W and WINDBC
       include 'gen.met'
       include 'grid.met'
       include 'd1.met'
-      integer i,j,k,is
+      integer i,j,k,side
       logical opened
       save opened
       data opened/.false./
@@ -46,8 +46,16 @@ c --- S4-R1c8a write only: original DIAGNO tail after W and WINDBC
       write(91) (((v(i,j,k),i=1,nx),j=1,ny),k=1,nz)
       write(91) (((w(i,j,k),i=1,nx),j=1,ny),k=1,nz+1)
       write(91) (((div(i,j,k),i=1,nx),j=1,ny),k=1,nz)
-      write(91) (((ub(j,is,k),j=1,ny),is=1,2),k=1,nz)
-      write(91) (((vb(i,is,k),i=1,nx),is=1,2),k=1,nz)
+      do k=1,nz
+         do side=1,2
+            write(91) (ub(j,side,k),j=1,ny)
+         enddo
+      enddo
+      do k=1,nz
+         do side=1,2
+            write(91) (vb(i,side,k),i=1,nx)
+         enddo
+      enddo
       return
       end
 """
