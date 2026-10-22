@@ -6,11 +6,12 @@
 // This is a physical candidate, NOT a G14 transaction, station-clock commit,
 // second-hour forcing admission, general G26, or P7 output.
 #include "cteas/p6/p6g_g59_real_noaa_firsthour_dataset.hpp"
-#include "cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
+#include "cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
 #include "cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp"
 #include "cteas/p6/p6g_g43_comp_missfc_source.hpp"
 #include "cteas/p6/p6g_g47_real_water_post_slope.hpp"
 #include "cteas/p6/p6g_g48_real_sparse_stheor.hpp"
+#include "cteas/p6/p6g_g54_real_land_mixht.hpp"
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -33,6 +34,7 @@ struct G62RealNoaaFirstHourMemorySeed {
     bool g14_source_missfc_original_wind_untouched=false;
     bool g14_water_thermal_slope_bitwise_verified=false;
     bool g14_real_sparse_stheor_g24_bitwise_verified=false;
+    bool g14_water_comp_mixht_stage12_bitwise_verified=false;
     bool g14_17_stage_transaction_committed=false;
     bool station_clocks_published=false;
     bool second_hour_prior_state_consumed=false;
@@ -215,6 +217,64 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        frame.fields.w_face_mps!=live_g24.wind.w_face_mps)
         throw std::logic_error(
             "G26 real NOAA same-frame STHEOR/INTER2/G24 disagrees with independent G48");
+    // Actual G26B, not G54, executes stage12 from this G26A live frame.
+    // The independent frozen real G54 case is re-run ONLY for comparison.
+    // Absent stages 13..16 remain forbidden, including scheduler commit.
+    G26BSourceFileBackedCompBridge g14_comp(
+        g14_diagno,g14_source,false,&source);
+    g14_comp.run_selected(p6::kHefeiOriginalStageOrder[12],frame,true);
+    const auto& live_mix=g14_comp.source_water_mixht_stage12(frame);
+    const auto standalone_mix=g54_real_noaa_firsthour_land_mixht(paths,true);
+    if(!live_mix.source_native_comp_mixht_uncommitted||
+       !standalone_mix.sparse_first_hour_research_only||
+       standalone_mix.native_avemix_ready||
+       standalone_mix.g26_45field_ready||
+       live_mix.end!=frame.input.end||
+       standalone_mix.end!=frame.input.end||
+       live_mix.water_cells!=63||live_mix.land_cells!=6907||
+       live_mix.valid_ss!=1||live_mix.missing_ss!=1||
+       !real4_equal(live_mix.zi_before_avemix_m,
+                    standalone_mix.zi_before_avemix_m)||
+       !real4_equal(live_mix.ziconv_before_avemix_m,
+                    standalone_mix.ziconv_before_avemix_m)||
+       !real4_equal(live_mix.dptt_before_avemix_k,
+                    standalone_mix.dptt_before_avemix_k)||
+       !real4_equal(live_mix.comp_third_temperature_k,
+                    standalone_mix.comp_third_heat_k)||
+       !real4_equal(live_mix.comp_third_qh_wm2,
+                    standalone_mix.comp_third_qh_wm2)||
+       !real4_equal(live_mix.comp_third_density_kgm3,
+                    standalone_mix.comp_third_density_kgm3)||
+       !real4_equal(live_mix.comp_third_ustar_mps,
+                    standalone_mix.comp_third_ustar_mps)||
+       !real4_equal(live_mix.comp_third_el_m,
+                    standalone_mix.comp_third_el_m)||
+       live_mix.zi_before_avemix_m.size()!=n||
+       live_mix.ziconv_before_avemix_m.size()!=n||
+       live_mix.dptt_before_avemix_k.size()!=n||
+       live_mix.comp_third_temperature_k.size()!=n||
+       live_mix.comp_third_qh_wm2.size()!=n||
+       live_mix.comp_third_density_kgm3.size()!=n||
+       live_mix.comp_third_ustar_mps.size()!=n||
+       live_mix.comp_third_el_m.size()!=n||
+       frame.next.zi_m!=frame.previous.zi_m||
+       frame.next.ziconv_m!=frame.previous.ziconv_m||
+       frame.next.dptt_k!=frame.previous.dptt_k)
+        throw std::logic_error(
+            "G26B stage12 same G14 NOAA WATER+LAND MIXHT differs from native G54");
+    // Attempting 13 without implementation MUST fail with no G14 mutation.
+    bool stage13_denied=false;
+    try {
+        g14_comp.run_selected(p6::kHefeiOriginalStageOrder[13],frame,true);
+    } catch(const std::invalid_argument&) {
+        stage13_denied=true;
+    }
+    if(!stage13_denied||
+       frame.next.zi_m!=frame.previous.zi_m||
+       frame.next.ziconv_m!=frame.previous.ziconv_m||
+       frame.next.dptt_k!=frame.previous.dptt_k)
+        throw std::logic_error(
+            "G26B G14 original WATER unverified AVEMIX was accidentally admitted");
     if(frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.source.surface.hourly.size()!=6||
@@ -298,6 +358,7 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     result.g14_source_missfc_original_wind_untouched=true;
     result.g14_water_thermal_slope_bitwise_verified=true;
     result.g14_real_sparse_stheor_g24_bitwise_verified=true;
+    result.g14_water_comp_mixht_stage12_bitwise_verified=true;
     return result;
 }
 } // namespace cteas::calmet::p6g
