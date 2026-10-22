@@ -40,6 +40,8 @@ struct G62RealNoaaFirstHourMemorySeed {
     bool g14_water_comp_avemix_stage13_bitwise_verified=false;
     bool g14_water_comp_wstarr_stage14_bitwise_verified=false;
     bool g14_water_comp_temp3d_stage15_bitwise_verified=false;
+    bool g14_p6f_stage16_all45_bitwise_to_independent_g59=false;
+    bool g14_p6f_negative_tamper_rejected=false;
     bool g14_17_stage_transaction_committed=false;
     bool station_clocks_published=false;
     bool second_hour_prior_state_consumed=false;
@@ -320,20 +322,72 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        frame.next.dptt_k!=frame.previous.dptt_k)
         throw std::logic_error(
             "G26B actual G14 NOAA stage15 TEMP3D differs from independent G56");
-    // Stage 16 P6F is unaccepted. It must not emit output or commit
-    // either G14 grid memory or source AA/BB/CGAMMA clocks.
-    bool stage16_denied=false;
-    try {
-        g14_comp.run_selected(p6::kHefeiOriginalStageOrder[16],frame,true);
-    } catch(const std::invalid_argument&) {
-        stage16_denied=true;
-    }
-    if(!stage16_denied||
-       frame.next.zi_m!=frame.previous.zi_m||
-       frame.next.ziconv_m!=frame.previous.ziconv_m||
-       frame.next.dptt_k!=frame.previous.dptt_k)
+    // The SAME actor now executes original stage 16 P6F, including
+    // 43 real and native PGT/RH two integer fields. Actual G14 physics
+    // supplies every value and G18D1 verifies the PRECOMMIT candidate.
+    // G59 is calculated independently from source data, used ONLY as
+    // an oracle-free post-computation bitwise comparison of every field.
+    g14_comp.run_selected(p6::kHefeiOriginalStageOrder[16],frame,true);
+    const auto& prepared=g14_comp.source_water_p6f_stage16(frame);
+    if(!prepared.actual_g14_stage16_precommit_validated||
+       prepared.g14_hour_committed||prepared.source_clocks_published||
+       prepared.ready_for_next_hour||
+       prepared.candidate_dataset.hourly.size()!=45||
+       prepared.serialized_prepared_only.empty()||
+       frame.next.zi_m!=standalone_mix.zi_after_avemix_m||
+       frame.next.ziconv_m!=standalone_mix.ziconv_after_avemix_m||
+       frame.next.dptt_k!=standalone_mix.dptt_before_avemix_k||
+       frame.fields.temperature_k!=separate_temp3d.temperature_k||
+       scheduler.completed_hours()!=0||station_clocks.has_published_hour()||
+       g14_diagno.clocks_published())
         throw std::logic_error(
-            "G26B native G14 source P6F stage16 bypassed science gate");
+            "G26B actual G14 45-field firsthour P6F improperly promoted to commit");
+    std::size_t compared=0, integers=0, reals=0;
+    for(std::size_t k=0;k<45;++k) {
+        const auto& actual=prepared.candidate_dataset.hourly.at(k);
+        const auto& separate=file.dataset.hourly.at(k);
+        if(actual.label!=separate.label||
+           actual.integer!=separate.integer||
+           actual.begin!=separate.begin||actual.end!=separate.end)
+            throw std::logic_error("G26B original NOAA G14 P6F field label/clock drift");
+        if(actual.integer) {
+            if(actual.integer_values!=separate.integer_values||
+               actual.integer_values.size()!=n)
+                throw std::logic_error(
+                    "G26B original NOAA G14 IPGT/IRH differs from independent G59");
+            ++integers;
+        }else{
+            if(!real4_equal(actual.real_values,separate.real_values)||
+               actual.real_values.size()!=n)
+                throw std::logic_error(
+                    "G26B original NOAA G14 43 REAL4 records differ from independent G59");
+            ++reals;
+        }
+        compared+=n;
+    }
+    if(compared!=45*n||integers!=2||reals!=43)
+        throw std::logic_error("G26B firsthour original P6F 45-field scope invalid");
+    // Negative test: corrupt one field on a DETACHED prepared document.
+    // The frozen precommit validator MUST reject it and the source
+    // scheduler/state/AA-BB-CGAMMA MUST remain unpublished.
+    auto tampered=prepared.candidate_dataset;
+    const float old_value=tampered.hourly.at(0).real_values.at(0);
+    tampered.hourly.at(0).real_values.at(0)=old_value+1.0f;
+    if(tampered.hourly.at(0).real_values.at(0)==old_value)
+        throw std::logic_error("G26B P6F negative test mutated no float bits");
+    bool forged_rejected=false;
+    try {
+        (void)g18d1_validate_p6f_precommit(frame,tampered);
+    }catch(const std::invalid_argument&) {
+        forged_rejected=true;
+    }
+    if(!forged_rejected||scheduler.completed_hours()!=0||
+       station_clocks.has_published_hour()||
+       frame.next.zi_m!=prepared.candidate_next.zi_m||
+       frame.next.ziconv_m!=prepared.candidate_next.ziconv_m||
+       frame.next.dptt_k!=prepared.candidate_next.dptt_k)
+        throw std::logic_error(
+            "G26B corrupted real NOAA P6F bypassed G18D1 precommit gate");
     if(frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.source.surface.hourly.size()!=6||
@@ -421,6 +475,8 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     result.g14_water_comp_avemix_stage13_bitwise_verified=true;
     result.g14_water_comp_wstarr_stage14_bitwise_verified=true;
     result.g14_water_comp_temp3d_stage15_bitwise_verified=true;
+    result.g14_p6f_stage16_all45_bitwise_to_independent_g59=true;
+    result.g14_p6f_negative_tamper_rejected=true;
     return result;
 }
 } // namespace cteas::calmet::p6g
