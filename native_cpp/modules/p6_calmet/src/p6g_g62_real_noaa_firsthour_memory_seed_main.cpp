@@ -42,6 +42,7 @@ int main(int argc,char** argv) {
            !state.g14_fradj_source_native_bitwise_verified||
            !state.g14_source_missfc_original_wind_untouched||
            !state.g14_water_thermal_slope_bitwise_verified||
+           !state.g14_real_sparse_stheor_g24_bitwise_verified||
            state.g14_17_stage_transaction_committed||
            state.station_clocks_published||
            state.second_hour_prior_state_consumed||
@@ -77,6 +78,7 @@ int main(int argc,char** argv) {
               "G14_STAGE2_FRADJ=G26_NATIVE_BITWISE_G41 "
               "G14_G43_NONWIND_MISSFC=P5_RAW_WIND_UNCHANGED "
               "G14_STAGE3_TO_6_WATER_THERMAL_SLOPE=G26_NATIVE_BITWISE_G47 "
+              "G14_STAGE7_TO_11_SPARSE_INTER2_G24=G26_NATIVE_BITWISE_G48 "
               "G14_COMMIT_SECONDHOUR_G26_P7=NOT_ACCEPTED\n";
         return 0;
     }catch(const std::exception& error){

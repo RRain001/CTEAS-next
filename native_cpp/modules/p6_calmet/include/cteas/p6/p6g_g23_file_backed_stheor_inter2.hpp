@@ -129,10 +129,19 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
         if(source.stations.upper[i].id!=frame.stations.upper[i].id)
             throw std::invalid_argument("G23 original US source ordinal mismatch");
 
+    if(source.research_noow_water_source_only &&
+       (frame.hour_index!=0||grid.nx!=82||grid.ny!=85||
+        frame.stations.surface.size()!=2||
+        frame.stations.upper.size()!=1||
+        source.source_water_cells.size()!=63))
+        throw std::invalid_argument(
+            "G23 firsthour NOAA WATER sparse STHEOR source scope drift");
     G17B4TwoPassSurfvar surfvar(
-        grid,frame.stations,source.surface,frame.surface,source.surface_controls);
+        grid,frame.stations,source.surface,frame.surface,
+        source.surface_controls,source.research_noow_water_source_only);
     // Keep the original station profile immutable for subsequent DIAGI merge.
-    G16SelectedWindPhysics original_wind(original_g20_profiles);
+    G16SelectedWindPhysics original_wind(
+        original_g20_profiles,source.research_noow_water_source_only);
     const auto first=original_wind.run(
         p6::NativeHourStage::DiagnoWind1,frame);
     if(!first.completed||first.source!=p6::NativeHourSource::NativeCpp)
@@ -153,9 +162,25 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
     // FIRST WINDBC, yet it consumes observed SURF/UP, previous n-1
     // grid ZI/ZICONV/DPTT, actual HEATFX, and source SETCOM station US.
     const auto candidate=selected_station_diagi_from_previous_comp(
-        frame,surfvar,g22.heat,controls);
+        frame,surfvar,g22.heat,controls,
+        source.research_noow_water_source_only);
+    // Original CALMET skips SS with true EDITL-missing wind. Preserve
+    // its full 2SS+1US ordinal axes through G16/INTER2, never compress
+    // two SS records into one or replace the missing SS with calm.
+    std::vector<unsigned char> original_wind_valid;
+    if(source.research_noow_water_source_only) {
+        for(const auto& observed:frame.surface.by_station)
+            original_wind_valid.push_back(observed.wind_valid?1U:0U);
+        if(original_wind_valid!=std::vector<unsigned char>{0U,1U} &&
+           original_wind_valid!=std::vector<unsigned char>{1U,0U})
+            throw std::logic_error(
+                "G23 selected genuine NOAA SS missing-wind identity changed");
+        if(candidate.size()!=1)
+            throw std::logic_error("G23 sparse NOAA STHEOR must have one real station");
+    }
     const auto merged=merge_g17c3_surface_diagi(
-        original_g20_profiles,frame.stations,candidate);
+        original_g20_profiles,frame.stations,candidate,
+        original_wind_valid);
 
     G16PostSlopeFields corrected;
     corrected.end=frame.input.end;
