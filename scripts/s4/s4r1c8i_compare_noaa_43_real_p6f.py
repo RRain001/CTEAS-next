@@ -37,8 +37,8 @@ def fortran_records(data:bytes):
     return out
 def original_hour(path:Path):
     records=fortran_records(path.read_bytes())
-    if len(records)<10 or len(records[0])!=96 or
-        records[0][:16].decode("ascii").strip()!="CALMET.DAT":
+    if (len(records)<10 or len(records[0])!=96 or
+        records[0][:16].decode("ascii").strip()!="CALMET.DAT"):
         raise ValueError("G57 must parse real CALMET.DAT 2.1 output")
     if len(records[1])!=4:raise ValueError("G57 original NCOM missing")
     comments,=struct.unpack("<i",records[1])
@@ -49,8 +49,7 @@ def original_hour(path:Path):
         raise ValueError("G57 original OUTHD controls missing")
     irlg,irtype,nx,ny,nz=struct.unpack_from("<5i",header,48)
     iwfcod,nss,nus,nps=struct.unpack_from("<4i",header,80)
-    if (irlg,irtype,nx,ny,nz,iwfcod,nss,nus,nps)!=
-       (6,1,NX,NY,NZ,1,2,1,0):
+    if (irlg,irtype,nx,ny,nz,iwfcod,nss,nus,nps)!=(6,1,NX,NY,NZ,1,2,1,0):
         raise ValueError("G57 source model sixhour 2SS1US identity changed")
     hourly=[]
     for payload in records[comments+3:]:
@@ -105,10 +104,10 @@ def tol(label:str,a:float,b:float):
     raise ValueError("G57 unclassified original physical field")
 def compare(original:Path,native:Path,log:Path,receipt:Path,report:Path):
     accepted=json.loads(receipt.read_text())
-    if accepted.get("status")!="PASS_SOURCE_ONLY_ORIGINAL_NOAA_6H_TEMP3D" or
+    if (accepted.get("status")!="PASS_SOURCE_ONLY_ORIGINAL_NOAA_6H_TEMP3D" or
        accepted.get("sixhour_original_met_byte_identical") is not True or
        "S4R1C8I_REAL_NOAA_NATIVE_P6F_REAL_FIELDS=PRODUCED_UNVERIFIED" not in log.read_text() or
-       "INTEGER_IPGT_IRH=NOT_ACCEPTED" not in log.read_text():
+       "INTEGER_IPGT_IRH=NOT_ACCEPTED" not in log.read_text()):
         raise ValueError("G57 requires independently accepted G56 original & native source")
     orig,hours=original_hour(original)
     real=native_hour(native)
