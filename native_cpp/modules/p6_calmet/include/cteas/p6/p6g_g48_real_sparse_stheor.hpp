@@ -4,6 +4,8 @@
 // Original missing station wind remains invalid, not zero/calm.
 #include "cteas/p6/p6g_g47_real_water_post_slope.hpp"
 #include "cteas/p6/p6g_g23_file_backed_stheor_inter2.hpp"
+#include "cteas/p6/p6g_g24_file_backed_wind_tail.hpp"
+#include <optional>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
@@ -20,12 +22,14 @@ struct G48RealSparseStheor {
     std::vector<float> firsthour_inter2_u_unverified;
     std::vector<float> firsthour_inter2_v_unverified;
     bool firsthour_inter2_candidate_unverified=false;
+    std::optional<G24SourceWindTail> firsthour_g24_tail_unverified;
     bool native_g23_inter2_or_g26_ready=false;
 };
 
 inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
     const G19SourceFilePaths& paths,bool explicit_reference_only,
-    bool explicit_firsthour_inter2_forensic_only=false) {
+    bool explicit_firsthour_inter2_forensic_only=false,
+    bool explicit_firsthour_g24_tail_forensic_only=false) {
     if(!explicit_reference_only)
         throw std::invalid_argument("G48 real station STHEOR requires test-only opt-in");
     // G47 uses exactly accepted G42/G21/G39/G22 C++ kernels.
@@ -132,7 +136,8 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
        scheduler.completed_hours()!=0)
         throw std::logic_error(
             "G48 real first-hour original sparse STHEOR count/identity mismatch");
-    if(explicit_firsthour_inter2_forensic_only) {
+    if(explicit_firsthour_inter2_forensic_only||
+       explicit_firsthour_g24_tail_forensic_only) {
         // G17C3's native actual valid surface station is mapped back into
         // the SAME original SS1..SSn, US1..USm identity space. Missing
         // source wind is never marked valid (nor converted to calm).
@@ -192,6 +197,25 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
            result.firsthour_inter2_v_unverified.size()!=9*n)
             throw std::logic_error("G48 incomplete native full-grid INTER2");
         result.firsthour_inter2_candidate_unverified=true;
+        if(explicit_firsthour_g24_tail_forensic_only) {
+            // Provenance guard: selected source G41 really contains all 63
+            // source WATER cells, and G47 supplied the same hour's native
+            // original-selected post-SLOPE field. No oracle enters G24.
+            if(selected.water_heat_source.original_water_cell_indices.size()!=63||
+               frame.grid.landuse!=selected.source.grid.landuse||
+               frame.input.end!=g47.end||scheduler.completed_hours()!=0)
+                throw std::logic_error("G48 real G24 source scope changed");
+            result.firsthour_g24_tail_unverified=
+                g24_selected_original_wind_tail_from_g16(
+                    frame,shared.selected_result().blended_u,
+                    shared.selected_result().blended_v,
+                    shared.selected_result().original_ub_west_east_mps,
+                    shared.selected_result().original_vb_south_north_mps,true);
+            if(result.firsthour_g24_tail_unverified->end!=frame.input.end||
+               result.firsthour_g24_tail_unverified->wind.w_face_mps.size()!=10*n||
+               result.firsthour_g24_tail_unverified->wind.divergence_per_s.size()!=9*n)
+                throw std::logic_error("G48 real G24 wind-tail not complete");
+        }
     }
     result.source_p5_raw_wind_unchanged=true;
     result.native_shared_g16_sparse_wind1_equal_to_g42=true;

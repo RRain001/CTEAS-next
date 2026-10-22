@@ -1290,3 +1290,15 @@ else()
   target_compile_options(cteas_p6g_g49_real_sparse_inter2
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8a: true source-only G24 real NOAA first-hour final wind diagnostic.
+add_executable(cteas_p6g_g50_real_noaa_g24_tail
+               src/p6g_g50_real_noaa_g24_tail_main.cpp)
+target_link_libraries(cteas_p6g_g50_real_noaa_g24_tail
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g50_real_noaa_g24_tail PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g50_real_noaa_g24_tail
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

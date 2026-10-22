@@ -21,27 +21,29 @@ struct G24SourceWindTail {
     std::vector<float> pre_inter2_vb_south_north_mps;
 };
 
-inline G24SourceWindTail g24_selected_original_wind_tail(
+// Shared selected original G24 tail, invoked by both the frozen G19
+// all-LAND G23 route and a *separately guarded* G41 real-WATER forensic
+// frame. Physical operations remain exclusively original_smooth_divcel_w.
+// No stage completion or COMP history is committed by this helper.
+inline G24SourceWindTail g24_selected_original_wind_tail_from_g16(
     const MultiHourFrame& frame,
-    const G19FileBackedCase& source,
-    const G23SelectedSourceStheorInter2& g23,
+    const p6::Inter2SelectedOutput& inter2_u,
+    const p6::Inter2SelectedOutput& inter2_v,
+    const std::vector<float>& first_ub,
+    const std::vector<float>& first_vb,
     bool explicitly_test_only) {
     const auto nx=static_cast<std::size_t>(frame.grid.nx);
     const auto ny=static_cast<std::size_t>(frame.grid.ny);
     const auto n=nx*ny;
     if(!explicitly_test_only||!frame.source_controls||
-       frame.input.end!=g23.end||frame.hour_index!=g23.hour_index||
-       source.grid.nx!=frame.grid.nx||source.grid.ny!=frame.grid.ny||
-       source.grid.landuse!=frame.grid.landuse||
-       source.grid.terrain_m!=frame.grid.terrain_m||
-       frame.grid.grid_km!=source.grid.grid_km||
-       g23.inter2_u.component_mps.size()!=9*n||
-       g23.inter2_v.component_mps.size()!=9*n||
-       g23.original_ub_west_east_mps.size()!=18*ny||
-       g23.original_vb_south_north_mps.size()!=18*nx||
+       frame.grid.nx<2||frame.grid.ny<2||
+       inter2_u.component_mps.size()!=9*n||
+       inter2_v.component_mps.size()!=9*n||
+       first_ub.size()!=18*ny||first_vb.size()!=18*nx||
        frame.source_controls->iobr!=0||frame.source_controls->iprog!=0)
-        throw std::invalid_argument("G24 original G14 first WINDBC/INTER2 source not accepted");
-    // G19 GEO.DAT reader only accepts the exact HTFAC=1 selected route.
+        throw std::invalid_argument("G24 shared selected INTER2 handoff not source accepted");
+    // Both G19 all-LAND and G41 mixed-WATER use this SINGLE frozen
+    // HTFAC>0 tail, but only after upstream source admission.
     // CALMET L6092-L6101 then performs SECOND WINDBC after INTER2,
     // overwriting the transient SMOOTH boundary. The first WINDBC
     // boundary is preserved separately in G23 and cannot be erased.
@@ -52,8 +54,8 @@ inline G24SourceWindTail g24_selected_original_wind_tail(
     smooth.lake_breeze=false;
     smooth.passes_per_layer.assign(frame.source_controls->nsmth.begin(),
                                    frame.source_controls->nsmth.end());
-    smooth.u_mps=g23.inter2_u.component_mps;
-    smooth.v_mps=g23.inter2_v.component_mps;
+    smooth.u_mps=inter2_u.component_mps;
+    smooth.v_mps=inter2_v.component_mps;
     smooth.ub_west_east_mps.resize(18*ny);
     smooth.vb_south_north_mps.resize(18*nx);
     for(std::size_t k=0;k<9;++k) {
@@ -82,8 +84,8 @@ inline G24SourceWindTail g24_selected_original_wind_tail(
     }
     G24SourceWindTail result;
     result.end=frame.input.end;
-    result.pre_inter2_ub_west_east_mps=g23.original_ub_west_east_mps;
-    result.pre_inter2_vb_south_north_mps=g23.original_vb_south_north_mps;
+    result.pre_inter2_ub_west_east_mps=first_ub;
+    result.pre_inter2_vb_south_north_mps=first_vb;
     result.second_ub_west_east_mps=smooth.ub_west_east_mps;
     result.second_vb_south_north_mps=smooth.vb_south_north_mps;
     result.wind=p6::original_smooth_divcel_w(
@@ -92,5 +94,31 @@ inline G24SourceWindTail g24_selected_original_wind_tail(
        result.wind.w_face_mps.size()!=10*n)
         throw std::logic_error("G24 original selected DIAGNO U/V/W incomplete");
     return result;
+}
+
+inline G24SourceWindTail g24_selected_original_wind_tail(
+    const MultiHourFrame& frame,
+    const G19FileBackedCase& source,
+    const G23SelectedSourceStheorInter2& g23,
+    bool explicitly_test_only) {
+    const auto nx=static_cast<std::size_t>(frame.grid.nx);
+    const auto ny=static_cast<std::size_t>(frame.grid.ny);
+    const auto n=nx*ny;
+    if(!explicitly_test_only||!frame.source_controls||
+       frame.input.end!=g23.end||frame.hour_index!=g23.hour_index||
+       source.grid.nx!=frame.grid.nx||source.grid.ny!=frame.grid.ny||
+       source.grid.landuse!=frame.grid.landuse||
+       source.grid.terrain_m!=frame.grid.terrain_m||
+       frame.grid.grid_km!=source.grid.grid_km||
+       g23.inter2_u.component_mps.size()!=9*n||
+       g23.inter2_v.component_mps.size()!=9*n||
+       g23.original_ub_west_east_mps.size()!=18*ny||
+       g23.original_vb_south_north_mps.size()!=18*nx||
+       frame.source_controls->iobr!=0||frame.source_controls->iprog!=0)
+        throw std::invalid_argument("G24 original G14 first WINDBC/INTER2 source not accepted");
+    return g24_selected_original_wind_tail_from_g16(
+        frame,g23.inter2_u,g23.inter2_v,
+        g23.original_ub_west_east_mps,
+        g23.original_vb_south_north_mps,true);
 }
 } // namespace cteas::calmet::p6g
