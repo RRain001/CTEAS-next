@@ -95,7 +95,6 @@ inline G24SourceWindTail g24_selected_original_wind_tail_from_g16(
         throw std::logic_error("G24 original selected DIAGNO U/V/W incomplete");
     return result;
 }
-}
 
 inline G24SourceWindTail g24_selected_original_wind_tail(
     const MultiHourFrame& frame,
