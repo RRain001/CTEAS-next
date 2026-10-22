@@ -12,6 +12,8 @@
 #include "cteas/p6/p6g_g18b3_upper_choice.hpp"
 #include "cteas/p6/p6g_g63_real_noaa_g14_comp_mixht.hpp"
 #include "cteas/p6e/wstarr.hpp"
+#include "cteas/p6e/temp3d_observed_land.hpp"
+#include "cteas/p6/p6g_g18b5_upper_temp_faces.hpp"
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -200,9 +202,79 @@ public:
                 ++phase_;
                 return;
             }
+            if(phase_==3) {
+                // Actual original G14 stage 15 TEMP3D follows one native
+                // MIXHT/AVEMIX/WSTARR on this identical first-hour frame.
+                // The original PREPDI AA/BB FACET physical temperature
+                // and COMP-third surface T are computed, not imported
+                // from any original MET or detached G56 diagnostic.
+                const auto& wstar=source_water_wstarr_stage14(frame);
+                const auto& upper=diagno_.selected_upper_for_comp(frame);
+                if(!water_mixht_stage12_||!water_avemix_stage13_||
+                   frame.next.zi_m!=previous_.zi_m||
+                   frame.next.ziconv_m!=previous_.ziconv_m||
+                   frame.next.dptt_k!=previous_.dptt_k)
+                    throw std::logic_error(
+                        "G26B native G14 NOAA TEMP3D prior/mixing not staged");
+                const auto n=static_cast<std::size_t>(frame.grid.nx)*
+                             static_cast<std::size_t>(frame.grid.ny);
+                const auto controls=g18c3_parse_original_temp3d_controls(
+                    source_.original_metinp);
+                const auto faces=g18b5_selected_native_temperature_faces(
+                    frame,upper);
+                if(controls.itprog!=0||!controls.lcalgrd||
+                   faces.end!=frame.input.end||
+                   faces.station_ids.size()!=1||
+                   faces.face_height_m.size()!=10||
+                   faces.aa_face_k.size()!=10||
+                   faces.bb_face_k.size()!=10||
+                   water_mixht_stage12_->comp_third_temperature_k.size()!=n||
+                   water_avemix_stage13_->ziconv_m.size()!=n||
+                   wstar.size()!=n)
+                    throw std::invalid_argument(
+                        "G26B G14 source AA/BB COMP TEMP3D not physical");
+                p6e::Temp3dObservedInput input;
+                input.nx=static_cast<std::size_t>(frame.grid.nx);
+                input.ny=static_cast<std::size_t>(frame.grid.ny);
+                input.nz=9;
+                input.dgrid_m=frame.grid.grid_km*1000.f;
+                input.irad=controls.irad;
+                using namespace std::chrono;
+                const auto h=duration_cast<hours>(
+                    frame.input.end-floor<days>(frame.input.end)).count();
+                input.current_hour_utc=static_cast<int>(h%12);
+                input.face_z_m=faces.face_height_m;
+                input.justa=faces.justa;
+                input.past_seconds=faces.past_seconds;
+                input.to_go_seconds=faces.to_go_seconds;
+                input.aa_face_temp_k=faces.aa_face_k;
+                input.bb_face_temp_k=faces.bb_face_k;
+                input.surface_temp_k=
+                    water_mixht_stage12_->comp_third_temperature_k;
+                input.convective_zi_m=water_avemix_stage13_->ziconv_m;
+                for(const auto& st:frame.stations.upper) {
+                    input.station_x_m.push_back(st.local_x_m);
+                    input.station_y_m.push_back(st.local_y_m);
+                }
+                auto temperature=p6e::temp3d_observed_land(input);
+                if(temperature.size()!=9*n)
+                    throw std::logic_error(
+                        "G26B G14 source TEMP3D nine-layer field missing");
+                for(std::size_t i=0;i<n;++i)
+                    if(temperature[i]!=input.surface_temp_k[i])
+                        throw std::logic_error(
+                            "G26B native G14 TEMP3D k1 not COMP third SURFVAR");
+                for(float v:temperature)
+                    if(!std::isfinite(v)||v<180.f||v>350.f)
+                        throw std::logic_error(
+                            "G26B G14 TEMP3D nonphysical source temperature");
+                water_temp3d_stage15_.emplace(std::move(temperature));
+                ++phase_;
+                return;
+            }
             if(phase_!=0)
                 throw std::invalid_argument(
-                    "G26B genuine NOAA stages15-16 unaccepted");
+                    "G26B genuine NOAA stage16 P6F not yet admitted");
             auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
                 frame,source_,*original_noow_water_,diagno_,true);
             if(!candidate.source_native_comp_mixht_uncommitted||
@@ -361,6 +433,23 @@ public:
         return *water_wstarr_stage14_;
     }
 
+    [[nodiscard]] const std::vector<float>& source_water_temp3d_stage15(
+        const MultiHourFrame& frame) const {
+        if(phase_!=4||!water_temp3d_stage15_||
+           !source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=end_||
+           frame.previous.zi_m!=previous_.zi_m||
+           frame.previous.ziconv_m!=previous_.ziconv_m||
+           frame.previous.dptt_k!=previous_.dptt_k||
+           frame.next.zi_m!=previous_.zi_m||
+           frame.next.ziconv_m!=previous_.ziconv_m||
+           frame.next.dptt_k!=previous_.dptt_k)
+            throw std::logic_error(
+                "G26B actual NOAA TEMP3D not from uncommitted G14 firsthour");
+        return *water_temp3d_stage15_;
+    }
+
     [[nodiscard]] const G18ASelectedCompResult& source_mixht_before_avemix(
         const MultiHourFrame& frame) const {
         if(phase_<1||!comp_||&frame!=live_||
@@ -433,6 +522,7 @@ private:
     std::optional<G63RealNoaaG14MixhtStage12> water_mixht_stage12_;
     std::optional<G18C1AvemixOutput> water_avemix_stage13_;
     std::optional<std::vector<float>> water_wstarr_stage14_;
+    std::optional<std::vector<float>> water_temp3d_stage15_;
     bool normal_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;

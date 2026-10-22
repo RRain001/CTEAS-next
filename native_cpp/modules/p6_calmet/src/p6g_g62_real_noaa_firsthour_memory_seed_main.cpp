@@ -46,6 +46,7 @@ int main(int argc,char** argv) {
            !state.g14_water_comp_mixht_stage12_bitwise_verified||
            !state.g14_water_comp_avemix_stage13_bitwise_verified||
            !state.g14_water_comp_wstarr_stage14_bitwise_verified||
+           !state.g14_water_comp_temp3d_stage15_bitwise_verified||
            state.g14_17_stage_transaction_committed||
            state.station_clocks_published||
            state.second_hour_prior_state_consumed||
@@ -85,6 +86,7 @@ int main(int argc,char** argv) {
               "G14_COMP_STAGE12_MIXHT=G26B_NATIVE_BITWISE_G54 "
               "G14_COMP_STAGE13_AVEMIX=G26B_NATIVE_BITWISE_G54 "
               "G14_COMP_STAGE14_WSTARR=G26B_NATIVE_BITWISE_G55 "
+              "G14_COMP_STAGE15_TEMP3D=G26B_NATIVE_BITWISE_G56 "
               "G14_COMMIT_SECONDHOUR_G26_P7=NOT_ACCEPTED\n";
         return 0;
     }catch(const std::exception& error){
