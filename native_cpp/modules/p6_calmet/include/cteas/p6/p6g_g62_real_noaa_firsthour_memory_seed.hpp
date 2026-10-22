@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -360,10 +361,28 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
                     "G26B original NOAA G14 IPGT/IRH differs from independent G59");
             ++integers;
         }else{
-            if(!real4_equal(actual.real_values,separate.real_values)||
-               actual.real_values.size()!=n)
+            if(actual.real_values.size()!=n||
+               separate.real_values.size()!=n)
                 throw std::logic_error(
-                    "G26B original NOAA G14 43 REAL4 records differ from independent G59");
+                    "G26B original NOAA G14 REAL4 extent drift label="+actual.label);
+            if(!real4_equal(actual.real_values,separate.real_values)) {
+                for(std::size_t cell=0;cell<n;++cell) {
+                    const auto native_bits=
+                        std::bit_cast<std::uint32_t>(actual.real_values[cell]);
+                    const auto reference_bits=
+                        std::bit_cast<std::uint32_t>(separate.real_values[cell]);
+                    if(native_bits!=reference_bits)
+                        throw std::logic_error(
+                            "G26B first unequal NOAA G14/G59 REAL4"
+                            " field="+actual.label+
+                            " record="+std::to_string(k)+
+                            " cell_zero_based="+std::to_string(cell)+
+                            " native_bits="+std::to_string(native_bits)+
+                            " g59_bits="+std::to_string(reference_bits));
+                }
+                throw std::logic_error(
+                    "G26B NOAA G14/G59 REAL4 vector unequal without cell mismatch");
+            }
             ++reals;
         }
         compared+=n;
