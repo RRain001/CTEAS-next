@@ -10,6 +10,8 @@ on:
       - 'native_cpp/modules/p6_calmet/src/p6g_g47_real_water_post_slope_main.cpp'
       - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
       - 'scripts/s4/s4r1c6_real_noaa_post_slope_reference.py'
+      - 'scripts/s4/s4r1c7a_real_original_stheor_similt.py'
+      - 'docs/plans/ISSUE40_S4R1C7A_REAL_ORIGINAL_STHEOR_BASELINE_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C6_REAL_WATER_POST_SLOPE_20261021.md'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g44_real_missfc_thermal_first_hour.hpp'
       - 'native_cpp/modules/p6_calmet/src/p6g_g44_real_missfc_thermal_first_hour_main.cpp'
@@ -1085,6 +1087,60 @@ jobs:
             "$root/evidence/independent-original-native-post-slope.log"
           grep -Fx 'S4R1C6_G23_G24_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-original-native-post-slope.log"
+      - name: Pin original-only genuine 2SS1US six-hour STHEOR SIMILT station oracle (no native G23)
+        shell: bash
+        timeout-minutes: 16
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c7a"
+          mkdir -p "$root/evidence"
+          python3 -m scripts.s4.s4r1c7a_real_original_stheor_similt selftest
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          python3 -m scripts.s4.s4r1c7a_real_original_stheor_similt prepare \
+            --vendor "$vendor" \
+            --dest "$root/real-original-stheor-scratch.for" \
+            --receipt "$root/evidence/original-source-sha.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/real-original-stheor-scratch.for" \
+            -o "$root/real-original-stheor-scratch.x"
+          sha256sum "$root/real-original-stheor-scratch.x" \
+            > "$root/evidence/original-source-probe-binary-sha.txt"
+      - name: Independently verify original six-hour station SIMILT source and unchanged original MET
+        shell: bash
+        timeout-minutes: 36
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c7a"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/real-original-station-only"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c7a-real-noaa-stheor-similt-oracle.txt"
+          (cd "$scratch/run/met" && "$root/real-original-stheor-scratch.x" met.inp) \
+            > "$root/evidence/original-only-station.stdout" \
+            2> "$root/evidence/original-only-station.stderr" || {
+              tail -n 65 "$root/evidence/original-only-station.stdout"
+              tail -n 65 "$root/evidence/original-only-station.stderr"
+              exit 1
+            }
+          test -s "$scratch/run/met/s4r1c7a-real-noaa-stheor-similt-oracle.txt"
+          python3 -m scripts.s4.s4r1c7a_real_original_stheor_similt verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --pristine "$baseline/run/met/met.dat" \
+            --scratch "$scratch/run/met/met.dat" \
+            --trace "$scratch/run/met/s4r1c7a-real-noaa-stheor-similt-oracle.txt" \
+            --report "$root/evidence/original-six-hour-physical-station-profiles.json" \
+            | tee "$root/evidence/original-sixhour-stheor-scope.log"
+          grep -Fx 'S4R1C7A_REAL_NOAA_ORIGINAL_STHEOR_SIMILT=PASS_REFERENCE_ONLY' \
+            "$root/evidence/original-sixhour-stheor-scope.log"
+          grep -Fx 'S4R1C7A_ORIGINAL_6H_45FIELDS=BYTE_IDENTICAL' \
+            "$root/evidence/original-sixhour-stheor-scope.log"
+          grep -Fx 'S4R1C7A_NATIVE_G23_G24_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/original-sixhour-stheor-scope.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1098,6 +1154,7 @@ jobs:
             ${{ runner.temp }}/s4r1c2/evidence/
             ${{ runner.temp }}/s4r1c3/evidence/
             ${{ runner.temp }}/s4r1c6/evidence/
+            ${{ runner.temp }}/s4r1c7a/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
