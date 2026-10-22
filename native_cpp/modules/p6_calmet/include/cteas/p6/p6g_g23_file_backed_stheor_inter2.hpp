@@ -35,11 +35,14 @@ struct G23SelectedSourceStheorInter2 {
 // source case explicitly supplies FCORIOL=1e-4, so a scalar is valid.
 // FCORIOL>998 produces site-dependent latitude FCORI; FAIL until that
 // grid-varying branch is tied to a distinct source Fortran acceptance.
-inline G17C3StationControls g23_stheor_original_readcf_controls(
-    const G19FileBackedCase& source,bool explicitly_test_only) {
+inline G17C3StationControls g23_source_stheor_station_controls(
+    const std::string& met,
+    const std::vector<std::size_t>& ordinal_for_surface,
+    const G12HeatCoefficients& source_heat,
+    std::size_t source_surface_count,
+    bool explicitly_test_only) {
     if(!explicitly_test_only)
         throw std::invalid_argument("G23 source STHEOR remains selected test-only");
-    const auto& met=source.original_metinp;
     if(g18d5_source_integer(met,"ICOARE")<=0)
         throw std::invalid_argument("G23 original ICOARE=0 changes ISFCMET/IPSIFCN");
     const float fcoriol=g18d5_source_scalar(met,"FCORIOL");
@@ -49,8 +52,8 @@ inline G17C3StationControls g23_stheor_original_readcf_controls(
         throw std::invalid_argument("G23 source latitude-varying FCORI or bad mechanical mixing controls");
     G17C3StationControls c;
     c.explicitly_test_only=true;
-    c.upper_ordinal_for_surface=source.stheor_upper_ordinal_for_surface;
-    c.heat_coefficients=source.heat_inputs.coefficients;
+    c.upper_ordinal_for_surface=ordinal_for_surface;
+    c.heat_coefficients=source_heat;
     c.ipsifcn=0; // READCF ICOARE>0 selection
     c.imixh=g18d5_source_integer(met,"IMIXH");
     c.izicrlx=g18d5_source_integer(met,"IZICRLX");
@@ -66,13 +69,25 @@ inline G17C3StationControls g23_stheor_original_readcf_controls(
     c.onedte_s=3600.f*(1.f+conste);
     c.fcori_s=std::max(std::abs(fcoriol),0.25e-4f);
     c.cmech=constb/std::sqrt(c.fcori_s);
-    if(c.upper_ordinal_for_surface.size()!=source.stations.surface.size()||
+    if(c.upper_ordinal_for_surface.size()!=source_surface_count||
        !std::isfinite(c.cmech)||c.cmech<=0.f||
        c.zimin_m<=0.f||c.zimax_m<c.zimin_m||c.dptmin_kperm<=0.f||
        c.dzzi_m<=0.f||c.constn<=0.f||c.tzicrlx_s<=0.f||
        c.imixh!=1||c.izicrlx!=1)
         throw std::invalid_argument("G23 original selected STHEOR/MIXHTST source controls outside scope");
     return c;
+}
+
+// One original READCF numerical control path, whether all-land source G19
+// or genuine real-WATER source G41; neither licenses G23 production.
+inline G17C3StationControls g23_stheor_original_readcf_controls(
+    const G19FileBackedCase& source,bool explicitly_test_only) {
+    return g23_source_stheor_station_controls(
+        source.original_metinp,
+        source.stheor_upper_ordinal_for_surface,
+        source.heat_inputs.coefficients,
+        source.stations.surface.size(),
+        explicitly_test_only);
 }
 
 // Frame is passed by reference because G16 selected WIND1 and INTER2 use the
