@@ -11,7 +11,7 @@ Merged #261 independently validated all **43 REAL4 physical outputs** of origina
 - Input only source-owned real NOAA P1–P5 model deck, unchanged G41 surface/upper station identity, and the same G43 authentic model-local nonwind MISSFC that retains the original missing wind.
 - Existing accepted G57 first-hour actual G24 final `U-LEV 1`/`V-LEV 1` drive P6E original-backed `pgtstb`, with original source-comp G54 `NEARS` and `SINALP`, original grid categories, `MCLOUD=1` as mapped from `ICLOUD=0/1` and real station opaque-cloud and ceiling observations.
 - `PGTSTB` explicitly skips all water cells; original genuine selected `NOWSTA=0` neutral `WATER` has assigned **PGT D=4**. G58 overlays precisely this original-defined value for 63 source-verified WATER cells. Water is never reclassified LAND and no missing wind is converted to CALM.
-- P6E `surfvar_multistation` reuses original observed station-relative-humidity interpolation, original `IRAD/NUMTS/TRAD`, authentic station positions and original model-local nonwind-missing controls, all 6,970 cells.
+- P6E `surfvar_multistation` reuses original observed station-relative-humidity interpolation with original `IRAD/NUMTS/TRAD`, authentic station positions and model-local nonwind MISSFC for 6,907 LAND cells. On 63 WATER cells original SURFVAR `LDWAT=1` and `NOWSTA=0` selects zero eligible overwater stations and explicitly sets `IRH=100` (vendor L12926–13005); preserve that source-selected branch without reclassifying WATER as LAND.
 - Any source branch change, GEO mismatch, missing cloud/ceiling controls, forged station wind or unsupported control tuple rejects. Existing G18C5 all-LAND and G26B production gates remain untouched.
 
 ## Independent science gate
