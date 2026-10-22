@@ -16,7 +16,7 @@ The existing G18C3 all-LAND-only entry remains unchanged and fail-closed. This n
 
 ## Original-native acceptance
 
-Pin original source CALMET Git blob `437f43bb7f0e51a1919e56664663e1a046986ed0`, with source-only write after vendor L4773 (immediately after original `TEMP3D`/selected `ISFCMET` branch), preserving all physical statements. Re-run genuine original CALMET six consecutive NOAA hours from scratch and confirm the **original six-hour 45-field MET.DAT remains byte-identical** before and after the instrument, exact model UTC 6 hour record identity, 82×85×9×6 finite physical 3D temperature fields. The reference binary cannot be an input to native G56.
+Pin original source CALMET Git blob `437f43bb7f0e51a1919e56664663e1a046986ed0`, with source-only write after vendor L4772 (immediately after original `TEMP3D`/selected `ISFCMET` branch), preserving all physical statements. Re-run genuine original CALMET six consecutive NOAA hours from scratch and confirm the **original six-hour 45-field MET.DAT remains byte-identical** before and after the instrument, exact model UTC 6 hour record identity, 82×85×9×6 finite physical 3D temperature fields. The reference binary cannot be an input to native G56.
 
 Independently run native G56 on only authentic P1–P5 NOAA input, then compare **62,730** original/native REAL4 TLEVEL values (9×6,970) for first hour at fixed **2e-4 K absolute threshold** and zero exceedances. The separate report records all 9 layer max/min/worst i,j and source hashes; no tolerance tuning to accommodate failure. The inherited G24, MIXHT, AVEMIX and WSTARR real source physical checks plus frozen C1/C2 regressions remain required for acceptance.
 
