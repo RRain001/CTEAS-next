@@ -1352,3 +1352,15 @@ else()
   target_compile_options(cteas_p6g_g54_real_land_mixht
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8g: native true COMP WSTARR after genuine firsthour AVEMIX.
+add_executable(cteas_p6g_g55_real_comp_wstarr
+               src/p6g_g55_real_comp_wstarr_main.cpp)
+target_link_libraries(cteas_p6g_g55_real_comp_wstarr
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g55_real_comp_wstarr PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g55_real_comp_wstarr
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
