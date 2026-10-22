@@ -1414,3 +1414,21 @@ if(MSVC)
 else()
   target_compile_options(cteas_p6g_g59_real_noaa_firsthour_met21 PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8n: actual source-native firsthour hidden COMP ZI/ZICONV/DPTT
+# physical candidate, byte-separate from G59 output and no G14 commit.
+add_executable(cteas_p6g_g62_real_noaa_firsthour_memory
+               src/p6g_g62_real_noaa_firsthour_memory_seed_main.cpp)
+target_link_libraries(cteas_p6g_g62_real_noaa_firsthour_memory
+                      PRIVATE cteas_p6a_contracts)
+target_sources(cteas_p6g_g62_real_noaa_firsthour_memory
+               PRIVATE p6f/src/calmet_dat21_writer.cpp)
+target_include_directories(cteas_p6g_g62_real_noaa_firsthour_memory PRIVATE
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
+if(MSVC)
+  target_compile_options(cteas_p6g_g62_real_noaa_firsthour_memory
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g62_real_noaa_firsthour_memory
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
