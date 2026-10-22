@@ -10,6 +10,7 @@
 #include "cteas/p6/p6g_g18d4_comp_stage_adapter.hpp"
 #include "cteas/p6/p6g_g18d5_source_mixht_controls.hpp"
 #include "cteas/p6/p6g_g18b3_upper_choice.hpp"
+#include "cteas/p6/p6g_g63_real_noaa_g14_comp_mixht.hpp"
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -78,8 +79,10 @@ public:
     G26BSourceFileBackedCompBridge(
         const G26SourceFileBackedG14DiagnoBridge& diagno,
         const G19FileBackedCase& source,
-        bool explicitly_opt_in_normal_trial=false)
+        bool explicitly_opt_in_normal_trial=false,
+        const G41SelectedNoowWaterFirstHourSource* original_noow_water=nullptr)
         :diagno_(diagno),source_(source),
+         original_noow_water_(original_noow_water),
          normal_trial_(explicitly_opt_in_normal_trial) {}
 
     [[nodiscard]] p6::NativeHourStageResult run(
@@ -104,6 +107,32 @@ public:
            frame.fields.v_mps!=final_wind.v_mps||
            frame.fields.w_face_mps!=final_wind.w_face_mps)
             throw std::invalid_argument("G26B source COMP missing original G24 U/V/W");
+        if(source_.research_noow_water_source_only) {
+            // Only original G14 stage 12 is admitted for real NOAA.
+            // The first real WATER+LAND MIXHT executes from exactly
+            // this G26A live frame, never detached G54 output. No stage
+            // 13..16, G14 commit, station-clock publish or production.
+            if(phase_!=0||!original_noow_water_||
+               frame.hour_index!=0||
+               original_noow_water_->source.original_metinp!=
+                   source_.original_metinp)
+                throw std::invalid_argument(
+                    "G26B genuine water source only admits firsthour stage12");
+            auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
+                frame,source_,*original_noow_water_,diagno_,true);
+            if(!candidate.source_native_comp_mixht_uncommitted||
+               candidate.valid_ss!=1||candidate.missing_ss!=1||
+               candidate.water_cells!=63||candidate.land_cells!=6907)
+                throw std::logic_error(
+                    "G26B native water G14 COMP 12 candidate invalid");
+            water_mixht_stage12_.emplace(std::move(candidate));
+            live_=&frame;
+            hour_index_=frame.hour_index;
+            end_=frame.input.end;
+            previous_=frame.previous;
+            ++phase_;
+            return;
+        }
         if(phase_==0) {
             const auto& station=diagno_.selected_station_for_comp(frame);
             const auto& thermal=diagno_.selected_thermal_for_comp(frame);
@@ -197,6 +226,23 @@ public:
         ++phase_;
     }
 
+    [[nodiscard]] const G63RealNoaaG14MixhtStage12& source_water_mixht_stage12(
+        const MultiHourFrame& frame) const {
+        if(!source_.research_noow_water_source_only||
+           phase_!=1||!water_mixht_stage12_||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=end_||
+           frame.previous.zi_m!=previous_.zi_m||
+           frame.previous.ziconv_m!=previous_.ziconv_m||
+           frame.previous.dptt_k!=previous_.dptt_k||
+           frame.next.zi_m!=previous_.zi_m||
+           frame.next.ziconv_m!=previous_.ziconv_m||
+           frame.next.dptt_k!=previous_.dptt_k)
+            throw std::logic_error(
+                "G26B true native WATER MIXHT stage12 detached or committed");
+        return *water_mixht_stage12_;
+    }
+
     [[nodiscard]] const G18ASelectedCompResult& source_mixht_before_avemix(
         const MultiHourFrame& frame) const {
         if(phase_<1||!comp_||&frame!=live_||
@@ -265,6 +311,8 @@ private:
     const G26SourceFileBackedG14DiagnoBridge& diagno_;
     const G19FileBackedCase& source_;
     std::optional<G18D4SelectedCompStageAdapter> comp_;
+    const G41SelectedNoowWaterFirstHourSource* original_noow_water_=nullptr;
+    std::optional<G63RealNoaaG14MixhtStage12> water_mixht_stage12_;
     bool normal_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
