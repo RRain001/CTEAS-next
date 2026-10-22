@@ -67,6 +67,8 @@ inline G64RealNoaaP6FPrecommit g64_real_noaa_p6f_from_live_g14(
        mix.comp_third_density_kgm3.size()!=n||
        mix.comp_third_qh_wm2.size()!=n||
        mix.comp_third_ustar_mps.size()!=n||
+       mix.p6f_water_reconciled_ustar_mps.size()!=n||
+       mix.p6f_water_reconciled_el_m.size()!=n||
        mix.comp_third_el_m.size()!=n||
        mix.comp_third_shortwave_wm2.size()!=n||
        mix.comp_third_sun_sine.size()!=n||
@@ -84,8 +86,11 @@ inline G64RealNoaaP6FPrecommit g64_real_noaa_p6f_from_live_g14(
     fields.v_mps=frame.fields.v_mps;
     fields.w_face_mps=frame.fields.w_face_mps;
     fields.temperature_k=temp3d;
-    fields.ustar_mps=mix.comp_third_ustar_mps;
-    fields.el_m=mix.comp_third_el_m;
+    // Preserve physical COMP MIXHT candidate separately; original P6F
+    // publishes source-native neutral-water USTAR and EL at the 63 WATER
+    // cells, as does independent G57. Never overwrite the G54 audit arrays.
+    fields.ustar_mps=mix.p6f_water_reconciled_ustar_mps;
+    fields.el_m=mix.p6f_water_reconciled_el_m;
     fields.qh_wm2=mix.comp_third_qh_wm2;
     fields.wstar_mps=wstar;
     for(const auto* values:
