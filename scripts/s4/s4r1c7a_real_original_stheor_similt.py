@@ -39,7 +39,8 @@ def prepare(vendor:Path,dest:Path,receipt:Path)->None:
         "c     S4-R1c7a write-only station SIMILT after original call",
         "      open(unit=95,file='"+TRACE_NAME+"',",
         "     1 status='unknown',position='append',action='write')",
-        "      write(95,*) is,js,ns,(us(k),vs(k),k=1,9)",
+        "      write(95,'(3(i6,1x),18(es23.15,1x))')",
+        "     1 is,js,ns,(us(k),vs(k),k=1,9)",
         "      close(unit=95)",
     ]
     # Instrument AFTER actual SIMILT call at line 6894, never before it.
