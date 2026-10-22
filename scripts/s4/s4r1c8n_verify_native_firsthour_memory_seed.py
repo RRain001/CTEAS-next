@@ -129,6 +129,10 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
             not in native_log.read_text()
         or "G14_COMP_STAGE15_TEMP3D=G26B_NATIVE_BITWISE_G56"
             not in native_log.read_text()
+        or "G14_STAGE16_P6F_PRECOMMIT=G26B_NATIVE_45FIELD_BITWISE_G59"
+            not in native_log.read_text()
+        or "G14_STAGE16_FORGED_OUTPUT=G18D1_REJECTED"
+            not in native_log.read_text()
         or "G14_COMMIT_SECONDHOUR_G26_P7=NOT_ACCEPTED"
             not in native_log.read_text()):
         raise ValueError("G62 source only/NOT_ACCEPTED run attestation missing")
@@ -159,6 +163,8 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
         "g14_water_land_avemix_stage13_bitwise_matches_g54": True,
         "g14_water_land_wstarr_stage14_bitwise_matches_g55": True,
         "g14_water_land_temp3d_stage15_bitwise_matches_g56": True,
+        "g14_p6f_stage16_45fields_native_bitwise_g59": True,
+        "g14_p6f_g18d1_negative_tamper_rejected": True,
         "g14_native_17stage_commit": "NOT_ACCEPTED",
         "station_upper_gamma_clocks_committed": "NOT_ACCEPTED",
         "actual_second_hour_physics": "NOT_RUN",
@@ -181,6 +187,8 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
     print("S4R1C8S_G14_WATER_LAND_AVEMIX_G54_BITWISE=PASS_13940_REAL4")
     print("S4R1C8T_G14_WATER_LAND_WSTARR_G55_BITWISE=PASS_6970_REAL4")
     print("S4R1C8U_G14_WATER_LAND_TEMP3D_G56_BITWISE=PASS_62730_REAL4")
+    print("S4R1C8V_G14_P6F_45FIELDS_G59_BITWISE=PASS_313650_WORDS")
+    print("S4R1C8V_G14_P6F_G18D1_TAMPER_REJECTED=PASS")
     print("S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED")
     return True
 
