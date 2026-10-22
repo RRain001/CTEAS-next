@@ -1277,3 +1277,16 @@ else()
 endif()
 add_test(NAME p6g_g17c3_sparse_original_source_ordinals
          COMMAND cteas_p6g_g17c3_sparse_ordinal_merge_tests)
+
+# S4-R1c7f: strict test-only real NOAA G16 INTER2 U/V science comparator
+# Native executable never accepts any original CALMET U/V as runtime input.
+add_executable(cteas_p6g_g49_real_sparse_inter2
+               src/p6g_g49_real_sparse_inter2_main.cpp)
+target_link_libraries(cteas_p6g_g49_real_sparse_inter2
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g49_real_sparse_inter2 PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g49_real_sparse_inter2
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
