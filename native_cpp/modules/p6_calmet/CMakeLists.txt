@@ -1259,3 +1259,21 @@ else()
   target_compile_options(cteas_p6g_g48_real_sparse_stheor
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c7d: source-count-invariant G17C3 sparse SS ordinal merge contract.
+# The test cannot be promoted into original/native INTER2 science.
+add_executable(cteas_p6g_g17c3_sparse_ordinal_merge_tests
+               tests/p6g_g17c3_sparse_ordinal_merge_tests.cpp)
+target_link_libraries(cteas_p6g_g17c3_sparse_ordinal_merge_tests
+                      PRIVATE cteas_p6a_contracts)
+target_include_directories(cteas_p6g_g17c3_sparse_ordinal_merge_tests PRIVATE
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6e/include)
+if(MSVC)
+  target_compile_options(cteas_p6g_g17c3_sparse_ordinal_merge_tests
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g17c3_sparse_ordinal_merge_tests
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+add_test(NAME p6g_g17c3_sparse_original_source_ordinals
+         COMMAND cteas_p6g_g17c3_sparse_ordinal_merge_tests)

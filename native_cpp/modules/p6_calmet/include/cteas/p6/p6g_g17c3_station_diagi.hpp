@@ -198,17 +198,24 @@ inline std::vector<G17C3StationDiagi> selected_station_diagi_from_previous_comp(
     }
     return result;
 }
-// The already validated G16 WIND1 neutral profiles must be preserved.
-// Only DIAGI's surface columns may be replaced by the source-station
-// STHEOR/MIXHTST output, leaving PREPDI upper-air columns intact.
+// Keep the frozen G16 neutral WIND1 and PREPDI upper-air columns immutable.
+// With an explicit authentic source wind-validity mask, DIAGI may return
+// fewer STHEOR results than the source SS count. Never compress the source
+// SS1..SSn, US1..USm column indices or turn an absent wind into calm.
+// No mask means the old dense validated behaviour; sparse is opt-in only.
+// This adapter does NOT admit G16 WIND1, INTER2 or a full G14 hour.
 inline G16ObservedProfiles merge_g17c3_surface_diagi(
     G16ObservedProfiles profiles,
     const StationSet& station_set,
-    const std::vector<G17C3StationDiagi>& selected) {
+    const std::vector<G17C3StationDiagi>& selected,
+    const std::vector<unsigned char>& source_wind_valid={}) {
     const auto ns=station_set.surface.size();
     const auto nu=station_set.upper.size();
     const auto total=ns+nu;
-    if(selected.size()!=ns||profiles.station_ids.size()!=total||
+    const bool sparse=!source_wind_valid.empty();
+    if((sparse&&source_wind_valid.size()!=ns)||
+       (!sparse&&selected.size()!=ns)||
+       profiles.station_ids.size()!=total||
        profiles.wind1_u_mps.size()!=total*9||
        profiles.wind1_v_mps.size()!=total*9||
        profiles.inter2_u_mps.size()!=total*9||
@@ -219,8 +226,28 @@ inline G16ObservedProfiles merge_g17c3_surface_diagi(
         if(profiles.station_ids[i]!=(i<ns?station_set.surface[i].id:
                                        station_set.upper[i-ns].id))
             throw std::invalid_argument("G17C3 DIAGI station ordinal mismatch");
+    std::size_t expected=0;
     for(std::size_t i=0;i<ns;++i) {
-        const auto& src=selected[i];
+        if(sparse&&source_wind_valid[i]>1U)
+            throw std::invalid_argument("G17C3 nonbinary original SS wind mask");
+        if(!sparse||source_wind_valid[i]!=0U)
+            ++expected;
+    }
+    if(expected!=selected.size())
+        throw std::invalid_argument("G17C3 source-valid and DIAGI station count disagree");
+    std::size_t cursor=0;
+    for(std::size_t i=0;i<ns;++i) {
+        if(sparse&&source_wind_valid[i]==0U) {
+            // Original source validity, not observed zero/calm. Refuse
+            // contradictory presence from WIND1/PREPDI rather than
+            // silently suppressing a supposedly real observation.
+            for(std::size_t k=0;k<9;++k)
+                if(profiles.inter2_present[k*total+i]!=0U)
+                    throw std::invalid_argument(
+                        "G17C3 missing SS wind marked observed in INTER2 source");
+            continue; // keep the exact original absent SS column unchanged
+        }
+        const auto& src=selected[cursor++];
         if(src.surface_id!=station_set.surface[i].id||
            src.end!=profiles.end||src.levels_filled>9||
            src.levels_filled<1)
