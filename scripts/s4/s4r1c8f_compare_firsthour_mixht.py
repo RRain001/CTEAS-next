@@ -11,7 +11,7 @@ from pathlib import Path
 from scripts.s4.s4r1c8e_original_mixht_avemix_stages import (
     NX,NY,NC,decode,sha
 )
-DATA=struct.Struct("<"+str(3*NC)+"f")
+DATA=struct.Struct("<"+str(5*NC)+"f")
 ZI_ABS_M=5e-3
 ZI_REL=5e-5
 
@@ -48,8 +48,9 @@ def compare(original:Path,receipt:Path,native:Path,native_log:Path,
     result={}
     errors=[]
     above=0
-    for k,name in enumerate(("ZI","ZICONV")):
-        orig=original_after[k]
+    for k,name in enumerate(("MIXHT_ZI","MIXHT_ZICONV",
+                             "AVEMIX_ZI","AVEMIX_ZICONV")):
+        orig=(original_after if k<2 else stages[2,3])[k%2]
         pred=values[k*NC:(k+1)*NC]
         mx=-1.
         worst=None
@@ -73,7 +74,6 @@ def compare(original:Path,receipt:Path,native:Path,native_log:Path,
                       "mean_abs_error_m":total/NC,
                       "abs_tolerance_m":ZI_ABS_M,"rel_tolerance":ZI_REL,
                       "above_tolerance":fails,"worst":worst}
-    zero_water_expected=0
     # No inference about DPTT acceptance: the source tracing currently
     # includes only ZI and ZICONV, not native/Fortran DPTT parity.
     result_all={
@@ -81,17 +81,17 @@ def compare(original:Path,receipt:Path,native:Path,native_log:Path,
                   if above==0 else
                   "FAIL_REAL_NOAA_NATIVE_LAND_MIXHT_NUMERIC"),
         "case":"2022-06-01_01-02_UTC_true_2SS_1US_82x85x9",
-        "science_scope":"FIRSTHOUR_ORIGINAL_POST_LAND_MIXHT_PRE_AVEMIX_6970_GRID_ZI_ZICONV",
+        "science_scope":"FIRSTHOUR_SOURCE_COMP_LAND_MIXHT_AND_WHOLE_GRID_AVEMIX_ZI_ZICONV",
         "original_trace_sha256":sha(original),
         "native_source_only_candidate_sha256":sha(native),
         "original_sixhour_45_met_byte_identical":True,
         "native_original_intermediate_injection":False,
         "source_land_count":6907,"source_water_count":63,
-        "float_compared":2*NC,
+        "float_compared":4*NC,
         "fields":result,
         "above_frozen_tolerance":above,
         "first_exceedances":errors,
-        "native_avemix":"NOT_RUN",
+        "native_avemix":"TEST_ONLY_NUMERIC_CANDIDATE",
         "native_wstarr_temp3d":"NOT_RUN",
         "native_6h_causal":"NOT_ACCEPTED",
         "g26_45field_p7":"NOT_ACCEPTED",
@@ -100,7 +100,7 @@ def compare(original:Path,receipt:Path,native:Path,native_log:Path,
     report.write_text(json.dumps(result_all,indent=2,sort_keys=True)+"\n")
     print("S4R1C8F_NATIVE_SOURCE_MIXHT="+result_all["status"])
     print("S4R1C8F_MIXHT_ABOVE_TOLERANCE="+str(above))
-    print("S4R1C8F_ZI_ZICONV_MAX="+json.dumps(
+    print("S4R1C8F_MIXHT_AVEMIX_MAX="+json.dumps(
         {k:v["max_abs_error_m"] for k,v in result.items()},sort_keys=True))
     print("S4R1C8F_AVEMIX_G26_P7=NOT_ACCEPTED")
     return above==0
