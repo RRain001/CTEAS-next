@@ -10,6 +10,7 @@
 #include "cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp"
 #include "cteas/p6/p6g_g43_comp_missfc_source.hpp"
 #include "cteas/p6/p6g_g47_real_water_post_slope.hpp"
+#include "cteas/p6/p6g_g48_real_sparse_stheor.hpp"
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -31,6 +32,7 @@ struct G62RealNoaaFirstHourMemorySeed {
     bool g14_fradj_source_native_bitwise_verified=false;
     bool g14_source_missfc_original_wind_untouched=false;
     bool g14_water_thermal_slope_bitwise_verified=false;
+    bool g14_real_sparse_stheor_g24_bitwise_verified=false;
     bool g14_17_stage_transaction_committed=false;
     bool station_clocks_published=false;
     bool second_hour_prior_state_consumed=false;
@@ -174,6 +176,45 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        live_thermal.post_slope_wind.v.size()!=9*n)
         throw std::logic_error(
             "G26 same-frame NOAA G22 thermal/SLOPE differs from source G47");
+    // True first-hour G26A stages 7..11, not a stand-alone G48 oracle:
+    // original station STHEOR/DIAGI, INTER2, WINDBC/SMOOTH/DIVCEL/W
+    // consume the same previously calculated G22 thermal and the
+    // untouched original prior-hour COMP source state.
+    for(std::size_t k=7;k<=11;++k)
+        g14_diagno.run_selected(p6::kHefeiOriginalStageOrder[k],frame,true);
+    const auto& live_g23=g14_diagno.selected_station_for_comp(frame);
+    const auto& live_g24=g14_diagno.selected_wind_for_comp(frame);
+    const auto independently_source_native=
+        g48_real_sparse_stheor_first_hour(paths,true,true,true,false);
+    if(!independently_source_native.firsthour_inter2_candidate_unverified||
+       !independently_source_native.firsthour_g24_tail_unverified||
+       !independently_source_native.source_p5_raw_wind_unchanged||
+       !independently_source_native.native_shared_g16_sparse_wind1_equal_to_g42||
+       independently_source_native.missing_wind_skipped!=1||
+       independently_source_native.native_valid_station.size()!=1||
+       live_g23.station_diagi.size()!=1||
+       live_g23.station_diagi[0].surface_id!=
+           independently_source_native.native_valid_station[0].surface_id||
+       !real4_equal(live_g23.inter2_u.component_mps,
+                    independently_source_native.firsthour_inter2_u_unverified)||
+       !real4_equal(live_g23.inter2_v.component_mps,
+                    independently_source_native.firsthour_inter2_v_unverified)||
+       !real4_equal(live_g24.wind.u_mps,
+                    independently_source_native.firsthour_g24_tail_unverified->wind.u_mps)||
+       !real4_equal(live_g24.wind.v_mps,
+                    independently_source_native.firsthour_g24_tail_unverified->wind.v_mps)||
+       !real4_equal(live_g24.wind.w_face_mps,
+                    independently_source_native.firsthour_g24_tail_unverified->wind.w_face_mps)||
+       live_g23.inter2_u.component_mps.size()!=9*n||
+       live_g23.inter2_v.component_mps.size()!=9*n||
+       live_g24.wind.u_mps.size()!=9*n||
+       live_g24.wind.v_mps.size()!=9*n||
+       live_g24.wind.w_face_mps.size()!=10*n||
+       frame.fields.u_mps!=live_g24.wind.u_mps||
+       frame.fields.v_mps!=live_g24.wind.v_mps||
+       frame.fields.w_face_mps!=live_g24.wind.w_face_mps)
+        throw std::logic_error(
+            "G26 real NOAA same-frame STHEOR/INTER2/G24 disagrees with independent G48");
     if(frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.source.surface.hourly.size()!=6||
@@ -183,8 +224,8 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        g14_source.grid.landuse!=source.source.grid.landuse||
        g14_source.stations.surface.size()!=source.source.stations.surface.size()||
        g14_source.stations.upper.size()!=source.source.stations.upper.size()||
-       g14_diagno.selected_checkpoints()!=7||
-       g14_diagno.source_diagno_ready()||
+       g14_diagno.selected_checkpoints()!=12||
+       !g14_diagno.source_diagno_ready()||
        g14_diagno.clocks_published()||
        station_clocks.has_published_hour()||
        scheduler.completed_hours()!=0||
@@ -256,6 +297,7 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     result.g14_fradj_source_native_bitwise_verified=true;
     result.g14_source_missfc_original_wind_untouched=true;
     result.g14_water_thermal_slope_bitwise_verified=true;
+    result.g14_real_sparse_stheor_g24_bitwise_verified=true;
     return result;
 }
 } // namespace cteas::calmet::p6g
