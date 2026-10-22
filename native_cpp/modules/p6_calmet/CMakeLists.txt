@@ -1400,3 +1400,17 @@ else()
   target_compile_options(cteas_p6g_g58_real_noaa_ipgt_irh
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8k: real NOAA 2SS/1US source-native 45-record CALMET.DAT 2.1
+# firsthour candidate using EXISTING P6F writer; no sixhour G14/P7 promotion.
+add_executable(cteas_p6g_g59_real_noaa_firsthour_met21
+               src/p6g_g59_real_noaa_firsthour_dataset_main.cpp)
+target_link_libraries(cteas_p6g_g59_real_noaa_firsthour_met21 PRIVATE cteas_p6a_contracts)
+target_sources(cteas_p6g_g59_real_noaa_firsthour_met21 PRIVATE p6f/src/calmet_dat21_writer.cpp)
+target_include_directories(cteas_p6g_g59_real_noaa_firsthour_met21 PRIVATE
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
+if(MSVC)
+  target_compile_options(cteas_p6g_g59_real_noaa_firsthour_met21 PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g59_real_noaa_firsthour_met21 PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
