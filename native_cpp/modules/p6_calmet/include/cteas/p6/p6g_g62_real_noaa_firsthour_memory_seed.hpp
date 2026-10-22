@@ -348,7 +348,10 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
         const auto& separate=file.dataset.hourly.at(k);
         if(actual.label!=separate.label||
            actual.integer!=separate.integer||
-           actual.begin!=separate.begin||actual.end!=separate.end)
+           cteas::p6f::instant_seconds(actual.begin)!=
+               cteas::p6f::instant_seconds(separate.begin)||
+           cteas::p6f::instant_seconds(actual.end)!=
+               cteas::p6f::instant_seconds(separate.end))
             throw std::logic_error("G26B original NOAA G14 P6F field label/clock drift");
         if(actual.integer) {
             if(actual.integer_values!=separate.integer_values||
