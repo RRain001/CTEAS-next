@@ -115,6 +115,8 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
             not in native_log.read_text()
         or "G14_STAGE2_FRADJ=G26_NATIVE_BITWISE_G41"
             not in native_log.read_text()
+        or "G14_G43_NONWIND_MISSFC=P5_RAW_WIND_UNCHANGED"
+            not in native_log.read_text()
         or "G14_COMMIT_SECONDHOUR_G26_P7=NOT_ACCEPTED"
             not in native_log.read_text()):
         raise ValueError("G62 source only/NOT_ACCEPTED run attestation missing")
@@ -138,6 +140,7 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
         "g14_source_prepdi_staged_unpublished": True,
         "g14_selected_sparse_wind1_bitwise_matches_g42": True,
         "g14_selected_water_fradj_bitwise_matches_g41": True,
+        "g14_original_source_missfc_preserves_p5_raw_wind": True,
         "g14_native_17stage_commit": "NOT_ACCEPTED",
         "station_upper_gamma_clocks_committed": "NOT_ACCEPTED",
         "actual_second_hour_physics": "NOT_RUN",
@@ -153,6 +156,7 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
     print("S4R1C8O_G14_SOURCE_PREPDI=STAGED_UNPUBLISHED")
     print("S4R1C8O_G14_WIND1_G42_BITWISE=PASS_125460_REAL4")
     print("S4R1C8O_G14_FRADJ_G41_BITWISE=PASS_146370_REAL4")
+    print("S4R1C8O_G14_G43_RAW_P5_WIND=UNCHANGED")
     print("S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED")
     return True
 
