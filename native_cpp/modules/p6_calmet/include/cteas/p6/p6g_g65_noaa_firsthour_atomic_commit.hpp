@@ -4,6 +4,7 @@
 // All 17 physics stages run on the SAME scheduler-owned frame; no G54/G59
 // numbers are used as native forcing. Failed precommit cannot publish state.
 #include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
+#include "cteas/p6/p6g_g45_six_hour_water_wind1.hpp"
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -76,6 +77,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_raw_source_admission_verified=false;
     bool hour2_firsthour_replay_rejected_atomically=false;
     bool hour2_prepdi_stage0_staged_preflight_only=false;
+    std::size_t hour2_live_g26_wind1_bitwise_compared_words=0;
+    bool hour2_live_g26_stage01_uncommitted=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -348,6 +351,60 @@ g65_real_noaa_firsthour_atomic_commit(
         throw std::logic_error(
             "G65 PREPDI-only hour-two stage prematurely published G14/clocks");
 
+    // G26A executes *real* second-hour PREPDI [0] and WIND1 [1]
+    // against the live G14 next-hour frame, with the prior G14 memory
+    // and AA/BB/CGAMMA clocks committed at hour one. The separate G45
+    // six-hour source-only WIND1 path is comparison-only; the G26
+    // physical stage never receives G45 arrays as meteorological input.
+    auto live_wind_frame=scheduler.preview_next_hour();
+    G26SourceFileBackedG14DiagnoBridge hour2_diagno(
+        scheduler,clocks,source,true);
+    for(std::size_t stage=0;stage<2;++stage) {
+        const auto result=hour2_diagno.run(
+            p6::kHefeiOriginalStageOrder[stage],live_wind_frame);
+        if(!result.completed||
+           result.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 second-hour live G26A PREPDI/WIND1 stage absent");
+    }
+    if(hour2_diagno.selected_checkpoints()!=2||
+       live_wind_frame.hour_index!=1||
+       live_wind_frame.input.end!=hour2.input.end)
+        throw std::logic_error("G65 second-hour G26A stage identity drift");
+    const auto& live_wind=hour2_diagno.selected_source_wind1_after_stage(
+        live_wind_frame);
+    const auto comparison=g45_selected_source_six_hour_wind1(paths,true);
+    if(comparison.hours.size()!=6||
+       comparison.source_end_utc.size()!=6||
+       comparison.source_end_utc[1]!=hour2.input.end||
+       comparison.g21_g39_g24_g26_accepted||
+       comparison.original_p5_surf_mutated||
+       comparison.original_previous_ziconv_accepted)
+        throw std::logic_error(
+            "G65 independent original-source G45 hour-two WIND1 unavailable");
+    const auto& ref_wind=comparison.hours[1].native_firstguess;
+    const std::size_t size=9U*82U*85U;
+    if(live_wind.nx!=82||live_wind.ny!=85||live_wind.nz!=9||
+       ref_wind.nx!=82||ref_wind.ny!=85||ref_wind.nz!=9||
+       live_wind.u_mps.size()!=size||live_wind.v_mps.size()!=size||
+       !g65_equal_real4_bits(live_wind.u_mps,ref_wind.u_mps)||
+       !g65_equal_real4_bits(live_wind.v_mps,ref_wind.v_mps))
+        throw std::logic_error(
+            "G65 real hour-two live G26 WIND1 U/V differs from G45 source path");
+    // No precommit output or clock publication is possible at stage 1;
+    // WIND1 must not create or replace next-hour hidden COMP memory.
+    if(scheduler.completed_hours()!=1||
+       clocks.latest_upper_hour()!=first_end||
+       clocks.latest_gamma_hour()!=first_end||
+       !g65_equal_real4_bits(scheduler.committed_memory().zi_m,committed.zi_m)||
+       !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,committed.ziconv_m)||
+       !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,committed.dptt_k)||
+       !g65_equal_real4_bits(live_wind_frame.next.zi_m,committed.zi_m)||
+       !g65_equal_real4_bits(live_wind_frame.next.ziconv_m,committed.ziconv_m)||
+       !g65_equal_real4_bits(live_wind_frame.next.dptt_k,committed.dptt_k))
+        throw std::logic_error(
+            "G65 second-hour physical WIND1 changed committed COMP memory/clocks");
+
     G65NoaaFirstHourCommitReceipt receipt;
     receipt.end=first_end;
     receipt.committed_memory=committed;
@@ -360,6 +417,8 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_raw_source_admission_verified=true;
     receipt.hour2_firsthour_replay_rejected_atomically=true;
     receipt.hour2_prepdi_stage0_staged_preflight_only=true;
+    receipt.hour2_live_g26_wind1_bitwise_compared_words=2U*9U*82U*85U;
+    receipt.hour2_live_g26_stage01_uncommitted=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
