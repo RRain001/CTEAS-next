@@ -1989,6 +1989,47 @@ jobs:
             "$root/evidence/independent-noaa-ipgt-irh-original-vs-native.log"
           grep -Fx 'S4R1C8J_FULL_P6F_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-noaa-ipgt-irh-original-vs-native.log"
+      - name: Independently verify source-native full firsthour 45-record CALMET.DAT against pristine original
+        shell: bash
+        timeout-minutes: 45
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8k"
+          mkdir -p "$root/evidence"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g59_real_noaa_firsthour_met21
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g59_real_noaa_firsthour_met21"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --real-noaa-firsthour-met21-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-source-firsthour-calmet.dat" \
+            > "$root/evidence/native-g59-stdout.log" \
+            2> "$root/evidence/native-g59-stderr.log" || {
+              tail -n 90 "$root/evidence/native-g59-stderr.log"
+              exit 1
+            }
+          grep -F 'S4R1C8K_NATIVE_NOAA_FIRSTHOUR_MET21=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g59-stderr.log"
+          python3 -m scripts.s4.s4r1c8k_compare_noaa_firsthour_met21 \
+            --original "$RUNNER_TEMP/s4j/original-real-two-ss-case/run/met/met.dat" \
+            --native "$root/native-source-firsthour-calmet.dat" \
+            --g57 "$RUNNER_TEMP/s4r1c8i/native-firsthour-43real.bin" \
+            --g58 "$RUNNER_TEMP/s4r1c8j/native-firsthour-ipgt-irh.bin" \
+            --real-receipt "$RUNNER_TEMP/s4r1c8i/evidence/independent-native-43real-numeric.json" \
+            --integer-receipt "$RUNNER_TEMP/s4r1c8j/evidence/independent-noaa-ipgt-irh-original-vs-native.json" \
+            --native-log "$root/evidence/native-g59-stderr.log" \
+            --report "$root/evidence/independent-full45-firsthour-original-vs-native.json" \
+            | tee "$root/evidence/independent-full45-firsthour-original-vs-native.log"
+          grep -Fx 'S4R1C8K_NATIVE_NOAA_FIRSTHOUR_MET21=PASS_SOURCE_SCOPED_REAL_NOAA_NATIVE_FIRSTHOUR_FULL45_MET21' \
+            "$root/evidence/independent-full45-firsthour-original-vs-native.log"
+          grep -Fx 'S4R1C8K_45RECORDS_COMPARED=45' \
+            "$root/evidence/independent-full45-firsthour-original-vs-native.log"
+          grep -Fx 'S4R1C8K_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-full45-firsthour-original-vs-native.log"
+          grep -Fx 'S4R1C8K_6HOUR_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-full45-firsthour-original-vs-native.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -2016,6 +2057,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8h/evidence/
             ${{ runner.temp }}/s4r1c8i/evidence/
             ${{ runner.temp }}/s4r1c8j/evidence/
+            ${{ runner.temp }}/s4r1c8k/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
