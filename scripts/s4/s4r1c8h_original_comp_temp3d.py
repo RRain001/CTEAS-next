@@ -21,8 +21,8 @@ PINS={
     4760:"       if( LCALGRD .or. itprog.ge.1 )then",
     4766:"              call temp3d(nyrze,njulze,nhrze,nsecze,temp2d,ziconv,",
     4767:"     &                tzgraa,tzgrbb,ztemp,zi,tprog)",
-    4773:"           endif",
-    4774:"c",
+    4772:"          endif",
+    4773:"c",
 }
 def sha(p:Path)->str:return hashlib.sha256(p.read_bytes()).hexdigest()
 def pinned(path:Path):
@@ -44,14 +44,14 @@ HOOK="""      open(unit=94,file='s4r1c8h-original-comp-temp3d.bin',
 def prepare(vendor:Path,destination:Path,receipt:Path):
     a=pinned(vendor)
     destination.parent.mkdir(parents=True,exist_ok=True)
-    destination.write_text("".join(a[:4773])+HOOK+"".join(a[4773:]))
+    destination.write_text("".join(a[:4772])+HOOK+"".join(a[4772:]))
     receipt.parent.mkdir(parents=True,exist_ok=True)
     receipt.write_text(json.dumps({
         "status":"PREPARED_S4R1C8H_SHA_PINNED_ORIGINAL_TEMP3D_WRITE_ONLY",
         "original_vendor_git_blob":BLOB,
         "original_vendor_sha256":sha(vendor),
         "scratch_source_sha256":sha(destination),
-        "hook_after_original_fortran_line":4773,
+        "hook_after_original_fortran_line":4772,
         "original_physics_modified":False,
         "native_temp3d_accepted":False,
     },indent=2,sort_keys=True)+"\n")
