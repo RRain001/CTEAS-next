@@ -16,6 +16,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -87,7 +88,8 @@ inline G64RealNoaaP6FPrecommit g64_real_noaa_p6f_from_live_g14(
     fields.el_m=mix.comp_third_el_m;
     fields.qh_wm2=mix.comp_third_qh_wm2;
     fields.wstar_mps=wstar;
-    for(const auto* values:{
+    for(const auto* values:
+        std::initializer_list<const std::vector<float>*>{
             &current_memory.zi_m,&current_memory.ziconv_m,
             &current_memory.dptt_k,&fields.u_mps,&fields.v_mps,
             &fields.w_face_mps,&fields.temperature_k,&fields.ustar_mps,
