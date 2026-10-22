@@ -28,6 +28,11 @@ on:
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g54_real_land_mixht.hpp'
       - 'native_cpp/modules/p6_calmet/src/p6g_g54_real_land_mixht_main.cpp'
       - 'scripts/s4/s4r1c8f_compare_firsthour_mixht.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g55_real_comp_wstarr.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g55_real_comp_wstarr_main.cpp'
+      - 'scripts/s4/s4r1c8g_original_comp_wstarr.py'
+      - 'scripts/s4/s4r1c8g_compare_real_wstarr.py'
+      - 'docs/plans/ISSUE40_S4R1C8G_COMP_WSTARR_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8F_NATIVE_REAL_MIXHT_AVEMIX_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8E_COMP_MIXHT_AVEMIX_STAGE_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8D_G24_NATIVE_WATER_NEUTRAL_20261022.md'
@@ -1727,6 +1732,92 @@ jobs:
             "$root/evidence/independent-native-original-mixht-avemix.log"
           grep -Fx 'S4R1C8F_AVEMIX_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-native-original-mixht-avemix.log"
+      - name: Pin original COMP WSTARR write-only six-hour source oracle
+        shell: bash
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8g"
+          mkdir -p "$root/evidence"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          python3 -m scripts.s4.s4r1c8g_original_comp_wstarr selftest
+          python3 -m scripts.s4.s4r1c8g_original_comp_wstarr prepare \
+            --vendor "$vendor" \
+            --destination "$root/original-wstarr-writeonly.for" \
+            --receipt "$root/evidence/pinned-original-wstarr-source.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/original-wstarr-writeonly.for" \
+            -o "$root/original-wstarr-writeonly.x"
+          sha256sum "$root/original-wstarr-writeonly.x" \
+            > "$root/evidence/pinned-original-wstarr-binary-sha256.txt"
+      - name: Verify genuine six-hour original WSTARR and unchanged original 45-field MET
+        shell: bash
+        timeout-minutes: 40
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8g"
+          pristine="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-wstarr-only-run"
+          test -s "$pristine/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$pristine" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c8g-original-comp-wstarr.bin"
+          (cd "$scratch/run/met" && "$root/original-wstarr-writeonly.x" met.inp) \
+            > "$root/evidence/original-wstarr-stdout.log" \
+            2> "$root/evidence/original-wstarr-stderr.log" || {
+              tail -n 80 "$root/evidence/original-wstarr-stdout.log"
+              tail -n 80 "$root/evidence/original-wstarr-stderr.log"
+              exit 1
+            }
+          python3 -m scripts.s4.s4r1c8g_original_comp_wstarr verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --pristine "$pristine/run/met/met.dat" \
+            --scratch "$scratch/run/met/met.dat" \
+            --trace "$scratch/run/met/s4r1c8g-original-comp-wstarr.bin" \
+            --report "$root/evidence/original-6h-source-wstarr-report.json" \
+            | tee "$root/evidence/original-6h-source-wstarr-report.log"
+          grep -Fx 'S4R1C8G_ORIGINAL_6H_WSTARR=PASS_REFERENCE_ONLY' \
+            "$root/evidence/original-6h-source-wstarr-report.log"
+          grep -Fx 'S4R1C8G_ORIGINAL_6H45_MET=BYTE_IDENTICAL' \
+            "$root/evidence/original-6h-source-wstarr-report.log"
+      - name: Verify real native COMP WSTARR 6970 cells against independent original trace
+        shell: bash
+        timeout-minutes: 32
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8g"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g55_real_comp_wstarr
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g55_real_comp_wstarr"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --authentic-noaa-comp-wstarr-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-firsthour-wstar.bin" \
+            > "$root/evidence/native-g55-stdout.log" \
+            2> "$root/evidence/native-g55-stderr.log" || {
+              tail -n 80 "$root/evidence/native-g55-stderr.log"
+              exit 1
+            }
+          grep -F 'S4R1C8G_NATIVE_NOAA_COMP_WSTARR=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g55-stderr.log"
+          python3 -m scripts.s4.s4r1c8g_compare_real_wstarr \
+            --original "$root/original-wstarr-only-run/run/met/s4r1c8g-original-comp-wstarr.bin" \
+            --receipt "$root/evidence/original-6h-source-wstarr-report.json" \
+            --native "$root/native-firsthour-wstar.bin" \
+            --native-log "$root/evidence/native-g55-stderr.log" \
+            --report "$root/evidence/independent-native-original-wstarr.json" \
+            | tee "$root/evidence/independent-native-original-wstarr.log"
+          grep -Fx 'S4R1C8G_NATIVE_REAL_NOAA_WSTARR=PASS_SCOPED_REAL_NOAA_NATIVE_WSTARR_FIRST_HOUR' \
+            "$root/evidence/independent-native-original-wstarr.log"
+          grep -Fx 'S4R1C8G_WSTARR_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-native-original-wstarr.log"
+          grep -Fx 'S4R1C8G_TEMP3D_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-native-original-wstarr.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1750,6 +1841,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8d/evidence/
             ${{ runner.temp }}/s4r1c8e/evidence/
             ${{ runner.temp }}/s4r1c8f/evidence/
+            ${{ runner.temp }}/s4r1c8g/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
