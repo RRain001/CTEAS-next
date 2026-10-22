@@ -29,6 +29,7 @@ int main(int argc,char** argv) {
            !result.hour2_preview_uses_committed_state||
            !result.hour2_raw_source_admission_verified||
            !result.hour2_firsthour_replay_rejected_atomically||
+           !result.hour2_prepdi_stage0_staged_preflight_only||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
         std::cout
@@ -40,6 +41,7 @@ int main(int argc,char** argv) {
             <<"S4R1C8W_G14_HOUR2_PREVIEW_INHERITS_MEMORY=PASS_SOURCE_ONLY\n"
             <<"S4R1C8W_G14_HOUR2_RAW_MISSFC_WIND_PRESERVED=PASS_SOURCE_ONLY\n"
             <<"S4R1C8W_G14_HOUR2_FIRSTHOUR_REPLAY_REJECTED=PASS_ATOMIC\n"
+            <<"S4R1C8W_G14_HOUR2_REAL_PREPDI_STAGE0=PASS_PRECOMMIT_ONLY\n"
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;
