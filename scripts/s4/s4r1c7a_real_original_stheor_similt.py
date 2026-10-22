@@ -40,7 +40,7 @@ def prepare(vendor:Path,dest:Path,receipt:Path)->None:
         "      open(unit=95,file='"+TRACE_NAME+"',",
         "     1 status='unknown',position='append',action='write')",
         "      write(95,'(3(i6,1x),18(es23.15,1x))')",
-        "     1 is,js,ns,(us(k),vs(k),k=1,9)",
+        "     1 is,js,ns,(us(k,ns),vs(k,ns),k=1,9)",
         "      close(unit=95)",
     ]
     # Instrument AFTER actual SIMILT call at line 6894, never before it.
@@ -68,18 +68,19 @@ def verify(vendor:Path,pristine:Path,scratch:Path,trace:Path,report:Path)->None:
         parts=line.split()
         if len(parts)!=3+2*ORIGINAL_NZ:
             raise ValueError("R1c7a original SIMILT station profile malformed")
-        i,j,levels=map(int,parts[:3])
+        i,j,station_ordinal=map(int,parts[:3])
         uv=[]
         for value in parts[3:]:
             x=float(value.replace("D","E"))
             if not math.isfinite(x):
                 raise ValueError("Nonfinite original source station profile")
             uv.append(x)
-        if not (1<=i<=82 and 1<=j<=85 and 0<=levels<=9):
-            raise ValueError("Original station cell or SIMILT vertical count invalid")
+        if not (1<=i<=82 and 1<=j<=85 and 1<=station_ordinal<=2):
+            raise ValueError("Original station cell or SIMILT station ordinal invalid")
         rows.append({
             "original_station_grid_cell":[i,j],
-            "original_SIMILT_levels_filled":levels,
+            "original_SIMILT_station_ordinal":station_ordinal,
+            "original_SIMILT_level_validity":"NOT_YET_ESTABLISHED",
             "original_profile_uv_mps":uv,
         })
     if not 1<=len(rows)<=12:
@@ -87,7 +88,7 @@ def verify(vendor:Path,pristine:Path,scratch:Path,trace:Path,report:Path)->None:
     # The vendor routine's actual invocation count and validity is evidence;
     # it is deliberately NOT forced to 2 events per hour before inspecting
     # original missing-observation and station-replacement semantics.
-    nonzero=sum(any(abs(v)>1e-8 for v in r["original_profile_uv_mps"][:2*max(0,r["original_SIMILT_levels_filled"])]) for r in rows)
+    nonzero=sum(any(1e-8<abs(v)<900 for v in r["original_profile_uv_mps"]) for r in rows)
     result={
         "scope":"SOURCE_ONLY_REAL_NOAA_ORIGINAL_STHEOR_SIMILT_6H",
         "status":"PASS_ORIGINAL_STATION_PROFILE_REFERENCE_ONLY",
@@ -98,6 +99,8 @@ def verify(vendor:Path,pristine:Path,scratch:Path,trace:Path,report:Path)->None:
         "original_ELUSTR2_SIMILT_call_events":len(rows),
         "nonzero_profile_events":nonzero,
         "source_clock_binding_to_events":"NOT_YET_ESTABLISHED",
+        "NS_semantics":"ORIGINAL_SURFACE_STATION_COLUMN_NOT_FILLED_LEVELS",
+        "original_returned_profile_validity":"NOT_YET_ACCEPTED",
         "missing_surface_station_interpretation":"NOT_YET_ACCEPTED",
         "original_events":rows,
         "native_1SS2SS_station_DIAGI_numeric_parity":"NOT_RUN",
@@ -118,13 +121,13 @@ def selftest()->None:
         original=Path(d)/"met.dat"
         original.write_bytes(b"CALMET independent original")
         trace=Path(d)/TRACE_NAME
-        vals=["10","20","9"]+["1.0","-2.0"]*9
+        vals=["10","20","1"]+["1.0","-2.0"]*9
         trace.write_text(" ".join(vals)+"\n")
         vendor=Path(d)/"dummy"
         # Verify the schema without claiming a synthetic blob is vendor.
         lines=trace.read_text().split()
         assert len(lines)==21 and len(lines[3:])==18
-        assert int(lines[2])==9
+        assert int(lines[2])==1
         corrupted=vals.copy()
         corrupted[3]="NaN"
         assert not math.isfinite(float(corrupted[3]))
