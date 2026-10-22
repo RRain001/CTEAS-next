@@ -15,6 +15,7 @@ Source `G43` MISSFC only fills missing **nonwind** model-internal surface fields
 3. Construct a fresh actor and repeat stages 0–16 with the same scheduler; this time allow G14 to commit. Require `completed_hours=1`, committed hidden memory bit-identical to G54 and **both clocks** published at the first-hour UTC end.
 4. Check that G14 `preview_next_hour()` is on the second real NOAA UTC hour and references the just-committed `ZI/ZICONV/DPTT`. On this actual second-hour original source record, independently call the original scoped G43 `MISSFC` repair and verify both the preview's and repaired copy's wind/direction/precip remain exactly equal to raw P5. This is **input provenance only**, not second-hour physics.
 5. Explicitly invoke a *fresh* G65 first-hour-only actor against that true second-hour frame and require deterministic rejection at stage 0, without advancing the scheduler or altering first-hour AA/BB/CGAMMA or the three committed hidden planes. This negative test forbids silently replaying hour zero as hour one.
+6. Separately invoke authentic G18E4 PREPDI stage 0 on the scheduler's **actual second-hour frame**, reading source UP.DAT with the committed first-hour `ZI/ZICONV/DPTT` and AA/BB/CGAMMA histories. Require original upper station IDs, correct second-hour UTC, source AA/BB slot candidates, independent G18D2 station-clock preflight, and no G14/clock publication. This produces only a **real stage-0 uncommitted candidate**, not second-hour WIND1/FRADJ/COMP/P6F or second-hour original numerical parity.
 
 The scope-specific executable refuses normal mode and emits no production CALMET.DAT or P7 artifact. The existing workflow keeps prior G41/G42/G47/G48/G54/G55/G56/G59/G61/G62 forensic gates and adds G65 with exact line receipts. The frozen C1/C2 science and expensive 143-hour suites remain manual-only.
 
@@ -26,4 +27,4 @@ The scope-specific executable refuses normal mode and emits no production CALMET
 
 **2026-10-22 remediation:** Related #275/#276 builds now link the P6F CALMET.DAT writer centrally; WATER G63 stages keep unmodified COMP-third USTAR/EL for G54 audit but also expose native G53-neutral 63-WATER cells for the G64 P6F output. Strict G62 bitwise mismatch diagnostics report field/record/cell/bit patterns. The latest exact-head CI jobs remain queued; these changes are **not yet accepted**.
 
-**Provisional status:** `G65_G14_FIRSTHOUR_ATOMIC=CI_PENDING`; `G14_SECOND_HOUR_PHYSICS=NOT_ACCEPTED`; `NOAA_6H_45FIELDS=NOT_ACCEPTED`; `S4_P6_PRODUCTION=NOT_ACCEPTED`.
+**Provisional status:** `G65_G14_FIRSTHOUR_ATOMIC=CI_PENDING`; `G14_SECOND_HOUR_PREPDI_STAGE0=CI_PENDING_PRECOMMIT_ONLY`; `G14_SECOND_HOUR_PHYSICS=NOT_ACCEPTED`; `NOAA_6H_45FIELDS=NOT_ACCEPTED`; `S4_P6_PRODUCTION=NOT_ACCEPTED`.
