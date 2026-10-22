@@ -23,13 +23,16 @@ struct G48RealSparseStheor {
     std::vector<float> firsthour_inter2_v_unverified;
     bool firsthour_inter2_candidate_unverified=false;
     std::optional<G24SourceWindTail> firsthour_g24_tail_unverified;
+    std::vector<float> firsthour_comp_third_temperature_unverified;
+    bool firsthour_comp_third_candidate_unverified=false;
     bool native_g23_inter2_or_g26_ready=false;
 };
 
 inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
     const G19SourceFilePaths& paths,bool explicit_reference_only,
     bool explicit_firsthour_inter2_forensic_only=false,
-    bool explicit_firsthour_g24_tail_forensic_only=false) {
+    bool explicit_firsthour_g24_tail_forensic_only=false,
+    bool explicit_firsthour_comp_third_forensic_only=false) {
     if(!explicit_reference_only)
         throw std::invalid_argument("G48 real station STHEOR requires test-only opt-in");
     // G47 uses exactly accepted G42/G21/G39/G22 C++ kernels.
@@ -137,7 +140,8 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
         throw std::logic_error(
             "G48 real first-hour original sparse STHEOR count/identity mismatch");
     if(explicit_firsthour_inter2_forensic_only||
-       explicit_firsthour_g24_tail_forensic_only) {
+       explicit_firsthour_g24_tail_forensic_only||
+       explicit_firsthour_comp_third_forensic_only) {
         // G17C3's native actual valid surface station is mapped back into
         // the SAME original SS1..SSn, US1..USm identity space. Missing
         // source wind is never marked valid (nor converted to calm).
@@ -197,7 +201,8 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
            result.firsthour_inter2_v_unverified.size()!=9*n)
             throw std::logic_error("G48 incomplete native full-grid INTER2");
         result.firsthour_inter2_candidate_unverified=true;
-        if(explicit_firsthour_g24_tail_forensic_only) {
+        if(explicit_firsthour_g24_tail_forensic_only||
+           explicit_firsthour_comp_third_forensic_only) {
             // Provenance guard: selected source G41 really contains all 63
             // source WATER cells, and G47 supplied the same hour's native
             // original-selected post-SLOPE field. No oracle enters G24.
@@ -215,6 +220,28 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
                result.firsthour_g24_tail_unverified->wind.w_face_mps.size()!=10*n||
                result.firsthour_g24_tail_unverified->wind.divergence_per_s.size()!=9*n)
                 throw std::logic_error("G48 real G24 wind-tail not complete");
+            if(explicit_firsthour_comp_third_forensic_only) {
+                // Reuse G33C's unchanged original IALL=1 COMP SURFVAR
+                // adapter only AFTER G24 final U/V. C1/C2 call path
+                // and raw P5 surface temperature/wind remain untouched.
+                // This is not MIXHT, COMP memory, or full G26.
+                const auto& final=result.firsthour_g24_tail_unverified->wind;
+                twice.after_final_diagno_before_comp(
+                    frame.input.end,final.u_mps,final.v_mps,true);
+                if(!twice.comp_ready()||
+                   !twice.comp_stage_wind_matches(
+                       final.u_mps,final.v_mps)||
+                   !twice.matches_source_geometry(
+                       frame.grid,selected.source.stations))
+                    throw std::logic_error(
+                        "G48 real COMP third SURFVAR lost final G24 source");
+                result.firsthour_comp_third_temperature_unverified=
+                    twice.comp_temperature();
+                if(result.firsthour_comp_third_temperature_unverified.size()!=n)
+                    throw std::logic_error(
+                        "G48 real COMP third SURFVAR grid incomplete");
+                result.firsthour_comp_third_candidate_unverified=true;
+            }
         }
     }
     result.source_p5_raw_wind_unchanged=true;

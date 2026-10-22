@@ -15,6 +15,10 @@ on:
       - 'scripts/s4/s4r1c7f_compare_real_native_inter2.py'
       - 'scripts/s4/s4r1c8a_real_noaa_original_g24_tail.py'
       - 'scripts/s4/s4r1c8a_compare_native_g24_tail.py'
+      - 'scripts/s4/s4r1c8b_original_real_comp_third_surfvar.py'
+      - 'scripts/s4/s4r1c8b_compare_real_comp_third.py'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g51_real_noaa_comp_third_main.cpp'
+      - 'docs/plans/ISSUE40_S4R1C8B_COMP_THIRD_NOAA_20261022.md'
       - 'native_cpp/modules/p6_calmet/src/p6g_g50_real_noaa_g24_tail_main.cpp'
       - 'docs/plans/ISSUE40_S4R1C8A_G24_REAL_NOAA_20261022.md'
       - 'native_cpp/modules/p6_calmet/src/p6g_g49_real_sparse_inter2_main.cpp'
@@ -1402,6 +1406,92 @@ jobs:
             "$root/evidence/independent-firsthour-original-native-g24.log"
           grep -Fx 'S4R1C8A_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-firsthour-original-native-g24.log"
+      - name: Source-pin authentic original NOAA six-hour COMP third SURFVAR oracle
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8b"
+          mkdir -p "$root/evidence"
+          python3 -m scripts.s4.s4r1c8b_original_real_comp_third_surfvar selftest
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          python3 -m scripts.s4.s4r1c8b_original_real_comp_third_surfvar prepare \
+            --vendor "$vendor" \
+            --destination "$root/original-comp-third-scratch.for" \
+            --receipt "$root/evidence/pinned-original-comp-third-source.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/original-comp-third-scratch.for" \
+            -o "$root/original-comp-third-scratch.x"
+          sha256sum "$root/original-comp-third-scratch.x" \
+            > "$root/evidence/original-comp-third-binary-sha256.txt"
+      - name: Preserve genuine original six-hour COMP third SURFVAR without changing MET
+        shell: bash
+        timeout-minutes: 40
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8b"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-comp-third-write-only-run"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c8b-original-comp-third-surfvar.bin"
+          (cd "$scratch/run/met" && "$root/original-comp-third-scratch.x" met.inp) \
+            > "$root/evidence/original-comp-third-stdout.log" \
+            2> "$root/evidence/original-comp-third-stderr.log" || {
+              tail -n 65 "$root/evidence/original-comp-third-stdout.log"
+              tail -n 65 "$root/evidence/original-comp-third-stderr.log"
+              exit 1
+            }
+          python3 -m scripts.s4.s4r1c8b_original_real_comp_third_surfvar verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --pristine "$baseline/run/met/met.dat" \
+            --scratch "$scratch/run/met/met.dat" \
+            --trace "$scratch/run/met/s4r1c8b-original-comp-third-surfvar.bin" \
+            --report "$root/evidence/original-sixhour-comp-third-reference.json" \
+            | tee "$root/evidence/original-sixhour-comp-third-reference.log"
+          grep -Fx 'S4R1C8B_ORIGINAL_NOAA_COMP_THIRD=PASS_REFERENCE_ONLY' \
+            "$root/evidence/original-sixhour-comp-third-reference.log"
+          grep -Fx 'S4R1C8B_ORIGINAL_6H45_MET=BYTE_IDENTICAL' \
+            "$root/evidence/original-sixhour-comp-third-reference.log"
+      - name: Independently compare real G24-final-wind COMP third SURFVAR original vs G17B4
+        shell: bash
+        timeout-minutes: 22
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8b"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g51_real_noaa_comp_third
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g51_real_noaa_comp_third"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --real-noaa-comp-third-source-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-firsthour-comp-third-temp.f32" \
+            > "$root/evidence/native-g51-stdout.log" \
+            2> "$root/evidence/native-g51-stderr.log" || {
+              tail -n 75 "$root/evidence/native-g51-stderr.log"
+              exit 1
+            }
+          grep -F 'S4R1C8B_NATIVE_REAL_COMP_THIRD=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g51-stderr.log"
+          python3 -m scripts.s4.s4r1c8b_compare_real_comp_third \
+            --original "$root/original-comp-third-write-only-run/run/met/s4r1c8b-original-comp-third-surfvar.bin" \
+            --source-receipt "$root/evidence/original-sixhour-comp-third-reference.json" \
+            --native "$root/native-firsthour-comp-third-temp.f32" \
+            --native-log "$root/evidence/native-g51-stderr.log" \
+            --report "$root/evidence/independent-original-native-comp-third.json" \
+            | tee "$root/evidence/independent-original-native-comp-third.log"
+          grep -Fx 'S4R1C8B_COMP_THIRD_NUMERIC=PASS_GENUINE_NOAA_ORIGINAL_NATIVE_COMP_THIRD_SCOPED_FIRSTHOUR' \
+            "$root/evidence/independent-original-native-comp-third.log"
+          grep -Fx 'S4R1C8B_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-original-native-comp-third.log"
+          grep -Fx 'S4R1C8B_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-original-native-comp-third.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1420,6 +1510,7 @@ jobs:
             ${{ runner.temp }}/s4r1c7c/evidence/
             ${{ runner.temp }}/s4r1c7f/evidence/
             ${{ runner.temp }}/s4r1c8a/evidence/
+            ${{ runner.temp }}/s4r1c8b/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json

@@ -1302,3 +1302,15 @@ else()
   target_compile_options(cteas_p6g_g50_real_noaa_g24_tail
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8b real NOAA shared G17B4 third COMP SURFVAR candidate only.
+add_executable(cteas_p6g_g51_real_noaa_comp_third
+               src/p6g_g51_real_noaa_comp_third_main.cpp)
+target_link_libraries(cteas_p6g_g51_real_noaa_comp_third
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g51_real_noaa_comp_third PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g51_real_noaa_comp_third
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
