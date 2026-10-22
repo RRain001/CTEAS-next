@@ -12,6 +12,9 @@ on:
       - 'scripts/s4/s4r1c6_real_noaa_post_slope_reference.py'
       - 'scripts/s4/s4r1c7a_real_original_stheor_similt.py'
       - 'scripts/s4/s4r1c7c_original_sparse_inter2_reference.py'
+      - 'scripts/s4/s4r1c7f_compare_real_native_inter2.py'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g49_real_sparse_inter2_main.cpp'
+      - 'docs/plans/ISSUE40_S4R1C7F_ORIGINAL_NATIVE_INTER2_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C7C_ORIGINAL_SPARSE_INTER2_20261022.md'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c3_station_diagi.hpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g16_staged_wind.hpp'
@@ -1275,6 +1278,41 @@ jobs:
             "$root/evidence/g17c3-sparse-ordinal-unit.log"
           grep -Fx 'S4R1C7D_NATIVE_G16_WIND1_G23_INTER2_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/g17c3-sparse-ordinal-unit.log"
+      - name: Independently compare real NOAA 82x85x9 original and native shared G16 INTER2
+        shell: bash
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c7f"
+          mkdir -p "$root/evidence"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g49_real_sparse_inter2
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g49_real_sparse_inter2"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --genuine-source-inter2-diagnostic \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-firsthour-g16-inter2.bin" \
+            > "$root/evidence/native-g49-stdout.log" \
+            2> "$root/evidence/native-g49-stderr.log" || {
+              cat "$root/evidence/native-g49-stderr.log"; exit 1
+            }
+          grep -F 'S4R1C7F_GENUINE_82X85X9_NATIVE_G16_INTER2=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g49-stderr.log"
+          python3 -m scripts.s4.s4r1c7f_compare_real_native_inter2 \
+            --original "$RUNNER_TEMP/s4r1c7c/original-write-only-inter2-run/run/met/s4r1c7c-original-after-inter2.bin" \
+            --source-receipt "$RUNNER_TEMP/s4r1c7c/evidence/real-original-sparse-pre-post-inter2-reference.json" \
+            --native "$root/native-firsthour-g16-inter2.bin" \
+            --native-log "$root/evidence/native-g49-stderr.log" \
+            --report "$root/evidence/independent-original-native-real-inter2.json" \
+            | tee "$root/evidence/independent-original-native-real-inter2.log"
+          grep -Fx 'S4R1C7F_ORIGINAL_NATIVE_FIRSTHOUR_INTER2_REPORT=PASS_SOURCE_SCOPED_REAL_NOAA_NATIVE_G16_INTER2' \
+            "$root/evidence/independent-original-native-real-inter2.log"
+          grep -Fx 'S4R1C7F_ABOVE_2E_MINUS4_MPS=0' \
+            "$root/evidence/independent-original-native-real-inter2.log"
+          grep -Fx 'S4R1C7F_G24_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-original-native-real-inter2.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1291,6 +1329,7 @@ jobs:
             ${{ runner.temp }}/s4r1c7a/evidence/
             ${{ runner.temp }}/s4r1c7b/evidence/
             ${{ runner.temp }}/s4r1c7c/evidence/
+            ${{ runner.temp }}/s4r1c7f/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json

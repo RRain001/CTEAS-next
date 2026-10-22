@@ -16,11 +16,16 @@ struct G48RealSparseStheor {
     std::size_t missing_wind_skipped=0;
     bool source_p5_raw_wind_unchanged=false;
     bool native_shared_g16_sparse_wind1_equal_to_g42=false;
+    // Diagnostic stage data are never authorized G23/G26 production fields.
+    std::vector<float> firsthour_inter2_u_unverified;
+    std::vector<float> firsthour_inter2_v_unverified;
+    bool firsthour_inter2_candidate_unverified=false;
     bool native_g23_inter2_or_g26_ready=false;
 };
 
 inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
-    const G19SourceFilePaths& paths,bool explicit_reference_only) {
+    const G19SourceFilePaths& paths,bool explicit_reference_only,
+    bool explicit_firsthour_inter2_forensic_only=false) {
     if(!explicit_reference_only)
         throw std::invalid_argument("G48 real station STHEOR requires test-only opt-in");
     // G47 uses exactly accepted G42/G21/G39/G22 C++ kernels.
@@ -127,6 +132,67 @@ inline G48RealSparseStheor g48_real_sparse_stheor_first_hour(
        scheduler.completed_hours()!=0)
         throw std::logic_error(
             "G48 real first-hour original sparse STHEOR count/identity mismatch");
+    if(explicit_firsthour_inter2_forensic_only) {
+        // G17C3's native actual valid surface station is mapped back into
+        // the SAME original SS1..SSn, US1..USm identity space. Missing
+        // source wind is never marked valid (nor converted to calm).
+        std::vector<unsigned char> source_wind_valid;
+        for(const auto& obs:raw.by_station)
+            source_wind_valid.push_back(obs.wind_valid?1U:0U);
+        const auto merged=merge_g17c3_surface_diagi(
+            g47.thermal.native_wind1.source_profiles,
+            selected.source.stations,result.native_valid_station,
+            source_wind_valid);
+        // Source G47 validates the 6970×9 POST-FRADJ+SLOPE grid without
+        // reading any original post-INTER2 U/V. Under original IPROG=0,
+        // RDWT gives the same physical WO=1 branch as shared G23.
+        if(frame.source_controls->iprog!=0)
+            throw std::invalid_argument(
+                "G48 real INTER2 non-unit source WO remains unsupported");
+        const auto nx=static_cast<std::size_t>(frame.grid.nx);
+        const auto ny=static_cast<std::size_t>(frame.grid.ny);
+        const auto n=nx*ny;
+        G16PostSlopeFields corrected;
+        corrected.end=frame.input.end;
+        corrected.u_mps=g47.slope.post_slope_wind.u;
+        corrected.v_mps=g47.slope.post_slope_wind.v;
+        if(corrected.u_mps.size()!=9*n||
+           corrected.v_mps.size()!=9*n)
+            throw std::logic_error("G48 incomplete native source post-SLOPE");
+        corrected.observation_weight.assign(9*n,1.f);
+        corrected.ub_west_east_mps.resize(18*ny);
+        corrected.vb_south_north_mps.resize(18*nx);
+        for(std::size_t k=0;k<9;++k) {
+            for(std::size_t j=0;j<ny;++j) {
+                const auto row=k*n+j*nx,face=k*2*ny+j;
+                corrected.ub_west_east_mps[face]=corrected.u_mps[row];
+                corrected.ub_west_east_mps[face+ny]=corrected.u_mps[row+nx-1];
+            }
+            for(std::size_t i=0;i<nx;++i) {
+                const auto row=k*n+i,face=k*2*nx+i;
+                corrected.vb_south_north_mps[face]=corrected.v_mps[row];
+                corrected.vb_south_north_mps[face+nx]=
+                    corrected.v_mps[row+(ny-1)*nx];
+            }
+        }
+        shared.provide_post_slope(std::move(corrected));
+        shared.provide_selected_diagi_after_wind1(merged);
+        const auto inter2=shared.run(
+            p6::NativeHourStage::DiagnoInter2,frame);
+        if(!inter2.completed||
+           inter2.source!=p6::NativeHourSource::NativeCpp||
+           !shared.selected_result().inter2_complete)
+            throw std::logic_error(
+                "G48 original-source real INTER2 candidate not computed");
+        result.firsthour_inter2_u_unverified=
+            shared.selected_result().blended_u.component_mps;
+        result.firsthour_inter2_v_unverified=
+            shared.selected_result().blended_v.component_mps;
+        if(result.firsthour_inter2_u_unverified.size()!=9*n||
+           result.firsthour_inter2_v_unverified.size()!=9*n)
+            throw std::logic_error("G48 incomplete native full-grid INTER2");
+        result.firsthour_inter2_candidate_unverified=true;
+    }
     result.source_p5_raw_wind_unchanged=true;
     result.native_shared_g16_sparse_wind1_equal_to_g42=true;
     return result;
