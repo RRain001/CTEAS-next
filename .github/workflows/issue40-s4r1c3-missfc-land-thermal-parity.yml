@@ -42,6 +42,10 @@ on:
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g58_real_noaa_ipgt_irh.hpp'
       - 'native_cpp/modules/p6_calmet/src/p6g_g58_real_noaa_ipgt_irh_main.cpp'
       - 'scripts/s4/s4r1c8j_compare_noaa_ipgt_irh.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g59_real_noaa_firsthour_45file.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g59_real_noaa_firsthour_45file_main.cpp'
+      - 'scripts/s4/s4r1c8k_compare_native_onehour_p6f45.py'
+      - 'docs/plans/ISSUE40_S4R1C8K_NATIVE_NOAA_FIRSTHOUR_P6F45_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8J_NATIVE_NOAA_IPGT_IRH_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8I_NATIVE_FIRSTHOUR_43_REAL_P6F_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8H_NATIVE_TEMP3D_20261022.md'
@@ -1989,6 +1993,43 @@ jobs:
             "$root/evidence/independent-noaa-ipgt-irh-original-vs-native.log"
           grep -Fx 'S4R1C8J_FULL_P6F_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-noaa-ipgt-irh-original-vs-native.log"
+      - name: Emit genuine source native first-hour CALMET DAT 2.1 45 records and audit static plus numeric
+        shell: bash
+        timeout-minutes: 40
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8k"
+          mkdir -p "$root/evidence"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g59_real_noaa_firsthour_p6f45
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g59_real_noaa_firsthour_p6f45"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --authentic-noaa-firsthour-45file-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-noaa-onehour-calmet.dat" \
+            > "$root/evidence/native-g59-stdout.log" \
+            2> "$root/evidence/native-g59-stderr.log" || {
+              tail -n 95 "$root/evidence/native-g59-stderr.log"
+              exit 1
+            }
+          grep -F 'S4R1C8K_REAL_NOAA_NATIVE_P6F_45FILE=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g59-stderr.log"
+          python3 -m scripts.s4.s4r1c8k_compare_native_onehour_p6f45 \
+            --original "$RUNNER_TEMP/s4j/original-real-two-ss-case/run/met/met.dat" \
+            --native "$root/native-noaa-onehour-calmet.dat" \
+            --native-log "$root/evidence/native-g59-stderr.log" \
+            --accepted43 "$RUNNER_TEMP/s4r1c8i/evidence/independent-native-43real-numeric.json" \
+            --accepted2 "$RUNNER_TEMP/s4r1c8j/evidence/independent-noaa-ipgt-irh-original-vs-native.json" \
+            --report "$root/evidence/independent-full-noaa-onehour-p6f45.json" \
+            | tee "$root/evidence/independent-full-noaa-onehour-p6f45.log"
+          grep -Fx 'S4R1C8K_NATIVE_REAL_NOAA_P6F45=PASS_SCOPED_NATIVE_NOAA_45_RECORD_FIRSTHOUR_FILE' \
+            "$root/evidence/independent-full-noaa-onehour-p6f45.log"
+          grep -Fx 'S4R1C8K_45_RECORD_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-full-noaa-onehour-p6f45.log"
+          grep -Fx 'S4R1C8K_G14_SIXHOUR_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-full-noaa-onehour-p6f45.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -2016,6 +2057,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8h/evidence/
             ${{ runner.temp }}/s4r1c8i/evidence/
             ${{ runner.temp }}/s4r1c8j/evidence/
+            ${{ runner.temp }}/s4r1c8k/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
