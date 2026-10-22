@@ -1,0 +1,34 @@
+name: Issue40 S4-R1c7b real sparse STHEOR targeted build gate
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4r1c7b-native-stheor-build.yml'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c3_station_diagi.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g23_file_backed_stheor_inter2.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g48_real_sparse_stheor.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g48_real_sparse_stheor_main.cpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'scripts/s4/s4r1c7b_compare_sparse_native_stheor.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-source-stheor-build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Targeted original-physics G48 compilation, no source outputs accepted
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet -B "$RUNNER_TEMP/s4r1c7b-build" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-12
+          cmake --build "$RUNNER_TEMP/s4r1c7b-build" --parallel 2 \
+            --target cteas_p6g_g48_real_sparse_stheor
+          python3 -m py_compile scripts/s4/s4r1c7b_compare_sparse_native_stheor.py
+          echo 'S4R1C7B_REAL_SPARSE_STHEOR_COMPILE=PASS_SOFTWARE_ONLY'
+          echo 'S4R1C7B_REAL_ORIGINAL_NATIVE_STATION_NUMERIC=NOT_RUN'
+          echo 'S4R1C7B_G23_G24_G26_P7=NOT_ACCEPTED'

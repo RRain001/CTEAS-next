@@ -1246,3 +1246,16 @@ else()
   target_compile_options(cteas_p6g_g47_real_water_post_slope
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c7b: real P5 sparse SS original STHEOR station kernel reuse after G47.
+# Test-only: not full G23 INTER2, G24 final wind, COMP or P7.
+add_executable(cteas_p6g_g48_real_sparse_stheor
+               src/p6g_g48_real_sparse_stheor_main.cpp)
+target_link_libraries(cteas_p6g_g48_real_sparse_stheor
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g48_real_sparse_stheor PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g48_real_sparse_stheor
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

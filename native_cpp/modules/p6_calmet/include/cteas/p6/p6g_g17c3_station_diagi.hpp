@@ -43,7 +43,8 @@ inline std::vector<G17C3StationDiagi> selected_station_diagi_from_previous_comp(
     const MultiHourFrame& frame,
     const G17B4TwoPassSurfvar& surfvar,
     const G17CSelectedHeatResult& heat,
-    const G17C3StationControls& ctrl) {
+    const G17C3StationControls& ctrl,
+    bool explicitly_original_sparse_surface_wind=false) {
     using namespace std::chrono;
     const auto& grid=frame.grid;
     const auto& deck=frame.stations;
@@ -86,6 +87,12 @@ inline std::vector<G17C3StationDiagi> selected_station_diagi_from_previous_comp(
     for(std::size_t i=0;i<deck.surface.size();++i) {
         const auto& station=deck.surface[i];
         const auto& obs=frame.surface.by_station[i];
+        // Original actual sparse SURF: a genuinely missing observed wind
+        // contributes no STHEOR/SIMILT station column. Keep the original
+        // ordinal, site geometry and P5 mask; never turn it into calm zero.
+        // Only an explicit research opt-in may skip source-invalid winds.
+        if(!obs.wind_valid&&explicitly_original_sparse_surface_wind)
+            continue;
         const auto upper_id=ctrl.upper_ordinal_for_surface[i];
         if(upper_id>=deck.upper.size()||
            frame.upper[upper_id].station_id!=deck.upper[upper_id].id||
