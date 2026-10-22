@@ -75,6 +75,7 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_preview_uses_committed_state=false;
     bool hour2_raw_source_admission_verified=false;
     bool hour2_firsthour_replay_rejected_atomically=false;
+    bool hour2_prepdi_stage0_staged_preflight_only=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -310,6 +311,43 @@ g65_real_noaa_firsthour_atomic_commit(
         throw std::logic_error(
             "G65 hour-two unsupported physics failed closed/altered hour-one state");
 
+    // G18E4 genuine hour-two PREPDI stage zero is already reusable:
+    // evaluate authentic AA/BB upper buffers and per-US CGAMMA against
+    // scheduler-owned hour-one ZI/ZICONV/DPTT and committed clocks.
+    // Do not call any remaining second-hour physics stage, and NEVER
+    // publish this stage-zero-only station-clock candidate.
+    auto hour2_live=scheduler.preview_next_hour();
+    G18E4SelectedPrepdiStageAdapter second_prepdi(
+        scheduler,clocks,source.original_metinp);
+    second_prepdi.run_selected(
+        p6::kHefeiOriginalStageOrder[0],hour2_live,true);
+    const auto& second_upper=second_prepdi.selected_upper_for(hour2_live);
+    const auto& second_gamma=second_prepdi.selected_gamma_for(hour2_live);
+    if(!second_prepdi.staged()||second_prepdi.published()||
+       second_upper.end!=hour2.input.end||
+       second_gamma.end!=hour2.input.end||
+       second_gamma.hour_index!=1||
+       second_upper.station_ids.size()!=source.stations.upper.size()||
+       second_gamma.station_ids!=second_upper.station_ids||
+       second_upper.physical_aa_index.size()!=source.stations.upper.size()||
+       second_upper.physical_bb_index.size()!=source.stations.upper.size()||
+       second_gamma.candidate.size()!=source.stations.upper.size()||
+       second_gamma.lapse.size()!=source.stations.upper.size())
+        throw std::logic_error(
+            "G65 authentic hour-two AA/BB/CGAMMA PREPDI stage-zero invalid");
+    // Preflight is allowed while G14 is at committed hour 1; publishing
+    // is NOT allowed because the remaining 16 stages and P6F are absent.
+    second_prepdi.require_publishable_before_g14_commit(hour2_live);
+    if(scheduler.completed_hours()!=1||
+       second_prepdi.published()||
+       clocks.latest_upper_hour()!=first_end||
+       clocks.latest_gamma_hour()!=first_end||
+       !g65_equal_real4_bits(scheduler.committed_memory().zi_m,committed.zi_m)||
+       !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,committed.ziconv_m)||
+       !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,committed.dptt_k))
+        throw std::logic_error(
+            "G65 PREPDI-only hour-two stage prematurely published G14/clocks");
+
     G65NoaaFirstHourCommitReceipt receipt;
     receipt.end=first_end;
     receipt.committed_memory=committed;
@@ -321,6 +359,7 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_preview_uses_committed_state=true;
     receipt.hour2_raw_source_admission_verified=true;
     receipt.hour2_firsthour_replay_rejected_atomically=true;
+    receipt.hour2_prepdi_stage0_staged_preflight_only=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
