@@ -9,6 +9,7 @@
 #include "cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
 #include "cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp"
 #include "cteas/p6/p6g_g43_comp_missfc_source.hpp"
+#include "cteas/p6/p6g_g47_real_water_post_slope.hpp"
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -29,6 +30,7 @@ struct G62RealNoaaFirstHourMemorySeed {
     bool g14_wind1_source_native_bitwise_verified=false;
     bool g14_fradj_source_native_bitwise_verified=false;
     bool g14_source_missfc_original_wind_untouched=false;
+    bool g14_water_thermal_slope_bitwise_verified=false;
     bool g14_17_stage_transaction_committed=false;
     bool station_clocks_published=false;
     bool second_hour_prior_state_consumed=false;
@@ -135,6 +137,43 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        live_fradj.temperature_after_k.size()!=n)
         throw std::logic_error(
             "G26 same-frame NOAA G21 FRADJ differs from G41 source parity");
+    // Stages 3..6 preserve the original G14 order and re-use accepted
+    // G39 WATER HEATFX/ELUSTR plus original G22 SLOPE kernel. These
+    // four checkpoints are the same live frame as PREPDI/WIND1/FRADJ.
+    // G47 provides an independent *native/source* cross-path, not a
+    // Fortran oracle and never becomes the actor's input.
+    for(std::size_t k=3;k<=6;++k)
+        g14_diagno.run_selected(p6::kHefeiOriginalStageOrder[k],frame,true);
+    const auto& live_thermal=
+        g14_diagno.selected_source_water_thermal_after_stage(frame);
+    const auto independent_thermal=
+        g47_actual_noow_water_after_elustr_slope(paths,true);
+    const auto& g47=independent_thermal.thermal.native_heat;
+    if(live_thermal.end!=frame.input.end||
+       independent_thermal.end!=frame.input.end||
+       !real4_equal(live_thermal.heat.temperature_k,
+                    g47.heat.temperature_k)||
+       !real4_equal(live_thermal.heat.density_kg_m3,
+                    g47.heat.density_kg_m3)||
+       !real4_equal(live_thermal.elustr.qh_wm2,
+                    g47.elustr.qh_wm2)||
+       !real4_equal(live_thermal.elustr.ustar_mps,
+                    g47.elustr.ustar_mps)||
+       !real4_equal(live_thermal.elustr.el_m,
+                    g47.elustr.el_m)||
+       !real4_equal(live_thermal.post_slope_wind.u,
+                    independent_thermal.slope.post_slope_wind.u)||
+       !real4_equal(live_thermal.post_slope_wind.v,
+                    independent_thermal.slope.post_slope_wind.v)||
+       live_thermal.heat.temperature_k.size()!=n||
+       live_thermal.heat.density_kg_m3.size()!=n||
+       live_thermal.elustr.qh_wm2.size()!=n||
+       live_thermal.elustr.ustar_mps.size()!=n||
+       live_thermal.elustr.el_m.size()!=n||
+       live_thermal.post_slope_wind.u.size()!=9*n||
+       live_thermal.post_slope_wind.v.size()!=9*n)
+        throw std::logic_error(
+            "G26 same-frame NOAA G22 thermal/SLOPE differs from source G47");
     if(frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.source.surface.hourly.size()!=6||
@@ -144,7 +183,7 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        g14_source.grid.landuse!=source.source.grid.landuse||
        g14_source.stations.surface.size()!=source.source.stations.surface.size()||
        g14_source.stations.upper.size()!=source.source.stations.upper.size()||
-       g14_diagno.selected_checkpoints()!=3||
+       g14_diagno.selected_checkpoints()!=7||
        g14_diagno.source_diagno_ready()||
        g14_diagno.clocks_published()||
        station_clocks.has_published_hour()||
@@ -216,6 +255,7 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     result.g14_wind1_source_native_bitwise_verified=true;
     result.g14_fradj_source_native_bitwise_verified=true;
     result.g14_source_missfc_original_wind_untouched=true;
+    result.g14_water_thermal_slope_bitwise_verified=true;
     return result;
 }
 } // namespace cteas::calmet::p6g

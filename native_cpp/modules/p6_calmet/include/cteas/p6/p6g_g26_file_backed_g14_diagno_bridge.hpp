@@ -219,6 +219,22 @@ public:
         verify_frame(frame);
         return *g21_;
     }
+    // S4-R1c8p actual mixed-WATER G22 HEATFX/AIRDEN/ELUSTR/SLOPE
+    // native result from the same G14 frame. No G23 or COMP hour was
+    // executed. The existing C2 all-LAND physics remains unchanged.
+    [[nodiscard]] const G22SelectedThermalSlope& selected_source_water_thermal_after_stage(
+        const MultiHourFrame& frame) const {
+        if(phase_<7||!g22_||!source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=source_end_||
+           frame.next.zi_m!=previous_.zi_m||
+           frame.next.ziconv_m!=previous_.ziconv_m||
+           frame.next.dptt_k!=previous_.dptt_k)
+            throw std::logic_error(
+                "G26 source WATER thermal not from same live G14 stage 6");
+        verify_frame(frame);
+        return *g22_;
+    }
     [[nodiscard]] unsigned selected_checkpoints() const noexcept {return phase_;}
     [[nodiscard]] bool source_diagno_ready() const noexcept {
         return phase_==12&&g24_.has_value()&&g23_.has_value()&&

@@ -5,6 +5,7 @@
 // No original multi-station full-hour or original-vendor 45-field acceptance.
 #include "cteas/p6/p6g_g21_file_backed_fradj.hpp"
 #include "cteas/p6/p6g_g17c2_elustr_handoff.hpp"
+#include "cteas/p6/p6g_g39_selected_water_thermal_reference.hpp"
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -129,7 +130,8 @@ inline G22SelectedThermalSlope g22_selected_source_thermal_slope(
     // Reconstruct the two *existing* source SURFVAR stage adapters on the
     // same observed surface hour; reject any caller-supplied fake TEMP2D.
     G17B4TwoPassSurfvar surfvar(
-        grid,live.stations,source.surface,live.surface,source.surface_controls);
+        grid,live.stations,source.surface,live.surface,
+        source.surface_controls,source.research_noow_water_source_only);
     surfvar.after_wind1_before_fradj(
         live.input.end,original_wind1.u,original_wind1.v);
     surfvar.after_fradj_before_heatfx(
@@ -141,6 +143,45 @@ inline G22SelectedThermalSlope g22_selected_source_thermal_slope(
        surfvar.final_temperature()!=fradj.temperature_after_k)
         throw std::invalid_argument(
             "G22 source twice-SURFVAR mismatch: cannot inject thermal fixture");
+
+    if(source.research_noow_water_source_only) {
+        // S4-R1c8p: first-hour G38 WATER source admission only. Use the
+        // already source-verified G39 HEATFX/AIRDEN/ELUSTR physical
+        // kernels on the EXACT current G14 frame, then unchanged G22
+        // original slope kernel. Never manufacture WATER USTAR/QH/EL.
+        // Keep C1/C2 all-LAND fallback byte-identical below.
+        if(live.hour_index!=0||grid.nx!=82||grid.ny!=85||
+           live.stations.surface.size()!=2||
+           live.stations.upper.size()!=1||
+           source.source_water_cells.size()!=63||
+           source.surface.hourly.size()!=6||
+           source.heat_inputs.initial_water_qh_wm2.size()!=n)
+            throw std::invalid_argument(
+                "G22 unvalidated mixed-WATER hour/station/GEO source path");
+        const float zm=0.5f*(live.source_controls->zface_m[0]+
+                             live.source_controls->zface_m[1]);
+        const auto selected=g39_original_noow_water_postfradj_thermal_reference(
+            grid,live.stations,live.surface,surfvar,
+            fradj.corrected_wind,source.original_metinp,zm,true);
+        if(selected.selected_original_water_cells!=63||
+           selected.water_ustar_el_zi_ready||
+           selected.g22_g24_wind_ready||
+           selected.g14_g26_production_ready||
+           selected.heat.end!=live.input.end||
+           selected.elustr.end!=live.input.end)
+            throw std::logic_error(
+                "G22 real WATER source G39 thermal branch unexpectedly promoted");
+        const auto slope=g22_original_slope_after_elustr(
+            grid,*live.source_controls,source.original_metinp,
+            fradj.corrected_wind,selected.heat,selected.elustr,true);
+        G22SelectedThermalSlope result;
+        result.end=live.input.end;
+        result.heat=selected.heat;
+        result.elustr=selected.elustr;
+        result.post_slope_wind=slope.post_slope_wind;
+        result.changed_slope_components=slope.changed_slope_components;
+        return result;
+    }
 
     const auto heat_inputs=g18d3_source_hflux_inputs(
         grid,source.original_metinp,true);
