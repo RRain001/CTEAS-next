@@ -11,6 +11,7 @@
 #include "cteas/p6/p6g_g18c1_avemix.hpp"
 #include "cteas/p6/p6g_g18d6_station_upper_assignment.hpp"
 #include "cteas/p6/p6g_g18d3_heat_source_defaults.hpp"
+#include "cteas/p6/p6g_g38_selected_noow_water_hflux_source.hpp"
 #include "cteas/p6/p6g_g17b4_iavet_two_pass.hpp"
 #include <cmath>
 #include <fstream>
@@ -54,7 +55,11 @@ struct G19FileBackedCase : G19SourceClockCase {
     std::vector<std::size_t> stheor_upper_ordinal_for_surface;
     G17B4SurfaceControls surface_controls;
     G17CSelectedHeatInputs heat_inputs;
-
+    // Explicit research-only source admission for original NOWSTA=0 WATER.
+    // G26/G26B stages still require independent WATER physics admission;
+    // passing this loader NEVER implies a completed native G14 hour.
+    bool research_noow_water_source_only=false;
+    std::vector<std::size_t> source_water_cells;
 };
 
 inline double g19_read_real_control(
@@ -157,7 +162,8 @@ inline G19SourceClockCase g19_load_source_clock_only(
 // Existing production/test-selected admission, unchanged physical branch:
 // source-only case is NOT implicitly convertible to G19FileBackedCase.
 inline G19FileBackedCase g19_load_original_source_case(
-    const G19SourceFilePaths& paths) {
+    const G19SourceFilePaths& paths,
+    bool explicit_noow_water_source_research_only=false) {
     auto input=g19_load_source_clock_only(paths);
     G19FileBackedCase result;
     static_cast<G19SourceClockCase&>(result)=std::move(input);
@@ -177,8 +183,18 @@ inline G19FileBackedCase g19_load_original_source_case(
             "G19B source SURFVAR requires accepted ISURFT=-1 observed path");
     result.surface_controls=
         parse_g17b4_surface_controls(result.original_metinp);
-    result.heat_inputs=g18d3_source_hflux_inputs(
-        result.grid,result.original_metinp,false);
+    if(explicit_noow_water_source_research_only) {
+        // G38 pins original HFLUX defaults and neutral-water zero-QH
+        // source mode. It does NOT issue permission to compute G26/G26B.
+        const auto source_water=g38_selected_noow_water_hflux_source_only(
+            result.grid,result.original_metinp,true);
+        result.heat_inputs=source_water.reference_heat;
+        result.source_water_cells=source_water.original_water_cell_indices;
+        result.research_noow_water_source_only=true;
+    } else {
+        result.heat_inputs=g18d3_source_hflux_inputs(
+            result.grid,result.original_metinp,false);
+    }
     if(result.stheor_upper_ordinal_for_surface.size()!=
        result.stations.surface.size())
         throw std::logic_error("G19B missing original STHEOR nearest-US station mapping");

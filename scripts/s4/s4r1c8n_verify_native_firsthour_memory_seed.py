@@ -109,6 +109,12 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
         raise ValueError("G62 source-native G54/G59/G60 authentic receipts stale")
     if ("S4R1C8N_NATIVE_HIDDEN_COMP_MEMORY=PRODUCED_UNVERIFIED"
             not in native_log.read_text()
+        or "G14_SOURCE_PREPDI=STAGED_UNPUBLISHED"
+            not in native_log.read_text()
+        or "G14_STAGE1_WIND1=G26_NATIVE_BITWISE_G42"
+            not in native_log.read_text()
+        or "G14_STAGE2_FRADJ=G26_NATIVE_BITWISE_G41"
+            not in native_log.read_text()
         or "G14_COMMIT_SECONDHOUR_G26_P7=NOT_ACCEPTED"
             not in native_log.read_text()):
         raise ValueError("G62 source only/NOT_ACCEPTED run attestation missing")
@@ -129,6 +135,9 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
         "real_ziconv_nonzero": sum(x != 0 for x in values[1]),
         "real_dptt_nonzero": sum(x != 0 for x in values[2]),
         "native_produced_from_original_intermediate": False,
+        "g14_source_prepdi_staged_unpublished": True,
+        "g14_selected_sparse_wind1_bitwise_matches_g42": True,
+        "g14_selected_water_fradj_bitwise_matches_g41": True,
         "g14_native_17stage_commit": "NOT_ACCEPTED",
         "station_upper_gamma_clocks_committed": "NOT_ACCEPTED",
         "actual_second_hour_physics": "NOT_RUN",
@@ -141,6 +150,9 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
     print("S4R1C8N_NATIVE_HIDDEN_STATE="+result["status"])
     print("S4R1C8N_BIT_EXACT_PLANES=3")
     print("S4R1C8N_REAL4_COMPARED="+str(3*NC))
+    print("S4R1C8O_G14_SOURCE_PREPDI=STAGED_UNPUBLISHED")
+    print("S4R1C8O_G14_WIND1_G42_BITWISE=PASS_125460_REAL4")
+    print("S4R1C8O_G14_FRADJ_G41_BITWISE=PASS_146370_REAL4")
     print("S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED")
     return True
 

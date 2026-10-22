@@ -78,8 +78,18 @@ public:
                 throw std::logic_error("G26 original source CGAMMA hour absent");
             break;
         case 1: {
-            profiles_.emplace(g20_file_backed_source_wind1_profiles(frame,true));
-            wind_.emplace(*profiles_);
+            if(source_.research_noow_water_source_only) {
+                // Real NOAA G38 source admission: the existing G20/G16
+                // shared native WIND1 kernel honors missing SS ordinal.
+                // The same live G14 frame and G18E4 staged clocks own it;
+                // this does NOT admit FRADJ/COMP/P6F or publish the hour.
+                profiles_.emplace(g20_source_wind1_profiles_kernel(
+                    frame,true,true));
+                wind_.emplace(*profiles_,true);
+            } else {
+                profiles_.emplace(g20_file_backed_source_wind1_profiles(frame,true));
+                wind_.emplace(*profiles_);
+            }
             const auto result=wind_->run(stage,frame);
             if(!result.completed||
                result.source!=p6::NativeHourSource::NativeCpp||
@@ -90,9 +100,19 @@ public:
         case 2:
             if(!wind_)
                 throw std::logic_error("G26 source WIND1 prerequisite missing");
-            g21_.emplace(g21_selected_original_file_fradj(
-                frame,source_,prepdi_.selected_gamma_for(frame),
-                wind_->selected_result().first_guess,true));
+            if(source_.research_noow_water_source_only) {
+                // The exact accepted G21 native FRADJ arithmetic, same
+                // committed-prior frame/G18E4 gamma/G16 WIND1; explicitly
+                // source-scoped G38 neutral-WATER SURFVAR, not all-LAND.
+                g21_.emplace(g21_original_source_clock_fradj_kernel(
+                    frame,source_,source_.surface_controls,
+                    prepdi_.selected_gamma_for(frame),
+                    wind_->selected_result().first_guess,true,true));
+            } else {
+                g21_.emplace(g21_selected_original_file_fradj(
+                    frame,source_,prepdi_.selected_gamma_for(frame),
+                    wind_->selected_result().first_guess,true));
+            }
             break;
         case 3:
             // G22 is physically ordered inside this one source-bound
@@ -160,6 +180,45 @@ public:
         ++phase_;
     }
 
+    // Read-only source-stage checkpoint. No detaching native G16 WIND1
+    // from the scheduler, and no shortcut from G42 output to G14 commit.
+    [[nodiscard]] const Wind1MultiField& selected_source_wind1_after_stage(
+        const MultiHourFrame& frame) const {
+        if(phase_<2||!wind_||!wind_->selected_result().wind1_complete||
+           !source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=source_end_||
+           frame.next.zi_m!=previous_.zi_m||
+           frame.next.ziconv_m!=previous_.ziconv_m||
+           frame.next.dptt_k!=previous_.dptt_k)
+            throw std::logic_error(
+                "G26 original NOAA sparse WIND1 not from same live G14 stage");
+        return wind_->selected_result().first_guess;
+    }
+    // Neither method publishes G14 hour/clock nor admits G26B COMP.
+    // The original G18E4 station-clock candidate remains staged only.
+    [[nodiscard]] const G18B4CGammaPrepared& selected_source_gamma_after_stage(
+        const MultiHourFrame& frame) const {
+        if(phase_<1||!source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=source_end_||
+           clocks_.has_published_hour())
+            throw std::logic_error("G26 staged NOAA PREPDI source gamma detached");
+        verify_frame(frame);
+        return prepdi_.selected_gamma_for(frame);
+    }
+    [[nodiscard]] const G21SelectedFradjFields& selected_source_fradj_after_stage(
+        const MultiHourFrame& frame) const {
+        if(phase_<3||!g21_||!source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=source_end_||
+           frame.next.zi_m!=previous_.zi_m||
+           frame.next.ziconv_m!=previous_.ziconv_m||
+           frame.next.dptt_k!=previous_.dptt_k)
+            throw std::logic_error("G26 live NOAA FRADJ not yet native-complete");
+        verify_frame(frame);
+        return *g21_;
+    }
     [[nodiscard]] unsigned selected_checkpoints() const noexcept {return phase_;}
     [[nodiscard]] bool source_diagno_ready() const noexcept {
         return phase_==12&&g24_.has_value()&&g23_.has_value()&&

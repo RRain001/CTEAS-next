@@ -36,6 +36,10 @@ int main(int argc,char** argv) {
         const auto state=p6g::g62_real_noaa_firsthour_memory_seed(paths,true);
         if(!state.source_native_hidden_memory_candidate||
            !state.firsthour_g59_45_fields_crosschecked||
+           !state.g14_source_preflight_only||
+           !state.g14_prepdi_clocks_staged_unpublished||
+           !state.g14_wind1_source_native_bitwise_verified||
+           !state.g14_fradj_source_native_bitwise_verified||
            state.g14_17_stage_transaction_committed||
            state.station_clocks_published||
            state.second_hour_prior_state_consumed||
@@ -66,6 +70,9 @@ int main(int argc,char** argv) {
             <<"S4R1C8N_NATIVE_HIDDEN_COMP_MEMORY=PRODUCED_UNVERIFIED "
               "FIRSTHOUR=TRUE CELLS=6970 PLANES=3 "
               "G59_SERIALIZED_ZI_BITWISE_IDENTICAL=TRUE "
+              "G14_SOURCE_PREPDI=STAGED_UNPUBLISHED "
+              "G14_STAGE1_WIND1=G26_NATIVE_BITWISE_G42 "
+              "G14_STAGE2_FRADJ=G26_NATIVE_BITWISE_G41 "
               "G14_COMMIT_SECONDHOUR_G26_P7=NOT_ACCEPTED\n";
         return 0;
     }catch(const std::exception& error){
