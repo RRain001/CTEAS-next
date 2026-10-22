@@ -1364,3 +1364,15 @@ else()
   target_compile_options(cteas_p6g_g55_real_comp_wstarr
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8h: full real NOAA source-only TEMP3D after native AVEMIX/WSTARR.
+add_executable(cteas_p6g_g56_real_comp_temp3d
+               src/p6g_g56_real_comp_temp3d_main.cpp)
+target_link_libraries(cteas_p6g_g56_real_comp_temp3d
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g56_real_comp_temp3d PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g56_real_comp_temp3d
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
