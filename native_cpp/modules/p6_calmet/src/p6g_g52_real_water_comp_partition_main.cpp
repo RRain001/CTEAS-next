@@ -56,12 +56,12 @@ int main(int argc,char** argv) {
             (void)p6g::g26b_real_water_comp_partition_source_only(
                 forged,frame,true);
         },"G52 changed observed original SS station identity");
-        auto wrong_frame=frame;
+        auto reclassified=source;
         const auto water=partition.original_water_cell_ordinals.front();
-        wrong_frame.grid.landuse[water]=10;
+        reclassified.source.grid.landuse[water]=10;
         deny([&] {
             (void)p6g::g26b_real_water_comp_partition_source_only(
-                source,wrong_frame,true);
+                reclassified,frame,true);
         },"G52 WATER reclassified into LAND source mapping");
         std::cout<<"S4R1C8C_REAL_NOAA_WATER_COMP_SOURCE_PARTITION=PASS "
                     "LAND=6907 WATER=63 SS=2 US=1\n"
