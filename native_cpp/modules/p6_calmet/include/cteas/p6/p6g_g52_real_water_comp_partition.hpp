@@ -52,8 +52,7 @@ g26b_real_water_comp_partition_source_only(
             "G26B original WATER COMP source partition detached from G41");
     for(std::size_t k=0;k<frame.stations.surface.size();++k)
         if(frame.stations.surface[k].id!=s.stations.surface[k].id||
-           frame.surface.by_station[k].station_id!=
-               s.surface.hourly.front().by_station[k].station_id)
+           s.surface.station_ids[k]!=s.stations.surface[k].id)
             throw std::invalid_argument(
                 "G26B original WATER COMP surface station identity changed");
     for(std::size_t k=0;k<frame.stations.upper.size();++k)
