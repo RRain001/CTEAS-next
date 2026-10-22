@@ -1376,3 +1376,15 @@ else()
   target_compile_options(cteas_p6g_g56_real_comp_temp3d
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8i: source-native first-hour P6F 43 REAL4 field preflight, no IPGT/IRH.
+add_executable(cteas_p6g_g57_real_p6f_43
+               src/p6g_g57_real_firsthour_p6f_43_main.cpp)
+target_link_libraries(cteas_p6g_g57_real_p6f_43
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g57_real_p6f_43 PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g57_real_p6f_43
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
