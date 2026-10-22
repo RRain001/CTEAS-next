@@ -124,6 +124,10 @@ inline G58RealNoaaIntegerOutput g58_source_noaa_p6f_ipgt_irh(
             if(stability[k]!=p6e::missing_pgt)
                 throw std::logic_error("G58 WATER spuriously classified as LAND");
             stability[k]=4;
+            // Original SURFVAR L12926-L13005 LDWAT=1 uses only
+            // overwater RH stations at WATER cells; NOWSTA=0 means
+            // zero eligible stations, assigning WATER RH=100 exactly.
+            humidity.rh2d_pct[k]=100;
             ++nw;
         }else{
             if(stability[k]<1||stability[k]>6)
