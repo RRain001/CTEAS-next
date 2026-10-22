@@ -29,6 +29,10 @@ struct G63RealNoaaG14MixhtStage12 {
     std::vector<float> comp_third_density_kgm3;
     std::vector<float> comp_third_ustar_mps;
     std::vector<float> comp_third_el_m;
+    // Original P6F writes neutral WATER USTAR/EL; retain the unmodified
+    // COMP-third fields above for independent G54 stage12 parity.
+    std::vector<float> p6f_water_reconciled_ustar_mps;
+    std::vector<float> p6f_water_reconciled_el_m;
     // P6F stage16 must use current COMP source SOLAR/SETCOM quantities;
     // never steal shortwave/PGT geometry from independent G54/G59.
     std::vector<float> comp_third_shortwave_wm2;
@@ -202,6 +206,24 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
     result.comp_third_density_kgm3=heat.density_kg_m3;
     result.comp_third_ustar_mps=elustr.ustar_mps;
     result.comp_third_el_m=elustr.el_m;
+    // mix.ustar/el were copied from live COMP-third and updated ONLY at
+    // source-identified WATER cells using G53 neutral physical arithmetic.
+    // These are native P6F output fields, NOT imported G54/G57/G59 values.
+    result.p6f_water_reconciled_ustar_mps=std::move(mix.ustar);
+    result.p6f_water_reconciled_el_m=std::move(mix.el);
+    if(result.p6f_water_reconciled_ustar_mps.size()!=n||
+       result.p6f_water_reconciled_el_m.size()!=n)
+        throw std::logic_error("G63 P6F WATER USTAR/EL invalid grid extents");
+    for(std::size_t i=0;i<n;++i) {
+        if(!encountered[i]) {
+            if(result.p6f_water_reconciled_ustar_mps[i]!=
+                   result.comp_third_ustar_mps[i]||
+               result.p6f_water_reconciled_el_m[i]!=
+                   result.comp_third_el_m[i])
+                throw std::logic_error(
+                    "G63 native P6F LAND USTAR/EL was unexpectedly modified");
+        }
+    }
     result.comp_third_shortwave_wm2=heat.shortwave_wm2;
     result.comp_third_sun_sine=heat.sun_sine;
     result.comp_third_nearest_surface=heat.nearest_surface;
