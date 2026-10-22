@@ -6,7 +6,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(cteas_p6a_contracts INTERFACE)
 target_include_directories(cteas_p6a_contracts INTERFACE
                            ${CMAKE_CURRENT_SOURCE_DIR}/include
-                           ${CMAKE_CURRENT_SOURCE_DIR}/p6e/include)
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6e/include
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
 # G6 independent arbitrary-NX/NY GEO reader; frozen p6_read_geo/50 is unchanged.
 add_executable(cteas_p6g_dynamic_geo_tests tests/p6g_dynamic_geo_tests.cpp)
 target_link_libraries(cteas_p6g_dynamic_geo_tests PRIVATE cteas_p6a_contracts)
