@@ -1400,3 +1400,16 @@ else()
   target_compile_options(cteas_p6g_g58_real_noaa_ipgt_irh
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8k: authentic source-native P6F firsthour 45-file,
+# deliberately separate from causal G14/P7 production.
+add_executable(cteas_p6g_g59_real_noaa_firsthour_p6f45
+               src/p6g_g59_real_noaa_firsthour_45file_main.cpp)
+target_link_libraries(cteas_p6g_g59_real_noaa_firsthour_p6f45
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g59_real_noaa_firsthour_p6f45 PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g59_real_noaa_firsthour_p6f45
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
