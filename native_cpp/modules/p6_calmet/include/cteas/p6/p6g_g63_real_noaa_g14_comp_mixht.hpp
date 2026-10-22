@@ -29,6 +29,11 @@ struct G63RealNoaaG14MixhtStage12 {
     std::vector<float> comp_third_density_kgm3;
     std::vector<float> comp_third_ustar_mps;
     std::vector<float> comp_third_el_m;
+    // P6F stage16 must use current COMP source SOLAR/SETCOM quantities;
+    // never steal shortwave/PGT geometry from independent G54/G59.
+    std::vector<float> comp_third_shortwave_wm2;
+    std::vector<float> comp_third_sun_sine;
+    std::vector<int> comp_third_nearest_surface;
     std::size_t valid_ss=0,missing_ss=0,water_cells=0,land_cells=0;
     bool source_native_comp_mixht_uncommitted=false;
 };
@@ -197,6 +202,9 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
     result.comp_third_density_kgm3=heat.density_kg_m3;
     result.comp_third_ustar_mps=elustr.ustar_mps;
     result.comp_third_el_m=elustr.el_m;
+    result.comp_third_shortwave_wm2=heat.shortwave_wm2;
+    result.comp_third_sun_sine=heat.sun_sine;
+    result.comp_third_nearest_surface=heat.nearest_surface;
     result.valid_ss=station.station_diagi.size();
     result.missing_ss=live.stations.surface.size()-result.valid_ss;
     result.water_cells=water.water.size();
