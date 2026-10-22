@@ -21,6 +21,7 @@ struct G54NativeLandMixhtCandidate {
     std::vector<float> zi_before_avemix_m,ziconv_before_avemix_m,dptt_before_avemix_k;
     std::vector<float> comp_third_heat_k,comp_third_qh_wm2;
     std::vector<float> comp_third_density_kgm3;
+    std::vector<float> comp_third_shortwave_wm2,comp_third_ustar_mps,comp_third_el_m;
     std::vector<float> zi_after_avemix_m,ziconv_after_avemix_m;
     bool native_avemix_candidate_unverified=false;
     std::size_t actual_land_count=0,actual_water_count=0;
@@ -211,6 +212,9 @@ inline G54NativeLandMixhtCandidate g54_real_noaa_firsthour_land_mixht(
     out.comp_third_heat_k=comp_heat.temperature_k;
     out.comp_third_qh_wm2=elustr.qh_wm2;
     out.comp_third_density_kgm3=comp_heat.density_kg_m3;
+    out.comp_third_shortwave_wm2=comp_heat.shortwave_wm2;
+    out.comp_third_ustar_mps=elustr.ustar_mps;
+    out.comp_third_el_m=elustr.el_m;
     out.actual_land_count=partition.original_land_cell_ordinals.size();
     out.actual_water_count=water.water.size();
     out.source_valid_diagi_count=accepted.native_valid_station.size();

@@ -36,6 +36,10 @@ on:
       - 'native_cpp/modules/p6_calmet/src/p6g_g56_real_comp_temp3d_main.cpp'
       - 'scripts/s4/s4r1c8h_original_comp_temp3d.py'
       - 'scripts/s4/s4r1c8h_compare_real_temp3d.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g57_real_firsthour_p6f_43.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g57_real_firsthour_p6f_43_main.cpp'
+      - 'scripts/s4/s4r1c8i_compare_noaa_43_real_p6f.py'
+      - 'docs/plans/ISSUE40_S4R1C8I_NATIVE_FIRSTHOUR_43_REAL_P6F_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8H_NATIVE_TEMP3D_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8G_COMP_WSTARR_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8F_NATIVE_REAL_MIXHT_AVEMIX_20261022.md'
@@ -1909,6 +1913,42 @@ jobs:
             "$root/evidence/independent-firsthour-native-original-temp3d.log"
           grep -Fx 'S4R1C8H_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-firsthour-native-original-temp3d.log"
+      - name: Compare source-native firsthour P6F 43 real fields to pristine original six-hour MET
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8i"
+          mkdir -p "$root/evidence"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g57_real_p6f_43
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g57_real_p6f_43"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --real-noaa-p6f-43real-firsthour-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-firsthour-43real.bin" \
+            > "$root/evidence/native-g57-stdout.log" \
+            2> "$root/evidence/native-g57-stderr.log" || {
+              tail -n 80 "$root/evidence/native-g57-stderr.log"
+              exit 1
+            }
+          grep -F 'S4R1C8I_REAL_NOAA_NATIVE_P6F_REAL_FIELDS=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g57-stderr.log"
+          python3 -m scripts.s4.s4r1c8i_compare_noaa_43_real_p6f \
+            --original "$RUNNER_TEMP/s4j/original-real-two-ss-case/run/met/met.dat" \
+            --native "$root/native-firsthour-43real.bin" \
+            --log "$root/evidence/native-g57-stderr.log" \
+            --receipt "$RUNNER_TEMP/s4r1c8h/evidence/original-sixhour-temp3d-report.json" \
+            --report "$root/evidence/independent-native-43real-numeric.json" \
+            | tee "$root/evidence/independent-native-43real-numeric.log"
+          grep -Fx 'S4R1C8I_REAL_NOAA_NATIVE_43REAL=PASS_SOURCE_SCOPED_REAL_NOAA_NATIVE_P6F_43_REAL_FIELDS' \
+            "$root/evidence/independent-native-43real-numeric.log"
+          grep -Fx 'S4R1C8I_43REAL_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-native-43real-numeric.log"
+          grep -Fx 'S4R1C8I_45FIELD_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-native-43real-numeric.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1934,6 +1974,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8f/evidence/
             ${{ runner.temp }}/s4r1c8g/evidence/
             ${{ runner.temp }}/s4r1c8h/evidence/
+            ${{ runner.temp }}/s4r1c8i/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
