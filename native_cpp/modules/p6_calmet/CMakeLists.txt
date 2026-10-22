@@ -1314,3 +1314,16 @@ else()
   target_compile_options(cteas_p6g_g51_real_noaa_comp_third
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8c: only true G41 source partition for WATER COMP, no physical stages.
+add_executable(cteas_p6g_g52_real_water_comp_partition
+               src/p6g_g52_real_water_comp_partition_main.cpp)
+target_link_libraries(cteas_p6g_g52_real_water_comp_partition
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g52_real_water_comp_partition
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g52_real_water_comp_partition
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
