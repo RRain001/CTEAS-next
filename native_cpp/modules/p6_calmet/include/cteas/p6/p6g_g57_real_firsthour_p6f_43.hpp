@@ -45,7 +45,7 @@ inline G57FirstHour43Real g57_noaa_real_43_output_fields(
     const auto n=static_cast<std::size_t>(source.source.grid.nx)*
                  static_cast<std::size_t>(source.source.grid.ny);
     if(n!=82U*85U||source.source.grid.nx!=82||
-       source.source.grid.ny!=85||wind.end!=mixed.end||
+       source.source.grid.ny!=85||g24.end!=mixed.end||
        wstar.end!=mixed.end||temp.end!=mixed.end||
        water.end!=mixed.end||wind.missing_wind_skipped!=1||
        wind.native_valid_station.size()!=1||
