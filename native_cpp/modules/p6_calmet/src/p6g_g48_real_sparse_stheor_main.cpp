@@ -16,6 +16,7 @@ int main(int argc,char** argv) {
         p6g::G19SourceFilePaths paths{argv[2],argv[3],argv[4],{argv[5]}};
         const auto native=p6g::g48_real_sparse_stheor_first_hour(paths,true);
         if(!native.source_p5_raw_wind_unchanged||
+           !native.native_shared_g16_sparse_wind1_equal_to_g42||
            native.native_g23_inter2_or_g26_ready||
            native.native_valid_station.size()!=1||
            native.missing_wind_skipped!=1)
@@ -50,6 +51,9 @@ int main(int argc,char** argv) {
                          <<site.station_flux.friction_velocity_mps<<'\n';
             }
         }
+        std::cerr<<"S4R1C7E_GENUINE_NOAA_SHARED_G16_WIND1_EQUALS_G42=PASS_FIRSTHOUR_9LEVEL_SCOPED "
+                    "RAW_P5_WIND=UNCHANGED DEFAULT_G16_MISSING_WIND=DENIED "
+                    "G23_INTER2_G26_P7=NOT_ACCEPTED\n";
         std::cerr<<"S4R1C7B_GENUINE_2SS1US_FIRSTHOUR_NATIVE_STHEOR=PRODUCED_UNVERIFIED "
                     "VALID_SS=1 SKIPPED_MISSING_SS=1 P5_RAW_UNCHANGED=TRUE "
                     "G23_INTER2_G24_G26_P7=NOT_ACCEPTED\n";
