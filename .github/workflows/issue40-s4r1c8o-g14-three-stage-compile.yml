@@ -1,0 +1,43 @@
+name: Issue40 S4-R1c8o G14 NOAA PREPDI WIND1 FRADJ compile and negative gate
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/issue40-s4r1c8o-g14-three-stage-compile.yml'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g19_file_backed_case.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g62_real_noaa_firsthour_memory_seed_main.cpp'
+      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
+      - 'scripts/s4/s4r1c8n_verify_native_firsthour_memory_seed.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-source-only-three-stage-cxx-compile:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact proposed commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile genuine G26/G19 G62 first three stages without any Fortran source inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S native_cpp/modules/p6_calmet \
+            -B "$RUNNER_TEMP/g14-noaa-three-stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/g14-noaa-three-stage" \
+            --parallel 2 --target cteas_p6g_g62_real_noaa_firsthour_memory
+          test -x "$RUNNER_TEMP/g14-noaa-three-stage/cteas_p6g_g62_real_noaa_firsthour_memory"
+          echo 'S4R1C8O_SAME_G14_NOAA_THREE_STAGE_CXX_BUILD=PASS'
+      - name: Reject forged native hidden state while original is unavailable
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m scripts.s4.s4r1c8n_verify_native_firsthour_memory_seed \
+            --selftest | tee "$RUNNER_TEMP/g14-noaa-negative-tests.log"
+          grep -Fx 'S4R1C8N_HIDDEN_STATE_NEGATIVE_TESTS=PASS' \
+            "$RUNNER_TEMP/g14-noaa-negative-tests.log"
+          echo 'S4R1C8O_143H_C1_C2_FULL_TESTS=MANUAL_ONLY'
+          echo 'S4R1C8O_G14_NEXT_HOUR_COMMITTED=NOT_ACCEPTED'
