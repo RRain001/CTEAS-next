@@ -1721,7 +1721,7 @@ jobs:
             --native-log "$root/evidence/native-g54-stderr.log" \
             --report "$root/evidence/independent-native-original-mixht-avemix.json" \
             | tee "$root/evidence/independent-native-original-mixht-avemix.log"
-          grep -Fx 'S4R1C8F_NATIVE_SOURCE_MIXHT=PASS_SCOPED_REAL_NOAA_NATIVE_MIXHT_BEFORE_AVEMIX' \
+          grep -Fx 'S4R1C8F_NATIVE_SOURCE_MIXHT=PASS_SCOPED_REAL_NOAA_NATIVE_MIXHT_AND_AVEMIX' \
             "$root/evidence/independent-native-original-mixht-avemix.log"
           grep -Fx 'S4R1C8F_MIXHT_ABOVE_TOLERANCE=0' \
             "$root/evidence/independent-native-original-mixht-avemix.log"
