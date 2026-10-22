@@ -1340,3 +1340,15 @@ else()
   target_compile_options(cteas_p6g_g53_real_g24_water_comp_neutral
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8f: real NOAA source-only LAND MIXHT then whole-grid AVEMIX.
+add_executable(cteas_p6g_g54_real_land_mixht
+               src/p6g_g54_real_land_mixht_main.cpp)
+target_link_libraries(cteas_p6g_g54_real_land_mixht
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g54_real_land_mixht PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g54_real_land_mixht
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

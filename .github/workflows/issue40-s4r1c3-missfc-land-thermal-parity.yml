@@ -25,6 +25,10 @@ on:
       - 'scripts/s4/s4r1c8d_compare_real_g24_water.py'
       - 'scripts/s4/s4r1c8e_original_mixht_avemix_stages.py'
       - 'scripts/s4/s4r1c8e_compare_native_water_handoff.py'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g54_real_land_mixht.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g54_real_land_mixht_main.cpp'
+      - 'scripts/s4/s4r1c8f_compare_firsthour_mixht.py'
+      - 'docs/plans/ISSUE40_S4R1C8F_NATIVE_REAL_MIXHT_AVEMIX_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8E_COMP_MIXHT_AVEMIX_STAGE_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8D_G24_NATIVE_WATER_NEUTRAL_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8C_REAL_WATER_G26B_PARTITION_20261022.md'
@@ -1687,6 +1691,42 @@ jobs:
             "$root/evidence/firsthour-g53-water-stage-handoff.log"
           grep -Fx 'S4R1C8E_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/firsthour-g53-water-stage-handoff.log"
+      - name: Independently compute native source MIXHT then AVEMIX and compare all original 6970 cell states
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8f"
+          mkdir -p "$root/evidence"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g54_real_land_mixht
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g54_real_land_mixht"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --real-noaa-firsthour-land-mixht-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-real-firsthour-mixht-avemix.bin" \
+            > "$root/evidence/native-g54-stdout.log" \
+            2> "$root/evidence/native-g54-stderr.log" || {
+              tail -n 95 "$root/evidence/native-g54-stderr.log"
+              exit 1
+            }
+          grep -F 'S4R1C8F_NATIVE_REAL_LAND_MIXHT=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g54-stderr.log"
+          python3 -m scripts.s4.s4r1c8f_compare_firsthour_mixht \
+            --original "$RUNNER_TEMP/s4r1c8e/original-comp-stage-writeonly-run/run/met/s4r1c8e-original-comp-stages.bin" \
+            --receipt "$RUNNER_TEMP/s4r1c8e/evidence/true-sixhour-before-after-mixht-avemix.json" \
+            --native "$root/native-real-firsthour-mixht-avemix.bin" \
+            --native-log "$root/evidence/native-g54-stderr.log" \
+            --report "$root/evidence/independent-native-original-mixht-avemix.json" \
+            | tee "$root/evidence/independent-native-original-mixht-avemix.log"
+          grep -Fx 'S4R1C8F_NATIVE_SOURCE_MIXHT=PASS_SCOPED_REAL_NOAA_NATIVE_MIXHT_AND_AVEMIX' \
+            "$root/evidence/independent-native-original-mixht-avemix.log"
+          grep -Fx 'S4R1C8F_MIXHT_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-native-original-mixht-avemix.log"
+          grep -Fx 'S4R1C8F_AVEMIX_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-native-original-mixht-avemix.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1709,6 +1749,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8c/evidence/
             ${{ runner.temp }}/s4r1c8d/evidence/
             ${{ runner.temp }}/s4r1c8e/evidence/
+            ${{ runner.temp }}/s4r1c8f/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
