@@ -1327,3 +1327,16 @@ else()
   target_compile_options(cteas_p6g_g52_real_water_comp_partition
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8d: source-only final NOAA G24 -> original neutral WATER G37/G35/G36
+add_executable(cteas_p6g_g53_real_g24_water_comp_neutral
+               src/p6g_g53_real_water_comp_neutral_main.cpp)
+target_link_libraries(cteas_p6g_g53_real_g24_water_comp_neutral
+                      PRIVATE cteas_p6a_contracts)
+if(MSVC)
+  target_compile_options(cteas_p6g_g53_real_g24_water_comp_neutral
+                         PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g53_real_g24_water_comp_neutral
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

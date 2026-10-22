@@ -20,6 +20,10 @@ on:
       - 'native_cpp/modules/p6_calmet/src/p6g_g51_real_noaa_comp_third_main.cpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g52_real_water_comp_partition.hpp'
       - 'native_cpp/modules/p6_calmet/src/p6g_g52_real_water_comp_partition_main.cpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g53_real_water_comp_neutral.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g53_real_water_comp_neutral_main.cpp'
+      - 'scripts/s4/s4r1c8d_compare_real_g24_water.py'
+      - 'docs/plans/ISSUE40_S4R1C8D_G24_NATIVE_WATER_NEUTRAL_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8C_REAL_WATER_G26B_PARTITION_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8B_COMP_THIRD_NOAA_20261022.md'
       - 'native_cpp/modules/p6_calmet/src/p6g_g50_real_noaa_g24_tail_main.cpp'
@@ -1517,6 +1521,94 @@ jobs:
             "$root/evidence/g52-real-original-comp-source-partition.log"
           grep -Fx 'S4R1C8C_WATER_MIXHT_AVEMIX_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/g52-real-original-comp-source-partition.log"
+      - name: Pin original source WATER neutral 63-cell six-hour trace independent of native G24
+        shell: bash
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8d"
+          mkdir -p "$root/evidence"
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          python3 -m scripts.s4.s4n_real_water_63cells_original_probe prepare \
+            --vendor "$vendor" \
+            --out "$root/original-water-writeonly.for" \
+            --receipt "$root/evidence/pinned-original-water-reference.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/original-water-writeonly.for" \
+            -o "$root/original-water-writeonly.x"
+          sha256sum "$root/original-water-writeonly.x" \
+            > "$root/evidence/original-water-writeonly-binary-sha256.txt"
+      - name: Verify untouched original vs WATER write-only six-hour MET binary and source 378 states
+        shell: bash
+        timeout-minutes: 40
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8d"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          scratch="$root/independent-original-water-sixhour-run"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4n-original-water-states.txt"
+          (cd "$scratch/run/met" && "$root/original-water-writeonly.x" met.inp) \
+            > "$root/evidence/original-water-sixhour-stdout.log" \
+            2> "$root/evidence/original-water-sixhour-stderr.log" || {
+              tail -n 80 "$root/evidence/original-water-sixhour-stdout.log"
+              tail -n 80 "$root/evidence/original-water-sixhour-stderr.log"
+              exit 1
+            }
+          python3 -m scripts.s4.s4n_real_water_63cells_original_probe verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --geo "$case/geo/makegeo/geo.dat" \
+            --met "$case/run/met/met.inp" \
+            --baseline "$baseline/run/met/met.dat" \
+            --instrumented "$scratch/run/met/met.dat" \
+            --trace "$scratch/run/met/s4n-original-water-states.txt" \
+            --receipt "$root/evidence/pinned-original-water-reference.json" \
+            --out "$root/evidence/original-378-water-sixhour-science.json" \
+            | tee "$root/evidence/original-378-water-sixhour-science.log"
+          grep -Fx 'S4N_TRUE_NOAA_ORIGINAL_63_WATER_CELLS_X_6H=378_VALUES_PASS_SCOPED' \
+            "$root/evidence/original-378-water-sixhour-science.log"
+          grep -Fx 'S4N_INSTRUMENTED_CALMET_45_FIELDS_BYTE_IDENTICAL_UNMODIFIED=PASS' \
+            "$root/evidence/original-378-water-sixhour-science.log"
+      - name: Compare real native G24 driven G37 G35 G36 to independently run WATER 63 first-hour states
+        shell: bash
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8d"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g53_real_g24_water_comp_neutral
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g53_real_g24_water_comp_neutral"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --actual-noaa-g24-neutral-water-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-firsthour-g24-water.csv" \
+            > "$root/evidence/native-g53-stdout.log" \
+            2> "$root/evidence/native-g53-stderr.log" || {
+              cat "$root/evidence/native-g53-stderr.log"; exit 1
+            }
+          grep -F 'S4R1C8D_REAL_NOAA_G24_TO_WATER=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g53-stderr.log"
+          python3 -m scripts.s4.s4r1c8d_compare_real_g24_water \
+            --original "$root/independent-original-water-sixhour-run/run/met/s4n-original-water-states.txt" \
+            --receipt "$root/evidence/original-378-water-sixhour-science.json" \
+            --native "$root/native-firsthour-g24-water.csv" \
+            --native-log "$root/evidence/native-g53-stderr.log" \
+            --report "$root/evidence/independent-actual-water-numeric.json" \
+            | tee "$root/evidence/independent-actual-water-numeric.log"
+          grep -Fx 'S4R1C8D_ORIGINAL_NATIVE_WATER=PASS_SCOPED_REAL_NOAA_G24_NATIVE_WATER_NEUTRAL' \
+            "$root/evidence/independent-actual-water-numeric.log"
+          grep -Fx 'S4R1C8D_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-actual-water-numeric.log"
+          grep -Fx 'S4R1C8D_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-actual-water-numeric.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1537,6 +1629,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8a/evidence/
             ${{ runner.temp }}/s4r1c8b/evidence/
             ${{ runner.temp }}/s4r1c8c/evidence/
+            ${{ runner.temp }}/s4r1c8d/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
