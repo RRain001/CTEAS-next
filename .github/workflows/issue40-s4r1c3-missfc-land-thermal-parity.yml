@@ -2075,12 +2075,12 @@ jobs:
           cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
             --target cteas_p6g_g62_real_noaa_firsthour_memory
           bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g62_real_noaa_firsthour_memory"
-          source="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
           "$bin" --real-noaa-firsthour-memory-only \
-            "$source/run/met/met.inp" \
-            "$source/geo/makegeo/geo.dat" \
-            "$source/run/met/surf.dat" \
-            "$source/run/met/up1.dat" \
+            "$case/run/met/met.inp" \
+            "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
             "$root/native-firsthour-hidden-comp-state.bin" \
             > "$root/evidence/native-g62-stdout.log" \
             2> "$root/evidence/native-g62-stderr.log" || {
