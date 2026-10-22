@@ -19,7 +19,7 @@ GRID=struct.Struct("<"+str(NC)+"f")
 RECORD=HEAD.size+GRID.size
 PINS={
   4740:"c --- compute convective velocity scale *** LAND CELLS ***",
-  4744:"          call wstarr(ziconv,qh,temp2d,rho,ilandu,iwat1,iwat2,nx,ny,",
+  4744:"         call wstarr(ziconv,qh,temp2d,rho,ilandu,iwat1,iwat2,nx,ny,",
   4745:"     1   wstar)",
   4750:"      endif",
 }
