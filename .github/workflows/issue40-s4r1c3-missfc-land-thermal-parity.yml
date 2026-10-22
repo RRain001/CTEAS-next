@@ -13,6 +13,10 @@ on:
       - 'scripts/s4/s4r1c7a_real_original_stheor_similt.py'
       - 'scripts/s4/s4r1c7c_original_sparse_inter2_reference.py'
       - 'scripts/s4/s4r1c7f_compare_real_native_inter2.py'
+      - 'scripts/s4/s4r1c8a_real_noaa_original_g24_tail.py'
+      - 'scripts/s4/s4r1c8a_compare_native_g24_tail.py'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g50_real_noaa_g24_tail_main.cpp'
+      - 'docs/plans/ISSUE40_S4R1C8A_G24_REAL_NOAA_20261022.md'
       - 'native_cpp/modules/p6_calmet/src/p6g_g49_real_sparse_inter2_main.cpp'
       - 'docs/plans/ISSUE40_S4R1C7F_ORIGINAL_NATIVE_INTER2_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C7C_ORIGINAL_SPARSE_INTER2_20261022.md'
@@ -1313,6 +1317,91 @@ jobs:
             "$root/evidence/independent-original-native-real-inter2.log"
           grep -Fx 'S4R1C7F_G24_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-original-native-real-inter2.log"
+      - name: Pin untouched original six-hour final DIAGNO G24 U V W DIV boundary oracle
+        shell: bash
+        timeout-minutes: 16
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8a"
+          mkdir -p "$root/evidence"
+          python3 -m scripts.s4.s4r1c8a_real_noaa_original_g24_tail selftest
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          python3 -m scripts.s4.s4r1c8a_real_noaa_original_g24_tail prepare \
+            --vendor "$vendor" \
+            --destination "$root/pinned-write-only-original-tail.for" \
+            --receipt "$root/evidence/pinned-original-g24-tail-prep.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/pinned-write-only-original-tail.for" \
+            -o "$root/pinned-write-only-original-tail.x"
+          sha256sum "$root/pinned-write-only-original-tail.x" \
+            > "$root/evidence/pinned-original-tail-binary-sha256.txt"
+      - name: Re-run real original 2SS1US six-hour tail and confirm pristine MET identical
+        shell: bash
+        timeout-minutes: 38
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8a"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-g24-tail-unchanged-run"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c8a-original-post-g24-tail.bin"
+          (cd "$scratch/run/met" && "$root/pinned-write-only-original-tail.x" met.inp) \
+            > "$root/evidence/original-g24-tail-stdout.log" \
+            2> "$root/evidence/original-g24-tail-stderr.log" || {
+              tail -n 70 "$root/evidence/original-g24-tail-stdout.log"
+              tail -n 70 "$root/evidence/original-g24-tail-stderr.log"
+              exit 1
+            }
+          python3 -m scripts.s4.s4r1c8a_real_noaa_original_g24_tail verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --pristine "$baseline/run/met/met.dat" \
+            --scratch "$scratch/run/met/met.dat" \
+            --trace "$scratch/run/met/s4r1c8a-original-post-g24-tail.bin" \
+            --report "$root/evidence/original-sixhour-post-g24-reference.json" \
+            | tee "$root/evidence/original-sixhour-g24-science.log"
+          grep -Fx 'S4R1C8A_GENUINE_ORIGINAL_6H_G24_TAIL=PASS_REFERENCE_ONLY' \
+            "$root/evidence/original-sixhour-g24-science.log"
+          grep -Fx 'S4R1C8A_ORIGINAL_6H45_MET=BYTE_IDENTICAL' \
+            "$root/evidence/original-sixhour-g24-science.log"
+      - name: Compare genuine NOAA native shared G24 against original full first-hour 3D tail
+        shell: bash
+        timeout-minutes: 26
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8a"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g50_real_noaa_g24_tail
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g50_real_noaa_g24_tail"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --real-noaa-firsthour-g24-only \
+            "$case/run/met/met.inp" "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            "$root/native-firsthour-g24.bin" \
+            > "$root/evidence/native-g50-stdout.log" \
+            2> "$root/evidence/native-g50-stderr.log" || {
+              cat "$root/evidence/native-g50-stderr.log"; exit 1
+            }
+          grep -F 'S4R1C8A_REAL_NOAA_NATIVE_G24=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g50-stderr.log"
+          python3 -m scripts.s4.s4r1c8a_compare_native_g24_tail \
+            --original "$root/original-g24-tail-unchanged-run/run/met/s4r1c8a-original-post-g24-tail.bin" \
+            --source-receipt "$root/evidence/original-sixhour-post-g24-reference.json" \
+            --native "$root/native-firsthour-g24.bin" \
+            --native-log "$root/evidence/native-g50-stderr.log" \
+            --report "$root/evidence/independent-firsthour-original-native-g24.json" \
+            | tee "$root/evidence/independent-firsthour-original-native-g24.log"
+          grep -Fx 'S4R1C8A_ORIGINAL_NATIVE_G24_REPORT=PASS_SCOPED_REAL_NOAA_ORIGINAL_NATIVE_G24_FIRST_HOUR' \
+            "$root/evidence/independent-firsthour-original-native-g24.log"
+          grep -Fx 'S4R1C8A_G24_ABOVE_TOLERANCE=0' \
+            "$root/evidence/independent-firsthour-original-native-g24.log"
+          grep -Fx 'S4R1C8A_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-firsthour-original-native-g24.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1330,6 +1419,7 @@ jobs:
             ${{ runner.temp }}/s4r1c7b/evidence/
             ${{ runner.temp }}/s4r1c7c/evidence/
             ${{ runner.temp }}/s4r1c7f/evidence/
+            ${{ runner.temp }}/s4r1c8a/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
