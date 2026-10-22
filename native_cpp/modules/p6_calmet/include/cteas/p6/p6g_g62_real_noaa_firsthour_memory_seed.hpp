@@ -35,6 +35,7 @@ struct G62RealNoaaFirstHourMemorySeed {
     bool g14_water_thermal_slope_bitwise_verified=false;
     bool g14_real_sparse_stheor_g24_bitwise_verified=false;
     bool g14_water_comp_mixht_stage12_bitwise_verified=false;
+    bool g14_water_comp_avemix_stage13_bitwise_verified=false;
     bool g14_17_stage_transaction_committed=false;
     bool station_clocks_published=false;
     bool second_hour_prior_state_consumed=false;
@@ -262,19 +263,34 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        frame.next.dptt_k!=frame.previous.dptt_k)
         throw std::logic_error(
             "G26B stage12 same G14 NOAA WATER+LAND MIXHT differs from native G54");
-    // Attempting 13 without implementation MUST fail with no G14 mutation.
-    bool stage13_denied=false;
-    try {
-        g14_comp.run_selected(p6::kHefeiOriginalStageOrder[13],frame,true);
-    } catch(const std::invalid_argument&) {
-        stage13_denied=true;
-    }
-    if(!stage13_denied||
+    // G26B stage 13 computes the actual original AVEMIX on the same
+    // live G14 frame and its uncommitted stage12 MIXHT candidate.
+    // Compare only afterwards to independently sourced G54; a detached
+    // G54 AVEMIX must never become the actor's initial physical field.
+    g14_comp.run_selected(p6::kHefeiOriginalStageOrder[13],frame,true);
+    const auto& live_ave=g14_comp.source_water_avemix_stage13(frame);
+    if(!real4_equal(live_ave.zi_m,standalone_mix.zi_after_avemix_m)||
+       !real4_equal(live_ave.ziconv_m,standalone_mix.ziconv_after_avemix_m)||
+       live_ave.zi_m.size()!=n||live_ave.ziconv_m.size()!=n||
        frame.next.zi_m!=frame.previous.zi_m||
        frame.next.ziconv_m!=frame.previous.ziconv_m||
        frame.next.dptt_k!=frame.previous.dptt_k)
         throw std::logic_error(
-            "G26B G14 original WATER unverified AVEMIX was accidentally admitted");
+            "G26B real native G14 AVEMIX does not match G54 post-COMP memory");
+    // Attempting stage 14 WSTARR before separate native source-admission
+    // must fail, without modifying the prior/next G14 physical memory.
+    bool stage14_denied=false;
+    try {
+        g14_comp.run_selected(p6::kHefeiOriginalStageOrder[14],frame,true);
+    } catch(const std::invalid_argument&) {
+        stage14_denied=true;
+    }
+    if(!stage14_denied||
+       frame.next.zi_m!=frame.previous.zi_m||
+       frame.next.ziconv_m!=frame.previous.ziconv_m||
+       frame.next.dptt_k!=frame.previous.dptt_k)
+        throw std::logic_error(
+            "G26B unaccepted G14 stage14 WSTARR improperly published");
     if(frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.source.surface.hourly.size()!=6||
@@ -359,6 +375,7 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     result.g14_water_thermal_slope_bitwise_verified=true;
     result.g14_real_sparse_stheor_g24_bitwise_verified=true;
     result.g14_water_comp_mixht_stage12_bitwise_verified=true;
+    result.g14_water_comp_avemix_stage13_bitwise_verified=true;
     return result;
 }
 } // namespace cteas::calmet::p6g
