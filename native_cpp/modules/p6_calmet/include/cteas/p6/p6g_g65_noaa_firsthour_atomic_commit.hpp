@@ -27,6 +27,9 @@ public:
 
     [[nodiscard]] p6::NativeHourStageResult run(
         p6::NativeHourStage stage,MultiHourFrame& frame) override {
+        if(frame.hour_index!=0)
+            throw std::logic_error(
+                "G65 first-hour source actor refuses cross-hour replay");
         if(cursor_>=p6::kHefeiOriginalStageOrder.size()||
            stage!=p6::kHefeiOriginalStageOrder[cursor_])
             throw std::logic_error("G65 17-stage G14 order/phase drift");
@@ -70,6 +73,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool rejected_precommit_rolled_back=false;
     bool committed_with_published_station_clocks=false;
     bool hour2_preview_uses_committed_state=false;
+    bool hour2_raw_source_admission_verified=false;
+    bool hour2_firsthour_replay_rejected_atomically=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -236,6 +241,75 @@ g65_real_noaa_firsthour_atomic_commit(
        !g65_equal_real4_bits(hour2.previous.dptt_k,committed.dptt_k))
         throw std::logic_error("G65 hour2 preview does not inherit G14 committed memory");
 
+    // Real second-hour source admission is separate from the UNSUPPORTED
+    // second-hour physics. G43 may repair only COMP's five non-wind
+    // meteorological fields, preserving the raw archive and all wind/precip.
+    const auto& hour2_raw=actual.source.surface.hourly.at(1);
+    if(hour2_raw.start!=first_end||
+       hour2_raw.end!=hour2.input.end||
+       hour2.input.end-first_end!=std::chrono::hours{1}||
+       hour2.surface.start!=hour2_raw.start||
+       hour2.surface.end!=hour2_raw.end||
+       hour2.surface.by_station.size()!=hour2_raw.by_station.size())
+        throw std::logic_error(
+            "G65 next-hour preview does not use actual NOAA hour-two source");
+    const auto repaired_hour2=g43_original_comp_missfc_source_only(
+        actual,hour2_raw,true);
+    if(!repaired_hour2.source_comp_missfc_complete||
+       repaired_hour2.original_raw.end!=hour2.input.end||
+       repaired_hour2.original_comp_resolved.end!=hour2.input.end)
+        throw std::logic_error("G65 genuine NOAA hour-two MISSFC unavailable");
+    for(std::size_t i=0;i<hour2_raw.by_station.size();++i) {
+        const auto& a=hour2_raw.by_station[i];
+        const auto& live=hour2.surface.by_station[i];
+        const auto& repaired_obs=
+            repaired_hour2.original_comp_resolved.by_station[i];
+        if(live.wind_valid!=a.wind_valid||
+           live.wind_speed_mps!=a.wind_speed_mps||
+           live.wind_direction_deg!=a.wind_direction_deg||
+           live.precipitation_code_valid!=a.precipitation_code_valid||
+           live.precip_code!=a.precip_code||
+           repaired_obs.wind_valid!=a.wind_valid||
+           repaired_obs.wind_speed_mps!=a.wind_speed_mps||
+           repaired_obs.wind_direction_deg!=a.wind_direction_deg||
+           repaired_obs.precipitation_code_valid!=a.precipitation_code_valid||
+           repaired_obs.precip_code!=a.precip_code)
+            throw std::logic_error(
+                "G65 authentic NOAA hour-two source wind/precip was imputed");
+    }
+    // Explicitly deny running the hour-zero-only G26/G63/G64 formulas
+    // against the hour-two frame, even with a valid committed hidden state.
+    // This is a negative safety test, NOT a stand-in for hour-two physics.
+    bool refused_replay=false;
+    try {
+        scheduler.advance_with_fresh_physics(
+            [&](const MultiHourFrame& next)
+                ->std::unique_ptr<MultiHourPhysics> {
+                if(next.hour_index!=1||next.input.end!=hour2.input.end)
+                    throw std::logic_error("G65 hour-two replay clock drift");
+                return std::make_unique<G65RealNoaaFirstHourActor>(
+                    scheduler,clocks,source,actual);
+            },
+            [](const MultiHourFrame&) {
+                throw std::logic_error(
+                    "G65 hour-two actor unexpectedly reached P6F precommit");
+            },
+            [](MultiHourPhysics&,
+               const UnifiedMultistationHourlyScheduler&) noexcept {});
+    }catch(const std::logic_error& e) {
+        if(std::string(e.what())!=
+           "G65 first-hour source actor refuses cross-hour replay")throw;
+        refused_replay=true;
+    }
+    if(!refused_replay||scheduler.completed_hours()!=1||
+       clocks.latest_upper_hour()!=first_end||
+       clocks.latest_gamma_hour()!=first_end||
+       !g65_equal_real4_bits(scheduler.committed_memory().zi_m,committed.zi_m)||
+       !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,committed.ziconv_m)||
+       !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,committed.dptt_k))
+        throw std::logic_error(
+            "G65 hour-two unsupported physics failed closed/altered hour-one state");
+
     G65NoaaFirstHourCommitReceipt receipt;
     receipt.end=first_end;
     receipt.committed_memory=committed;
@@ -245,6 +319,8 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.rejected_precommit_rolled_back=true;
     receipt.committed_with_published_station_clocks=true;
     receipt.hour2_preview_uses_committed_state=true;
+    receipt.hour2_raw_source_admission_verified=true;
+    receipt.hour2_firsthour_replay_rejected_atomically=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
