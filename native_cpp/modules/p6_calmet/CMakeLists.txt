@@ -1404,7 +1404,10 @@ endif()
 # S4-R1c8k: authentic source-native P6F firsthour 45-file,
 # deliberately separate from causal G14/P7 production.
 add_executable(cteas_p6g_g59_real_noaa_firsthour_p6f45
-               src/p6g_g59_real_noaa_firsthour_45file_main.cpp)
+               src/p6g_g59_real_noaa_firsthour_45file_main.cpp
+               p6f/src/calmet_dat21_writer.cpp)
+target_include_directories(cteas_p6g_g59_real_noaa_firsthour_p6f45
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
 target_link_libraries(cteas_p6g_g59_real_noaa_firsthour_p6f45
                       PRIVATE cteas_p6a_contracts)
 if(MSVC)
