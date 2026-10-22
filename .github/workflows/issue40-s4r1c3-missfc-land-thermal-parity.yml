@@ -43,6 +43,10 @@ on:
       - 'native_cpp/modules/p6_calmet/src/p6g_g58_real_noaa_ipgt_irh_main.cpp'
       - 'scripts/s4/s4r1c8j_compare_noaa_ipgt_irh.py'
       - 'scripts/s4/s4r1c8l_firsthour_postcomp_memory.py'
+      - 'scripts/s4/s4r1c8n_verify_native_firsthour_memory_seed.py'
+      - 'docs/plans/ISSUE40_S4R1C8N_NATIVE_NOAA_MEMORY_SEED_20261022.md'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g62_real_noaa_firsthour_memory_seed_main.cpp'
       - 'docs/plans/ISSUE40_S4R1C8L_FIRSTHOUR_POSTCOMP_MEMORY_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8J_NATIVE_NOAA_IPGT_IRH_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8I_NATIVE_FIRSTHOUR_43_REAL_P6F_20261022.md'
@@ -2059,6 +2063,51 @@ jobs:
             "$root/evidence/independent-real-noaa-firsthour-native-memory.log"
           grep -Fx 'S4R1C8L_NEXT_HOUR_G14_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-real-noaa-firsthour-native-memory.log"
+      - name: Source-native hidden COMP memory seed G62 crosschecked with G54 G59 G60
+        shell: bash
+        timeout-minutes: 45
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8n"
+          mkdir -p "$root/evidence"
+          python3 -m scripts.s4.s4r1c8n_verify_native_firsthour_memory_seed \
+            --selftest
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g62_real_noaa_firsthour_memory
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g62_real_noaa_firsthour_memory"
+          source="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          "$bin" --real-noaa-firsthour-memory-only \
+            "$source/run/met/met.inp" \
+            "$source/geo/makegeo/geo.dat" \
+            "$source/run/met/surf.dat" \
+            "$source/run/met/up1.dat" \
+            "$root/native-firsthour-hidden-comp-state.bin" \
+            > "$root/evidence/native-g62-stdout.log" \
+            2> "$root/evidence/native-g62-stderr.log" || {
+              tail -n 80 "$root/evidence/native-g62-stderr.log"
+              exit 1
+            }
+          grep -F 'S4R1C8N_NATIVE_HIDDEN_COMP_MEMORY=PRODUCED_UNVERIFIED' \
+            "$root/evidence/native-g62-stderr.log"
+          python3 -m scripts.s4.s4r1c8n_verify_native_firsthour_memory_seed \
+            --candidate "$root/native-firsthour-hidden-comp-state.bin" \
+            --g54 "$RUNNER_TEMP/s4r1c8f/native-real-firsthour-mixht-avemix.bin" \
+            --g54-receipt "$RUNNER_TEMP/s4r1c8f/evidence/independent-native-original-mixht-avemix.json" \
+            --g59 "$RUNNER_TEMP/s4r1c8k/native-source-firsthour-calmet.dat" \
+            --g59-receipt "$RUNNER_TEMP/s4r1c8k/evidence/independent-full45-firsthour-original-vs-native.json" \
+            --g60-receipt "$RUNNER_TEMP/s4r1c8l/evidence/independent-real-noaa-firsthour-native-memory.json" \
+            --original-met "$RUNNER_TEMP/s4j/original-real-two-ss-case/run/met/met.dat" \
+            --native-log "$root/evidence/native-g62-stderr.log" \
+            --report "$root/evidence/independent-native-hidden-memory-seed.json" \
+            | tee "$root/evidence/independent-native-hidden-memory-seed.log"
+          grep -Fx 'S4R1C8N_NATIVE_HIDDEN_STATE=PASS_SCOPED_NATIVE_FIRSTHOUR_HIDDEN_COMP_MEMORY_SEED' \
+            "$root/evidence/independent-native-hidden-memory-seed.log"
+          grep -Fx 'S4R1C8N_BIT_EXACT_PLANES=3' \
+            "$root/evidence/independent-native-hidden-memory-seed.log"
+          grep -Fx 'S4R1C8N_REAL4_COMPARED=20910' \
+            "$root/evidence/independent-native-hidden-memory-seed.log"
+          grep -Fx 'S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/independent-native-hidden-memory-seed.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -2088,6 +2137,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8j/evidence/
             ${{ runner.temp }}/s4r1c8k/evidence/
             ${{ runner.temp }}/s4r1c8l/evidence/
+            ${{ runner.temp }}/s4r1c8n/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
