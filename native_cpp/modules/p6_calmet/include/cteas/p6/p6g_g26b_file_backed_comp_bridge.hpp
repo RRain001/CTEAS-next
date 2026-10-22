@@ -11,6 +11,7 @@
 #include "cteas/p6/p6g_g18d5_source_mixht_controls.hpp"
 #include "cteas/p6/p6g_g18b3_upper_choice.hpp"
 #include "cteas/p6/p6g_g63_real_noaa_g14_comp_mixht.hpp"
+#include "cteas/p6e/wstarr.hpp"
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -152,9 +153,56 @@ public:
                 ++phase_;
                 return;
             }
+            if(phase_==2) {
+                // The *same* live G14 G26B stage12/13 physical candidates
+                // feed unchanged P6E WSTARR. Standalone G55 is NOT input.
+                const auto& averaged=source_water_avemix_stage13(frame);
+                if(!water_mixht_stage12_||frame.next.zi_m!=previous_.zi_m||
+                   frame.next.ziconv_m!=previous_.ziconv_m||
+                   frame.next.dptt_k!=previous_.dptt_k)
+                    throw std::logic_error(
+                        "G26B G14 WATER WSTARR has no live COMP thermal/prior");
+                const auto n=static_cast<std::size_t>(frame.grid.nx)*
+                             static_cast<std::size_t>(frame.grid.ny);
+                const auto& mixed=*water_mixht_stage12_;
+                if(averaged.ziconv_m.size()!=n||
+                   mixed.comp_third_qh_wm2.size()!=n||
+                   mixed.comp_third_temperature_k.size()!=n||
+                   mixed.comp_third_density_kgm3.size()!=n)
+                    throw std::invalid_argument(
+                        "G26B G14 NOAA WSTARR source array extents invalid");
+                p6e::WstarrInput input;
+                input.nx=static_cast<std::size_t>(frame.grid.nx);
+                input.ny=static_cast<std::size_t>(frame.grid.ny);
+                input.water_first=frame.grid.iwat1;
+                input.water_last=frame.grid.iwat2;
+                input.landuse=frame.grid.landuse;
+                input.zi_conv_m=averaged.ziconv_m;
+                input.heat_flux_wm2=mixed.comp_third_qh_wm2;
+                input.temp_k=mixed.comp_third_temperature_k;
+                input.rho_kgm3=mixed.comp_third_density_kgm3;
+                input.initial_wstar_ms.assign(n,0.f);
+                auto velocity=p6e::wstarr(input);
+                if(velocity.size()!=n)
+                    throw std::logic_error(
+                        "G26B G14 WSTARR current 82x85 grid incomplete");
+                for(std::size_t i=0;i<n;++i){
+                    if(!std::isfinite(velocity[i])||velocity[i]<0.f)
+                        throw std::logic_error(
+                            "G26B G14 WSTARR nonfinite/negative");
+                    if(frame.grid.landuse[i]>=frame.grid.iwat1&&
+                       frame.grid.landuse[i]<=frame.grid.iwat2&&
+                       velocity[i]!=0.f)
+                        throw std::logic_error(
+                            "G26B G14 NOAA neutral WATER WSTAR nonzero");
+                }
+                water_wstarr_stage14_.emplace(std::move(velocity));
+                ++phase_;
+                return;
+            }
             if(phase_!=0)
                 throw std::invalid_argument(
-                    "G26B genuine NOAA stages14-16 unaccepted");
+                    "G26B genuine NOAA stages15-16 unaccepted");
             auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
                 frame,source_,*original_noow_water_,diagno_,true);
             if(!candidate.source_native_comp_mixht_uncommitted||
@@ -296,6 +344,23 @@ public:
         return *water_avemix_stage13_;
     }
 
+    [[nodiscard]] const std::vector<float>& source_water_wstarr_stage14(
+        const MultiHourFrame& frame) const {
+        if(phase_!=3||!water_wstarr_stage14_||
+           !source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=end_||
+           frame.previous.zi_m!=previous_.zi_m||
+           frame.previous.ziconv_m!=previous_.ziconv_m||
+           frame.previous.dptt_k!=previous_.dptt_k||
+           frame.next.zi_m!=previous_.zi_m||
+           frame.next.ziconv_m!=previous_.ziconv_m||
+           frame.next.dptt_k!=previous_.dptt_k)
+            throw std::logic_error(
+                "G26B genuine NOAA WSTARR not staged on same G14 frame");
+        return *water_wstarr_stage14_;
+    }
+
     [[nodiscard]] const G18ASelectedCompResult& source_mixht_before_avemix(
         const MultiHourFrame& frame) const {
         if(phase_<1||!comp_||&frame!=live_||
@@ -367,6 +432,7 @@ private:
     const G41SelectedNoowWaterFirstHourSource* original_noow_water_=nullptr;
     std::optional<G63RealNoaaG14MixhtStage12> water_mixht_stage12_;
     std::optional<G18C1AvemixOutput> water_avemix_stage13_;
+    std::optional<std::vector<float>> water_wstarr_stage14_;
     bool normal_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;

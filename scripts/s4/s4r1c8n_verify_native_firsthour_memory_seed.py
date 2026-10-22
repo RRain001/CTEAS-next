@@ -125,6 +125,8 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
             not in native_log.read_text()
         or "G14_COMP_STAGE13_AVEMIX=G26B_NATIVE_BITWISE_G54"
             not in native_log.read_text()
+        or "G14_COMP_STAGE14_WSTARR=G26B_NATIVE_BITWISE_G55"
+            not in native_log.read_text()
         or "G14_COMMIT_SECONDHOUR_G26_P7=NOT_ACCEPTED"
             not in native_log.read_text()):
         raise ValueError("G62 source only/NOT_ACCEPTED run attestation missing")
@@ -153,6 +155,7 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
         "g14_sparse_inter2_final_wind_bitwise_matches_g48": True,
         "g14_water_land_mixht_stage12_bitwise_matches_g54": True,
         "g14_water_land_avemix_stage13_bitwise_matches_g54": True,
+        "g14_water_land_wstarr_stage14_bitwise_matches_g55": True,
         "g14_native_17stage_commit": "NOT_ACCEPTED",
         "station_upper_gamma_clocks_committed": "NOT_ACCEPTED",
         "actual_second_hour_physics": "NOT_RUN",
@@ -173,6 +176,7 @@ def verify(candidate: Path, g54: Path, g54_receipt: Path,
     print("S4R1C8Q_G14_SPARSE_INTER2_G24_G48_BITWISE=PASS_320620_REAL4")
     print("S4R1C8R_G14_WATER_LAND_MIXHT_G54_BITWISE=PASS_55760_REAL4")
     print("S4R1C8S_G14_WATER_LAND_AVEMIX_G54_BITWISE=PASS_13940_REAL4")
+    print("S4R1C8T_G14_WATER_LAND_WSTARR_G55_BITWISE=PASS_6970_REAL4")
     print("S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED")
     return True
 
