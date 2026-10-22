@@ -6,6 +6,9 @@
 // This is a physical candidate, NOT a G14 transaction, station-clock commit,
 // second-hour forcing admission, general G26, or P7 output.
 #include "cteas/p6/p6g_g59_real_noaa_firsthour_dataset.hpp"
+#include "cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
+#include "cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp"
+#include "cteas/p6/p6g_g43_comp_missfc_source.hpp"
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -21,6 +24,11 @@ struct G62RealNoaaFirstHourMemorySeed {
     p6::NativeGridMemory post_comp;
     bool source_native_hidden_memory_candidate=false;
     bool firsthour_g59_45_fields_crosschecked=false;
+    bool g14_source_preflight_only=false;
+    bool g14_prepdi_clocks_staged_unpublished=false;
+    bool g14_wind1_source_native_bitwise_verified=false;
+    bool g14_fradj_source_native_bitwise_verified=false;
+    bool g14_source_missfc_original_wind_untouched=false;
     bool g14_17_stage_transaction_committed=false;
     bool station_clocks_published=false;
     bool second_hour_prior_state_consumed=false;
@@ -36,12 +44,114 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     const auto physical=g54_real_noaa_firsthour_land_mixht(paths,true);
     const auto file=g59_source_noaa_firsthour_dataset(paths,true);
     const auto source=g41_load_selected_noow_water_first_hour_source(paths,true);
-    const auto scheduler=source.source.make_scheduler();
-    const auto frame=scheduler.preview_next_hour();
+    // The unchanged Fortran COMP performs MISSFC before DIAGNO.
+    // Keep P5/SURF original observations untouched. G43 generates a
+    // detached source-owned model-internal copy of ONLY the five nonwind
+    // fields, and leaves genuine absent surface wind + precipitation
+    // unchanged; no original result/trace may enter the native model.
+    const auto resolved=g43_original_comp_missfc_source_only(
+        source,source.source.surface.hourly.front(),true);
+    if(!resolved.source_comp_missfc_complete||
+       resolved.G14_G26_production_accepted||
+       resolved.original_raw.by_station.size()!=2||
+       resolved.original_comp_resolved.by_station.size()!=2)
+        throw std::logic_error("G14 source original COMP MISSFC unavailable");
+    for(std::size_t i=0;i<2;++i) {
+        const auto& before=resolved.original_raw.by_station[i];
+        const auto& after=resolved.original_comp_resolved.by_station[i];
+        if(before.wind_valid!=after.wind_valid||
+           before.wind_speed_mps!=after.wind_speed_mps||
+           before.wind_direction_deg!=after.wind_direction_deg||
+           before.precip_code!=after.precip_code||
+           before.precipitation_code_valid!=after.precipitation_code_valid||
+           !after.cloud_valid||!after.temperature_valid||
+           !after.pressure_valid||!after.humidity_valid||
+           !after.ceiling_valid)
+            throw std::logic_error(
+                "G14 cannot turn a missing NOAA observation into calm or alter P5");
+    }
+    // Reconstruct the SAME physical model-internal source snapshot on
+    // independent audit and G14 paths, never touch raw P5 source.
+    auto reference_source=source;
+    reference_source.source.surface.hourly.front()=
+        resolved.original_comp_resolved;
+    // The SAME stronger G19 G14-source admission used by accepted C2,
+    // now opt-in for original G38 neutral WATER controls. Stage-zero
+    // PREPDI is prepared on the authoritative next frame; there is no
+    // separate clock authority, no externally written prior ZICONV, and
+    // no fabricated G14 17-stage commit or second-hour promotion.
+    auto g14_source=g19_load_original_source_case(paths,true);
+    g14_source.surface.hourly.front()=resolved.original_comp_resolved;
+    auto scheduler=g14_source.make_scheduler();
+    auto frame=scheduler.preview_next_hour();
+    G18D2StationClockAuthority station_clocks;
+    // Real G26A, not a second PREPDI or G41 physics scheduler: execute
+    // native stage 0 PREPDI then stage 1 WIND1 on this very same frame.
+    // Independent G42 parity is comparison-only, never fed into the actor.
+    G26SourceFileBackedG14DiagnoBridge g14_diagno(
+        scheduler,station_clocks,g14_source);
+    g14_diagno.run_selected(p6::kHefeiOriginalStageOrder[0],frame,true);
+    g14_diagno.run_selected(p6::kHefeiOriginalStageOrder[1],frame,true);
+    const auto& live_wind1=g14_diagno.selected_source_wind1_after_stage(frame);
+    const auto independent_wind1=
+        g42_selected_real_water_missing_wind1(frame,reference_source,true);
     constexpr std::size_t n=82U*85U;
+    const auto real4_equal=[](const std::vector<float>& a,
+                              const std::vector<float>& b) {
+        if(a.size()!=b.size())return false;
+        for(std::size_t i=0;i<a.size();++i)
+            if(std::bit_cast<std::uint32_t>(a[i])!=
+               std::bit_cast<std::uint32_t>(b[i]))return false;
+        return true;
+    };
+    if(!real4_equal(live_wind1.u_mps,independent_wind1.native_firstguess.u_mps)||
+       !real4_equal(live_wind1.v_mps,independent_wind1.native_firstguess.v_mps))
+        throw std::logic_error(
+            "G26 actual G14 sparse NOAA WIND1 differs from independent G42");
+    // Continue the VERY SAME native G26A G14 candidate to original
+    // FRADJ stage 2, without publishing AA/BB, CGAMMA or 3-grid memory.
+    // For cross-path checks, G41 consumes only source-owned observations
+    // and G18E4 staged gamma, never an original CALMET output oracle.
+    const auto& staged_gamma=g14_diagno.selected_source_gamma_after_stage(frame);
+    g14_diagno.run_selected(p6::kHefeiOriginalStageOrder[2],frame,true);
+    const auto& live_fradj=g14_diagno.selected_source_fradj_after_stage(frame);
+    const auto reference_fradj=g41_real_water_first_hour_native_fradj(
+        frame,reference_source,staged_gamma,
+        independent_wind1.native_firstguess,true);
+    if(!real4_equal(live_fradj.corrected_wind.u,
+                    reference_fradj.corrected_wind.u)||
+       !real4_equal(live_fradj.corrected_wind.v,
+                    reference_fradj.corrected_wind.v)||
+       !real4_equal(live_fradj.gamma_k_per_m,
+                    reference_fradj.gamma_k_per_m)||
+       !real4_equal(live_fradj.temperature_before_k,
+                    reference_fradj.temperature_before_k)||
+       !real4_equal(live_fradj.temperature_after_k,
+                    reference_fradj.temperature_after_k)||
+       live_fradj.corrected_wind.u.size()!=9*n||
+       live_fradj.corrected_wind.v.size()!=9*n||
+       live_fradj.gamma_k_per_m.size()!=n||
+       live_fradj.temperature_before_k.size()!=n||
+       live_fradj.temperature_after_k.size()!=n)
+        throw std::logic_error(
+            "G26 same-frame NOAA G21 FRADJ differs from G41 source parity");
     if(frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.source.surface.hourly.size()!=6||
+       !g14_source.research_noow_water_source_only||
+       g14_source.source_water_cells.size()!=63||
+       g14_source.original_metinp!=source.source.original_metinp||
+       g14_source.grid.landuse!=source.source.grid.landuse||
+       g14_source.stations.surface.size()!=source.source.stations.surface.size()||
+       g14_source.stations.upper.size()!=source.source.stations.upper.size()||
+       g14_diagno.selected_checkpoints()!=3||
+       g14_diagno.source_diagno_ready()||
+       g14_diagno.clocks_published()||
+       station_clocks.has_published_hour()||
+       scheduler.completed_hours()!=0||
+       independent_wind1.missing_observed_surface_sites!=1||
+       live_wind1.u_mps.size()!=9*n||
+       live_wind1.v_mps.size()!=9*n||
        frame.hour_index!=0||scheduler.completed_hours()!=0||
        physical.end!=frame.input.end||
        !physical.sparse_first_hour_research_only||
@@ -101,6 +211,11 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     result.post_comp.dptt_k=physical.dptt_before_avemix_k;
     result.source_native_hidden_memory_candidate=true;
     result.firsthour_g59_45_fields_crosschecked=true;
+    result.g14_source_preflight_only=true;
+    result.g14_prepdi_clocks_staged_unpublished=true;
+    result.g14_wind1_source_native_bitwise_verified=true;
+    result.g14_fradj_source_native_bitwise_verified=true;
+    result.g14_source_missfc_original_wind_untouched=true;
     return result;
 }
 } // namespace cteas::calmet::p6g
