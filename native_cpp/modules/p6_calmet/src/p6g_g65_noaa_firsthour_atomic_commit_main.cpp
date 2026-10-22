@@ -27,6 +27,8 @@ int main(int argc,char** argv) {
            !result.rejected_precommit_rolled_back||
            !result.committed_with_published_station_clocks||
            !result.hour2_preview_uses_committed_state||
+           !result.hour2_raw_source_admission_verified||
+           !result.hour2_firsthour_replay_rejected_atomically||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
         std::cout
@@ -36,6 +38,8 @@ int main(int argc,char** argv) {
             <<"S4R1C8W_G14_FAILED_PRECOMMIT_ROLLBACK=PASS\n"
             <<"S4R1C8W_G14_AABB_CGAMMA_AFTER_COMMIT=PASS\n"
             <<"S4R1C8W_G14_HOUR2_PREVIEW_INHERITS_MEMORY=PASS_SOURCE_ONLY\n"
+            <<"S4R1C8W_G14_HOUR2_RAW_MISSFC_WIND_PRESERVED=PASS_SOURCE_ONLY\n"
+            <<"S4R1C8W_G14_HOUR2_FIRSTHOUR_REPLAY_REJECTED=PASS_ATOMIC\n"
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;
