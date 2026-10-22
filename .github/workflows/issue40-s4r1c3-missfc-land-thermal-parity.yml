@@ -11,6 +11,8 @@ on:
       - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
       - 'scripts/s4/s4r1c6_real_noaa_post_slope_reference.py'
       - 'scripts/s4/s4r1c7a_real_original_stheor_similt.py'
+      - 'scripts/s4/s4r1c7c_original_sparse_inter2_reference.py'
+      - 'docs/plans/ISSUE40_S4R1C7C_ORIGINAL_SPARSE_INTER2_20261022.md'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c3_station_diagi.hpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g23_file_backed_stheor_inter2.hpp'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g48_real_sparse_stheor.hpp'
@@ -1195,6 +1197,62 @@ jobs:
             "$root/evidence/independent-real-station-similt.log"
           grep -Fx 'S4R1C7B_NATIVE_G23_INTER2_G24_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-real-station-similt.log"
+      - name: Pin original-only six-hour 2SS1US before/after INTER2 source oracle
+        shell: bash
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c7c"
+          mkdir -p "$root/evidence"
+          python3 -m scripts.s4.s4r1c7c_original_sparse_inter2_reference selftest
+          vendor="$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for"
+          python3 -m scripts.s4.s4r1c7c_original_sparse_inter2_reference prepare \
+            --vendor "$vendor" \
+            --destination "$root/real-original-inter2-scratch.for" \
+            --receipt "$root/evidence/independent-original-write-only-prep.json"
+          gfortran -std=legacy -ffixed-line-length-none -fno-automatic \
+            -fno-align-commons -fallow-argument-mismatch -O0 \
+            -I"$RUNNER_TEMP/s4j/vendor-includes" \
+            "$root/real-original-inter2-scratch.for" \
+            -o "$root/real-original-inter2-scratch.x"
+          sha256sum "$root/real-original-inter2-scratch.x" \
+            > "$root/evidence/independent-original-inter2-binary-sha.txt"
+      - name: Prove true original six-hour sparse site arrays and 3D INTER2 without wind injection
+        shell: bash
+        timeout-minutes: 36
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c7c"
+          baseline="$RUNNER_TEMP/s4j/original-real-two-ss-case"
+          scratch="$root/original-write-only-inter2-run"
+          test -s "$baseline/run/met/met.dat"
+          test ! -e "$scratch"
+          cp -a "$baseline" "$scratch"
+          rm -f "$scratch/run/met/met.dat" "$scratch/run/met/met.lst" \
+                "$scratch/run/met/s4r1c7c-original-before-inter2.bin" \
+                "$scratch/run/met/s4r1c7c-original-after-inter2.bin"
+          (cd "$scratch/run/met" && "$root/real-original-inter2-scratch.x" met.inp) \
+            > "$root/evidence/original-inter2-stdout.log" \
+            2> "$root/evidence/original-inter2-stderr.log" || {
+              tail -n 65 "$root/evidence/original-inter2-stdout.log"
+              tail -n 65 "$root/evidence/original-inter2-stderr.log"
+              exit 1
+            }
+          python3 -m scripts.s4.s4r1c7c_original_sparse_inter2_reference verify \
+            --vendor "$GITHUB_WORKSPACE/original_cteas/engine/vendor/src/CALMET_v6.5.0_L150223/calmet.for" \
+            --pristine "$baseline/run/met/met.dat" \
+            --scratch "$scratch/run/met/met.dat" \
+            --pre "$scratch/run/met/s4r1c7c-original-before-inter2.bin" \
+            --post "$scratch/run/met/s4r1c7c-original-after-inter2.bin" \
+            --station-oracle "$RUNNER_TEMP/s4r1c7a/evidence/original-six-hour-physical-station-profiles.json" \
+            --report "$root/evidence/real-original-sparse-pre-post-inter2-reference.json" \
+            | tee "$root/evidence/real-original-sparse-inter2.log"
+          grep -Fx 'S4R1C7C_REAL_NOAA_ORIGINAL_SPARSE_INTER2=PASS_REFERENCE_ONLY' \
+            "$root/evidence/real-original-sparse-inter2.log"
+          grep -Fx 'S4R1C7C_ORIGINAL_6H_45FIELD_MET=BYTE_IDENTICAL' \
+            "$root/evidence/real-original-sparse-inter2.log"
+          grep -Fx 'S4R1C7C_NATIVE_INTER2_G24_G26_P7=NOT_ACCEPTED' \
+            "$root/evidence/real-original-sparse-inter2.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -1210,6 +1268,7 @@ jobs:
             ${{ runner.temp }}/s4r1c6/evidence/
             ${{ runner.temp }}/s4r1c7a/evidence/
             ${{ runner.temp }}/s4r1c7b/evidence/
+            ${{ runner.temp }}/s4r1c7c/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
