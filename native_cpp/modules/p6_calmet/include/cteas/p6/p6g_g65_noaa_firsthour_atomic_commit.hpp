@@ -1,0 +1,250 @@
+#pragma once
+// S4-R1c8w: one authentic NOAA first-hour G14 atomic transaction.
+// Research-only, selected WATER route. NOT hour-2 physics or P6 production.
+// All 17 physics stages run on the SAME scheduler-owned frame; no G54/G59
+// numbers are used as native forcing. Failed precommit cannot publish state.
+#include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
+#include <bit>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace cteas::calmet::p6g {
+
+class G65RealNoaaFirstHourActor final : public MultiHourPhysics {
+public:
+    G65RealNoaaFirstHourActor(
+        const UnifiedMultistationHourlyScheduler& scheduler,
+        G18D2StationClockAuthority& clocks,
+        const G19FileBackedCase& source,
+        const G41SelectedNoowWaterFirstHourSource& original)
+        :diagno_(scheduler,clocks,source,true),
+         comp_(diagno_,source,true,&original) {}
+
+    [[nodiscard]] p6::NativeHourStageResult run(
+        p6::NativeHourStage stage,MultiHourFrame& frame) override {
+        if(cursor_>=p6::kHefeiOriginalStageOrder.size()||
+           stage!=p6::kHefeiOriginalStageOrder[cursor_])
+            throw std::logic_error("G65 17-stage G14 order/phase drift");
+        const auto result=(cursor_<12)
+            ?diagno_.run(stage,frame):comp_.run(stage,frame);
+        if(!result.completed||result.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error("G65 missing native CALMET stage");
+        ++cursor_;
+        return result;
+    }
+
+    [[nodiscard]] const cteas::p6f::Calmet21File& precommit(
+        const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=0)
+            throw std::logic_error("G65 precommit before full first hour");
+        const auto& candidate=comp_.source_water_p6f_stage16(frame);
+        if(!candidate.actual_g14_stage16_precommit_validated||
+           candidate.serialized_prepared_only.empty()||
+           candidate.candidate_dataset.hourly.size()!=45)
+            throw std::logic_error("G65 P6F native precommit not verified");
+        diagno_.require_station_clock_preflight(frame);
+        return candidate.candidate_dataset;
+    }
+
+    [[nodiscard]] bool publish_after_commit_noexcept() noexcept {
+        return cursor_==17&&
+               diagno_.try_publish_after_selected_g14_commit_noexcept();
+    }
+private:
+    G26SourceFileBackedG14DiagnoBridge diagno_;
+    G26BSourceFileBackedCompBridge comp_;
+    std::size_t cursor_=0;
+};
+
+struct G65NoaaFirstHourCommitReceipt {
+    std::chrono::sys_seconds end{};
+    p6::NativeGridMemory committed_memory;
+    std::size_t committed_hours=0;
+    std::size_t g59_bitwise_compared_words=0;
+    std::size_t hidden_bitwise_compared_words=0;
+    bool rejected_precommit_rolled_back=false;
+    bool committed_with_published_station_clocks=false;
+    bool hour2_preview_uses_committed_state=false;
+    bool hour2_physics_accepted=false;
+    bool general_p6_accepted=false;
+};
+
+inline bool g65_equal_real4_bits(
+    const std::vector<float>& a,const std::vector<float>& b) {
+    if(a.size()!=b.size())return false;
+    for(std::size_t i=0;i<a.size();++i)
+        if(std::bit_cast<std::uint32_t>(a[i])!=
+           std::bit_cast<std::uint32_t>(b[i]))return false;
+    return true;
+}
+
+inline G65NoaaFirstHourCommitReceipt
+g65_real_noaa_firsthour_atomic_commit(
+    const G19SourceFilePaths& paths,bool explicitly_forensic_only) {
+    if(!explicitly_forensic_only)
+        throw std::invalid_argument("G65 cannot enter P6 production");
+
+    const auto actual=g41_load_selected_noow_water_first_hour_source(paths,true);
+    const auto repaired=g43_original_comp_missfc_source_only(
+        actual,actual.source.surface.hourly.front(),true);
+    if(!repaired.source_comp_missfc_complete||
+       repaired.original_raw.by_station.size()!=2||
+       repaired.original_comp_resolved.by_station.size()!=2)
+        throw std::logic_error("G65 authentic NOAA G43 source absent");
+    for(std::size_t i=0;i<2;++i) {
+        const auto& raw=repaired.original_raw.by_station[i];
+        const auto& next=repaired.original_comp_resolved.by_station[i];
+        if(raw.wind_valid!=next.wind_valid||
+           raw.wind_speed_mps!=next.wind_speed_mps||
+           raw.wind_direction_deg!=next.wind_direction_deg||
+           raw.precip_code!=next.precip_code||
+           raw.precipitation_code_valid!=next.precipitation_code_valid)
+            throw std::logic_error("G65 forbids P5 raw missing-wind imputation");
+    }
+
+    auto source=g19_load_original_source_case(paths,true);
+    source.surface.hourly.front()=repaired.original_comp_resolved;
+    if(!source.research_noow_water_source_only||
+       source.surface.hourly.size()!=6||
+       source.grid.nx!=82||source.grid.ny!=85||
+       source.stations.surface.size()!=2||source.stations.upper.size()!=1||
+       source.source_water_cells.size()!=63)
+        throw std::invalid_argument("G65 requires frozen actual NOAA 2SS/1US six-hour case");
+    // These two independent paths are exclusively post-physics comparators.
+    const auto independent=g59_source_noaa_firsthour_dataset(paths,true);
+    const auto hidden=g54_real_noaa_firsthour_land_mixht(paths,true);
+    auto scheduler=source.make_scheduler();
+    G18D2StationClockAuthority clocks;
+    const auto first=scheduler.preview_next_hour();
+    if(first.hour_index!=0||scheduler.completed_hours()!=0||
+       clocks.has_published_hour())
+        throw std::logic_error("G65 source G14 not at a cold first hour");
+    const auto first_end=first.input.end;
+
+    auto attempt=[&](bool inject_precommit_failure) {
+        G65RealNoaaFirstHourActor* live=nullptr;
+        bool published=false;
+        bool injection_reached=false;
+        std::size_t compared=0;
+        try {
+            scheduler.advance_with_fresh_physics(
+                [&](const MultiHourFrame& next)
+                    ->std::unique_ptr<MultiHourPhysics> {
+                    if(next.hour_index!=0||next.input.end!=first_end)
+                        throw std::logic_error("G65 factory not on NOAA first-hour clock");
+                    auto actor=std::make_unique<G65RealNoaaFirstHourActor>(
+                        scheduler,clocks,source,actual);
+                    live=actor.get();
+                    return actor;
+                },
+                [&](const MultiHourFrame& frame) {
+                    if(!live||frame.hour_index!=0||
+                       frame.input.end!=first_end)
+                        throw std::logic_error("G65 detached G14 precommit gate");
+                    const auto& candidate=live->precommit(frame);
+                    if(candidate.hourly.size()!=45||
+                       independent.dataset.hourly.size()!=45)
+                        throw std::logic_error("G65 incorrect original P6F cardinality");
+                    const auto n=static_cast<std::size_t>(82)*85;
+                    for(std::size_t k=0;k<45;++k) {
+                        const auto& a=candidate.hourly.at(k);
+                        const auto& b=independent.dataset.hourly.at(k);
+                        if(a.label!=b.label||a.integer!=b.integer||
+                           cteas::p6f::instant_seconds(a.begin)!=
+                               cteas::p6f::instant_seconds(b.begin)||
+                           cteas::p6f::instant_seconds(a.end)!=
+                               cteas::p6f::instant_seconds(b.end))
+                            throw std::logic_error("G65 original P6F label/UTC drift");
+                        if(a.integer) {
+                            if(a.integer_values.size()!=n||
+                               a.integer_values!=b.integer_values)
+                                throw std::logic_error("G65 G59 INTEGER4 parity failed");
+                        } else if(a.real_values.size()!=n||
+                                  !g65_equal_real4_bits(a.real_values,b.real_values))
+                            throw std::logic_error("G65 G59 REAL4 bit parity failed");
+                        compared+=n;
+                    }
+                    if(compared!=313650)
+                        throw std::logic_error("G65 full 45-field comparison incomplete");
+                    if(!g65_equal_real4_bits(frame.next.zi_m,
+                                             hidden.zi_after_avemix_m)||
+                       !g65_equal_real4_bits(frame.next.ziconv_m,
+                                             hidden.ziconv_after_avemix_m)||
+                       !g65_equal_real4_bits(frame.next.dptt_k,
+                                             hidden.dptt_before_avemix_k))
+                        throw std::logic_error("G65 hidden COMP memory parity failed");
+                    // Throw only after all 17 live stages and independent
+                    // comparisons, so this actually proves G14 rollback.
+                    if(inject_precommit_failure) {
+                        injection_reached=true;
+                        throw std::runtime_error("G65_EXPECTED_PRECOMMIT_INJECTION");
+                    }
+                },
+                [&](MultiHourPhysics& physics,
+                    const UnifiedMultistationHourlyScheduler& owner) noexcept {
+                    auto* actor=dynamic_cast<G65RealNoaaFirstHourActor*>(&physics);
+                    published=(actor!=nullptr&&
+                               actor->publish_after_commit_noexcept()&&
+                               clocks.has_published_hour()&&
+                               owner.completed_hours()==1);
+                });
+            if(inject_precommit_failure)
+                throw std::logic_error("G65 forged precommit unexpectedly committed");
+        } catch(const std::runtime_error& e) {
+            if(!inject_precommit_failure||!injection_reached||
+               std::string(e.what())!="G65_EXPECTED_PRECOMMIT_INJECTION")
+                throw;
+            if(scheduler.completed_hours()!=0||clocks.has_published_hour()||
+               !g65_equal_real4_bits(scheduler.committed_memory().zi_m,
+                                     first.previous.zi_m)||
+               !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,
+                                     first.previous.ziconv_m)||
+               !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,
+                                     first.previous.dptt_k))
+                throw std::logic_error("G65 failed G14 physical/station rollback");
+            return std::pair<bool,std::size_t>{false,compared};
+        }
+        if(!published||scheduler.completed_hours()!=1||
+           !clocks.has_published_hour()||
+           clocks.latest_upper_hour()!=first_end||
+           clocks.latest_gamma_hour()!=first_end)
+            throw std::logic_error("G65 firsthour G14/clock commit not synchronized");
+        return std::pair<bool,std::size_t>{true,compared};
+    };
+
+    const auto rejected=attempt(true);
+    if(rejected.first||rejected.second!=313650)
+        throw std::logic_error("G65 negative exact-head precommit gate failed");
+    const auto accepted=attempt(false);
+    if(!accepted.first||accepted.second!=313650)
+        throw std::logic_error("G65 successful exact-head P6F gate failed");
+    const auto& committed=scheduler.committed_memory();
+    if(!g65_equal_real4_bits(committed.zi_m,hidden.zi_after_avemix_m)||
+       !g65_equal_real4_bits(committed.ziconv_m,hidden.ziconv_after_avemix_m)||
+       !g65_equal_real4_bits(committed.dptt_k,hidden.dptt_before_avemix_k))
+        throw std::logic_error("G65 committed REAL4 hidden COMMON parity failed");
+    const auto hour2=scheduler.preview_next_hour();
+    if(hour2.hour_index!=1||hour2.surface.start!=first_end||
+       &hour2.previous!=&scheduler.committed_memory()||
+       !g65_equal_real4_bits(hour2.previous.zi_m,committed.zi_m)||
+       !g65_equal_real4_bits(hour2.previous.ziconv_m,committed.ziconv_m)||
+       !g65_equal_real4_bits(hour2.previous.dptt_k,committed.dptt_k))
+        throw std::logic_error("G65 hour2 preview does not inherit G14 committed memory");
+
+    G65NoaaFirstHourCommitReceipt receipt;
+    receipt.end=first_end;
+    receipt.committed_memory=committed;
+    receipt.committed_hours=scheduler.completed_hours();
+    receipt.g59_bitwise_compared_words=accepted.second;
+    receipt.hidden_bitwise_compared_words=3U*82U*85U;
+    receipt.rejected_precommit_rolled_back=true;
+    receipt.committed_with_published_station_clocks=true;
+    receipt.hour2_preview_uses_committed_state=true;
+    return receipt;
+}
+} // namespace cteas::calmet::p6g
