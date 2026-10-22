@@ -19,7 +19,7 @@ FIELD=struct.Struct("<"+str(NC)+"f")
 ROW=HEAD.size+FIELD.size
 PINS={
     4760:"       if( LCALGRD .or. itprog.ge.1 )then",
-    4766:"              call temp3d(nyrze,njulze,nhrze,nsecze,temp2d,ziconv,",
+    4766:"             call temp3d(nyrze,njulze,nhrze,nsecze,temp2d,ziconv,",
     4767:"     &                tzgraa,tzgrbb,ztemp,zi,tprog)",
     4772:"          endif",
     4773:"c",
