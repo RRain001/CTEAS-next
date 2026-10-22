@@ -2179,6 +2179,8 @@ jobs:
             "$root/evidence/independent-native-hidden-memory-seed.log"
           grep -Fx 'S4R1C8O_G14_G43_RAW_P5_WIND=UNCHANGED' \
             "$root/evidence/independent-native-hidden-memory-seed.log"
+          grep -Fx 'S4R1C8P_G14_WATER_THERMAL_SLOPE_G47_BITWISE=PASS_160310_REAL4' \
+            "$root/evidence/independent-native-hidden-memory-seed.log"
           grep -Fx 'S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-native-hidden-memory-seed.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
