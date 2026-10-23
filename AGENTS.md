@@ -1,10 +1,20 @@
 # CTEAS-next agent instructions
 
 ## Owner's current CI and merge decision (2026-10-23)
-- Keep automated GitHub Actions `pull_request` / `push` triggers and authorized agent-driven scientific dispatch. Do not apply the canceled `workflow_dispatch`-only proposal (Draft PR #285, closed).
+- Keep automatic PR admission checks and scoped software CI; longer science workflows use reviewed, agent-triggered `workflow_dispatch` with exact-SHA evidence. Do not revive the canceled blanket manual-only PR #285; do not re-enable every heavyweight science workflow on PR/push.
 - Develop and test candidates with Ubuntu Docker before opening/updating PRs; allow GitHub to auto-run its existing scoped CI on the exact PR HEAD without requiring the owner to click Run workflow.
 - Once ALL applicable software tests, original-model/scientific parity, precise input/commit evidence, independent review and required GitHub checks have passed, transition the PR out of Draft and automatically squash merge or enable native GitHub auto-merge; explicit per-PR owner approval is no longer needed. Never activate merge for blocked, NOT_RUN, failed, pending, stale or scope-limited science claims. Enabling repository `allow_auto_merge` alone is not authorization to waive gates.
 
+
+
+## Ubuntu Docker / GitHub admission (current deployment, 2026-10-23)
+- On the managed Ubuntu host, read `/home/lhy/dev/AGENTS.md` and `/home/lhy/dev/README.md` **before** this repository guide; in other environments those absolute paths may not exist, so use the equivalent documented container and gate contracts. A new ChatGPT session must explicitly read the files, not assume they are automatically injected.
+- Refresh remote Git refs and fetch the exact PR HEAD SHA; inspect clean worktrees and all existing tests. Use an isolated short-lived task branch/worktree, never commit directly to `main`, and never force-clean an accepted worktree. The Ubuntu working copy is under `/home/lhy/dev/CTEAS-next/worktrees/local-docker-dev`; the `local-ci` tool currently binds that path, so check the selected SHA before each run.
+- Run real builds, focused smoke, scoped `full`, and admissible scientific checks on Ubuntu in Docker. Host entry points: `/home/lhy/dev/bin/local-ci-build`, `/home/lhy/dev/bin/local-ci`, `/home/lhy/dev/bin/local-ci-report`; follow `/home/lhy/dev/infra/local-ci/README.md` for flags and resource limits. A scoped software pass is not all-option or independent scientific acceptance.
+- Ubuntu runs its **own Mihomo** HTTP(S) proxy at `127.0.0.1:7897`. Do not require a MacBook/Clash reverse tunnel. Docker daemon, BuildKit and the host-side buildx CLI need compatible proxy settings. Never commit proxy subscriptions, credentials or restricted data.
+- The GitHub `main` Ruleset requires the always-running `repository-admission` and `scientific-admission` PR checks. For applicable source/test PRs, publish `ubuntu-docker-full` success **only** after verified `full` software evidence at the exact live PR SHA via `python3 /home/lhy/dev/bin/local-ci-publish-status CTEAS-next <pr> <full-run-id>`; retrigger admission when necessary. This status does not assert science PASS.
+- Agents can dispatch longer workflows at a reviewed candidate SHA without asking the owner to click GitHub Actions. Record the run's actual SHA, inputs, checks and scientific conclusion. For science changes, obtain the project-specific external evidence and a genuinely independent, same-SHA human/non-bot APPROVED review as required; never manufacture a `science-validated` claim.
+- Only after **all applicable** checks and any required source-specific scientific evidence and independent review succeed, and the current PR is non-Draft and conflict-free, may the agent add `merge-verified`. The trusted `pull_request_target` workflow enables GitHub native squash auto-merge; changing the SHA invalidates the old authorization. NOT_RUN, FAIL, pending, Draft and scientific-review blockers must stay unmerged. No hourly polling or manual-owner click is required.
 
 ## Scope and acceptance
 - This is the **partial C++20** reconstruction of selected P1–P7 CALMET/CALPUFF pathways, **not** a whole-option Fortran replacement. Consult `README.md` and `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.{md,csv}` before implementing or changing physics.
