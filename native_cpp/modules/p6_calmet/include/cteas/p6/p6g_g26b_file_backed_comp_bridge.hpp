@@ -119,10 +119,9 @@ public:
             // Stages 14..16, clock publication and native G14 commit
             // remain explicitly unaccepted.
             if(!original_noow_water_||frame.hour_index>1||
-               // Hour2 admits only MIXHT stage12 and its causally
-               // following AVEMIX stage13. WSTARR, TEMP3D, P6F and
-               // any secondhour commit remain strictly fail-closed.
-               (frame.hour_index==1&&phase_>1)||
+               // Hour2 requires MIXHT/AVEMIX before WSTARR.
+               // TEMP3D/P6F and secondhour commit remain fail-closed.
+               (frame.hour_index==1&&phase_>2)||
                original_noow_water_->source.original_metinp!=
                    source_.original_metinp)
                 throw std::invalid_argument(
