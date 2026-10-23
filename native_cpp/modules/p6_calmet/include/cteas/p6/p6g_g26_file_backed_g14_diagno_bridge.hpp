@@ -31,12 +31,17 @@ public:
         const G19FileBackedCase& source,
         bool explicitly_opt_in_normal_trial=false,
         const G66NativeHour2WaterState* native_hour2_p6f=nullptr,
-        bool explicitly_opt_in_hour3_g22_trial=false)
+        bool explicitly_opt_in_hour3_g22_trial=false,
+        bool explicitly_opt_in_hour3_windtail_trial=false)
         :owner_(owner),clocks_(clocks),source_(source),
          prepdi_(owner,clocks,source.original_metinp),
          normal_trial_(explicitly_opt_in_normal_trial),
          native_hour2_p6f_(native_hour2_p6f),
-         hour3_g22_trial_(explicitly_opt_in_hour3_g22_trial) {
+         hour3_g22_trial_(explicitly_opt_in_hour3_g22_trial),
+         hour3_windtail_trial_(explicitly_opt_in_hour3_windtail_trial) {
+        if(hour3_windtail_trial_&&!hour3_g22_trial_)
+            throw std::invalid_argument(
+                "G26 hour3 wind-tail requires prior native G22 trial");
         if(hour3_g22_trial_&&(!normal_trial_||!native_hour2_p6f_))
             throw std::invalid_argument(
                 "G26 hour3 G22 trial requires explicit native hour2 P6F");
@@ -171,7 +176,8 @@ public:
             break;
         case 9:
             g23_.emplace(g23_source_stheor_diagi_inter2(
-                frame,source_,*profiles_,*g21_,*g22_,true));
+                frame,source_,*profiles_,*g21_,*g22_,true,
+                hour3_windtail_trial_));
             break;
         case 10:
             if(!g23_||g23_->inter2_u.component_mps.empty()||
@@ -180,7 +186,7 @@ public:
             break;
         case 11: {
             g24_.emplace(g24_selected_original_wind_tail(
-                frame,source_,*g23_,true));
+                frame,source_,*g23_,true,hour3_windtail_trial_));
             // First DIAGNO -> COMP handoff: authentic source-computed
             // 3-D wind plus current HEATFX/ELUSTR only. TEMP3D, WSTAR
             // and current grid MIXHT/AVEMIX remain ABSENT; no G14 commit.
@@ -269,6 +275,54 @@ public:
                 "G26 third-hour G22 trial trace not stage6-complete");
         verify_frame(frame);
         return hour3_g22_trace_;
+    }
+    // Read-only, unpublished forensic stages. Original Fortran trace is
+    // NEVER passed into this actor; compare in an independent Python tool.
+    [[nodiscard]] std::vector<std::uint8_t>
+    selected_hour3_windtail_trace_after_stage(
+        const MultiHourFrame& frame) const {
+        if(!hour3_windtail_trial_||phase_!=12||!g23_||!g24_||
+           frame.hour_index!=2||!source_.research_noow_water_source_only)
+            throw std::logic_error("G26 hour3 wind-tail stage11 not completed");
+        verify_frame(frame);
+        constexpr std::size_t n=82U*85U,nz=9U;
+        const auto& i_u=g23_->inter2_u.component_mps;
+        const auto& i_v=g23_->inter2_v.component_mps;
+        const auto& s_u=g24_->test_only_stage100_u;
+        const auto& s_v=g24_->test_only_stage100_v;
+        const auto& f_u=g24_->wind.u_mps;
+        const auto& f_v=g24_->wind.v_mps;
+        const auto& f_w=g24_->wind.w_face_mps;
+        if(i_u.size()!=nz*n||i_v.size()!=nz*n||
+           s_u.size()!=nz*n||s_v.size()!=nz*n||
+           f_u.size()!=nz*n||f_v.size()!=nz*n||f_w.size()!=(nz+1)*n)
+            throw std::logic_error("G26 hour3 wind-tail trace shape mismatch");
+        std::vector<std::uint8_t> bytes;
+        bytes.reserve(3*20+4*((6*nz+10)*n));
+        const auto put_word=[&](std::uint32_t word) {
+            for(unsigned i=0;i<4;++i)
+                bytes.push_back(static_cast<std::uint8_t>(word>>(8*i)));
+        };
+        const auto put_float=[&](float value) {
+            if(!std::isfinite(value))
+                throw std::logic_error("G26 hour3 wind-tail nonfinite");
+            put_word(std::bit_cast<std::uint32_t>(value));
+        };
+        const auto emit=[&](int stage,const std::vector<float>& u,
+                            const std::vector<float>& v,
+                            bool with_w) {
+            for(const int value:{4,82,85,9,stage})
+                put_word(static_cast<std::uint32_t>(value));
+            for(std::size_t k=0;k<nz*n;++k) {
+                put_float(u[k]);put_float(v[k]);
+            }
+            if(with_w)
+                for(float value:f_w)put_float(value);
+        };
+        emit(90,i_u,i_v,false);
+        emit(100,s_u,s_v,false);
+        emit(110,f_u,f_v,true);
+        return bytes;
     }
     [[nodiscard]] unsigned selected_checkpoints() const noexcept {return phase_;}
     [[nodiscard]] bool source_diagno_ready() const noexcept {
@@ -363,6 +417,7 @@ private:
     bool normal_trial_=false;
     const G66NativeHour2WaterState* native_hour2_p6f_=nullptr;
     bool hour3_g22_trial_=false;
+    bool hour3_windtail_trial_=false;
     std::vector<std::uint8_t> hour3_g22_trace_;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;

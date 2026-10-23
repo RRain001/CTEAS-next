@@ -99,7 +99,8 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
     G16ObservedProfiles original_g20_profiles,
     const G21SelectedFradjFields& g21,
     const G22SelectedThermalSlope& g22,
-    bool explicitly_test_only) {
+    bool explicitly_test_only,
+    bool opt_in_hour3_windtail_science_trial=false) {
     const auto& grid=frame.grid;
     const auto nx=static_cast<std::size_t>(grid.nx);
     const auto ny=static_cast<std::size_t>(grid.ny);
@@ -133,8 +134,19 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
     // authentic NOAA hour only when G14 supplies its committed previous
     // COMP planes and source UTC is the exact next SURF record. This does
     // not admit second-hour COMP, P6F, G14 commit or third-hour replay.
+    // Preserve the default hour>1 rejection. This narrow third-hour
+    // admission is *only* callable from an explicitly opted-in G26A
+    // diagnostic after authentic native hour-two G14/P6F commitment.
+    // It cannot be used to admit production G23 or future hours.
+    if(opt_in_hour3_windtail_science_trial &&
+       (!explicitly_test_only||!source.research_noow_water_source_only||
+        frame.hour_index!=2||frame.previous.zi_m.size()!=n||
+        frame.previous.ziconv_m.size()!=n||
+        frame.previous.dptt_k.size()!=n))
+        throw std::invalid_argument("G23 hour3 wind-tail trial provenance invalid");
     if(source.research_noow_water_source_only &&
-       (frame.hour_index>1||grid.nx!=82||grid.ny!=85||
+       ((frame.hour_index>1&&!opt_in_hour3_windtail_science_trial)||
+        frame.hour_index>2||grid.nx!=82||grid.ny!=85||
         frame.stations.surface.size()!=2||
         frame.stations.upper.size()!=1||
         source.source_water_cells.size()!=63||
@@ -142,7 +154,9 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
         frame.input.end!=source.surface.hourly[frame.hour_index].end||
         frame.surface.start!=source.surface.hourly[frame.hour_index].start||
         (frame.hour_index==1&&
-         frame.surface.start!=source.surface.hourly[0].end)))
+         frame.surface.start!=source.surface.hourly[0].end)||
+        (frame.hour_index==2&&
+         frame.surface.start!=source.surface.hourly[1].end)))
         throw std::invalid_argument(
             "G23 source-scoped NOAA second-hour STHEOR UTC/geometry invalid");
     G17B4TwoPassSurfvar surfvar(
@@ -187,6 +201,8 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
             (original_wind_valid[0]!=0U)+(original_wind_valid[1]!=0U));
         if((frame.hour_index==0&&nvalid!=1U)||
            (frame.hour_index==1&&nvalid==0U)||
+           (frame.hour_index==2&&
+            (!opt_in_hour3_windtail_science_trial||nvalid==0U))||
            candidate.size()!=nvalid)
             throw std::logic_error(
                 "G23 NOAA hourly wind-validity/STHEOR count invalid");

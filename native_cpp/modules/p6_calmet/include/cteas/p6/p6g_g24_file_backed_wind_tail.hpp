@@ -19,6 +19,7 @@ struct G24SourceWindTail {
     std::vector<float> second_vb_south_north_mps;
     std::vector<float> pre_inter2_ub_west_east_mps;
     std::vector<float> pre_inter2_vb_south_north_mps;
+    std::vector<float> test_only_stage100_u,test_only_stage100_v;
 };
 
 // Shared selected original G24 tail, invoked by both the frozen G19
@@ -31,7 +32,8 @@ inline G24SourceWindTail g24_selected_original_wind_tail_from_g16(
     const p6::Inter2SelectedOutput& inter2_v,
     const std::vector<float>& first_ub,
     const std::vector<float>& first_vb,
-    bool explicitly_test_only) {
+    bool explicitly_test_only,
+    bool capture_stage100=false) {
     const auto nx=static_cast<std::size_t>(frame.grid.nx);
     const auto ny=static_cast<std::size_t>(frame.grid.ny);
     const auto n=nx*ny;
@@ -89,7 +91,9 @@ inline G24SourceWindTail g24_selected_original_wind_tail_from_g16(
     result.second_ub_west_east_mps=smooth.ub_west_east_mps;
     result.second_vb_south_north_mps=smooth.vb_south_north_mps;
     result.wind=p6::original_smooth_divcel_w(
-        smooth,frame.grid.grid_km*1000.f,frame.grid.grid_km*1000.f,dz,false);
+        smooth,frame.grid.grid_km*1000.f,frame.grid.grid_km*1000.f,dz,false,
+        capture_stage100?&result.test_only_stage100_u:nullptr,
+        capture_stage100?&result.test_only_stage100_v:nullptr);
     if(result.wind.u_mps.size()!=9*n||result.wind.v_mps.size()!=9*n||
        result.wind.w_face_mps.size()!=10*n)
         throw std::logic_error("G24 original selected DIAGNO U/V/W incomplete");
@@ -100,7 +104,8 @@ inline G24SourceWindTail g24_selected_original_wind_tail(
     const MultiHourFrame& frame,
     const G19FileBackedCase& source,
     const G23SelectedSourceStheorInter2& g23,
-    bool explicitly_test_only) {
+    bool explicitly_test_only,
+    bool capture_stage100=false) {
     const auto nx=static_cast<std::size_t>(frame.grid.nx);
     const auto ny=static_cast<std::size_t>(frame.grid.ny);
     const auto n=nx*ny;
@@ -119,6 +124,6 @@ inline G24SourceWindTail g24_selected_original_wind_tail(
     return g24_selected_original_wind_tail_from_g16(
         frame,g23.inter2_u,g23.inter2_v,
         g23.original_ub_west_east_mps,
-        g23.original_vb_south_north_mps,true);
+        g23.original_vb_south_north_mps,true,capture_stage100);
 }
 } // namespace cteas::calmet::p6g

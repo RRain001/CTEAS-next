@@ -26,6 +26,19 @@ int main(){
     throw std::runtime_error("original W integration wrong");
   if(std::abs(o.w_face_mps[18+2]-o.w_face_mps[9+2])>1.e-6f)
     throw std::runtime_error("W integration across layers wrong");
+  // Test-only stage100 observer is a read-only snapshot of the same
+  // SMOOTH invocation and must not change final U/V/W or divergence.
+  std::vector<float> stage100_u,stage100_v;
+  const auto observed=original_smooth_divcel_w(
+      s,100.f,100.f,{20.f,40.f},false,&stage100_u,&stage100_v);
+  if(stage100_u.size()!=18||stage100_v.size()!=18||
+     stage100_u!=o.u_mps||stage100_v!=o.v_mps||
+     observed.u_mps!=o.u_mps||observed.v_mps!=o.v_mps||
+     observed.w_face_mps!=o.w_face_mps||
+     observed.divergence_per_s!=o.divergence_per_s||
+     observed.ub_west_east_mps!=o.ub_west_east_mps||
+     observed.vb_south_north_mps!=o.vb_south_north_mps)
+      throw std::runtime_error("test-only stage100 observer changed physics");
   // Boundary renewal after integration has source-faithful original
   // WINDBC values based on smoothed final U/V (zero in this test).
   for(float x:o.ub_west_east_mps)

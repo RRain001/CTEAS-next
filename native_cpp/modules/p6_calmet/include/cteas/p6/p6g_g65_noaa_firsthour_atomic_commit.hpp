@@ -168,6 +168,8 @@ struct G65NoaaFirstHourCommitReceipt {
     std::vector<std::uint8_t> hour3_test_only_native_g22_trace_bytes;
     bool hour3_live_g26a_stage3_trial_only=false;
     std::vector<std::uint8_t> hour3_live_g26a_stage3_trace_bytes;
+    bool hour3_native_g23_g24_stage11_trial_only=false;
+    std::vector<std::uint8_t> hour3_native_g23_g24_trace_bytes;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
@@ -231,7 +233,11 @@ g65_real_noaa_firsthour_atomic_commit(
     bool opt_in_positive_hour2_transaction=false,
     bool opt_in_third_hour_diagno_preflight=false,
     bool opt_in_hour3_g22_trace_only=false,
-    bool opt_in_hour3_live_g22_trial=false) {
+    bool opt_in_hour3_live_g22_trial=false,
+    bool opt_in_hour3_windtail_trial=false) {
+    if(opt_in_hour3_windtail_trial&&!opt_in_hour3_live_g22_trial)
+        throw std::invalid_argument(
+            "G65 hour3 wind-tail requires live G22 trial");
     if(opt_in_hour3_live_g22_trial&&!opt_in_hour3_g22_trace_only)
         throw std::invalid_argument(
             "G65 hour3 live G22 trial requires independent detached trace");
@@ -1201,6 +1207,7 @@ g65_real_noaa_firsthour_atomic_commit(
     G66NoaaHour3G22Trace third_g22_forensic;
     G66NativeHour2WaterState third_native_prior;
     std::vector<std::uint8_t> third_live_g22_bytes;
+    std::vector<std::uint8_t> third_windtail_bytes;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -1372,8 +1379,9 @@ g65_real_noaa_firsthour_atomic_commit(
                 auto live_third=scheduler.preview_next_hour();
                 G26SourceFileBackedG14DiagnoBridge live_actor(
                     scheduler,clocks,source,true,
-                    &third_native_prior,true);
-                for(std::size_t stage=0;stage<7;++stage) {
+                    &third_native_prior,true,opt_in_hour3_windtail_trial);
+                for(std::size_t stage=0;
+                    stage<(opt_in_hour3_windtail_trial?12U:7U);++stage) {
                     const auto step=live_actor.run(
                         p6::kHefeiOriginalStageOrder[stage],live_third);
                     if(!step.completed||
@@ -1383,7 +1391,8 @@ g65_real_noaa_firsthour_atomic_commit(
                 }
                 third_live_g22_bytes=
                     live_actor.selected_hour3_g22_trace_after_stage(live_third);
-                if(live_actor.selected_checkpoints()!=7||
+                if(live_actor.selected_checkpoints()!=
+                       (opt_in_hour3_windtail_trial?12U:7U)||
                    third_live_g22_bytes!=third_g22_forensic.bytes||
                    scheduler.completed_hours()!=2||
                    clocks.latest_upper_hour()!=hour2.input.end||
@@ -1399,6 +1408,17 @@ g65_real_noaa_firsthour_atomic_commit(
                     throw std::logic_error(
                         "G65 real G26A stage3 differs from detached G66"
                         " or mutated prior G14 state/clocks");
+                if(opt_in_hour3_windtail_trial) {
+                    third_windtail_bytes=
+                        live_actor.selected_hour3_windtail_trace_after_stage(
+                            live_third);
+                    if(third_windtail_bytes.empty()||
+                       scheduler.completed_hours()!=2||
+                       clocks.latest_upper_hour()!=hour2.input.end||
+                       clocks.latest_gamma_hour()!=hour2.input.end)
+                        throw std::logic_error(
+                            "G65 third-hour G23/G24 trace modified G14 authority");
+                }
             }
         }
     }
@@ -1422,6 +1442,11 @@ g65_real_noaa_firsthour_atomic_commit(
     if(receipt.hour3_live_g26a_stage3_trial_only)
         receipt.hour3_live_g26a_stage3_trace_bytes=
             std::move(third_live_g22_bytes);
+    receipt.hour3_native_g23_g24_stage11_trial_only=
+        opt_in_hour3_windtail_trial&&!third_windtail_bytes.empty();
+    if(receipt.hour3_native_g23_g24_stage11_trial_only)
+        receipt.hour3_native_g23_g24_trace_bytes=
+            std::move(third_windtail_bytes);
     if(second_positive_published)
         receipt.hour2_committed_memory=std::move(second_committed);
     receipt.g59_bitwise_compared_words=accepted.second;
