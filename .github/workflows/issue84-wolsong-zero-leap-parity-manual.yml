@@ -1,12 +1,5 @@
 name: Issue84 authentic Wolsong zero-virtual leap 2024 SMERGE science (manual)
 on:
-  pull_request:
-    paths:
-      - scripts/s2g/issue84_real_noaa_p5_zero_leap.py
-      - scripts/s2g/tests/test_issue84_real_noaa_p5_zero_leap.py
-      - .github/workflows/issue84-wolsong-zero-leap-parity-manual.yml
-      - native_cpp/modules/p6_calmet/src/p6g_surf_source_preflight_main.cpp
-      - native_cpp/modules/p6_calmet/tests/p6g_surface_dynamic_tests.cpp
   workflow_dispatch:
 permissions:
   contents: read

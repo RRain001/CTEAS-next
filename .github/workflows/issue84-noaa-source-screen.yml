@@ -1,10 +1,5 @@
 name: Issue84 real NOAA annual source screen (manual, metadata only)
 on:
-  pull_request:
-    paths:
-      - scripts/s2g/issue84_noaa_source_screen.py
-      - scripts/s2g/tests/test_issue84_noaa_source_screen.py
-      - .github/workflows/issue84-noaa-source-screen.yml
   workflow_dispatch:
     inputs:
       years:

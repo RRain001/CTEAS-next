@@ -1,13 +1,5 @@
 name: Issue40 S4-H genuine 2SS-grid P1 P2A P3 fresh original MAKEGEO science
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4h-real-2ss-large-grid-p3-science.yml'
-      - 'docs/plans/ISSUE40_S4H_REAL_2SS_LARGE_GRID_P3_ORIGINAL_20261021.md'
-      - 'native_cpp/orchestration/p3_case_handoff.py'
-      - 'native_cpp/orchestration/p2a_case_producer.py'
-      - 'scripts/s3f/verify_real_noaa_2022_2023_station_selection.py'
-      - 'scripts/s2g/issue42_s3_b1_true_srtm_window.py'
   workflow_dispatch:
 permissions:
   contents: read

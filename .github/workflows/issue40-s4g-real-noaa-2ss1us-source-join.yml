@@ -1,12 +1,5 @@
 name: Issue40 S4-G real NOAA 2SS 1US shared-grid source join
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4g-real-noaa-2ss1us-source-join.yml'
-      - 'scripts/s4/s4g_real_noaa_2ss1us_input_join.py'
-      - 'scripts/s2g/real_noaa_native_p4_up.py'
-      - 'scripts/s2g/issue56_real_noaa_p5_case.py'
-      - 'docs/plans/ISSUE40_S4G_REAL_NOAA_2SS1US_SOURCE_PAIR_20261021.md'
   workflow_dispatch:
 permissions:
   contents: read

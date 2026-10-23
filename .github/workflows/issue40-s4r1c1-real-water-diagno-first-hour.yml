@@ -1,21 +1,5 @@
 name: Issue40 S4-R1c1 genuine NOAA 63 WATER first-hour original G20/G21 wind parity
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4r1c1-real-water-diagno-first-hour.yml'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g41_real_water_first_hour_source.hpp'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g42_selected_real_water_missing_wind1.hpp'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g21_file_backed_fradj.hpp'
-      - 'native_cpp/modules/p6_calmet/src/p6g_g41_real_water_first_hour_main.cpp'
-      - 'scripts/s4/s4r1c1_original_water_first_hour_diagno.py'
-      - 'docs/plans/ISSUE40_S4R1C1_NATIVE_NOOW_WATER_FIRST_HOUR_20261021.md'
-      - '.github/workflows/issue40-s4r1b-real-water-qsw-parity.yml'
-      - 'scripts/s4/s4r1b_real_water_heatfx_reference.py'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g40_real_water_shortwave_source.hpp'
-      - 'native_cpp/modules/p6_calmet/src/p6g_g40_real_water_shortwave_source_main.cpp'
-      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
-      - 'docs/plans/ISSUE40_S4R1B_REAL_WATER_SHORTWAVE_63X6_20261021.md'
   workflow_dispatch:
 permissions:
   contents: read
