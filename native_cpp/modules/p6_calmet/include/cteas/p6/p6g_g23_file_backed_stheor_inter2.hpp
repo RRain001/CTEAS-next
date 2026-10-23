@@ -180,12 +180,26 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
     if(source.research_noow_water_source_only) {
         for(const auto& observed:frame.surface.by_station)
             original_wind_valid.push_back(observed.wind_valid?1U:0U);
-        if(original_wind_valid!=std::vector<unsigned char>{0U,1U} &&
-           original_wind_valid!=std::vector<unsigned char>{1U,0U})
+        // A station's missing-wind status belongs to this particular
+        // SURF hour, not to its preceding hour. Preserve frozen hour-zero
+        // 1-valid/1-missing science, then use hour one's genuine P5 mask.
+        const auto nvalid=static_cast<std::size_t>(
+            (original_wind_valid[0]!=0U)+(original_wind_valid[1]!=0U));
+        if((frame.hour_index==0&&nvalid!=1U)||
+           (frame.hour_index==1&&nvalid==0U)||
+           candidate.size()!=nvalid)
             throw std::logic_error(
-                "G23 selected genuine NOAA SS missing-wind identity changed");
-        if(candidate.size()!=1)
-            throw std::logic_error("G23 sparse NOAA STHEOR must have one real station");
+                "G23 NOAA hourly wind-validity/STHEOR count invalid");
+        std::size_t j=0;
+        for(std::size_t i=0;i<original_wind_valid.size();++i) {
+            if(!original_wind_valid[i])continue;
+            if(j>=candidate.size()||
+               candidate[j].surface_id!=frame.stations.surface[i].id||
+               candidate[j].end!=frame.input.end)
+                throw std::logic_error(
+                    "G23 NOAA STHEOR source valid-station ordinal changed");
+            ++j;
+        }
     }
     const auto merged=merge_g17c3_surface_diagi(
         original_g20_profiles,frame.stations,candidate,
