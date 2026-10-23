@@ -1440,3 +1440,21 @@ else()
   target_compile_options(cteas_p6g_g62_real_noaa_firsthour_memory
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+# S4-R1c8w: research-only REAL NOAA 17-stage G14 first-hour atomic
+# transaction. Both failed-precommit rollback and committed AA/BB/CGAMMA
+# publication are checked; hour2 physics and production remain blocked.
+add_executable(cteas_p6g_g65_noaa_firsthour_atomic
+               src/p6g_g65_noaa_firsthour_atomic_commit_main.cpp)
+target_link_libraries(cteas_p6g_g65_noaa_firsthour_atomic
+                      PRIVATE cteas_p6a_contracts)
+target_sources(cteas_p6g_g65_noaa_firsthour_atomic
+               PRIVATE p6f/src/calmet_dat21_writer.cpp)
+target_include_directories(cteas_p6g_g65_noaa_firsthour_atomic PRIVATE
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
+if(MSVC)
+  target_compile_options(cteas_p6g_g65_noaa_firsthour_atomic PRIVATE /W4 /WX)
+else()
+  target_compile_options(cteas_p6g_g65_noaa_firsthour_atomic
+                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

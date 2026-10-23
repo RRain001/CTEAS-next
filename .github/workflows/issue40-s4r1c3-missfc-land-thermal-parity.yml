@@ -49,6 +49,8 @@ on:
       - 'docs/plans/ISSUE40_S4R1C8O_UNIFIED_G14_SOURCE_PREFLIGHT_20261022.md'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp'
       - 'native_cpp/modules/p6_calmet/src/p6g_g62_real_noaa_firsthour_memory_seed_main.cpp'
+      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g65_noaa_firsthour_atomic_commit.hpp'
+      - 'native_cpp/modules/p6_calmet/src/p6g_g65_noaa_firsthour_atomic_commit_main.cpp'
       - 'docs/plans/ISSUE40_S4R1C8M_ORIGINAL_DPTT_SIXHOUR_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8L_FIRSTHOUR_POSTCOMP_MEMORY_20261022.md'
       - 'docs/plans/ISSUE40_S4R1C8J_NATIVE_NOAA_IPGT_IRH_20261022.md'
@@ -2197,6 +2199,41 @@ jobs:
             "$root/evidence/independent-native-hidden-memory-seed.log"
           grep -Fx 'S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-native-hidden-memory-seed.log"
+      - name: S4-R1c8w source-scoped one-hour G14 17-stage atomic commit and rollback
+        shell: bash
+        timeout-minutes: 45
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c8w"
+          mkdir -p "$root/evidence"
+          cmake --build "$RUNNER_TEMP/s4r1c7b/native" --parallel 2 \
+            --target cteas_p6g_g65_noaa_firsthour_atomic
+          bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g65_noaa_firsthour_atomic"
+          case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          "$bin" --real-noaa-firsthour-g14-atomic \
+            "$case/run/met/met.inp" \
+            "$case/geo/makegeo/geo.dat" \
+            "$case/met/surface/final/surf.dat" \
+            "$case/met/upperair/final/up_58424.dat" \
+            > "$root/evidence/firsthour-atomic-commit.log" \
+            2> "$root/evidence/firsthour-atomic-stderr.log" || {
+              tail -n 100 "$root/evidence/firsthour-atomic-stderr.log"
+              exit 1
+            }
+          for gate in \
+            'S4R1C8W_G14_FIRSTHOUR_17STAGE_ATOMIC_COMMIT=PASS_SCOPED' \
+            'S4R1C8W_G14_P6F_G59_BITWISE=PASS_313650_WORDS' \
+            'S4R1C8W_G14_HIDDEN_MEMORY_BITWISE=PASS_20910_REAL4' \
+            'S4R1C8W_G14_FAILED_PRECOMMIT_ROLLBACK=PASS' \
+            'S4R1C8W_G14_AABB_CGAMMA_AFTER_COMMIT=PASS' \
+            'S4R1C8W_G14_HOUR2_PREVIEW_INHERITS_MEMORY=PASS_SOURCE_ONLY' \
+            'S4R1C8W_G14_HOUR2_RAW_MISSFC_WIND_PRESERVED=PASS_SOURCE_ONLY' \
+            'S4R1C8W_G14_HOUR2_FIRSTHOUR_REPLAY_REJECTED=PASS_ATOMIC' \
+            'S4R1C8W_G14_HOUR2_REAL_PREPDI_STAGE0=PASS_PRECOMMIT_ONLY' \
+            'S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED' \
+            'S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED'; do
+            grep -Fx "$gate" "$root/evidence/firsthour-atomic-commit.log"
+          done
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -2228,6 +2265,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8l/evidence/
             ${{ runner.temp }}/s4r1c8m/evidence/
             ${{ runner.temp }}/s4r1c8n/evidence/
+            ${{ runner.temp }}/s4r1c8w/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
