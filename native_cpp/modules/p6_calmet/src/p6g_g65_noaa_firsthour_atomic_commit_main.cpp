@@ -14,10 +14,13 @@
 
 int main(int argc,char** argv) {
     try {
+        const bool third_trace=(argc==8&&
+            std::string(argv[6])=="--third-hour-g22-trace-only");
         if((argc!=6&&argc!=7&&argc!=8&&argc!=10&&argc!=12&&argc!=14)||
            (argc==7&&std::string(argv[6])!="--positive-hour2-g14-transaction"&&
             std::string(argv[6])!="--third-hour-g26a-preflight-only")||
-           (argc>=8&&std::string(argv[6])!="--forensic-hour2-precommit")||
+           (argc>=8&&!third_trace&&
+            std::string(argv[6])!="--forensic-hour2-precommit")||
            (argc>=10&&std::string(argv[8])!="--forensic-stage14-inputs")||
            (argc>=12&&std::string(argv[10])!="--forensic-stage12-13-mixht")||
            (argc==14&&std::string(argv[12])!="--forensic-hour1-committed")||
@@ -28,18 +31,20 @@ int main(int argc,char** argv) {
                 "G65 requires: --real-noaa-firsthour-g14-atomic met.inp GEO.DAT SURF.DAT UP.DAT");
         const cteas::calmet::p6g::G19SourceFilePaths paths{
             argv[2],argv[3],argv[4],{argv[5]}};
-        const bool positive_hour2=(argc==7);
-        const bool third_hour_diagno=positive_hour2&&
-            std::string(argv[6])=="--third-hour-g26a-preflight-only";
+        const bool positive_hour2=(argc==7||third_trace);
+        const bool third_hour_diagno=third_trace||
+            (argc==7&&
+             std::string(argv[6])=="--third-hour-g26a-preflight-only");
         const auto result=
             cteas::calmet::p6g::g65_real_noaa_firsthour_atomic_commit(
-                paths,true,positive_hour2,third_hour_diagno);
+                paths,true,positive_hour2,third_hour_diagno,third_trace);
         if(result.committed_hours!=(positive_hour2?2U:1U)||
            result.hour2_positive_g14_commit_verified!=positive_hour2||
            result.hour2_positive_station_clocks_published!=positive_hour2||
            result.hour3_preview_inherits_hour2_memory!=positive_hour2||
            result.hour3_real_g26a_stage02_preflight_only!=third_hour_diagno||
            result.hour3_g22_thermal_guard_remains_rejected!=third_hour_diagno||
+           result.hour3_test_only_native_g22_trace_ready!=third_trace||
            (positive_hour2&&
             (result.hour2_committed_memory.zi_m.size()!=6970||
              result.hour2_committed_memory.ziconv_m.size()!=6970||
@@ -75,7 +80,21 @@ int main(int argc,char** argv) {
             throw std::logic_error("G65 scope or committed-hour claim drift");
         // Only opt-in forensic output; never write an accepted hourly
         // CALMET.DAT or overwrite a prior audit input/receipt.
-        if(argc>=8) {
+        if(third_trace) {
+            const std::filesystem::path trace_path(argv[7]);
+            if(trace_path.empty()||std::filesystem::exists(trace_path)||
+               result.hour3_test_only_native_g22_trace_bytes.empty())
+                throw std::invalid_argument(
+                    "G66 test-only third-hour trace path absent/already exists");
+            std::ofstream out(trace_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G66 cannot open trace output");
+            const auto& bytes=result.hour3_test_only_native_g22_trace_bytes;
+            out.write(reinterpret_cast<const char*>(bytes.data()),
+                      static_cast<std::streamsize>(bytes.size()));
+            out.close();
+            if(!out)throw std::runtime_error("G66 incomplete trace write");
+        }
+        if(argc>=8&&!third_trace) {
             const std::filesystem::path candidate_path(argv[7]);
             if(candidate_path.empty()||
                std::filesystem::exists(candidate_path)||
@@ -203,6 +222,9 @@ int main(int argc,char** argv) {
             <<(third_hour_diagno
                ?"S4R1C9K_HOUR3_G22_GUARD=PASS_REJECTED\n"
                :"S4R1C9K_HOUR3_G22_GUARD=NOT_RUN\n")
+            <<(third_trace
+               ?"S4R1C9N_HOUR3_NATIVE_G22_TRACE=PASS_TEST_ONLY_NOT_SCIENCE\n"
+               :"S4R1C9N_HOUR3_NATIVE_G22_TRACE=NOT_RUN\n")
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;

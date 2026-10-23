@@ -7,6 +7,7 @@
 // numbers are used as native forcing. Failed precommit cannot publish state.
 #include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
 #include "cteas/p6/p6g_g45_six_hour_water_wind1.hpp"
+#include "cteas/p6/p6g_g66_noaa_hour3_g22_trace.hpp"
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -163,6 +164,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour3_preview_inherits_hour2_memory=false;
     bool hour3_real_g26a_stage02_preflight_only=false;
     bool hour3_g22_thermal_guard_remains_rejected=false;
+    bool hour3_test_only_native_g22_trace_ready=false;
+    std::vector<std::uint8_t> hour3_test_only_native_g22_trace_bytes;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
@@ -189,8 +192,9 @@ inline G65NoaaFirstHourCommitReceipt
 g65_real_noaa_firsthour_atomic_commit(
     const G19SourceFilePaths& paths,bool explicitly_forensic_only,
     bool opt_in_positive_hour2_transaction=false,
-    bool opt_in_third_hour_diagno_preflight=false) {
-    if(opt_in_third_hour_diagno_preflight&&
+    bool opt_in_third_hour_diagno_preflight=false,
+    bool opt_in_hour3_g22_trace_only=false) {
+    if((opt_in_third_hour_diagno_preflight||opt_in_hour3_g22_trace_only)&&
        !opt_in_positive_hour2_transaction)
         throw std::invalid_argument(
             "G65 third-hour PREPDI requires committed hour-two trial");
@@ -217,6 +221,36 @@ g65_real_noaa_firsthour_atomic_commit(
 
     auto source=g19_load_original_source_case(paths,true);
     source.surface.hourly.front()=repaired.original_comp_resolved;
+    if(opt_in_hour3_g22_trace_only) {
+        // CALMET COMP calls MISSFC before every DIAGNO. In the real NOAA
+        // third hour SS #1 has missing pressure/T/RH/cloud; raw P5 is
+        // immutable, while the model-internal five nonwind fields must
+        // be repaired from the current-hour valid station #2.
+        // This isolated G66 forensic route is the ONLY additional caller;
+        // existing G26 production/hour>1 guards remain untouched.
+        const auto& raw=actual.source.surface.hourly.at(2);
+        const auto third_missfc=g43_original_comp_missfc_source_only(
+            actual,raw,true);
+        if(!third_missfc.source_comp_missfc_complete||
+           third_missfc.original_raw.end!=raw.end||
+           third_missfc.original_comp_resolved.end!=raw.end||
+           third_missfc.original_comp_resolved.by_station.size()!=2)
+            throw std::logic_error("G66 third-hour source MISSFC invalid");
+        for(std::size_t site=0;site<2;++site) {
+            const auto& a=raw.by_station[site];
+            const auto& b=third_missfc.original_comp_resolved.by_station[site];
+            if(!b.pressure_valid||!b.temperature_valid||
+               !b.humidity_valid||!b.cloud_valid||!b.ceiling_valid||
+               a.wind_valid!=b.wind_valid||
+               a.wind_speed_mps!=b.wind_speed_mps||
+               a.wind_direction_deg!=b.wind_direction_deg||
+               a.precip_code!=b.precip_code||
+               a.precipitation_code_valid!=b.precipitation_code_valid)
+                throw std::logic_error(
+                    "G66 MISSFC cannot repair P5 wind or precip");
+        }
+        source.surface.hourly[2]=third_missfc.original_comp_resolved;
+    }
     if(!source.research_noow_water_source_only||
        source.surface.hourly.size()!=6||
        source.grid.nx!=82||source.grid.ny!=85||
@@ -1123,6 +1157,7 @@ g65_real_noaa_firsthour_atomic_commit(
     bool third_inherits_second=false;
     bool third_g26a_staged=false;
     bool third_thermal_refused=false;
+    G66NoaaHour3G22Trace third_g22_forensic;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -1264,6 +1299,26 @@ g65_real_noaa_firsthour_atomic_commit(
                clocks.latest_gamma_hour()!=hour2.input.end)
                 throw std::logic_error(
                     "G65 third-hour unverified G22 thermal was not fail-closed");
+            if(opt_in_hour3_g22_trace_only) {
+                // This standalone G66 tracer never invokes G26 stage3,
+                // consumes only the NATIVE hour2 P6F result, and cannot
+                // publish an hour3 stage, memory, clocks or MET output.
+                const auto& native_wind1=
+                    third_diagno.selected_source_wind1_after_stage(third_frame);
+                const auto& native_fradj=
+                    third_diagno.selected_source_fradj_after_stage(third_frame);
+                third_g22_forensic=g66_native_hour3_g22_trace_only(
+                    third_frame,source,native_wind1,native_fradj,
+                    live_p6f.candidate_dataset,true);
+                if(third_g22_forensic.traced_stages!=5||
+                   third_g22_forensic.water_history_values!=126||
+                   third_g22_forensic.production_admitted||
+                   scheduler.completed_hours()!=2||
+                   clocks.latest_upper_hour()!=hour2.input.end||
+                   clocks.latest_gamma_hour()!=hour2.input.end)
+                    throw std::logic_error(
+                        "G65 standalone third-hour trace modified G14 authority");
+            }
         }
     }
 
@@ -1276,6 +1331,11 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour3_preview_inherits_hour2_memory=third_inherits_second;
     receipt.hour3_real_g26a_stage02_preflight_only=third_g26a_staged;
     receipt.hour3_g22_thermal_guard_remains_rejected=third_thermal_refused;
+    receipt.hour3_test_only_native_g22_trace_ready=
+        opt_in_hour3_g22_trace_only&&third_g22_forensic.traced_stages==5;
+    if(receipt.hour3_test_only_native_g22_trace_ready)
+        receipt.hour3_test_only_native_g22_trace_bytes=
+            std::move(third_g22_forensic.bytes);
     if(second_positive_published)
         receipt.hour2_committed_memory=std::move(second_committed);
     receipt.g59_bitwise_compared_words=accepted.second;
