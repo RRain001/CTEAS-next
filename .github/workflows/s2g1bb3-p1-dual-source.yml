@@ -1,20 +1,6 @@
 name: S2-G1B-B3 P1 local TIFF + selectable SRTM GL1/GL3 contract
 
 on:
-  push:
-    branches: [codex/s2g1bb3-p1-dual-terrain-source]
-    paths:
-      - .github/workflows/s2g1bb3-p1-dual-source.yml
-      - scripts/s2g/p1_terrain_source.py
-      - scripts/s2g/tests/test_p1_terrain_source.py
-      - docs/s2g1bb3_p1_dual_source.md
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2g1bb3-p1-dual-source.yml
-      - scripts/s2g/p1_terrain_source.py
-      - scripts/s2g/tests/test_p1_terrain_source.py
-      - docs/s2g1bb3_p1_dual_source.md
   workflow_dispatch:
     inputs:
       dem:

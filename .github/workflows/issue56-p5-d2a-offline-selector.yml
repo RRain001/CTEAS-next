@@ -1,13 +1,5 @@
 name: Issue 56 P5 D2-A offline original station selection
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue56-p5-d2a-offline-selector.yml'
-      - 'native_cpp/modules/p5_smerge/data_prep/download_isd_by_grid.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/p5_case_producer.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_offline_selector.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_case_producer.py'
   workflow_dispatch:
 permissions:
   contents: read

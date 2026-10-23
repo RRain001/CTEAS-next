@@ -1,15 +1,5 @@
 name: Issue168 S1 retirement build, link and policy regression
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/**
-      - docker/cpp/Dockerfile
-      - scripts/migration/validate_ubuntu.py
-      - scripts/s2g/tests/test_issue119_wolsong_contract.py
-      - .github/workflows/issue160-*.yml
-      - .github/workflows/issue168-p2-retirement-ci.yml
-      - docs/plans/ISSUE168_S1_P2B_RETIREMENT_AUDIT_20261020.md
   workflow_dispatch:
 permissions:
   contents: read

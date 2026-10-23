@@ -1,19 +1,5 @@
 name: Issue160 C4-C5 Hefei real 20km 2022 GLC30m integer HITS and LU format science
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - data/landcover/glc_fcs30d/v1_2022/hefei20km/**
-      - native_cpp/CMakeLists.txt
-      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
-      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
-      - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp
-      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
-      - scripts/s2g/issue160_glc30m_independent_reference.py
-      - scripts/s2g/issue160_p3_lu_format_contract.py
-      - scripts/s2g/issue160_hefei20km_glc_acquire.py
-      - docs/plans/ISSUE53_GLC35_USGS38_USER_SELECTED_20261019.json
-      - .github/workflows/issue160-c4c5-hefei-20km-real-30m.yml
   workflow_dispatch:
 concurrency:
   group: issue160-hefei-real-${{ github.event.pull_request.number || github.ref }}

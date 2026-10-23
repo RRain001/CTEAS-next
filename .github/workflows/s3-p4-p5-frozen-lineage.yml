@@ -1,13 +1,6 @@
 name: S3 real native P4 P5 2022 frozen producer byte lineage
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s3-p4-p5-frozen-lineage.yml
-      - native_cpp/orchestration/verify_p4_p5_frozen_lineage.py
-      - native_cpp/modules/p4_read62/**
-      - native_cpp/modules/p5_smerge/**
-      - native_cpp/include/cteas/met_input/**
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

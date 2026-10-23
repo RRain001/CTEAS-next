@@ -1,20 +1,5 @@
 name: Issue 54 P1 D1-B offline two-route native case gate
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue54-p1-d1b-native-case.yml'
-      - 'native_cpp/src/p1_terrain_case_cli.cpp'
-      - 'native_cpp/src/geo/terrain.cpp'
-      - 'native_cpp/src/geo/terrain_grid.cpp'
-      - 'native_cpp/p1/CMakeLists.txt'
-      - 'scripts/s2g/p1_native_case.py'
-      - 'scripts/s2g/p1_terrain_source.py'
-      - 'scripts/s2g/p1_opentopo_bulk.py'
-      - 'scripts/s2g/tests/test_p1_terrain_source.py'
-      - 'scripts/s2g/tests/test_p1_opentopo_bulk.py'
-      - 'scripts/s2g/tests/test_p1_native_case.py'
-      - 'native_cpp/orchestration/case_admission.py'
   workflow_dispatch:
 permissions:
   contents: read

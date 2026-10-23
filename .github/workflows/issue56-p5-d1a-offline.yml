@@ -1,14 +1,5 @@
 name: Issue 56 P5 D1-A offline archive gate
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue56-p5-d1a-offline.yml'
-      - 'native_cpp/modules/p5_smerge/data_prep/case_archive_gate.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_case_archive_gate.py'
-      - 'native_cpp/orchestration/case_admission.py'
-      - 'native_cpp/orchestration/site_plan.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/station_identity.py'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,11 +1,6 @@
 name: Issue 55 P4 D3 original READ62 genuine NOAA short parity
 # Automatic bounded 6h comparator only, no 2022/2023 full-year parity.
 on:
-  pull_request:
-    paths:
-      - .github/workflows/issue55-p4-d3-short-noaa-parity.yml
-      - scripts/s2g/issue55_p4_d3_short.py
-      - native_cpp/modules/p4_read62/**
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,12 +1,5 @@
 name: Issue40 S4-R0 original-water HFLUX source guard (not DIAGNO)
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4r0-water-hflux-source.yml'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g38_selected_noow_water_hflux_source.hpp'
-      - 'native_cpp/modules/p6_calmet/src/p6g_g38_selected_water_hflux_source_main.cpp'
-      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
-      - 'docs/plans/ISSUE40_S4R0_WATER_DIAGNO_DEPENDENCY_GATE_20261021.md'
   workflow_dispatch:
 permissions:
   contents: read

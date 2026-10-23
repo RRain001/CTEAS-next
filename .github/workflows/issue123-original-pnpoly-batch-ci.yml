@@ -1,14 +1,5 @@
 name: Issue123 D4 original PNPOLY paired oracle harness (synthetic CI only)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/src/p2_original_pnpoly_batch_cli.cpp
-      - native_cpp/CMakeLists.txt
-      - scripts/s2g/issue123_original_pnpoly_oracle.py
-      - .github/workflows/issue123-original-pnpoly-manual.yml
-      - .github/workflows/issue123-original-pnpoly-batch-ci.yml
-      - docs/plans/ISSUE123_ORIGINAL_PNPOLY_SAME_INPUT_GATE_20261019.md
   workflow_dispatch:
 permissions:
   contents: read

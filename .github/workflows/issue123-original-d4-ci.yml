@@ -1,14 +1,5 @@
 name: Issue123 D4 Fortran-style PNPOLY and COASTRD BLN (synthetic only)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/include/cteas/geo/ctgproc_original_bln_pnpoly.hpp
-      - native_cpp/src/geo/ctgproc_original_bln_pnpoly.cpp
-      - native_cpp/tests/p2_original_bln_pnpoly_tests.cpp
-      - native_cpp/CMakeLists.txt
-      - docs/plans/ISSUE123_ORIGINAL_SAMPLING_D4_20261019.md
-      - .github/workflows/issue123-original-d4-ci.yml
   workflow_dispatch:
 permissions:
   contents: read

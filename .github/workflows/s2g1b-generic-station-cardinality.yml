@@ -1,26 +1,6 @@
 name: S2-G1B generic cardinality SS1..SSn US1..USm source-only C++ admission
 
 on:
-  push:
-    branches: [codex/s2g1b-g19-1-to-n-source-stations]
-    paths:
-      - .github/workflows/s2g1b-generic-station-cardinality.yml
-      - native_cpp/modules/p6_calmet/include/cteas/p6/**
-      - native_cpp/modules/p6_calmet/tests/p6g_g19_file_backed_case_tests.cpp
-      - native_cpp/modules/p6_calmet/src/p6g_g19_source_case_preflight_main.cpp
-      - native_cpp/orchestration/p6_g19_handoff.py
-      - native_cpp/orchestration/tests/test_p6_g19_handoff.py
-      - native_cpp/orchestration/README.md
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2g1b-generic-station-cardinality.yml
-      - native_cpp/modules/p6_calmet/include/cteas/p6/**
-      - native_cpp/modules/p6_calmet/tests/p6g_g19_file_backed_case_tests.cpp
-      - native_cpp/modules/p6_calmet/src/p6g_g19_source_case_preflight_main.cpp
-      - native_cpp/orchestration/p6_g19_handoff.py
-      - native_cpp/orchestration/tests/test_p6_g19_handoff.py
-      - native_cpp/orchestration/README.md
   workflow_dispatch:
 
 permissions:

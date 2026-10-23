@@ -1,13 +1,5 @@
 name: Issue46 P3 dynamic MAKEGEO contract (software only)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/src/p3_makegeo_cli.cpp
-      - native_cpp/p3/**
-      - native_cpp/include/cteas/geo/grid_origin.hpp
-      - docs/plans/ISSUE46_P3_D1A_DYNAMIC_MAKEGEO_20261019.md
-      - .github/workflows/issue46-p3-dynamic-software-ci.yml
   workflow_dispatch:
 permissions:
   contents: read

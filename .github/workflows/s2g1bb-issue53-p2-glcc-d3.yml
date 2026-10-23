@@ -1,14 +1,5 @@
 name: Issue53 P2 D3 GLCC 38-class LU.DAT serialization (software only)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/CMakeLists.txt
-      - native_cpp/src/p2_glcc_raw_cli.cpp
-      - native_cpp/src/p2_glcc_lu_dat_cli.cpp
-      - scripts/s2g/tests/test_glcc_lu_dat_d3.py
-      - .github/workflows/s2g1bb-issue53-p2-glcc-d3.yml
-      - docs/plans/ISSUE53_P2_D3_GLCC_LU_20261018.md
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,13 +1,5 @@
 name: Issue40 S4-R1b real 2SS 1US WATER 63x6 original-vs-native QSW source parity
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4r1b-real-water-qsw-parity.yml'
-      - 'scripts/s4/s4r1b_real_water_heatfx_reference.py'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g40_real_water_shortwave_source.hpp'
-      - 'native_cpp/modules/p6_calmet/src/p6g_g40_real_water_shortwave_source_main.cpp'
-      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
-      - 'docs/plans/ISSUE40_S4R1B_REAL_WATER_SHORTWAVE_63X6_20261021.md'
   workflow_dispatch:
 permissions:
   contents: read

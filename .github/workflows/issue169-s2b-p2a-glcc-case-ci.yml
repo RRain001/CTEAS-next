@@ -1,15 +1,5 @@
 name: Issue169 S2-B P2-A GLCC immutable case and real source parity
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/orchestration/p2a_case_producer.py
-      - native_cpp/orchestration/tests/test_p2a_case_producer.py
-      - native_cpp/src/p2_glcc_raw_cli.cpp
-      - native_cpp/src/p2_glcc_lu_dat_cli.cpp
-      - native_cpp/orchestration/case_admission.py
-      - .github/workflows/issue169-s2b-p2a-glcc-case-ci.yml
-      - docs/plans/ISSUE169_S2B_P2A_CASE_PRODUCER_20261020.md
   workflow_dispatch:
 permissions:
   contents: read

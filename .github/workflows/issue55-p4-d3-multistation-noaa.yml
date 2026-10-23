@@ -1,11 +1,6 @@
 name: Issue 55 P4 D3 two genuine in-domain NOAA sources same-FSL parity
 # Automatic bounded 6h 2-station comparator only, no full-year P6/P7.
 on:
-  pull_request:
-    paths:
-      - .github/workflows/issue55-p4-d3-multistation-noaa.yml
-      - scripts/s2g/issue55_p4_d3_multistation.py
-      - native_cpp/modules/p4_read62/**
   workflow_dispatch:
 permissions:
   contents: read

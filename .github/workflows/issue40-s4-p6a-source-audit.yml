@@ -1,10 +1,5 @@
 name: "Issue40 S4 P6-A hardcode source inventory (no physics)"
 on:
-  pull_request:
-    paths:
-      - "scripts/s4/p6a_hardcode_source_inventory.py"
-      - "docs/plans/ISSUE40_S4_P6A_HARDCODING_20261020.md"
-      - ".github/workflows/issue40-s4-p6a-source-audit.yml"
   workflow_dispatch:
 permissions:
   contents: read

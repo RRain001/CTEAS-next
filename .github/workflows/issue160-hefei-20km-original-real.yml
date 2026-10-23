@@ -1,13 +1,5 @@
 name: Issue160 C1 Hefei 20km original GLCC full integer and F6.3 science
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - scripts/s2g/issue160_hefei_glcc_science.py
-      - native_cpp/src/p2_original_sampling_hefei_cli.cpp
-      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
-      - native_cpp/CMakeLists.txt
-      - .github/workflows/issue160-hefei-20km-original-real.yml
   workflow_dispatch:
 permissions:
   contents: read

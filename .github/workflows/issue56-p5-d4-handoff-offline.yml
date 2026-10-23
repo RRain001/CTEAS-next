@@ -1,14 +1,5 @@
 name: Issue 56 P5 D4 source-only handoff contract
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue56-p5-d4-handoff-offline.yml'
-      - 'native_cpp/modules/p5_smerge/data_prep/p5_handoff.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/surf_hourly_quality.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_surf_hourly_quality.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/tests/test_p5_handoff.py'
-      - 'scripts/s2g/issue56_real_noaa_p5_case.py'
   workflow_dispatch:
 permissions:
   contents: read

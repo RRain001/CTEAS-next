@@ -1,18 +1,5 @@
 name: Issue53 GLCC original IMG D1 native vs GEN gates (original GLAZAS not run)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/include/cteas/geo/glcc_raw_fractions.hpp
-      - native_cpp/include/cteas/geo/glcc_direct_laea_probe.hpp
-      - native_cpp/src/geo/glcc_raw_fractions.cpp
-      - native_cpp/src/p2_glcc_raw_cli.cpp
-      - native_cpp/tests/p2_glcc_gen_test_driver.cpp
-      - native_cpp/include/cteas/geo/glcc_cli_modes.hpp
-      - native_cpp/CMakeLists.txt
-      - scripts/s2g/tests/test_glcc_native_d1.py
-      - .github/workflows/s2g1bb-issue53-p2-glcc-d1.yml
-      - docker/cpp/Dockerfile
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,13 +1,5 @@
 name: Issue42 S3-0 common five source SHA preflight software
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/issue42-s3-0-source-join.yml
-      - native_cpp/orchestration/s3_five_source_preflight.py
-      - native_cpp/orchestration/tests/test_s3_five_source_preflight.py
-      - native_cpp/orchestration/case_admission.py
-      - docs/plans/ISSUE42_S3_0_FIVE_SOURCE_JOIN_AUDIT_20261020.md
   workflow_dispatch:
 permissions:
   contents: read

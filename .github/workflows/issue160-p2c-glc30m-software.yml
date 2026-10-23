@@ -1,14 +1,5 @@
 name: Issue160 C4 native GLC30m point-sampling software compile
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp
-      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
-      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
-      - native_cpp/tests/p2c_glc30m_sampling_tests.cpp
-      - native_cpp/CMakeLists.txt
-      - .github/workflows/issue160-p2c-glc30m-software.yml
   workflow_dispatch:
 concurrency:
   group: issue160-c4-software-${{ github.event.pull_request.number || github.ref }}

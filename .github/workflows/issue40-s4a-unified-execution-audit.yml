@@ -1,19 +1,5 @@
 name: "Issue40 S4A C1-C2 selected P6 route audit (source only)"
 on:
-  pull_request:
-    paths:
-      - "scripts/s4/p6s4a_execution_route_audit.py"
-      - "docs/plans/ISSUE40_S4A_C1_C2_UNIFIED_EXECUTION_ARCHITECTURE_20261020.md"
-      - ".github/workflows/issue40-s4a-unified-execution-audit.yml"
-      - ".github/workflows/science-c1-143h.yml"
-      - ".github/workflows/science-c2-143h.yml"
-      - "native_cpp/modules/p6_calmet/src/native_hourly_driver_main.cpp"
-      - "native_cpp/modules/p6_calmet/src/realcase_wind_field_main.cpp"
-      - "native_cpp/modules/p6_calmet/src/p6g_g34b_six_hour_selected_gate_main.cpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c3_station_diagi.hpp"
   workflow_dispatch:
 permissions:
   contents: read

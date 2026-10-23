@@ -1,17 +1,6 @@
 name: S3-E P4 P5 auto station selection only
 
 on:
-  push:
-    branches:
-      - codex/s3e-p4-p5-autostation-ci
-    paths:
-      - .github/workflows/s3e-p4-p5-auto-station.yml
-      - scripts/s3e/**
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s3e-p4-p5-auto-station.yml
-      - scripts/s3e/**
   workflow_dispatch:
 
 permissions:

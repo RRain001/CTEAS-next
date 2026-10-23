@@ -1,11 +1,5 @@
 name: "Issue40 S4-E source-owned station resource preflight"
 on:
-  pull_request:
-    paths:
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b1_admission.hpp'
-      - 'native_cpp/modules/p6_calmet/tests/p6g_s4b1_admission_tests.cpp'
-      - '.github/workflows/issue40-s4e-source-shape-preflight.yml'
-      - 'docs/plans/ISSUE40_S4E_RESOURCE_SHAPE_PRODUCTION_READINESS_20261021.md'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,29 +1,6 @@
 name: Issue54 original CTEAS TERREL genuine same-TIFF parity (manual only)
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue54-original-terrel-manual.yml'
-      - 'scripts/s2g/p1_original_actions_replay.py'
-      - 'scripts/s2g/p1_real_actions_case.py'
-      - 'scripts/s2g/p1_terrain_source.py'
-      - 'scripts/s2g/p1_opentopo_bulk.py'
-      - 'scripts/s2g/p1_native_case.py'
-      - 'scripts/s2g/tests/test_p1_terrain_source.py'
-      - 'scripts/s2g/tests/test_p1_opentopo_bulk.py'
-      - 'native_cpp/reference/compare_p1_general.py'
-      - 'scripts/s2g/tests/test_p1_native_case.py'
-      - 'scripts/s2g/tests/test_p1_real_actions_case.py'
-      - 'native_cpp/reference/tests/test_compare_p1_general.py'
-      - 'scripts/s2g/tests/test_p1_original_actions_replay.py'
-      - 'scripts/s2g/tests/test_p1_original_legacy_tiff.py'
-      - 'scripts/s2g/p1_original_coord_probe.py'
-      - 'scripts/s2g/p1_original_native_coord_probe.py'
-      - 'scripts/s2g/tests/test_p1_original_coord_probe.py'
-      - 'scripts/s2g/tests/test_p1_original_native_coord_probe.py'
-      - 'scripts/s2g/p1_original_hit_diagnostics.py'
-      - 'scripts/s2g/tests/test_p1_original_hit_diagnostics.py'
   workflow_dispatch:
     inputs:
       route:
@@ -50,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
           lfs: false
       - name: Install GDAL C++ headers and compiler for synthetic scratch-native test

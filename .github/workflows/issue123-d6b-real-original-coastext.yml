@@ -1,59 +1,5 @@
 name: Issue123 D6B original CTGPROC Wolsong coast.bln
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - scripts/s2g/issue123_original_coastext_wolsong.py
-      - scripts/s2g/issue123_gfortran_stream_io_adapter.py
-      - scripts/s2g/issue123_gfortran_split_io_adapter.py
-      - scripts/s2g/tests/test_issue123_gfortran_split_io_adapter.py
-      - scripts/s2g/issue123_gfortran_eof_adapter.py
-      - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
-      - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
-      - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
-      - scripts/s2g/issue123_d8_real_bln_iptype.py
-      - scripts/s2g/tests/test_issue123_d8_real_bln_iptype.py
-      - native_cpp/src/p2_original_iptype_bln_batch_cli.cpp
-      - scripts/s2g/issue123_d9_original_coastal_hits.py
-      - scripts/s2g/tests/test_issue123_d9_original_coastal_hits.py
-      - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
-      - scripts/s2g/issue123_science_run_callback.py
-      - scripts/s2g/tests/test_issue123_science_run_callback.py
-      - scripts/s2g/issue123_d10_original_f63_lu.py
-      - scripts/s2g/tests/test_issue123_d10_original_f63_lu.py
-      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
-      - native_cpp/src/p2_original_sampling_wolsong_cli.cpp
-      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
-      - scripts/s2g/issue123_d11_native_lu_verify.py
-      - scripts/s2g/tests/test_issue123_d11_native_lu_verify.py
-      - .github/workflows/issue123-d6b-real-original-coastext.yml
-  push:
-    branches: [main]
-    paths:
-      - scripts/s2g/issue123_original_coastext_wolsong.py
-      - scripts/s2g/issue123_gfortran_stream_io_adapter.py
-      - scripts/s2g/issue123_gfortran_split_io_adapter.py
-      - scripts/s2g/tests/test_issue123_gfortran_split_io_adapter.py
-      - scripts/s2g/issue123_gfortran_eof_adapter.py
-      - scripts/s2g/tests/test_issue123_gfortran_eof_adapter.py
-      - scripts/s2g/tests/test_issue123_gfortran_stream_io_adapter.py
-      - scripts/s2g/tests/test_issue123_original_coastext_wolsong.py
-      - scripts/s2g/issue123_d8_real_bln_iptype.py
-      - scripts/s2g/tests/test_issue123_d8_real_bln_iptype.py
-      - native_cpp/src/p2_original_iptype_bln_batch_cli.cpp
-      - scripts/s2g/issue123_d9_original_coastal_hits.py
-      - scripts/s2g/tests/test_issue123_d9_original_coastal_hits.py
-      - native_cpp/src/p2_original_coast_hits_wolsong_cli.cpp
-      - scripts/s2g/issue123_science_run_callback.py
-      - scripts/s2g/tests/test_issue123_science_run_callback.py
-      - scripts/s2g/issue123_d10_original_f63_lu.py
-      - scripts/s2g/tests/test_issue123_d10_original_f63_lu.py
-      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
-      - native_cpp/src/p2_original_sampling_wolsong_cli.cpp
-      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
-      - scripts/s2g/issue123_d11_native_lu_verify.py
-      - scripts/s2g/tests/test_issue123_d11_native_lu_verify.py
-      - .github/workflows/issue123-d6b-real-original-coastext.yml
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,20 +1,6 @@
 name: S2-G1B-B3 GLCC source-only UTM crop contract (no native P2 physics)
 
 on:
-  push:
-    branches: [codex/s2g1bb3-glcc-from-grid-source-only]
-    paths:
-      - .github/workflows/s2g1bb3-glcc-source.yml
-      - scripts/s2g/real_glcc_landuse_from_grid.py
-      - scripts/s2g/tests/test_real_glcc_landuse_from_grid.py
-      - docs/s2g1bb3_p1_p2_sources.md
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2g1bb3-glcc-source.yml
-      - scripts/s2g/real_glcc_landuse_from_grid.py
-      - scripts/s2g/tests/test_real_glcc_landuse_from_grid.py
-      - docs/s2g1bb3_p1_p2_sources.md
   workflow_dispatch:
 
 permissions:

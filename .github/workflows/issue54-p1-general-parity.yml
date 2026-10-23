@@ -1,12 +1,6 @@
 name: Issue 54 original/native TERREL general parity
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue54-p1-general-parity.yml'
-      - 'native_cpp/reference/compare_p1_general.py'
-      - 'native_cpp/reference/tests/test_compare_p1_general.py'
   workflow_dispatch:
     inputs:
       case_id:
@@ -32,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Run synthetic Fortran DAT/SAV and provenance negative tests
         run: |

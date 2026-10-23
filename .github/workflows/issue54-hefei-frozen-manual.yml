@@ -1,11 +1,6 @@
 name: Issue54 frozen Hefei historical original P1 science replay
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue54-hefei-frozen-manual.yml'
-      - 'scripts/s2g/p1_hefei_frozen_replay.py'
   workflow_dispatch:
 
 permissions:
@@ -18,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Static parse only; no original data on PR
         run: |

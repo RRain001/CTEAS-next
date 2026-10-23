@@ -2,11 +2,6 @@ name: "Issue40 S4B4 C1 unified G14 143h frozen original science (manual or agent
 # Purpose-bound expensive original 143h regression; NEVER ordinary PR/push CI.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - 'automation/science/s4b4/**'
-    paths:
-      - '.github/science-triggers/s4b4.request'
 permissions:
   contents: read
 concurrency:

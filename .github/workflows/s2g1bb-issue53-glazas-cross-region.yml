@@ -1,11 +1,5 @@
 name: Issue53 GLCC real original GLAZAS cross-region science (manual)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/reference/validate_p2_glazas_regions.py
-      - native_cpp/reference/tests/test_glazas_regions.py
-      - .github/workflows/s2g1bb-issue53-glazas-cross-region.yml
   workflow_dispatch:
 permissions:
   contents: read

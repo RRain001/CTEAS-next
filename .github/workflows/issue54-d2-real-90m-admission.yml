@@ -1,12 +1,6 @@
 name: Issue 54 D2 real 90m owner-tile admission
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue54-d2-real-90m-admission.yml'
-      - 'scripts/s2g/p1_real_srtm90_admission.py'
-      - 'scripts/s2g/tests/test_p1_real_srtm90_admission.py'
   workflow_dispatch:
     inputs:
       case_id:
@@ -25,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
           lfs: false
       - name: Install source-contract dependencies

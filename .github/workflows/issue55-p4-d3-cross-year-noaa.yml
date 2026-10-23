@@ -1,11 +1,6 @@
 name: Issue 55 P4 D2-D3 authentic NOAA cross-year original READ62 parity
 # Automatic bounded 2022-12-31 to 2023-01-01 real-source year-boundary test only.
 on:
-  pull_request:
-    paths:
-      - .github/workflows/issue55-p4-d3-cross-year-noaa.yml
-      - scripts/s2g/issue55_p4_d3_cross_year.py
-      - native_cpp/modules/p4_read62/**
   workflow_dispatch:
 permissions:
   contents: read

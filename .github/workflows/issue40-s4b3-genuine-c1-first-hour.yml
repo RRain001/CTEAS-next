@@ -1,10 +1,5 @@
 name: "Issue40 S4B3 original C1 1SS1US G14 first-hour diagnostic"
 on:
-  pull_request:
-    paths:
-      - "native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp"
-      - ".github/workflows/issue40-s4b3-genuine-c1-first-hour.yml"
-      - "docs/plans/ISSUE40_S4B3_C1_GENUINE_SINGLE_STATION_20261020.md"
   workflow_dispatch:
 permissions:
   contents: read

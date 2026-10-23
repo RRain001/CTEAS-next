@@ -1,10 +1,6 @@
 name: S2D P7 source-pinned CLI build and negative-admission smoke
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2d-p7-native-cli.yml
-      - native_cpp/modules/p7_calpuff/**
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

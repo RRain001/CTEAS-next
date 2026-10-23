@@ -1,13 +1,5 @@
 name: Issue 56 real NOAA runner offline staging contract
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue56-real-noaa-p5-stage-offline.yml'
-      - '.github/workflows/issue56-real-noaa-p5-manual.yml'
-      - 'scripts/s2g/issue56_real_noaa_p5_case.py'
-      - 'scripts/s2g/tests/test_issue56_real_noaa_p5_case.py'
-      - 'native_cpp/modules/p5_smerge/data_prep/p5_case_producer.py'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,16 +1,11 @@
 name: S3D true archived NOAA raw to P4 P5 P6 P7 same-MET H3 143h
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s3d-noaa-to-native-p4-p7-science.yml
-      - native_cpp/orchestration/replay_archived_noaa_2022.py
-      - native_cpp/orchestration/verify_p4_p5_frozen_lineage.py
+  workflow_dispatch:
 permissions:
 
   contents: read
 concurrency:
-  group: s3d-noaa-raw-to-p4-p7-${{ github.event.pull_request.number }}
+  group: s3d-noaa-raw-to-p4-p7-${{ github.ref_name }}
   cancel-in-progress: true
 jobs:
   independently-validated-p6-to-p7:

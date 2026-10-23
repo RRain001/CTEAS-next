@@ -1,13 +1,5 @@
 name: Issue 42 shared B0 case admission offline contract
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue42-b0-case-admission.yml'
-      - 'native_cpp/orchestration/case_admission.py'
-      - 'native_cpp/orchestration/tests/test_case_admission.py'
-      - 'native_cpp/orchestration/site_plan.py'
-      - 'engine/run_met/station_grid.py'
   workflow_dispatch:
 permissions:
   contents: read

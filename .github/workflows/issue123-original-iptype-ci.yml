@@ -1,14 +1,5 @@
 name: Issue123 D2 GSHHG Full L1-L4 original IPTYPE software-only
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/include/cteas/geo/ctgproc_original_iptype.hpp
-      - native_cpp/src/geo/ctgproc_original_iptype.cpp
-      - native_cpp/tests/p2_original_iptype_tests.cpp
-      - native_cpp/CMakeLists.txt
-      - docs/plans/ISSUE123_ORIGINAL_SAMPLING_D2_20261019.md
-      - .github/workflows/issue123-original-iptype-ci.yml
   workflow_dispatch:
 permissions:
   contents: read

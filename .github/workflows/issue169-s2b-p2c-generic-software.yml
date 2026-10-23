@@ -1,15 +1,5 @@
 name: Issue169 S2-B dynamic P2-C native software (no original science)
 on:
-  pull_request:
-    paths:
-      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
-      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
-      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
-      - native_cpp/orchestration/p2c_case_producer.py
-      - native_cpp/tests/p2c_glc30m_sampling_tests.cpp
-      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
-      - scripts/s2g/tests/test_issue169_p2c_case_producer.py
-      - .github/workflows/issue169-s2b-p2c-generic-software.yml
   workflow_dispatch:
 permissions:
   contents: read

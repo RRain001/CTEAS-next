@@ -1,22 +1,6 @@
 name: S2-G1B-B1 genuine archived NOAA to native P4 UP input-only
 
 on:
-  push:
-    branches: [codex/s2g1bb-real-noaa-p4-upperair-production]
-    paths:
-      - .github/workflows/s2g1bb-real-noaa-native-p4-up.yml
-      - scripts/s2g/real_noaa_native_p4_up.py
-      - native_cpp/modules/p6_calmet/src/p6g_up_source_preflight_main.cpp
-      - native_cpp/modules/p6_calmet/CMakeLists.txt
-      - native_cpp/modules/p4_read62/**
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2g1bb-real-noaa-native-p4-up.yml
-      - scripts/s2g/real_noaa_native_p4_up.py
-      - native_cpp/modules/p6_calmet/src/p6g_up_source_preflight_main.cpp
-      - native_cpp/modules/p6_calmet/CMakeLists.txt
-      - native_cpp/modules/p4_read62/**
   workflow_dispatch:
 
 permissions:

@@ -1,21 +1,5 @@
 name: "Issue40 S4B4 genuine C1 selected COMP 1SS+1US hour gate"
 on:
-  pull_request:
-    paths:
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18a_selected_comp_mixht.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c3_temp3d_after_comp.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c5_selected_p6f_fields.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c6_selected_p6f_dataset.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp"
-      - "native_cpp/modules/p6_calmet/src/p6g_s4b4_original_c1_first_hour_main.cpp"
-      - "native_cpp/modules/p6_calmet/CMakeLists.txt"
-      - ".github/workflows/issue40-s4b4-true-c1-comp.yml"
-      - "docs/plans/ISSUE40_S4B4_C1_SINGLE_STATION_COMP_20261020.md"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp"
-      - "native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c_iavet1_heat_handoff.hpp"
-      - "native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/surfvar_multistation.hpp"
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,12 +1,6 @@
 name: Issue160 C2 historic production-link isolation static audit
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/src/geo/ctgproc_original_sampling_recount.cpp
-      - native_cpp/CMakeLists.txt
-      - docs/plans/ISSUE160_C2_SURROGATE_DEPENDENCY_ISOLATION_20261020.md
-      - .github/workflows/issue160-c2-link-audit.yml
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

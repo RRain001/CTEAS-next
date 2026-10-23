@@ -7,7 +7,7 @@ permissions:
 
   contents: read
 concurrency:
-  group: s3-fresh-p4-p5-native-p6-p7-science-${{ github.event.pull_request.number }}
+  group: s3-fresh-p4-p5-native-p6-p7-science-${{ github.ref_name }}
   cancel-in-progress: true
 jobs:
   independently-validated-p6-to-p7:

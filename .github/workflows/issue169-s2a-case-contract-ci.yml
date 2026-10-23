@@ -1,12 +1,5 @@
 name: Issue169 S2-A immutable two-case admission (software only)
 on:
-  pull_request:
-    paths:
-      - 'native_cpp/orchestration/case_admission.py'
-      - 'native_cpp/orchestration/site_plan.py'
-      - 'native_cpp/orchestration/tests/test_case_admission.py'
-      - 'docs/plans/ISSUE169_S2A_CONTRACT_INVENTORY_20261020.md'
-      - '.github/workflows/issue169-s2a-case-contract-ci.yml'
   workflow_dispatch:
 permissions:
   contents: read

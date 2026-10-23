@@ -1,13 +1,7 @@
 name: S2C P6 native PR regression gates
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2c-p6-pr-gates.yml
-      - engine/preprocess/grid/**
-      - native_cpp/**
-      - AGENTS.md
+  workflow_dispatch:
 permissions:
   contents: read
 

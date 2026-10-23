@@ -3,11 +3,6 @@ name: CTEAS-next SCIENCE C2 143h (manual or agent-request)
 # No main-branch push, PR or merge triggers.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - 'automation/science/c2/**'
-    paths:
-      - '.github/science-triggers/c2.request'
 permissions:
   contents: read
 concurrency:

@@ -1,25 +1,5 @@
 name: Issue53 original CTGPROC GLAZAS parity (CTEAS pinned source, manual science)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/reference/validate_p2_glazas_original.py
-      - native_cpp/reference/validate_p2_glazas_hits.py
-      - native_cpp/reference/diagnose_glazas_mesh_coordinates.py
-      - native_cpp/reference/exact_glazas_coordinate_lineage.py
-      - native_cpp/reference/coordlib_stage_trace.py
-      - native_cpp/reference/tests/test_glazas_exact_lineage.py
-      - native_cpp/reference/tests/test_glazas_mesh_coordinates.py
-      - native_cpp/reference/tests/test_glazas_direct_candidate.py
-      - native_cpp/src/geo/glcc_raw_fractions.cpp
-      - native_cpp/include/cteas/geo/glcc_raw_fractions.hpp
-      - native_cpp/include/cteas/geo/glcc_direct_laea_probe.hpp
-      - native_cpp/include/cteas/geo/glcc_cli_modes.hpp
-      - native_cpp/reference/tests/test_glazas_original_gate.py
-      - native_cpp/reference/tests/test_glazas_original_integer_hits.py
-      - native_cpp/src/p2_glcc_raw_cli.cpp
-      - .github/workflows/s2g1bb-issue53-glazas-original.yml
-      - docs/plans/ISSUE53_P2_GLAZAS_ORIGINAL_GATE_20261018.md
   workflow_dispatch:
 permissions:
   contents: read

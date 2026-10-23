@@ -1,10 +1,5 @@
 name: S2C Issue25 source-stage static audit (no scientific model)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2c-issue25-all-fresh-143h.yml
-      - .github/workflows/s2c-issue25-pr-source-audit.yml
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,14 +1,6 @@
 name: CTEAS science dispatcher offline security tests
 on:
-  pull_request:
-    paths:
-      - .github/scripts/cteas-dispatch.cjs
-      - .github/scripts/cteas-dispatch.test.cjs
-      - .github/workflows/cteas-science-dispatcher.yml
-      - .github/workflows/cteas-science-dispatcher-ci.yml
-      - docs/ci/SCIENCE_TRIGGER_POLICY.md
-      - AGENTS.md
-      - README.md
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

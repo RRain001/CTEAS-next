@@ -1,13 +1,5 @@
 name: Issue53 GLC35 crosswalk independent audit (not mapping approval)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - docs/plans/ISSUE53_GLC35_USGS92_REVIEW_CANDIDATES_20261018.json
-      - docs/plans/ISSUE53_P2_D0_20261018.md
-      - scripts/s2g/audit_glc_crosswalk_review.py
-      - scripts/s2g/tests/test_glc_crosswalk_review.py
-      - .github/workflows/s2g1bb-issue53-glc-crosswalk-review.yml
   workflow_dispatch:
 permissions:
   contents: read

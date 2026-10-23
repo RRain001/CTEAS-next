@@ -1,21 +1,6 @@
 name: S2-G0 non-Hefei native case and original NOAA station handoff (P6/P7 blocked)
 
 on:
-  push:
-    branches:
-      - codex/s2g-new-site-selection-handoff
-    paths:
-      - .github/workflows/s2g-nonhefei-site-contract.yml
-      - native_cpp/orchestration/site_plan.py
-      - native_cpp/orchestration/tests/test_site_plan.py
-      - scripts/s2g/**
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2g-nonhefei-site-contract.yml
-      - native_cpp/orchestration/site_plan.py
-      - native_cpp/orchestration/tests/test_site_plan.py
-      - scripts/s2g/**
   workflow_dispatch:
 
 permissions:

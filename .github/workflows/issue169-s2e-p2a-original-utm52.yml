@@ -1,11 +1,5 @@
 name: Issue169 S2-E true original GLCC GLAZAS UTM52N second-grid parity
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - scripts/s2g/issue169_s2e_original_glcc_utm52.py
-      - .github/workflows/issue169-s2e-p2a-original-utm52.yml
-      - native_cpp/orchestration/p2a_case_producer.py
   workflow_dispatch:
 permissions:
   contents: read

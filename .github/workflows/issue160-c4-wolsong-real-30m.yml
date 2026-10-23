@@ -1,15 +1,5 @@
 name: Issue160 C4 Wolsong real 2022 30m source point sampling vs independent reference
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/CMakeLists.txt
-      - native_cpp/src/geo/p2c_glc30m_sampling.cpp
-      - native_cpp/include/cteas/geo/p2c_glc30m_sampling.hpp
-      - native_cpp/src/p2c_glc30m_sampling_cli.cpp
-      - scripts/s2g/issue160_glc30m_independent_reference.py
-      - scripts/s2g/issue160_p3_lu_format_contract.py
-      - .github/workflows/issue160-c4-wolsong-real-30m.yml
   workflow_dispatch:
 concurrency:
   group: issue160-c4-wolsong-${{ github.event.pull_request.number || github.ref }}

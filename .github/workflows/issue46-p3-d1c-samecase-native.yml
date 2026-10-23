@@ -1,12 +1,5 @@
 name: Issue46 P3 B0 native P1/P2C to GEO same-case software
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/orchestration/p3_case_handoff.py
-      - native_cpp/orchestration/tests/test_p3_case_handoff.py
-      - .github/workflows/issue46-p3-d1c-samecase-native.yml
-      - docs/plans/ISSUE46_P3_D1C_P1_P2_TO_GEO_HANDOFF_20261020.md
   workflow_dispatch:
 permissions:
   contents: read

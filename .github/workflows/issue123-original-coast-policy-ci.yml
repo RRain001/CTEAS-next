@@ -1,13 +1,5 @@
 name: Issue123 original CTGPROC coast options (synthetic only)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - native_cpp/include/cteas/geo/ctgproc_original_coast_policy.hpp
-      - native_cpp/tests/p2_original_coast_policy_tests.cpp
-      - native_cpp/CMakeLists.txt
-      - docs/plans/ISSUE123_ORIGINAL_SAMPLING_D0_D1_20261019.md
-      - .github/workflows/issue123-original-coast-policy-ci.yml
   workflow_dispatch:
 permissions:
   contents: read

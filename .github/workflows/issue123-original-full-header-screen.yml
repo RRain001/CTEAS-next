@@ -1,19 +1,5 @@
 name: Issue123 D6A genuine GSHHG Full binary Wolsong header screen
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - scripts/s2g/issue123_original_full_header_screen.py
-      - scripts/s2g/tests/test_issue123_original_full_header_screen.py
-      - .github/workflows/issue123-original-full-header-screen.yml
-      - docs/plans/ISSUE123_D6A_FULL_BINARY_HEADER_SCREEN_20261019.md
-  push:
-    branches: [main]
-    paths:
-      - scripts/s2g/issue123_original_full_header_screen.py
-      - scripts/s2g/tests/test_issue123_original_full_header_screen.py
-      - .github/workflows/issue123-original-full-header-screen.yml
-      - docs/plans/ISSUE123_D6A_FULL_BINARY_HEADER_SCREEN_20261019.md
   workflow_dispatch:
 permissions:
   contents: read

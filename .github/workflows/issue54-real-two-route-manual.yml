@@ -1,15 +1,5 @@
 name: Issue54 real SRTM 90m and 30m to native P1 (manual only)
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '.github/workflows/issue54-real-two-route-manual.yml'
-      - 'scripts/s2g/p1_real_actions_case.py'
-      - 'scripts/s2g/tests/test_p1_real_actions_case.py'
-      - 'scripts/s2g/p1_terrain_source.py'
-      - 'scripts/s2g/tests/test_p1_terrain_http_diagnostics.py'
-      - 'scripts/s2g/p1_opentopo_bulk.py'
-      - 'scripts/s2g/tests/test_p1_opentopo_bulk.py'
   workflow_dispatch:
     inputs:
       route:
@@ -32,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
           lfs: false
       - name: Install offline grid dependencies

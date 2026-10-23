@@ -1,11 +1,5 @@
 name: Issue40 S4-L original water HEATFX QH source and independent 24-mode numeric
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4l-original-water-heatfx-qh-source-audit.yml'
-      - 'scripts/s4/s4l_original_water_qh_static_trace.py'
-      - 'docs/plans/ISSUE40_S4L_ORIGINAL_WATER_QH_SOURCE_20261021.md'
-      - 'native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/heatfx.hpp'
   workflow_dispatch:
 permissions:
   contents: read

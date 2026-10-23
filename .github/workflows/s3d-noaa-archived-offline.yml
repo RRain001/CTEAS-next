@@ -1,17 +1,6 @@
 name: S3D archived NOAA 2022 offline raw to FSL GENERIC science input
 on:
-  push:
-    branches:
-      - codex/s3d-noaa-archived-offline-replay
-    paths:
-      - .github/workflows/s3d-noaa-archived-offline.yml
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s3d-noaa-archived-offline.yml
-      - native_cpp/orchestration/replay_archived_noaa_2022.py
-      - native_cpp/modules/p4_read62/data_prep/**
-      - native_cpp/modules/p5_smerge/data_prep/**
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

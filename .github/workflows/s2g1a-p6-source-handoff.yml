@@ -1,20 +1,6 @@
 name: S2-G1A dynamic P6 G19 source-only handoff, no P6/P7 physics
 
 on:
-  push:
-    branches: [codex/s2g1a-dynamic-p6-file-handoff]
-    paths:
-      - .github/workflows/s2g1a-p6-source-handoff.yml
-      - native_cpp/orchestration/p6_g19_handoff.py
-      - native_cpp/orchestration/tests/test_p6_g19_handoff.py
-      - native_cpp/orchestration/README.md
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2g1a-p6-source-handoff.yml
-      - native_cpp/orchestration/p6_g19_handoff.py
-      - native_cpp/orchestration/tests/test_p6_g19_handoff.py
-      - native_cpp/orchestration/README.md
   workflow_dispatch:
 
 permissions:

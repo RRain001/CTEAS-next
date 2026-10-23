@@ -1,14 +1,5 @@
 name: S2-G1B-B2 real NOAA ISD-Lite native P5 SURF source
 on:
-  push:
-    branches: [codex/s2g1bb2-real-noaa-p5-surf-native]
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2g1bb2-real-noaa-p5-surf.yml
-      - scripts/s2g/real_noaa_native_p5_surf.py
-      - native_cpp/modules/p6_calmet/src/p6g_surf_source_preflight_main.cpp
-      - native_cpp/modules/p6_calmet/CMakeLists.txt
   workflow_dispatch:
 permissions:
   contents: read

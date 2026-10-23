@@ -1,12 +1,6 @@
 name: Issue160 C4 Hefei 20km GLC source acquisition offline contract
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - scripts/s2g/issue160_hefei20km_glc_acquire.py
-      - scripts/s2g/tests/test_issue160_hefei20km_source.py
-      - data/landcover/glc_fcs30d/v1_2022/hefei20km/**
-      - .github/workflows/issue160-c4-hefei-source-contract.yml
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

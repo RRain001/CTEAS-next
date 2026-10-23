@@ -1,50 +1,5 @@
 name: Issue42 S3-B1/B2 authentic Huoshan true source and original MAKEGEO numerical science
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/issue42-s3b1-huoshan-real-geo.yml
-      - native_cpp/orchestration/p2a_case_producer.py
-      - native_cpp/orchestration/p3_case_handoff.py
-      - native_cpp/orchestration/case_admission.py
-      - docs/plans/ISSUE42_S3_B1_HUOSHAN_REAL_SOURCE_20261020.md
-      - scripts/s2g/issue42_s3_b1_true_srtm_window.py
-      - native_cpp/reference/compare_p3_makegeo_dynamic.py
-      - scripts/s2g/issue42_s3b4_real_noaa_station_probe.py
-      - docs/plans/ISSUE42_S3_B5_REAL_NOAA_PRODUCERS_20261020.md
-      - native_cpp/orchestration/s3_huoshan_g19_source_only.py
-      - engine/run_met/prepare_met.py
-      - docs/plans/ISSUE42_S3_B6_HUOSHAN_REAL_G19_SOURCE_20261020.md
-      - native_cpp/orchestration/s3_huoshan_g19_negative_gates.py
-      - docs/plans/ISSUE42_S3_B7_ALTERNATE_REAL_NOAA_AND_NEGATIVE_20261020.md
-      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g20_file_backed_wind1_profiles.hpp
-      - native_cpp/modules/p6_calmet/src/p6g_g20_source_wind1_probe_main.cpp
-      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b1_admission.hpp
-      - native_cpp/modules/p6_calmet/src/p6g_s4b2_unified_selected_main.cpp
-      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp
-      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp
-      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_s4b2_selected_hour.hpp
-      - docs/plans/ISSUE40_S4_P6B1_REAL_1SS1US_WIND1_20261020.md
-      - native_cpp/modules/p6_calmet/reference/compare_g20_real_huoshan_1ss1us_original_wind1.py
-      - docs/plans/ISSUE40_S4_P6B1_ORIGINAL_VENDOR_180K_20261020.md
-      - native_cpp/modules/p6_calmet/src/p6g_g21_source_fradj_probe_main.cpp
-      - native_cpp/modules/p6_calmet/reference/compare_g21_real_huoshan_original_fradj.py
-      - docs/plans/ISSUE40_S4_P6B2_G21_REAL_FRADJ_180K_20261020.md
-      - native_cpp/modules/p6_calmet/reference/compare_g22_real_huoshan_original_slope.py
-      - docs/plans/ISSUE40_S4_P6B2B_REAL_G22_SLOPE_20261020.md
-      - native_cpp/modules/p6_calmet/src/p6g_g20_real_1us_prepdi_export_main.cpp
-      - native_cpp/modules/p6_calmet/reference/compare_g20_real_1us_original_vertav_prepdi.py
-      - native_cpp/modules/p6_calmet/CMakeLists.txt
-      - docs/plans/ISSUE40_S4_P6B2C_TRUE_NOAA_1US_ORIGINAL_VERTAV_PREPDI_20261020.md
-      - docs/plans/ISSUE40_S4_P6B2C2_REAL_G17C3_STHEOR_DIAGI_20261020.md
-      - docs/plans/ISSUE40_S4C_HUOSHAN_UNIFIED_REAL_G14_20261020.md
-      - native_cpp/modules/p6_calmet/reference/s4d_run_real_huoshan_original_calmet.py
-      - docs/plans/ISSUE40_S4D_HUOSHAN_FRESH_CALMET_NUMERIC_20261020.md
-      - docs/plans/ISSUE42_S3_B2_HUOSHAN_ORIGINAL_MAKEGEO_20261020.md
-      - docs/plans/ISSUE42_S3_B3_HUOSHAN_NOAA_WINDOW_20261020.md
-      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp
-      - native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17c_iavet1_heat_handoff.hpp
-      - native_cpp/modules/p6_calmet/p6e/include/cteas/p6e/surfvar_multistation.hpp
   workflow_dispatch:
 permissions:
   contents: read
