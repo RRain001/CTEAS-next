@@ -81,4 +81,23 @@ int main(){
     const auto stable=mixht_observed_mc(a);
     assert(tw.hit&&tw.branch==1&&stable.ziconv[1]==0.f);
     a.trace=nullptr;
+    // S4-R1c9h scientific regression: CALMET WATER() has a *local*
+    // ZICONV scalar, while gridded ZICONV is retained from the previous
+    // hour; subsequent MIXHT() skips water rather than zeroing this grid.
+    // Preserve the exact previous-hour source value (2022 NOAA example)
+    // even when the local WATER convective solution is zero.
+    MixhtObservedMcInput inherited=a;
+    inherited.initial_zi[2]=50.f;
+    inherited.initial_ziconv[2]=186.914794921875f;
+    inherited.initial_dptt[2]=0.f;
+    inherited.qh[2]=0.f;
+    const auto kept=mixht_observed_mc(inherited);
+    assert(kept.zi[2]==50.f&&
+           kept.ziconv[2]==inherited.initial_ziconv[2]&&
+           kept.dptt[2]==0.f);
+    // Wrongly overwriting with WATER's local ZICONV=0 reproduces the
+    // previous S4 hour-two scientific failure; the two states differ.
+    inherited.initial_ziconv[2]=0.f;
+    const auto lost=mixht_observed_mc(inherited);
+    assert(lost.ziconv[2]==0.f&&lost.ziconv[2]!=kept.ziconv[2]);
 }

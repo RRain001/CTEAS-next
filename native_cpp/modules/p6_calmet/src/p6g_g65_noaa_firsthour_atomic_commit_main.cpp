@@ -13,8 +13,11 @@
 
 int main(int argc,char** argv) {
     try {
-        if((argc!=6&&argc!=8)||
-           (argc==8&&std::string(argv[6])!="--forensic-hour2-precommit")||
+        if((argc!=6&&argc!=8&&argc!=10&&argc!=12&&argc!=14)||
+           (argc>=8&&std::string(argv[6])!="--forensic-hour2-precommit")||
+           (argc>=10&&std::string(argv[8])!="--forensic-stage14-inputs")||
+           (argc>=12&&std::string(argv[10])!="--forensic-stage12-13-mixht")||
+           (argc==14&&std::string(argv[12])!="--forensic-hour1-committed")||
            std::string(argv[1])!="--real-noaa-firsthour-g14-atomic"||
            sizeof(float)!=4||sizeof(std::int32_t)!=4||
            std::endian::native!=std::endian::little)
@@ -56,7 +59,7 @@ int main(int argc,char** argv) {
             throw std::logic_error("G65 scope or committed-hour claim drift");
         // Only opt-in forensic output; never write an accepted hourly
         // CALMET.DAT or overwrite a prior audit input/receipt.
-        if(argc==8) {
+        if(argc>=8) {
             const std::filesystem::path candidate_path(argv[7]);
             if(candidate_path.empty()||
                std::filesystem::exists(candidate_path)||
@@ -72,6 +75,68 @@ int main(int argc,char** argv) {
             output.close();
             if(!output)throw std::runtime_error(
                 "G65 incomplete forensic secondhour candidate write");
+        }
+        if(argc>=10) {
+            const std::filesystem::path stage_path(argv[9]);
+            const auto& values=result.hour2_unpublished_wstarr_input_rows;
+            if(stage_path.empty()||stage_path==std::filesystem::path(argv[7])||
+               std::filesystem::exists(stage_path)||values.size()!=5U*82U*85U)
+                throw std::invalid_argument(
+                    "G65 stage14 forensic path/shape invalid or already exists");
+            std::ofstream out(stage_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G65 stage14 forensic open failed");
+            // Same [year, Julian-day, UTC-hour, NX, NY] framing as the
+            // scratch-only original Fortran stage probe, never production MET.
+            const std::int32_t header[5]={2022,152,3,82,85};
+            out.write(reinterpret_cast<const char*>(header),sizeof(header));
+            out.write(reinterpret_cast<const char*>(values.data()),
+                      static_cast<std::streamsize>(values.size()*sizeof(float)));
+            out.close();
+            if(!out)throw std::runtime_error("G65 stage14 forensic write incomplete");
+        }
+        if(argc>=12) {
+            const std::filesystem::path mixht_path(argv[11]);
+            const auto& values=result.hour2_unpublished_mixht_avemix_rows;
+            if(mixht_path.empty()||
+               mixht_path==std::filesystem::path(argv[7])||
+               mixht_path==std::filesystem::path(argv[9])||
+               std::filesystem::exists(mixht_path)||
+               values.size()!=4U*82U*85U)
+                throw std::invalid_argument(
+                    "G65 stage12/13 forensic path/shape invalid or already exists");
+            std::ofstream out(mixht_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G65 stage12/13 forensic open failed");
+            const std::int32_t header[5]={2022,152,3,82,85};
+            out.write(reinterpret_cast<const char*>(header),sizeof(header));
+            out.write(reinterpret_cast<const char*>(values.data()),
+                      static_cast<std::streamsize>(values.size()*sizeof(float)));
+            out.close();
+            if(!out)throw std::runtime_error(
+                "G65 stage12/13 forensic write incomplete");
+        }
+        if(argc==14) {
+            const std::filesystem::path state_path(argv[13]);
+            const auto& memory=result.committed_memory;
+            const auto n=82U*85U;
+            if(state_path.empty()||state_path==std::filesystem::path(argv[7])||
+               state_path==std::filesystem::path(argv[9])||
+               state_path==std::filesystem::path(argv[11])||
+               std::filesystem::exists(state_path)||
+               memory.zi_m.size()!=n||memory.ziconv_m.size()!=n||
+               memory.dptt_k.size()!=n)
+                throw std::invalid_argument(
+                    "G65 hour1 committed memory trace path/extent invalid");
+            std::ofstream out(state_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G65 hour1 memory trace open failed");
+            const std::int32_t header[5]={2022,152,2,82,85};
+            out.write(reinterpret_cast<const char*>(header),sizeof(header));
+            for(std::size_t i=0;i<n;++i) {
+                const float row[3]={memory.zi_m[i],memory.ziconv_m[i],
+                                    memory.dptt_k[i]};
+                out.write(reinterpret_cast<const char*>(row),sizeof(row));
+            }
+            out.close();
+            if(!out)throw std::runtime_error("G65 hour1 memory trace incomplete");
         }
         std::cout
             <<"S4R1C8W_G14_FIRSTHOUR_17STAGE_ATOMIC_COMMIT=PASS_SCOPED\n"

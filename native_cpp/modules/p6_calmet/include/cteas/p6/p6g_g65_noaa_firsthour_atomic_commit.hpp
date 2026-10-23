@@ -99,6 +99,11 @@ struct G65NoaaFirstHourCommitReceipt {
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
     std::vector<std::uint8_t> hour2_unpublished_p6f_bytes;
+    // Read-only source-native stage14 AoS [ZICONV,QH,TEMP2D,RHO,WSTAR]
+    // 6970 cells x 5 REAL4, independent of the reference Fortran model.
+    std::vector<float> hour2_unpublished_wstarr_input_rows;
+    // [ZI,ZICONV] before and after AVEMIX (4 REAL4 per cell) for independent source comparison.
+    std::vector<float> hour2_unpublished_mixht_avemix_rows;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -996,6 +1001,30 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_stage16_prepared_unpublished=true;
     receipt.hour2_p6f_compared_words=45U*82U*85U;
     receipt.hour2_unpublished_p6f_bytes=live_p6f.serialized_prepared_only;
+    receipt.hour2_unpublished_mixht_avemix_rows.reserve(4U*82U*85U);
+    for(std::size_t i=0;i<82U*85U;++i) {
+        receipt.hour2_unpublished_mixht_avemix_rows.push_back(
+            live_mixht.zi_before_avemix_m[i]);
+        receipt.hour2_unpublished_mixht_avemix_rows.push_back(
+            live_mixht.ziconv_before_avemix_m[i]);
+        receipt.hour2_unpublished_mixht_avemix_rows.push_back(
+            live_avemix.zi_m[i]);
+        receipt.hour2_unpublished_mixht_avemix_rows.push_back(
+            live_avemix.ziconv_m[i]);
+    }
+    receipt.hour2_unpublished_wstarr_input_rows.reserve(5U*82U*85U);
+    for(std::size_t i=0;i<82U*85U;++i) {
+        receipt.hour2_unpublished_wstarr_input_rows.push_back(
+            live_avemix.ziconv_m[i]);
+        receipt.hour2_unpublished_wstarr_input_rows.push_back(
+            live_mixht.comp_third_qh_wm2[i]);
+        receipt.hour2_unpublished_wstarr_input_rows.push_back(
+            live_mixht.comp_third_temperature_k[i]);
+        receipt.hour2_unpublished_wstarr_input_rows.push_back(
+            live_mixht.comp_third_density_kgm3[i]);
+        receipt.hour2_unpublished_wstarr_input_rows.push_back(
+            live_wstarr[i]);
+    }
     return receipt;
 }
 } // namespace cteas::calmet::p6g
