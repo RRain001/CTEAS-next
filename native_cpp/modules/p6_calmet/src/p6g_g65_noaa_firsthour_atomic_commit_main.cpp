@@ -5,13 +5,16 @@
 #include <bit>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
 int main(int argc,char** argv) {
     try {
-        if(argc!=6||
+        if((argc!=6&&argc!=8)||
+           (argc==8&&std::string(argv[6])!="--forensic-hour2-precommit")||
            std::string(argv[1])!="--real-noaa-firsthour-g14-atomic"||
            sizeof(float)!=4||sizeof(std::int32_t)!=4||
            std::endian::native!=std::endian::little)
@@ -51,6 +54,25 @@ int main(int argc,char** argv) {
            result.hour2_p6f_compared_words!=313650||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
+        // Only opt-in forensic output; never write an accepted hourly
+        // CALMET.DAT or overwrite a prior audit input/receipt.
+        if(argc==8) {
+            const std::filesystem::path candidate_path(argv[7]);
+            if(candidate_path.empty()||
+               std::filesystem::exists(candidate_path)||
+               result.hour2_unpublished_p6f_bytes.empty())
+                throw std::invalid_argument(
+                    "G65 forensic hour2 candidate path absent/already exists");
+            std::ofstream output(candidate_path,std::ios::binary);
+            if(!output)throw std::runtime_error(
+                "G65 cannot open exclusive forensic output path");
+            const auto& bytes=result.hour2_unpublished_p6f_bytes;
+            output.write(reinterpret_cast<const char*>(bytes.data()),
+                         static_cast<std::streamsize>(bytes.size()));
+            output.close();
+            if(!output)throw std::runtime_error(
+                "G65 incomplete forensic secondhour candidate write");
+        }
         std::cout
             <<"S4R1C8W_G14_FIRSTHOUR_17STAGE_ATOMIC_COMMIT=PASS_SCOPED\n"
             <<"S4R1C8W_G14_P6F_G59_BITWISE=PASS_313650_WORDS\n"

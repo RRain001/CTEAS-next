@@ -36,6 +36,7 @@ on:
       - 'native_cpp/modules/p6_calmet/src/p6g_g56_real_comp_temp3d_main.cpp'
       - 'scripts/s4/s4r1c8h_original_comp_temp3d.py'
       - 'scripts/s4/s4r1c8h_compare_real_temp3d.py'
+      - 'scripts/s4/s4r1c9g_compare_noaa_hour2_met21.py'
       - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g57_real_firsthour_p6f_43.hpp'
       - 'native_cpp/modules/p6_calmet/src/p6g_g57_real_firsthour_p6f_43_main.cpp'
       - 'scripts/s4/s4r1c8i_compare_noaa_43_real_p6f.py'
@@ -2210,11 +2211,15 @@ jobs:
             --target cteas_p6g_g65_noaa_firsthour_atomic
           bin="$RUNNER_TEMP/s4r1c7b/native/cteas_p6g_g65_noaa_firsthour_atomic"
           case="$RUNNER_TEMP/s4h_huoshan_xinqiao_true_2ss_2022"
+          mkdir -p "$RUNNER_TEMP/s4r1c9g"
+          test ! -e "$RUNNER_TEMP/s4r1c9g/hour2-unpublished-candidate.dat"
           "$bin" --real-noaa-firsthour-g14-atomic \
             "$case/run/met/met.inp" \
             "$case/geo/makegeo/geo.dat" \
             "$case/met/surface/final/surf.dat" \
             "$case/met/upperair/final/up_58424.dat" \
+            --forensic-hour2-precommit \
+            "$RUNNER_TEMP/s4r1c9g/hour2-unpublished-candidate.dat" \
             > "$root/evidence/firsthour-atomic-commit.log" \
             2> "$root/evidence/firsthour-atomic-stderr.log" || {
               tail -n 100 "$root/evidence/firsthour-atomic-stderr.log"
@@ -2257,6 +2262,29 @@ jobs:
             'S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED'; do
             grep -Fx "$gate" "$root/evidence/firsthour-atomic-commit.log"
           done
+      - name: S4-R1c9g independent original NOAA hour2 45-field numerical audit (no commit)
+        shell: bash
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/s4r1c9g"
+          mkdir -p "$root/evidence"
+          python3 -m scripts.s4.s4r1c9g_compare_noaa_hour2_met21 selftest \
+            > "$root/evidence/parser-selftest.log"
+          grep -Fx 'S4R1C9G_PARSER_SELFTEST=PASS_SYNTHETIC_ONLY' \
+            "$root/evidence/parser-selftest.log"
+          pristine="$RUNNER_TEMP/s4j/original-real-two-ss-case/run/met/met.dat"
+          candidate="$root/hour2-unpublished-candidate.dat"
+          test -s "$pristine" && test -s "$candidate"
+          python3 -m scripts.s4.s4r1c9g_compare_noaa_hour2_met21 compare \
+            --original "$pristine" \
+            --native "$candidate" \
+            --report "$root/evidence/original-native-hour2-45field.json" \
+            | tee "$root/evidence/original-native-hour2-45field.log"
+          grep -Fx 'S4R1C9G_NOAA_HOUR2_ORIGINAL_NATIVE_FULL45=PASS_SCOPED_ORIGINAL_NATIVE_HOUR2_FULL45' \
+            "$root/evidence/original-native-hour2-45field.log"
+          sha256sum "$candidate" > "$root/evidence/forensic-native-candidate-sha256.txt"
+          # Only scientific summary is uploaded, never raw original or candidate MET.
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -2289,6 +2317,7 @@ jobs:
             ${{ runner.temp }}/s4r1c8m/evidence/
             ${{ runner.temp }}/s4r1c8n/evidence/
             ${{ runner.temp }}/s4r1c8w/evidence/
+            ${{ runner.temp }}/s4r1c9g/evidence/
             ${{ runner.temp }}/s4h/original-makegeo-bin-sha256.txt
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/evidence/
             ${{ runner.temp }}/s4h_huoshan_xinqiao_true_2ss_2022/inputs/p1_srtm90_source_window.json
