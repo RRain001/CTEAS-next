@@ -79,6 +79,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_prepdi_stage0_staged_preflight_only=false;
     std::size_t hour2_live_g26_wind1_bitwise_compared_words=0;
     bool hour2_live_g26_stage01_uncommitted=false;
+    std::size_t hour2_live_g26_fradj_compared_words=0;
+    bool hour2_live_g26_stage02_uncommitted=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -391,8 +393,55 @@ g65_real_noaa_firsthour_atomic_commit(
        !g65_equal_real4_bits(live_wind.v_mps,ref_wind.v_mps))
         throw std::logic_error(
             "G65 real hour-two live G26 WIND1 U/V differs from G45 source path");
-    // No precommit output or clock publication is possible at stage 1;
-    // WIND1 must not create or replace next-hour hidden COMP memory.
+    // S4-R1c8y: execute original stage 2 FRADJ on this SAME actual G14
+    // second-hour G26A actor, using its live stage-0 CGAMMA and stage-1
+    // source-native WIND1. Recompute an independent source-only current
+    // gamma/FRADJ candidate; no independent values feed the live actor.
+    const auto fradj_result=hour2_diagno.run(
+        p6::kHefeiOriginalStageOrder[2],live_wind_frame);
+    if(!fradj_result.completed||
+       fradj_result.source!=p6::NativeHourSource::NativeCpp||
+       hour2_diagno.selected_checkpoints()!=3)
+        throw std::logic_error(
+            "G65 authentic NOAA hour-two live G26A FRADJ stage2 absent");
+    const auto& live_fradj=
+        hour2_diagno.selected_source_fradj_after_stage(live_wind_frame);
+    const auto external_clocks=clocks.prepare_selected(
+        scheduler,source.original_metinp,true);
+    if(external_clocks.hour_index!=1||
+       external_clocks.source_end!=live_wind_frame.input.end||
+       !clocks.can_publish_after_next_g14_commit(scheduler,external_clocks))
+        throw std::logic_error(
+            "G65 detached NOAA second-hour source CGAMMA was not preflighted");
+    // Independently source real G45 hourly WIND1 and reconstruct original
+    // G21 gamma, SURFVAR(IAVET=1), TERSET/FRADJ and final SURFVAR; the
+    // G26A actor neither reads the oracle nor receives G45 input.
+    const auto independent_fradj=g21_original_source_clock_fradj_kernel(
+        live_wind_frame,source,source.surface_controls,
+        external_clocks.cgamma,ref_wind,true,true);
+    const std::size_t n=82U*85U;
+    if(live_fradj.end!=live_wind_frame.input.end||
+       independent_fradj.end!=live_wind_frame.input.end||
+       live_fradj.gamma_k_per_m.size()!=n||
+       live_fradj.temperature_before_k.size()!=n||
+       live_fradj.temperature_after_k.size()!=n||
+       live_fradj.corrected_wind.u.size()!=size||
+       live_fradj.corrected_wind.v.size()!=size||
+       !g65_equal_real4_bits(live_fradj.gamma_k_per_m,
+                             independent_fradj.gamma_k_per_m)||
+       !g65_equal_real4_bits(live_fradj.temperature_before_k,
+                             independent_fradj.temperature_before_k)||
+       !g65_equal_real4_bits(live_fradj.temperature_after_k,
+                             independent_fradj.temperature_after_k)||
+       !g65_equal_real4_bits(live_fradj.corrected_wind.u,
+                             independent_fradj.corrected_wind.u)||
+       !g65_equal_real4_bits(live_fradj.corrected_wind.v,
+                             independent_fradj.corrected_wind.v))
+        throw std::logic_error(
+            "G65 actual second-hour G26A FRADJ differs from standalone"
+            " original-source G21 after committed CGAMMA handoff");
+    // No precommit output or clock publication is possible at stage 2;
+    // FRADJ must not create or replace next-hour hidden COMP memory.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
        clocks.latest_gamma_hour()!=first_end||
@@ -419,6 +468,9 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_prepdi_stage0_staged_preflight_only=true;
     receipt.hour2_live_g26_wind1_bitwise_compared_words=2U*9U*82U*85U;
     receipt.hour2_live_g26_stage01_uncommitted=true;
+    receipt.hour2_live_g26_fradj_compared_words=3U*82U*85U+
+        2U*9U*82U*85U;
+    receipt.hour2_live_g26_stage02_uncommitted=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
