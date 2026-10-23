@@ -87,7 +87,9 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage11_uncommitted=false;
     std::size_t hour2_live_g26_mixht_compared_words=0;
     bool hour2_live_g26_stage12_uncommitted=false;
-    bool hour2_stage13_rejected=false;
+    std::size_t hour2_live_g26_avemix_compared_words=0;
+    bool hour2_live_g26_stage13_uncommitted=false;
+    bool hour2_stage14_rejected=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -684,20 +686,72 @@ g65_real_noaa_firsthour_atomic_commit(
         throw std::logic_error(
             "G65 secondhour real G26B MIXHT differs from detached"
             " causal source-native re-execution of 55760 REAL4 words");
-    // Forensic hour2 stage12 is not a general G26B completion license:
-    // the existing firsthour-only AVEMIX path must explicitly reject.
-    bool stage13_denied=false;
+    // S4-R1c9c: source-owned AVEMIX stage13 on the same scheduler
+    // hour-two frame, strictly AFTER accepted G26B MIXHT. The separate
+    // replay actor runs AVEMIX from its independently computed MIXHT.
+    const auto live_avemix_result=hour2_comp.run(
+        p6::kHefeiOriginalStageOrder[13],live_wind_frame);
+    const auto detached_avemix_result=detached_comp.run(
+        p6::kHefeiOriginalStageOrder[13],detached_frame);
+    if(!live_avemix_result.completed||
+       live_avemix_result.source!=p6::NativeHourSource::NativeCpp||
+       !detached_avemix_result.completed||
+       detached_avemix_result.source!=p6::NativeHourSource::NativeCpp)
+        throw std::logic_error(
+            "G65 real NOAA G14 hour-two native AVEMIX stage13 absent");
+    const auto& live_avemix=
+        hour2_comp.source_water_avemix_stage13(live_wind_frame);
+    const auto& detached_avemix=
+        detached_comp.source_water_avemix_stage13(detached_frame);
+    // Third comparison: direct original-source AVEMIX from a wholly
+    // independent G23/G24 wind reconstruction and separately replayed
+    // G63 pre-AVEMIX MIXHT. No vendor or detached numeric value enters
+    // the live actor; this is NOT an independent Fortran hour2 audit.
+    const auto controls=g18c1_parse_original_avemix(
+        source.original_metinp);
+    const auto offset=
+        static_cast<std::size_t>(controls.ilevzi-1)*cell_count;
+    if(controls.ilevzi<1||
+       offset+cell_count>separately_g24.wind.u_mps.size()||
+       offset+cell_count>separately_g24.wind.v_mps.size())
+        throw std::invalid_argument(
+            "G65 NOAA hour2 original AVEMIX ILEVZI out of source G24");
+    const std::vector<float> source_u(
+        separately_g24.wind.u_mps.begin()+offset,
+        separately_g24.wind.u_mps.begin()+offset+cell_count);
+    const std::vector<float> source_v(
+        separately_g24.wind.v_mps.begin()+offset,
+        separately_g24.wind.v_mps.begin()+offset+cell_count);
+    const auto source_avemix=g18c1_original_avemix_rebuild(
+        live_wind_frame.grid.nx,live_wind_frame.grid.ny,
+        controls.mnmdav,controls.hafang_deg,
+        live_wind_frame.grid.grid_km*1000.f,
+        source_u,source_v,separate_mixht.zi_before_avemix_m,
+        separate_mixht.ziconv_before_avemix_m);
+    if(live_avemix.zi_m.size()!=cell_count||
+       live_avemix.ziconv_m.size()!=cell_count||
+       !g65_equal_real4_bits(live_avemix.zi_m,detached_avemix.zi_m)||
+       !g65_equal_real4_bits(live_avemix.ziconv_m,
+                             detached_avemix.ziconv_m)||
+       !g65_equal_real4_bits(live_avemix.zi_m,source_avemix.zi_m)||
+       !g65_equal_real4_bits(live_avemix.ziconv_m,
+                             source_avemix.ziconv_m))
+        throw std::logic_error(
+            "G65 real NOAA hour-two AVEMIX source 13940 REAL4 bit mismatch");
+    // Forensic hour2 stage13 is not a general COMP license: WSTARR
+    // stage14 must still explicitly reject without mutating the frame.
+    bool stage14_denied=false;
     try {
         hour2_comp.run_selected(
-            p6::kHefeiOriginalStageOrder[13],live_wind_frame,true);
+            p6::kHefeiOriginalStageOrder[14],live_wind_frame,true);
     }catch(const std::invalid_argument&) {
-        stage13_denied=true;
+        stage14_denied=true;
     }
-    if(!stage13_denied)
+    if(!stage14_denied)
         throw std::logic_error(
-            "G65 real secondhour stage13 escaped its source-only guard");
-    // Stage12 and its rejected stage13 must preserve committed G14 state
-    // and the source AA/BB/CGAMMA publication of hour one only.
+            "G65 real secondhour stage14 escaped its source-only guard");
+    // Stages12/13 and rejected stage14 must preserve firsthour G14
+    // memory and AA/BB/CGAMMA publication until a full atomic commit.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
        clocks.latest_gamma_hour()!=first_end||
@@ -735,7 +789,9 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_stage11_uncommitted=true;
     receipt.hour2_live_g26_mixht_compared_words=8U*82U*85U;
     receipt.hour2_live_g26_stage12_uncommitted=true;
-    receipt.hour2_stage13_rejected=true;
+    receipt.hour2_live_g26_avemix_compared_words=2U*82U*85U;
+    receipt.hour2_live_g26_stage13_uncommitted=true;
+    receipt.hour2_stage14_rejected=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
