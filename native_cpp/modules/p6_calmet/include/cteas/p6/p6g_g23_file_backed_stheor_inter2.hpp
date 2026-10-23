@@ -129,13 +129,22 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
         if(source.stations.upper[i].id!=frame.stations.upper[i].id)
             throw std::invalid_argument("G23 original US source ordinal mismatch");
 
+    // Source-scoped physical STHEOR/DIAGI is valid in the second
+    // authentic NOAA hour only when G14 supplies its committed previous
+    // COMP planes and source UTC is the exact next SURF record. This does
+    // not admit second-hour COMP, P6F, G14 commit or third-hour replay.
     if(source.research_noow_water_source_only &&
-       (frame.hour_index!=0||grid.nx!=82||grid.ny!=85||
+       (frame.hour_index>1||grid.nx!=82||grid.ny!=85||
         frame.stations.surface.size()!=2||
         frame.stations.upper.size()!=1||
-        source.source_water_cells.size()!=63))
+        source.source_water_cells.size()!=63||
+        source.surface.hourly.size()!=6||
+        frame.input.end!=source.surface.hourly[frame.hour_index].end||
+        frame.surface.start!=source.surface.hourly[frame.hour_index].start||
+        (frame.hour_index==1&&
+         frame.surface.start!=source.surface.hourly[0].end)))
         throw std::invalid_argument(
-            "G23 firsthour NOAA WATER sparse STHEOR source scope drift");
+            "G23 source-scoped NOAA second-hour STHEOR UTC/geometry invalid");
     G17B4TwoPassSurfvar surfvar(
         grid,frame.stations,source.surface,frame.surface,
         source.surface_controls,source.research_noow_water_source_only);
