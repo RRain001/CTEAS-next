@@ -15,7 +15,8 @@
 int main(int argc,char** argv) {
     try {
         if((argc!=6&&argc!=7&&argc!=8&&argc!=10&&argc!=12&&argc!=14)||
-           (argc==7&&std::string(argv[6])!="--positive-hour2-g14-transaction")||
+           (argc==7&&std::string(argv[6])!="--positive-hour2-g14-transaction"&&
+            std::string(argv[6])!="--third-hour-g26a-preflight-only")||
            (argc>=8&&std::string(argv[6])!="--forensic-hour2-precommit")||
            (argc>=10&&std::string(argv[8])!="--forensic-stage14-inputs")||
            (argc>=12&&std::string(argv[10])!="--forensic-stage12-13-mixht")||
@@ -28,13 +29,17 @@ int main(int argc,char** argv) {
         const cteas::calmet::p6g::G19SourceFilePaths paths{
             argv[2],argv[3],argv[4],{argv[5]}};
         const bool positive_hour2=(argc==7);
+        const bool third_hour_diagno=positive_hour2&&
+            std::string(argv[6])=="--third-hour-g26a-preflight-only";
         const auto result=
             cteas::calmet::p6g::g65_real_noaa_firsthour_atomic_commit(
-                paths,true,positive_hour2);
+                paths,true,positive_hour2,third_hour_diagno);
         if(result.committed_hours!=(positive_hour2?2U:1U)||
            result.hour2_positive_g14_commit_verified!=positive_hour2||
            result.hour2_positive_station_clocks_published!=positive_hour2||
            result.hour3_preview_inherits_hour2_memory!=positive_hour2||
+           result.hour3_real_g26a_stage02_preflight_only!=third_hour_diagno||
+           result.hour3_g22_thermal_guard_remains_rejected!=third_hour_diagno||
            (positive_hour2&&
             (result.hour2_committed_memory.zi_m.size()!=6970||
              result.hour2_committed_memory.ziconv_m.size()!=6970||
@@ -192,6 +197,12 @@ int main(int argc,char** argv) {
             <<(positive_hour2
                ?"S4R1C9J_HOUR3_PREVIEW_INHERITS_HOUR2=PASS_SCOPED\n"
                :"S4R1C9J_HOUR3_PREVIEW_INHERITS_HOUR2=NOT_RUN\n")
+            <<(third_hour_diagno
+               ?"S4R1C9K_HOUR3_G26A_STAGE0_2=PASS_PRECOMMIT_ONLY\n"
+               :"S4R1C9K_HOUR3_G26A_STAGE0_2=NOT_RUN\n")
+            <<(third_hour_diagno
+               ?"S4R1C9K_HOUR3_G22_GUARD=PASS_REJECTED\n"
+               :"S4R1C9K_HOUR3_G22_GUARD=NOT_RUN\n")
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;

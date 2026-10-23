@@ -161,6 +161,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_positive_g14_commit_verified=false;
     bool hour2_positive_station_clocks_published=false;
     bool hour3_preview_inherits_hour2_memory=false;
+    bool hour3_real_g26a_stage02_preflight_only=false;
+    bool hour3_g22_thermal_guard_remains_rejected=false;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
@@ -186,7 +188,12 @@ inline bool g65_equal_real4_bits(
 inline G65NoaaFirstHourCommitReceipt
 g65_real_noaa_firsthour_atomic_commit(
     const G19SourceFilePaths& paths,bool explicitly_forensic_only,
-    bool opt_in_positive_hour2_transaction=false) {
+    bool opt_in_positive_hour2_transaction=false,
+    bool opt_in_third_hour_diagno_preflight=false) {
+    if(opt_in_third_hour_diagno_preflight&&
+       !opt_in_positive_hour2_transaction)
+        throw std::invalid_argument(
+            "G65 third-hour PREPDI requires committed hour-two trial");
     if(!explicitly_forensic_only)
         throw std::invalid_argument("G65 cannot enter P6 production");
 
@@ -1114,6 +1121,8 @@ g65_real_noaa_firsthour_atomic_commit(
     // a substitute for the separate original Fortran 45-field science audit.
     bool second_positive_published=false;
     bool third_inherits_second=false;
+    bool third_g26a_staged=false;
+    bool third_thermal_refused=false;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -1204,6 +1213,58 @@ g65_real_noaa_firsthour_atomic_commit(
         if(!third_inherits_second)
             throw std::logic_error(
                 "G65 hour-three preview lost committed hour-two history");
+
+        // S4-R1c9k: third-hour PREPDI/WIND1/FRADJ source stages0..2
+        // on the scheduler's real committed hour-two history. G22 thermal
+        // is still protected by hour_index>1 and MUST reject stage3.
+        // This is a bounded source/clock admission test, not third-hour
+        // physics or an authorization to bypass the G22/G63/G64 guards.
+        if(opt_in_third_hour_diagno_preflight) {
+            auto third_frame=scheduler.preview_next_hour();
+            G26SourceFileBackedG14DiagnoBridge third_diagno(
+                scheduler,clocks,source,true);
+            for(std::size_t stage=0;stage<3;++stage) {
+                const auto result=third_diagno.run(
+                    p6::kHefeiOriginalStageOrder[stage],third_frame);
+                if(!result.completed||
+                   result.source!=p6::NativeHourSource::NativeCpp)
+                    throw std::logic_error(
+                        "G65 third-hour source PREPDI/WIND1/FRADJ missing");
+            }
+            if(third_diagno.selected_checkpoints()!=3||
+               third_frame.input.end!=source.surface.hourly[2].end||
+               scheduler.completed_hours()!=2||
+               clocks.latest_upper_hour()!=hour2.input.end||
+               clocks.latest_gamma_hour()!=hour2.input.end||
+               !g65_equal_real4_bits(scheduler.committed_memory().zi_m,
+                                     second_committed.zi_m)||
+               !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,
+                                     second_committed.ziconv_m)||
+               !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,
+                                     second_committed.dptt_k)||
+               !g65_equal_real4_bits(third_frame.next.zi_m,
+                                     second_committed.zi_m)||
+               !g65_equal_real4_bits(third_frame.next.ziconv_m,
+                                     second_committed.ziconv_m)||
+               !g65_equal_real4_bits(third_frame.next.dptt_k,
+                                     second_committed.dptt_k))
+                throw std::logic_error(
+                    "G65 third-hour PREPDI/FRADJ mutated committed memory/clocks");
+            third_g26a_staged=true;
+            try {
+                (void)third_diagno.run(
+                    p6::kHefeiOriginalStageOrder[3],third_frame);
+            }catch(const std::invalid_argument& e) {
+                third_thermal_refused=(
+                    std::string(e.what())==
+                    "G22 unvalidated mixed-WATER hour/station/GEO source path");
+            }
+            if(!third_thermal_refused||scheduler.completed_hours()!=2||
+               clocks.latest_upper_hour()!=hour2.input.end||
+               clocks.latest_gamma_hour()!=hour2.input.end)
+                throw std::logic_error(
+                    "G65 third-hour unverified G22 thermal was not fail-closed");
+        }
     }
 
     G65NoaaFirstHourCommitReceipt receipt;
@@ -1213,6 +1274,8 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_positive_g14_commit_verified=second_positive_published;
     receipt.hour2_positive_station_clocks_published=second_positive_published;
     receipt.hour3_preview_inherits_hour2_memory=third_inherits_second;
+    receipt.hour3_real_g26a_stage02_preflight_only=third_g26a_staged;
+    receipt.hour3_g22_thermal_guard_remains_rejected=third_thermal_refused;
     if(second_positive_published)
         receipt.hour2_committed_memory=std::move(second_committed);
     receipt.g59_bitwise_compared_words=accepted.second;
