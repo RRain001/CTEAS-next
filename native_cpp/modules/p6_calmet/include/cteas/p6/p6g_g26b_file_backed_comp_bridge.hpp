@@ -85,11 +85,16 @@ public:
         const G19FileBackedCase& source,
         bool explicitly_opt_in_normal_trial=false,
         const G41SelectedNoowWaterFirstHourSource* original_noow_water=nullptr,
-        bool explicitly_opt_in_hour3_comp_stage12_trial=false)
+        bool explicitly_opt_in_hour3_comp_stage12_trial=false,
+        bool explicitly_opt_in_hour3_comp_stage15_trial=false)
         :diagno_(diagno),source_(source),
          original_noow_water_(original_noow_water),
          normal_trial_(explicitly_opt_in_normal_trial),
-         hour3_comp_stage12_trial_(explicitly_opt_in_hour3_comp_stage12_trial) {
+         hour3_comp_stage12_trial_(explicitly_opt_in_hour3_comp_stage12_trial),
+         hour3_comp_stage15_trial_(explicitly_opt_in_hour3_comp_stage15_trial) {
+        if(hour3_comp_stage15_trial_&&!hour3_comp_stage12_trial_)
+            throw std::invalid_argument(
+                "G26B hour3 stage15 requires prior stage12 trial");
         if(hour3_comp_stage12_trial_&&
            (!normal_trial_||!original_noow_water_||
             !diagno_.test_only_hour3_windtail_ready()))
@@ -109,7 +114,9 @@ public:
     void run_selected(p6::NativeHourStage stage,MultiHourFrame& frame,
                       bool explicitly_test_only) {
         if(!explicitly_test_only||
-           (hour3_comp_stage12_trial_&&phase_>0)||
+           (hour3_comp_stage12_trial_&&phase_>0&&
+            !hour3_comp_stage15_trial_)||
+           (hour3_comp_stage15_trial_&&phase_>3)||
            phase_>=(source_.research_noow_water_source_only?5U:4U)||
            stage!=p6::kHefeiOriginalStageOrder[12+phase_]||
            !frame.source_controls||
@@ -599,6 +606,7 @@ private:
     std::optional<G64RealNoaaP6FPrecommit> water_p6f_stage16_;
     bool normal_trial_=false;
     bool hour3_comp_stage12_trial_=false;
+    bool hour3_comp_stage15_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds end_{};
