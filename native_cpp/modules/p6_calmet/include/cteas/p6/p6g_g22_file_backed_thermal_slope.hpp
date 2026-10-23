@@ -150,11 +150,18 @@ inline G22SelectedThermalSlope g22_selected_source_thermal_slope(
         // kernels on the EXACT current G14 frame, then unchanged G22
         // original slope kernel. Never manufacture WATER USTAR/QH/EL.
         // Keep C1/C2 all-LAND fallback byte-identical below.
-        if(live.hour_index!=0||grid.nx!=82||grid.ny!=85||
+        // Only exact source-bracket hours 0 and 1 have scoped science.
+        // In hour two G26 owns the prior accepted G14 memory/station clock;
+        // never bypass its authority with a detached source frame.
+        if(live.hour_index>1||grid.nx!=82||grid.ny!=85||
            live.stations.surface.size()!=2||
            live.stations.upper.size()!=1||
            source.source_water_cells.size()!=63||
            source.surface.hourly.size()!=6||
+           live.input.end!=source.surface.hourly[live.hour_index].end||
+           live.surface.start!=source.surface.hourly[live.hour_index].start||
+           (live.hour_index==1&&
+            live.surface.start!=source.surface.hourly[0].end)||
            source.heat_inputs.initial_water_qh_wm2.size()!=n)
             throw std::invalid_argument(
                 "G22 unvalidated mixed-WATER hour/station/GEO source path");

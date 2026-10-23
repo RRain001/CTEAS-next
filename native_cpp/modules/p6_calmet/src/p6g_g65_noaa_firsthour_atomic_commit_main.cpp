@@ -34,6 +34,8 @@ int main(int argc,char** argv) {
            result.hour2_live_g26_wind1_bitwise_compared_words!=125460||
            !result.hour2_live_g26_stage02_uncommitted||
            result.hour2_live_g26_fradj_compared_words!=146370||
+           !result.hour2_live_g26_stage06_uncommitted||
+           result.hour2_live_g26_thermal_compared_words!=160310||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
         std::cout
@@ -52,6 +54,9 @@ int main(int argc,char** argv) {
             <<"S4R1C8Y_HOUR2_REAL_G26A_STAGE02=PASS_UNCOMMITTED\n"
             <<"S4R1C8Y_HOUR2_G26_FRADJ_G21_BITWISE=PASS_146370_REAL4\n"
             <<"S4R1C8Y_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_FRADJ\n"
+            <<"S4R1C8Z_HOUR2_REAL_G26A_STAGE03_06=PASS_UNCOMMITTED\n"
+            <<"S4R1C8Z_HOUR2_THERMAL_SLOPE_G39_G22_BITWISE=PASS_160310_REAL4\n"
+            <<"S4R1C8Z_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_SLOPE\n"
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;
