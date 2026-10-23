@@ -3,10 +3,18 @@ project(CTEAS_P6A_CALMET_CONTRACTS LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# G64 P6F is now transitively used by G19/G26B clients. Keep the
+# CALMET.DAT v2.1 writer as an actual linked implementation, not just
+# a header search path, including for source-only station tests.
+add_library(cteas_p6f_writer STATIC p6f/src/calmet_dat21_writer.cpp)
+target_include_directories(cteas_p6f_writer PUBLIC
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
 add_library(cteas_p6a_contracts INTERFACE)
+target_link_libraries(cteas_p6a_contracts INTERFACE cteas_p6f_writer)
 target_include_directories(cteas_p6a_contracts INTERFACE
                            ${CMAKE_CURRENT_SOURCE_DIR}/include
-                           ${CMAKE_CURRENT_SOURCE_DIR}/p6e/include)
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6e/include
+                           ${CMAKE_CURRENT_SOURCE_DIR}/p6f/include)
 # G6 independent arbitrary-NX/NY GEO reader; frozen p6_read_geo/50 is unchanged.
 add_executable(cteas_p6g_dynamic_geo_tests tests/p6g_dynamic_geo_tests.cpp)
 target_link_libraries(cteas_p6g_dynamic_geo_tests PRIVATE cteas_p6a_contracts)

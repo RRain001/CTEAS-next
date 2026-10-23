@@ -14,6 +14,7 @@
 #include "cteas/p6e/wstarr.hpp"
 #include "cteas/p6e/temp3d_observed_land.hpp"
 #include "cteas/p6/p6g_g18b5_upper_temp_faces.hpp"
+#include "cteas/p6/p6g_g64_real_noaa_p6f_precommit.hpp"
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -99,7 +100,8 @@ public:
 
     void run_selected(p6::NativeHourStage stage,MultiHourFrame& frame,
                       bool explicitly_test_only) {
-        if(!explicitly_test_only||phase_>=4||
+        if(!explicitly_test_only||
+           phase_>=(source_.research_noow_water_source_only?5U:4U)||
            stage!=p6::kHefeiOriginalStageOrder[12+phase_]||
            !frame.source_controls||
            frame.input.end!=frame.surface.end||
@@ -272,9 +274,42 @@ public:
                 ++phase_;
                 return;
             }
+            if(phase_==4) {
+                // Stage16 is an in-flight source-only P6F precommit:
+                // all 45 fields MUST be prepared from the live actor,
+                // not detached G57/G58/G59. G18D1 validates output
+                // before updating frame.next or any native fields.
+                if(!water_mixht_stage12_||!water_avemix_stage13_||
+                   !water_wstarr_stage14_||!water_temp3d_stage15_||
+                   frame.next.zi_m!=previous_.zi_m||
+                   frame.next.ziconv_m!=previous_.ziconv_m||
+                   frame.next.dptt_k!=previous_.dptt_k)
+                    throw std::logic_error(
+                        "G26B same-hour NOAA G14 P6F has no physical COMP");
+                auto prepared=g64_real_noaa_p6f_from_live_g14(
+                    frame,source_,*water_mixht_stage12_,
+                    *water_avemix_stage13_,
+                    *water_wstarr_stage14_,
+                    *water_temp3d_stage15_,true);
+                if(!prepared.actual_g14_stage16_precommit_validated||
+                   prepared.g14_hour_committed||
+                   prepared.source_clocks_published||
+                   prepared.ready_for_next_hour||
+                   prepared.candidate_dataset.hourly.size()!=45)
+                    throw std::logic_error(
+                        "G26B G14 P6F failed source-native precommit");
+                // In-flight native candidate is now staged inside this
+                // frame. DO NOT advance the scheduler or publish clocks.
+                // G14 atomic commit remains a separate science gate.
+                frame.next=prepared.candidate_next;
+                frame.fields=prepared.candidate_fields;
+                water_p6f_stage16_.emplace(std::move(prepared));
+                ++phase_;
+                return;
+            }
             if(phase_!=0)
                 throw std::invalid_argument(
-                    "G26B genuine NOAA stage16 P6F not yet admitted");
+                    "G26B genuine NOAA P6F stage order unsupported");
             auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
                 frame,source_,*original_noow_water_,diagno_,true);
             if(!candidate.source_native_comp_mixht_uncommitted||
@@ -450,6 +485,24 @@ public:
         return *water_temp3d_stage15_;
     }
 
+    [[nodiscard]] const G64RealNoaaP6FPrecommit& source_water_p6f_stage16(
+        const MultiHourFrame& frame) const {
+        if(phase_!=5||!water_p6f_stage16_||
+           !source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=end_||
+           frame.previous.zi_m!=previous_.zi_m||
+           frame.previous.ziconv_m!=previous_.ziconv_m||
+           frame.previous.dptt_k!=previous_.dptt_k||
+           frame.next.zi_m!=water_p6f_stage16_->candidate_next.zi_m||
+           frame.next.ziconv_m!=water_p6f_stage16_->candidate_next.ziconv_m||
+           frame.next.dptt_k!=water_p6f_stage16_->candidate_next.dptt_k||
+           frame.fields.temperature_k!=
+               water_p6f_stage16_->candidate_fields.temperature_k)
+            throw std::logic_error("G26B G14 source P6F detached or mutated");
+        return *water_p6f_stage16_;
+    }
+
     [[nodiscard]] const G18ASelectedCompResult& source_mixht_before_avemix(
         const MultiHourFrame& frame) const {
         if(phase_<1||!comp_||&frame!=live_||
@@ -523,6 +576,7 @@ private:
     std::optional<G18C1AvemixOutput> water_avemix_stage13_;
     std::optional<std::vector<float>> water_wstarr_stage14_;
     std::optional<std::vector<float>> water_temp3d_stage15_;
+    std::optional<G64RealNoaaP6FPrecommit> water_p6f_stage16_;
     bool normal_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;

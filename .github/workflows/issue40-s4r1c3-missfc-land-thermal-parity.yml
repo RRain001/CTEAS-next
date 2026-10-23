@@ -2191,6 +2191,10 @@ jobs:
             "$root/evidence/independent-native-hidden-memory-seed.log"
           grep -Fx 'S4R1C8U_G14_WATER_LAND_TEMP3D_G56_BITWISE=PASS_62730_REAL4' \
             "$root/evidence/independent-native-hidden-memory-seed.log"
+          grep -Fx 'S4R1C8V_G14_P6F_45FIELDS_G59_BITWISE=PASS_313650_WORDS' \
+            "$root/evidence/independent-native-hidden-memory-seed.log"
+          grep -Fx 'S4R1C8V_G14_P6F_G18D1_TAMPER_REJECTED=PASS' \
+            "$root/evidence/independent-native-hidden-memory-seed.log"
           grep -Fx 'S4R1C8N_NATIVE_2ND_HOUR_G14_G26_P7=NOT_ACCEPTED' \
             "$root/evidence/independent-native-hidden-memory-seed.log"
       - name: Preserve source SHA and comparison reports only; do not upload DEM or vendor assets
