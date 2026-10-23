@@ -1,8 +1,8 @@
 #pragma once
-// S4-R1c8w: one authentic NOAA first-hour G14 atomic transaction.
-// Selected WATER route; hour2 stages 0..16 are research-only and
-// uncommitted. Hour2 P6F is a candidate only: no original-hour
-// Fortran science, state/clock publication, or P6 production.
+// S4-R1c9j: authentic NOAA first/second-hour G14 transactions.
+// Selected WATER route. Second-hour positive commit is explicitly opted in
+// and research-only, with independent original-hour Fortran science performed
+// outside this actor; general P6 production remains NOT_ACCEPTED.
 // All 17 physics stages run on the SAME scheduler-owned frame; no G54/G59
 // numbers are used as native forcing. Failed precommit cannot publish state.
 #include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
@@ -67,12 +67,13 @@ private:
     std::size_t cursor_=0;
 };
 
-// S4-R1c9i: execute a real second-hour 17-stage G14 transaction on the
-// SAME first-hour scheduler. For now this actor is used ONLY in a deliberately
-// failing P6F precommit test. It must not publish hour2 memory or clocks.
-class G65RealNoaaSecondHourRollbackActor final : public MultiHourPhysics {
+// S4-R1c9j: a fresh second-hour 17-stage actor can serve either a forced
+// rollback trial or an explicitly opted-in positive G14 transaction. No
+// general P6 production is enabled, and independent original Fortran science
+// is a separate required gate.
+class G65RealNoaaSecondHourActor final : public MultiHourPhysics {
 public:
-    G65RealNoaaSecondHourRollbackActor(
+    G65RealNoaaSecondHourActor(
         const UnifiedMultistationHourlyScheduler& scheduler,
         G18D2StationClockAuthority& clocks,
         const G19FileBackedCase& source,
@@ -85,12 +86,12 @@ public:
         if(frame.hour_index!=1||cursor_>=p6::kHefeiOriginalStageOrder.size()||
            stage!=p6::kHefeiOriginalStageOrder[cursor_])
             throw std::logic_error(
-                "G65 second-hour rollback actor wrong hour/stage");
+                "G65 second-hour actor wrong hour/stage");
         const auto result=(cursor_<12)
             ?diagno_.run(stage,frame):comp_.run(stage,frame);
         if(!result.completed||result.source!=p6::NativeHourSource::NativeCpp)
             throw std::logic_error(
-                "G65 second-hour rollback actor missing native physics");
+                "G65 second-hour actor missing native physics");
         ++cursor_;
         return result;
     }
@@ -99,16 +100,27 @@ public:
         const MultiHourFrame& frame) const {
         if(cursor_!=17||frame.hour_index!=1)
             throw std::logic_error(
-                "G65 second-hour rollback before all 17 native stages");
+                "G65 second-hour precommit before all 17 native stages");
         const auto& candidate=comp_.source_water_p6f_stage16(frame);
         if(!candidate.actual_g14_stage16_precommit_validated||
            candidate.g14_hour_committed||candidate.source_clocks_published||
            candidate.candidate_dataset.hourly.size()!=45||
            candidate.serialized_prepared_only.empty())
             throw std::logic_error(
-                "G65 second-hour rollback has invalid P6F candidate");
+                "G65 second-hour has invalid P6F candidate");
         diagno_.require_station_clock_preflight(frame);
         return candidate;
+    }
+
+    void require_station_clock_preflight(const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=1)
+            throw std::logic_error("G65 second-hour clock preflight before P6F");
+        diagno_.require_station_clock_preflight(frame);
+    }
+
+    [[nodiscard]] bool publish_after_commit_noexcept() noexcept {
+        return cursor_==17&&
+               diagno_.try_publish_after_selected_g14_commit_noexcept();
     }
 private:
     G26SourceFileBackedG14DiagnoBridge diagno_;
@@ -146,6 +158,10 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage15_uncommitted=false;
     bool hour2_stage16_prepared_unpublished=false;
     bool hour2_real_g14_full17_rollback_verified=false;
+    bool hour2_positive_g14_commit_verified=false;
+    bool hour2_positive_station_clocks_published=false;
+    bool hour3_preview_inherits_hour2_memory=false;
+    p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
     std::vector<std::uint8_t> hour2_unpublished_p6f_bytes;
@@ -169,7 +185,8 @@ inline bool g65_equal_real4_bits(
 
 inline G65NoaaFirstHourCommitReceipt
 g65_real_noaa_firsthour_atomic_commit(
-    const G19SourceFilePaths& paths,bool explicitly_forensic_only) {
+    const G19SourceFilePaths& paths,bool explicitly_forensic_only,
+    bool opt_in_positive_hour2_transaction=false) {
     if(!explicitly_forensic_only)
         throw std::invalid_argument("G65 cannot enter P6 production");
 
@@ -1026,7 +1043,7 @@ g65_real_noaa_firsthour_atomic_commit(
     const auto second_before=scheduler.committed_memory();
     bool second_injection_reached=false;
     bool second_postcommit_called=false;
-    G65RealNoaaSecondHourRollbackActor* second_actor=nullptr;
+    G65RealNoaaSecondHourActor* second_actor=nullptr;
     try {
         scheduler.advance_with_fresh_physics(
             [&](const MultiHourFrame& next)
@@ -1036,7 +1053,7 @@ g65_real_noaa_firsthour_atomic_commit(
                     throw std::logic_error(
                         "G65 second-hour rollback detached G14 scheduler");
                 auto actor=std::make_unique<
-                    G65RealNoaaSecondHourRollbackActor>(
+                    G65RealNoaaSecondHourActor>(
                         scheduler,clocks,source,actual);
                 second_actor=actor.get();
                 return actor;
@@ -1089,10 +1106,115 @@ g65_real_noaa_firsthour_atomic_commit(
         throw std::logic_error(
             "G65 second-hour failed precommit changed physical/clock state");
 
+    // S4-R1c9j: opt-in POSITIVE transaction test only. The immediately
+    // preceding forced failure proved rollback with unchanged hour-one
+    // memory and clocks. This second attempt must allocate a NEW actor and
+    // publish hour-two clocks only after G14 commits the physical memory.
+    // Source-native 45-field equality is a precommit invariant; it is NOT
+    // a substitute for the separate original Fortran 45-field science audit.
+    bool second_positive_published=false;
+    bool third_inherits_second=false;
+    p6::NativeGridMemory second_committed;
+    if(opt_in_positive_hour2_transaction) {
+        G65RealNoaaSecondHourActor* positive_actor=nullptr;
+        bool positive_precommit_reached=false;
+        scheduler.advance_with_fresh_physics(
+            [&](const MultiHourFrame& next)
+                ->std::unique_ptr<MultiHourPhysics> {
+                if(next.hour_index!=1||next.input.end!=hour2.input.end||
+                   &next.previous!=&scheduler.committed_memory()||
+                   !g65_equal_real4_bits(next.previous.zi_m,second_before.zi_m)||
+                   !g65_equal_real4_bits(next.previous.ziconv_m,
+                                         second_before.ziconv_m)||
+                   !g65_equal_real4_bits(next.previous.dptt_k,
+                                         second_before.dptt_k))
+                    throw std::logic_error(
+                        "G65 positive hour-two factory prior memory/clock drift");
+                auto actor=std::make_unique<G65RealNoaaSecondHourActor>(
+                    scheduler,clocks,source,actual);
+                positive_actor=actor.get();
+                return actor;
+            },
+            [&](const MultiHourFrame& candidate_frame) {
+                if(!positive_actor||candidate_frame.hour_index!=1||
+                   candidate_frame.input.end!=hour2.input.end||
+                   scheduler.completed_hours()!=1||
+                   clocks.latest_upper_hour()!=first_end||
+                   clocks.latest_gamma_hour()!=first_end)
+                    throw std::logic_error(
+                        "G65 positive hour-two precommit not isolated");
+                const auto& candidate=positive_actor->precommit(candidate_frame);
+                if(candidate.serialized_prepared_only!=
+                       live_p6f.serialized_prepared_only||
+                   !g65_equal_real4_bits(
+                       candidate_frame.next.zi_m,
+                       live_p6f.candidate_next.zi_m)||
+                   !g65_equal_real4_bits(
+                       candidate_frame.next.ziconv_m,
+                       live_p6f.candidate_next.ziconv_m)||
+                   !g65_equal_real4_bits(
+                       candidate_frame.next.dptt_k,
+                       live_p6f.candidate_next.dptt_k))
+                    throw std::logic_error(
+                        "G65 positive hour-two source-native P6F drift");
+                positive_precommit_reached=true;
+            },
+            [&](MultiHourPhysics& physics,const MultiHourFrame& frame,
+                const UnifiedMultistationHourlyScheduler& owner) {
+                auto* actor=dynamic_cast<G65RealNoaaSecondHourActor*>(&physics);
+                if(!positive_precommit_reached||!actor||
+                   actor!=positive_actor||owner.completed_hours()!=1||
+                   frame.hour_index!=1)
+                    throw std::logic_error(
+                        "G65 positive hour-two clock preflight order drift");
+                actor->require_station_clock_preflight(frame);
+            },
+            [&](MultiHourPhysics& physics,
+                const UnifiedMultistationHourlyScheduler& owner) noexcept {
+                auto* actor=dynamic_cast<G65RealNoaaSecondHourActor*>(&physics);
+                second_positive_published=(actor!=nullptr&&
+                    actor==positive_actor&&
+                    actor->publish_after_commit_noexcept()&&
+                    owner.completed_hours()==2&&clocks.has_published_hour());
+            });
+        if(!positive_precommit_reached||!second_positive_published||
+           scheduler.completed_hours()!=2||
+           clocks.latest_upper_hour()!=hour2.input.end||
+           clocks.latest_gamma_hour()!=hour2.input.end)
+            throw std::logic_error(
+                "G65 hour-two G14 commit and AA/BB/CGAMMA not synchronized");
+        second_committed=scheduler.committed_memory();
+        if(!g65_equal_real4_bits(second_committed.zi_m,
+                                 live_p6f.candidate_next.zi_m)||
+           !g65_equal_real4_bits(second_committed.ziconv_m,
+                                 live_p6f.candidate_next.ziconv_m)||
+           !g65_equal_real4_bits(second_committed.dptt_k,
+                                 live_p6f.candidate_next.dptt_k))
+            throw std::logic_error(
+                "G65 positive hour-two committed hidden memory mismatch");
+        const auto third=scheduler.preview_next_hour();
+        third_inherits_second=(third.hour_index==2&&
+            third.surface.start==hour2.input.end&&
+            &third.previous==&scheduler.committed_memory()&&
+            g65_equal_real4_bits(third.previous.zi_m,second_committed.zi_m)&&
+            g65_equal_real4_bits(third.previous.ziconv_m,
+                                 second_committed.ziconv_m)&&
+            g65_equal_real4_bits(third.previous.dptt_k,
+                                 second_committed.dptt_k));
+        if(!third_inherits_second)
+            throw std::logic_error(
+                "G65 hour-three preview lost committed hour-two history");
+    }
+
     G65NoaaFirstHourCommitReceipt receipt;
     receipt.end=first_end;
-    receipt.committed_memory=committed;
+    receipt.committed_memory=second_before;
     receipt.committed_hours=scheduler.completed_hours();
+    receipt.hour2_positive_g14_commit_verified=second_positive_published;
+    receipt.hour2_positive_station_clocks_published=second_positive_published;
+    receipt.hour3_preview_inherits_hour2_memory=third_inherits_second;
+    if(second_positive_published)
+        receipt.hour2_committed_memory=std::move(second_committed);
     receipt.g59_bitwise_compared_words=accepted.second;
     receipt.hidden_bitwise_compared_words=3U*82U*85U;
     receipt.rejected_precommit_rolled_back=true;

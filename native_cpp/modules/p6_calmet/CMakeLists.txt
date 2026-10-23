@@ -1441,10 +1441,10 @@ else()
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# S4-R1c8w: research-only REAL NOAA 17-stage G14 first-hour atomic
-# transaction. Both failed-precommit rollback and committed AA/BB/CGAMMA
-# publication are checked; hour2 through TEMP3D is research-only and
-# uncommitted; hour2 P6F and production remain blocked.
+# S4-R1c9j: research-only REAL NOAA 17-stage G14 transaction.
+# First-hour commit, second-hour failed-precommit rollback and opt-in
+# positive second-hour commit/clock publication are scoped tests only.
+# Original Fortran science and hour3-6 P6/P7 production remain blocked.
 add_executable(cteas_p6g_g65_noaa_firsthour_atomic
                src/p6g_g65_noaa_firsthour_atomic_commit_main.cpp)
 target_link_libraries(cteas_p6g_g65_noaa_firsthour_atomic

@@ -1,6 +1,7 @@
-// S4-R1c8w genuine NOAA scoped G14 first-hour atomic commit trial.
-// Hour2 stages through P6F precommit are source-only/uncommitted.
-// No production CALMET.DAT or accepted hour2 original Fortran science comparison.
+// S4-R1c9j genuine NOAA scoped G14 first/second-hour transaction trials.
+// Default mode retains the rollback-only second-hour gate; explicit opt-in
+// commits hour two and publishes clocks, but never writes production MET.DAT.
+// Original Fortran parity is audited by a separate independent comparator.
 #include "cteas/p6/p6g_g65_noaa_firsthour_atomic_commit.hpp"
 #include <bit>
 #include <cstdint>
@@ -13,7 +14,8 @@
 
 int main(int argc,char** argv) {
     try {
-        if((argc!=6&&argc!=8&&argc!=10&&argc!=12&&argc!=14)||
+        if((argc!=6&&argc!=7&&argc!=8&&argc!=10&&argc!=12&&argc!=14)||
+           (argc==7&&std::string(argv[6])!="--positive-hour2-g14-transaction")||
            (argc>=8&&std::string(argv[6])!="--forensic-hour2-precommit")||
            (argc>=10&&std::string(argv[8])!="--forensic-stage14-inputs")||
            (argc>=12&&std::string(argv[10])!="--forensic-stage12-13-mixht")||
@@ -25,10 +27,18 @@ int main(int argc,char** argv) {
                 "G65 requires: --real-noaa-firsthour-g14-atomic met.inp GEO.DAT SURF.DAT UP.DAT");
         const cteas::calmet::p6g::G19SourceFilePaths paths{
             argv[2],argv[3],argv[4],{argv[5]}};
+        const bool positive_hour2=(argc==7);
         const auto result=
             cteas::calmet::p6g::g65_real_noaa_firsthour_atomic_commit(
-                paths,true);
-        if(result.committed_hours!=1||
+                paths,true,positive_hour2);
+        if(result.committed_hours!=(positive_hour2?2U:1U)||
+           result.hour2_positive_g14_commit_verified!=positive_hour2||
+           result.hour2_positive_station_clocks_published!=positive_hour2||
+           result.hour3_preview_inherits_hour2_memory!=positive_hour2||
+           (positive_hour2&&
+            (result.hour2_committed_memory.zi_m.size()!=6970||
+             result.hour2_committed_memory.ziconv_m.size()!=6970||
+             result.hour2_committed_memory.dptt_k.size()!=6970))||
            result.g59_bitwise_compared_words!=313650||
            result.hidden_bitwise_compared_words!=20910||
            !result.rejected_precommit_rolled_back||
@@ -173,6 +183,15 @@ int main(int argc,char** argv) {
             <<"S4R1C9F_HOUR2_P6F_45FIELDS_SOURCE_BITWISE=PASS_313650_WORDS\n"
             <<"S4R1C9F_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_P6F_PRECOMMIT\n"
             <<"S4R1C9I_HOUR2_REAL_G14_17STAGE_FAILED_PRECOMMIT=PASS_ROLLBACK_ONLY\n"
+            <<(positive_hour2
+               ?"S4R1C9J_HOUR2_G14_POSITIVE_COMMIT=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9J_HOUR2_G14_POSITIVE_COMMIT=NOT_RUN\n")
+            <<(positive_hour2
+               ?"S4R1C9J_HOUR2_AABB_CGAMMA_AFTER_COMMIT=PASS_SCOPED\n"
+               :"S4R1C9J_HOUR2_AABB_CGAMMA_AFTER_COMMIT=NOT_RUN\n")
+            <<(positive_hour2
+               ?"S4R1C9J_HOUR3_PREVIEW_INHERITS_HOUR2=PASS_SCOPED\n"
+               :"S4R1C9J_HOUR3_PREVIEW_INHERITS_HOUR2=NOT_RUN\n")
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;
