@@ -108,16 +108,53 @@ public:
            frame.fields.w_face_mps!=final_wind.w_face_mps)
             throw std::invalid_argument("G26B source COMP missing original G24 U/V/W");
         if(source_.research_noow_water_source_only) {
-            // Only original G14 stage 12 is admitted for real NOAA.
-            // The first real WATER+LAND MIXHT executes from exactly
-            // this G26A live frame, never detached G54 output. No stage
-            // 13..16, G14 commit, station-clock publish or production.
-            if(phase_!=0||!original_noow_water_||
-               frame.hour_index!=0||
+            // Original G14 stages 12 MIXHT then 13 AVEMIX, from ONE
+            // live frame and the same firsthour original WATER identity.
+            // AVEMIX is forbidden without the actual preceding MIXHT.
+            // Stages 14..16, clock publication and native G14 commit
+            // remain explicitly unaccepted.
+            if(!original_noow_water_||frame.hour_index!=0||
                original_noow_water_->source.original_metinp!=
                    source_.original_metinp)
                 throw std::invalid_argument(
-                    "G26B genuine water source only admits firsthour stage12");
+                    "G26B genuine water source identity outside selected scope");
+            if(phase_==1) {
+                const auto& mixed=source_water_mixht_stage12(frame);
+                const auto controls=g18c1_parse_original_avemix(
+                    source_.original_metinp);
+                const auto n=static_cast<std::size_t>(frame.grid.nx)*
+                             static_cast<std::size_t>(frame.grid.ny);
+                const auto start=static_cast<std::size_t>(controls.ilevzi-1)*n;
+                if(start+n>frame.fields.u_mps.size()||
+                   start+n>frame.fields.v_mps.size())
+                    throw std::invalid_argument(
+                        "G26B NOAA original AVEMIX source ILEVZI outside G24");
+                const std::vector<float> level_u(
+                    frame.fields.u_mps.begin()+start,
+                    frame.fields.u_mps.begin()+start+n);
+                const std::vector<float> level_v(
+                    frame.fields.v_mps.begin()+start,
+                    frame.fields.v_mps.begin()+start+n);
+                auto averaged=g18c1_original_avemix_rebuild(
+                    frame.grid.nx,frame.grid.ny,
+                    controls.mnmdav,controls.hafang_deg,
+                    frame.grid.grid_km*1000.f,level_u,level_v,
+                    mixed.zi_before_avemix_m,
+                    mixed.ziconv_before_avemix_m);
+                if(averaged.zi_m.size()!=n||
+                   averaged.ziconv_m.size()!=n||
+                   frame.next.zi_m!=frame.previous.zi_m||
+                   frame.next.ziconv_m!=frame.previous.ziconv_m||
+                   frame.next.dptt_k!=frame.previous.dptt_k)
+                    throw std::logic_error(
+                        "G26B G14 stage13 AVEMIX mutated precommit memory");
+                water_avemix_stage13_.emplace(std::move(averaged));
+                ++phase_;
+                return;
+            }
+            if(phase_!=0)
+                throw std::invalid_argument(
+                    "G26B genuine NOAA stages14-16 unaccepted");
             auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
                 frame,source_,*original_noow_water_,diagno_,true);
             if(!candidate.source_native_comp_mixht_uncommitted||
@@ -243,6 +280,22 @@ public:
         return *water_mixht_stage12_;
     }
 
+    [[nodiscard]] const G18C1AvemixOutput& source_water_avemix_stage13(
+        const MultiHourFrame& frame) const {
+        if(phase_!=2||!water_avemix_stage13_||
+           !source_.research_noow_water_source_only||
+           &frame!=live_||frame.hour_index!=hour_index_||
+           frame.input.end!=end_||
+           frame.previous.zi_m!=previous_.zi_m||
+           frame.previous.ziconv_m!=previous_.ziconv_m||
+           frame.previous.dptt_k!=previous_.dptt_k||
+           frame.next.zi_m!=previous_.zi_m||
+           frame.next.ziconv_m!=previous_.ziconv_m||
+           frame.next.dptt_k!=previous_.dptt_k)
+            throw std::logic_error("G26B source WATER AVEMIX detached from G14");
+        return *water_avemix_stage13_;
+    }
+
     [[nodiscard]] const G18ASelectedCompResult& source_mixht_before_avemix(
         const MultiHourFrame& frame) const {
         if(phase_<1||!comp_||&frame!=live_||
@@ -313,6 +366,7 @@ private:
     std::optional<G18D4SelectedCompStageAdapter> comp_;
     const G41SelectedNoowWaterFirstHourSource* original_noow_water_=nullptr;
     std::optional<G63RealNoaaG14MixhtStage12> water_mixht_stage12_;
+    std::optional<G18C1AvemixOutput> water_avemix_stage13_;
     bool normal_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
