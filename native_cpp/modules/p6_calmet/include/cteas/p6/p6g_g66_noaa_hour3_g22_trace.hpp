@@ -16,6 +16,9 @@
 namespace cteas::calmet::p6g {
 
 struct G66NoaaHour3G22Trace {
+    // Strictly unpublished native result, eligible only for a separate
+    // test-only G26A stage3 actor; NEVER a production stage admission.
+    G22SelectedThermalSlope thermal;
     std::vector<std::uint8_t> bytes;
     std::size_t water_history_values=0;
     std::size_t traced_stages=0;
@@ -198,6 +201,14 @@ inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
         4*n*(1+3+1+3+2*nz);
     if(result.traced_stages!=5||result.bytes.size()!=expected_bytes)
         throw std::logic_error("G66 trace byte schema drift");
+    result.thermal.end=frame.input.end;
+    result.thermal.heat=thermal.heat;
+    result.thermal.elustr=thermal.elustr;
+    result.thermal.elustr.ustar_mps=std::move(current_ustar);
+    result.thermal.elustr.el_m=std::move(current_el);
+    result.thermal.post_slope_wind=original_slope.post_slope_wind;
+    result.thermal.changed_slope_components=
+        original_slope.changed_slope_components;
     return result;
 }
 } // namespace cteas::calmet::p6g

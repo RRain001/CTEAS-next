@@ -14,7 +14,9 @@
 
 int main(int argc,char** argv) {
     try {
-        const bool third_trace=(argc==8&&
+        const bool live_third_g22=(argc==8&&
+            std::string(argv[6])=="--third-hour-g26a-g22-trial-only");
+        const bool third_trace=live_third_g22||(argc==8&&
             std::string(argv[6])=="--third-hour-g22-trace-only");
         if((argc!=6&&argc!=7&&argc!=8&&argc!=10&&argc!=12&&argc!=14)||
            (argc==7&&std::string(argv[6])!="--positive-hour2-g14-transaction"&&
@@ -37,7 +39,8 @@ int main(int argc,char** argv) {
              std::string(argv[6])=="--third-hour-g26a-preflight-only");
         const auto result=
             cteas::calmet::p6g::g65_real_noaa_firsthour_atomic_commit(
-                paths,true,positive_hour2,third_hour_diagno,third_trace);
+                paths,true,positive_hour2,third_hour_diagno,third_trace,
+                live_third_g22);
         if(result.committed_hours!=(positive_hour2?2U:1U)||
            result.hour2_positive_g14_commit_verified!=positive_hour2||
            result.hour2_positive_station_clocks_published!=positive_hour2||
@@ -45,6 +48,7 @@ int main(int argc,char** argv) {
            result.hour3_real_g26a_stage02_preflight_only!=third_hour_diagno||
            result.hour3_g22_thermal_guard_remains_rejected!=third_hour_diagno||
            result.hour3_test_only_native_g22_trace_ready!=third_trace||
+           result.hour3_live_g26a_stage3_trial_only!=live_third_g22||
            (positive_hour2&&
             (result.hour2_committed_memory.zi_m.size()!=6970||
              result.hour2_committed_memory.ziconv_m.size()!=6970||
@@ -83,12 +87,16 @@ int main(int argc,char** argv) {
         if(third_trace) {
             const std::filesystem::path trace_path(argv[7]);
             if(trace_path.empty()||std::filesystem::exists(trace_path)||
-               result.hour3_test_only_native_g22_trace_bytes.empty())
+               result.hour3_test_only_native_g22_trace_bytes.empty()||
+               (live_third_g22&&
+                result.hour3_live_g26a_stage3_trace_bytes.empty()))
                 throw std::invalid_argument(
                     "G66 test-only third-hour trace path absent/already exists");
             std::ofstream out(trace_path,std::ios::binary);
             if(!out)throw std::runtime_error("G66 cannot open trace output");
-            const auto& bytes=result.hour3_test_only_native_g22_trace_bytes;
+            const auto& bytes=live_third_g22
+                ?result.hour3_live_g26a_stage3_trace_bytes
+                :result.hour3_test_only_native_g22_trace_bytes;
             out.write(reinterpret_cast<const char*>(bytes.data()),
                       static_cast<std::streamsize>(bytes.size()));
             out.close();
@@ -225,6 +233,9 @@ int main(int argc,char** argv) {
             <<(third_trace
                ?"S4R1C9N_HOUR3_NATIVE_G22_TRACE=PASS_TEST_ONLY_NOT_SCIENCE\n"
                :"S4R1C9N_HOUR3_NATIVE_G22_TRACE=NOT_RUN\n")
+            <<(live_third_g22
+               ?"S4R1C9O_HOUR3_REAL_G26A_STAGE3_6=PASS_TEST_ONLY_PRECOMMIT\n"
+               :"S4R1C9O_HOUR3_REAL_G26A_STAGE3_6=NOT_RUN\n")
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;
