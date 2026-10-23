@@ -11,6 +11,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <cmath>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -170,6 +171,8 @@ struct G65NoaaFirstHourCommitReceipt {
     std::vector<std::uint8_t> hour3_live_g26a_stage3_trace_bytes;
     bool hour3_native_g23_g24_stage11_trial_only=false;
     std::vector<std::uint8_t> hour3_native_g23_g24_trace_bytes;
+    bool hour3_native_g26b_stage12_trial_only=false;
+    std::vector<std::uint8_t> hour3_native_g26b_stage12_trace_bytes;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
@@ -234,7 +237,11 @@ g65_real_noaa_firsthour_atomic_commit(
     bool opt_in_third_hour_diagno_preflight=false,
     bool opt_in_hour3_g22_trace_only=false,
     bool opt_in_hour3_live_g22_trial=false,
-    bool opt_in_hour3_windtail_trial=false) {
+    bool opt_in_hour3_windtail_trial=false,
+    bool opt_in_hour3_comp_stage12_trial=false) {
+    if(opt_in_hour3_comp_stage12_trial&&!opt_in_hour3_windtail_trial)
+        throw std::invalid_argument(
+            "G65 hour3 COMP stage12 requires live wind-tail trial");
     if(opt_in_hour3_windtail_trial&&!opt_in_hour3_live_g22_trial)
         throw std::invalid_argument(
             "G65 hour3 wind-tail requires live G22 trial");
@@ -1208,6 +1215,7 @@ g65_real_noaa_firsthour_atomic_commit(
     G66NativeHour2WaterState third_native_prior;
     std::vector<std::uint8_t> third_live_g22_bytes;
     std::vector<std::uint8_t> third_windtail_bytes;
+    std::vector<std::uint8_t> third_comp_stage12_bytes;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -1418,6 +1426,64 @@ g65_real_noaa_firsthour_atomic_commit(
                        clocks.latest_gamma_hour()!=hour2.input.end)
                         throw std::logic_error(
                             "G65 third-hour G23/G24 trace modified G14 authority");
+                    if(opt_in_hour3_comp_stage12_trial) {
+                        // A separate, strictly test-only G26B actor consumes
+                        // the SAME live third-hour G26A wind, committed
+                        // hour-two memory and source-owned current COMP WATER.
+                        // No stage13–16, third-hour G14 commit or clock publish.
+                        G26BSourceFileBackedCompBridge comp(
+                            live_actor,source,true,&actual,true);
+                        const auto step=comp.run(
+                            p6::kHefeiOriginalStageOrder[12],live_third);
+                        if(!step.completed||
+                           step.source!=p6::NativeHourSource::NativeCpp)
+                            throw std::logic_error(
+                                "G65 hour3 native G26B stage12 not completed");
+                        const auto& mixed=
+                            comp.source_water_mixht_stage12(live_third);
+                        constexpr std::size_t n=82U*85U;
+                        const std::array<const std::vector<float>*,7> fields{
+                            &mixed.zi_before_avemix_m,
+                            &mixed.ziconv_before_avemix_m,
+                            &mixed.comp_third_qh_wm2,
+                            &mixed.comp_third_temperature_k,
+                            &mixed.comp_third_density_kgm3,
+                            &mixed.p6f_water_reconciled_ustar_mps,
+                            &mixed.p6f_water_reconciled_el_m};
+                        const auto put=[&](std::uint32_t value) {
+                            for(unsigned k=0;k<4;++k)
+                                third_comp_stage12_bytes.push_back(
+                                    static_cast<std::uint8_t>(value>>(8*k)));
+                        };
+                        for(int value:{4,12,82,85,9})
+                            put(static_cast<std::uint32_t>(value));
+                        for(const auto* field:fields) {
+                            if(!field||field->size()!=n)
+                                throw std::logic_error(
+                                    "G65 hour3 COMP stage12 array shape invalid");
+                            for(float value:*field) {
+                                if(!std::isfinite(value))
+                                    throw std::logic_error(
+                                        "G65 hour3 COMP stage12 nonfinite");
+                                put(std::bit_cast<std::uint32_t>(value));
+                            }
+                        }
+                        if(third_comp_stage12_bytes.size()!=20U+7U*n*4U||
+                           scheduler.completed_hours()!=2||
+                           clocks.latest_upper_hour()!=hour2.input.end||
+                           clocks.latest_gamma_hour()!=hour2.input.end||
+                           !g65_equal_real4_bits(
+                               scheduler.committed_memory().zi_m,
+                               second_committed.zi_m)||
+                           !g65_equal_real4_bits(
+                               scheduler.committed_memory().ziconv_m,
+                               second_committed.ziconv_m)||
+                           !g65_equal_real4_bits(
+                               scheduler.committed_memory().dptt_k,
+                               second_committed.dptt_k))
+                            throw std::logic_error(
+                                "G65 hour3 stage12 mutated committed G14 authority");
+                    }
                 }
             }
         }
@@ -1447,6 +1513,11 @@ g65_real_noaa_firsthour_atomic_commit(
     if(receipt.hour3_native_g23_g24_stage11_trial_only)
         receipt.hour3_native_g23_g24_trace_bytes=
             std::move(third_windtail_bytes);
+    receipt.hour3_native_g26b_stage12_trial_only=
+        opt_in_hour3_comp_stage12_trial&&!third_comp_stage12_bytes.empty();
+    if(receipt.hour3_native_g26b_stage12_trial_only)
+        receipt.hour3_native_g26b_stage12_trace_bytes=
+            std::move(third_comp_stage12_bytes);
     if(second_positive_published)
         receipt.hour2_committed_memory=std::move(second_committed);
     receipt.g59_bitwise_compared_words=accepted.second;

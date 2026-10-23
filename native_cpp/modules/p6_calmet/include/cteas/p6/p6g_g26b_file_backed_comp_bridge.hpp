@@ -84,10 +84,18 @@ public:
         const G26SourceFileBackedG14DiagnoBridge& diagno,
         const G19FileBackedCase& source,
         bool explicitly_opt_in_normal_trial=false,
-        const G41SelectedNoowWaterFirstHourSource* original_noow_water=nullptr)
+        const G41SelectedNoowWaterFirstHourSource* original_noow_water=nullptr,
+        bool explicitly_opt_in_hour3_comp_stage12_trial=false)
         :diagno_(diagno),source_(source),
          original_noow_water_(original_noow_water),
-         normal_trial_(explicitly_opt_in_normal_trial) {}
+         normal_trial_(explicitly_opt_in_normal_trial),
+         hour3_comp_stage12_trial_(explicitly_opt_in_hour3_comp_stage12_trial) {
+        if(hour3_comp_stage12_trial_&&
+           (!normal_trial_||!original_noow_water_||
+            !diagno_.test_only_hour3_windtail_ready()))
+            throw std::invalid_argument(
+                "G26B hour3 COMP stage12 requires native G26A wind-tail trial");
+    }
 
     [[nodiscard]] p6::NativeHourStageResult run(
         p6::NativeHourStage stage,MultiHourFrame& frame) override {
@@ -101,6 +109,7 @@ public:
     void run_selected(p6::NativeHourStage stage,MultiHourFrame& frame,
                       bool explicitly_test_only) {
         if(!explicitly_test_only||
+           (hour3_comp_stage12_trial_&&phase_>0)||
            phase_>=(source_.research_noow_water_source_only?5U:4U)||
            stage!=p6::kHefeiOriginalStageOrder[12+phase_]||
            !frame.source_controls||
@@ -119,7 +128,10 @@ public:
             // Hour two admits a source-native stage16 precommit candidate;
             // atomic G14 commit, clock publication and original 45-field
             // parity remain fail-closed.
-            if(!original_noow_water_||frame.hour_index>1||
+            if(!original_noow_water_||
+               ((frame.hour_index>1&&!hour3_comp_stage12_trial_)||
+                frame.hour_index>2||
+                (hour3_comp_stage12_trial_&&frame.hour_index!=2))||
                (frame.hour_index==1&&phase_>4)||
                original_noow_water_->source.original_metinp!=
                    source_.original_metinp)
@@ -313,7 +325,8 @@ public:
                 throw std::invalid_argument(
                     "G26B genuine NOAA P6F stage order unsupported");
             auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
-                frame,source_,*original_noow_water_,diagno_,true);
+                frame,source_,*original_noow_water_,diagno_,true,
+                hour3_comp_stage12_trial_);
             std::size_t valid_ss=0;
             for(const auto& obs:frame.surface.by_station)
                 if(obs.wind_valid)++valid_ss;
@@ -585,6 +598,7 @@ private:
     std::optional<std::vector<float>> water_temp3d_stage15_;
     std::optional<G64RealNoaaP6FPrecommit> water_p6f_stage16_;
     bool normal_trial_=false;
+    bool hour3_comp_stage12_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds end_{};

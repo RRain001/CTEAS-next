@@ -324,6 +324,10 @@ public:
         emit(110,f_u,f_v,true);
         return bytes;
     }
+    [[nodiscard]] bool test_only_hour3_windtail_ready() const noexcept {
+        return hour3_windtail_trial_&&phase_==12&&hour_index_==2&&
+               g23_.has_value()&&g24_.has_value();
+    }
     [[nodiscard]] unsigned selected_checkpoints() const noexcept {return phase_;}
     [[nodiscard]] bool source_diagno_ready() const noexcept {
         return phase_==12&&g24_.has_value()&&g23_.has_value()&&
