@@ -81,6 +81,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage01_uncommitted=false;
     std::size_t hour2_live_g26_fradj_compared_words=0;
     bool hour2_live_g26_stage02_uncommitted=false;
+    std::size_t hour2_live_g26_thermal_compared_words=0;
+    bool hour2_live_g26_stage06_uncommitted=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -440,8 +442,78 @@ g65_real_noaa_firsthour_atomic_commit(
         throw std::logic_error(
             "G65 actual second-hour G26A FRADJ differs from standalone"
             " original-source G21 after committed CGAMMA handoff");
-    // No precommit output or clock publication is possible at stage 2;
-    // FRADJ must not create or replace next-hour hidden COMP memory.
+    // S4-R1c8z: execute the genuine second-hour WATER/LAND thermal
+    // checkpoints 3..6 (HEATFX, AIRDEN, ELUSTR, SLOPE) on the SAME live
+    // G14 frame/actor, without calling MIXHTST, COMP or P6F.
+    for(std::size_t stage=3;stage<=6;++stage) {
+        const auto completed=hour2_diagno.run(
+            p6::kHefeiOriginalStageOrder[stage],live_wind_frame);
+        if(!completed.completed||
+           completed.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 genuine second-hour G26A thermal/SLOPE stage absent");
+    }
+    if(hour2_diagno.selected_checkpoints()!=7)
+        throw std::logic_error(
+            "G65 second-hour G26A thermal checkpoint cursor drift");
+    const auto& live_thermal=
+        hour2_diagno.selected_source_water_thermal_after_stage(live_wind_frame);
+
+    // Comparator reconstructs current-hour SURFVAR two-pass, G39 thermal,
+    // and source G22 SLOPE solely from raw/source-repaired NOAA plus the
+    // independently staged G21 FRADJ. It never feeds G26's live physics.
+    G17B4TwoPassSurfvar independent_two_pass(
+        live_wind_frame.grid,live_wind_frame.stations,source.surface,
+        live_wind_frame.surface,source.surface_controls,true);
+    independent_two_pass.after_wind1_before_fradj(
+        live_wind_frame.input.end,ref_wind.u_mps,ref_wind.v_mps);
+    independent_two_pass.after_fradj_before_heatfx(
+        live_wind_frame.input.end,independent_fradj.corrected_wind.u,
+        independent_fradj.corrected_wind.v);
+    const float source_zm=
+        0.5f*(live_wind_frame.source_controls->zface_m[0]+
+              live_wind_frame.source_controls->zface_m[1]);
+    const auto standalone_water=
+        g39_original_noow_water_postfradj_thermal_reference(
+            live_wind_frame.grid,live_wind_frame.stations,
+            live_wind_frame.surface,independent_two_pass,
+            independent_fradj.corrected_wind,source.original_metinp,
+            source_zm,true);
+    const auto standalone_slope=g22_original_slope_after_elustr(
+        live_wind_frame.grid,*live_wind_frame.source_controls,
+        source.original_metinp,independent_fradj.corrected_wind,
+        standalone_water.heat,standalone_water.elustr,true);
+    if(live_thermal.end!=live_wind_frame.input.end||
+       live_thermal.heat.temperature_k.size()!=n||
+       live_thermal.heat.density_kg_m3.size()!=n||
+       live_thermal.elustr.qh_wm2.size()!=n||
+       live_thermal.elustr.ustar_mps.size()!=n||
+       live_thermal.elustr.el_m.size()!=n||
+       live_thermal.post_slope_wind.u.size()!=size||
+       live_thermal.post_slope_wind.v.size()!=size||
+       standalone_water.selected_original_water_cells!=63||
+       standalone_water.water_ustar_el_zi_ready||
+       standalone_water.g14_g26_production_ready||
+       !g65_equal_real4_bits(live_thermal.heat.temperature_k,
+                             standalone_water.heat.temperature_k)||
+       !g65_equal_real4_bits(live_thermal.heat.density_kg_m3,
+                             standalone_water.heat.density_kg_m3)||
+       !g65_equal_real4_bits(live_thermal.elustr.qh_wm2,
+                             standalone_water.elustr.qh_wm2)||
+       !g65_equal_real4_bits(live_thermal.elustr.ustar_mps,
+                             standalone_water.elustr.ustar_mps)||
+       !g65_equal_real4_bits(live_thermal.elustr.el_m,
+                             standalone_water.elustr.el_m)||
+       !g65_equal_real4_bits(live_thermal.post_slope_wind.u,
+                             standalone_slope.post_slope_wind.u)||
+       !g65_equal_real4_bits(live_thermal.post_slope_wind.v,
+                             standalone_slope.post_slope_wind.v))
+        throw std::logic_error(
+            "G65 NOAA second-hour G26A WATER thermal/SLOPE diverged"
+            " from detached source-only G39/G22 REAL4 comparator");
+
+    // No hour-two commit or new station clock is allowed at stage 6.
+    // G23/G24, COMP and P6F still require separate scoped scientific work.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
        clocks.latest_gamma_hour()!=first_end||
@@ -471,6 +543,9 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_fradj_compared_words=3U*82U*85U+
         2U*9U*82U*85U;
     receipt.hour2_live_g26_stage02_uncommitted=true;
+    receipt.hour2_live_g26_thermal_compared_words=5U*82U*85U+
+        2U*9U*82U*85U;
+    receipt.hour2_live_g26_stage06_uncommitted=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
