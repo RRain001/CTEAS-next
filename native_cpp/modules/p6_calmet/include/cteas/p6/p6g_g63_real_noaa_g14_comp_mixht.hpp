@@ -54,15 +54,20 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
     if(!explicitly_forensic_only||
        !source.research_noow_water_source_only||
        !diagno.source_diagno_ready()||
-       geo.nx!=82||geo.ny!=85||live.hour_index!=0||
+       geo.nx!=82||geo.ny!=85||live.hour_index>1||
        live.stations.surface.size()!=2||live.stations.upper.size()!=1||
        source.source_water_cells.size()!=63||
        original.source.surface.hourly.size()!=6||
        source.original_metinp!=original.source.original_metinp||
        original.source.grid.landuse!=geo.landuse||
        original.source.grid.terrain_m!=geo.terrain_m||
-       source.surface.hourly.front().end!=live.input.end||
-       original.source.surface.hourly.front().end!=live.input.end||
+       source.surface.hourly.size()!=6||
+       source.surface.hourly[live.hour_index].end!=live.input.end||
+       original.source.surface.hourly[live.hour_index].end!=live.input.end||
+       source.surface.hourly[live.hour_index].start!=live.surface.start||
+       original.source.surface.hourly[live.hour_index].start!=live.surface.start||
+       (live.hour_index==1&&
+        live.surface.start!=source.surface.hourly[0].end)||
        live.input.end!=live.surface.end||
        live.previous.zi_m.size()!=n||
        live.previous.ziconv_m.size()!=n||
@@ -80,7 +85,8 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
     const auto& upper=diagno.selected_upper_for_comp(live);
     if(g24.end!=live.input.end||station.end!=live.input.end||
        upper.end!=live.input.end||
-       station.station_diagi.size()!=1||
+       station.station_diagi.empty()||
+       station.station_diagi.size()>live.stations.surface.size()||
        live.fields.u_mps!=g24.wind.u_mps||
        live.fields.v_mps!=g24.wind.v_mps||
        live.fields.w_face_mps!=g24.wind.w_face_mps||
@@ -90,6 +96,20 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
        thermal.heat.temperature_k.size()!=n)
         throw std::invalid_argument(
             "G63 first-hour COMP cannot read fabricated final G26A wind");
+    // Station MIXHTST column identity must reflect CURRENT original P5
+    // wind validity, not the preceding hour's sparse station count.
+    std::size_t station_ordinal=0;
+    for(std::size_t i=0;i<live.surface.by_station.size();++i) {
+        if(!live.surface.by_station[i].wind_valid)continue;
+        if(station_ordinal>=station.station_diagi.size()||
+           station.station_diagi[station_ordinal].surface_id!=
+             live.stations.surface[i].id)
+            throw std::logic_error(
+                "G63 true NOAA hour-two COMP source STHEOR ordinal drift");
+        ++station_ordinal;
+    }
+    if(station_ordinal!=station.station_diagi.size())
+        throw std::logic_error("G63 current-hour COMP station mask mismatch");
     // Original COMP's third IAVET SURFVAR follows final DIAGNO G24.
     // The earlier G22 heat is a slope-flow estimate, not COMP heat.
     G17B4TwoPassSurfvar surface(

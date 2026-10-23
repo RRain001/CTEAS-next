@@ -33,8 +33,15 @@ g26b_real_water_comp_partition_source_only(
        !genuine.water_heat_source.reference_heat.explicitly_test_only||
        genuine.g14_g26_production_ready||
        genuine.water_heat_source.g14_g26_production_ready||
-       frame.hour_index!=0||s.surface.hourly.empty()||
-       frame.input.end!=s.surface.hourly.front().end||
+       // G41 owns all six real NOAA source hours, even though its
+       // historical type name says "FirstHour". Admit only hours 0 and
+       // 1 with exact current-hour source UTC. Hour-two previous memory
+       // remains owned by the validated G14 scheduler, not G41.
+       frame.hour_index>1||s.surface.hourly.size()!=6||
+       frame.input.end!=s.surface.hourly[frame.hour_index].end||
+       frame.surface.start!=s.surface.hourly[frame.hour_index].start||
+       (frame.hour_index==1&&
+        frame.surface.start!=s.surface.hourly[0].end)||
        frame.surface.end!=frame.input.end||
        nx<2||ny<2||nx>400||ny>400||
        s.grid.landuse.size()!=n||

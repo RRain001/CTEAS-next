@@ -118,7 +118,11 @@ public:
             // AVEMIX is forbidden without the actual preceding MIXHT.
             // Stages 14..16, clock publication and native G14 commit
             // remain explicitly unaccepted.
-            if(!original_noow_water_||frame.hour_index!=0||
+            if(!original_noow_water_||frame.hour_index>1||
+               // Hour2 is a stage12-only scientific candidate. Never
+               // admit AVEMIX, WSTARR, TEMP3D or P6F without distinct
+               // second-hour original CALMET physical verification.
+               (frame.hour_index==1&&phase_!=0)||
                original_noow_water_->source.original_metinp!=
                    source_.original_metinp)
                 throw std::invalid_argument(
@@ -312,8 +316,13 @@ public:
                     "G26B genuine NOAA P6F stage order unsupported");
             auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
                 frame,source_,*original_noow_water_,diagno_,true);
+            std::size_t valid_ss=0;
+            for(const auto& obs:frame.surface.by_station)
+                if(obs.wind_valid)++valid_ss;
             if(!candidate.source_native_comp_mixht_uncommitted||
-               candidate.valid_ss!=1||candidate.missing_ss!=1||
+               valid_ss==0||
+               candidate.valid_ss!=valid_ss||
+               candidate.missing_ss!=frame.stations.surface.size()-valid_ss||
                candidate.water_cells!=63||candidate.land_cells!=6907)
                 throw std::logic_error(
                     "G26B native water G14 COMP 12 candidate invalid");
