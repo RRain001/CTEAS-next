@@ -1,15 +1,5 @@
 name: Issue40 S4-I real NOAA 2SS 1US same-case GEO UP SURF G19
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4i-real-2ss1us-same-b0-g19.yml'
-      - 'docs/plans/ISSUE40_S4I_REAL_2SS1US_ALL_INPUT_G19_20261021.md'
-      - '.github/workflows/issue40-s4h-real-2ss-large-grid-p3-science.yml'
-      - 'docs/plans/ISSUE40_S4H_REAL_2SS_LARGE_GRID_P3_ORIGINAL_20261021.md'
-      - 'native_cpp/orchestration/p3_case_handoff.py'
-      - 'native_cpp/orchestration/p2a_case_producer.py'
-      - 'scripts/s3f/verify_real_noaa_2022_2023_station_selection.py'
-      - 'scripts/s2g/issue42_s3_b1_true_srtm_window.py'
   workflow_dispatch:
 permissions:
   contents: read

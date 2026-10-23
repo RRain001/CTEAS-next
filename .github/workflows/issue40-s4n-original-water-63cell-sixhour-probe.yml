@@ -1,22 +1,5 @@
 name: Issue40 S4-N original water 63 real cells x six-hour Fortran instrument and byte parity
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4n-original-water-63cell-sixhour-probe.yml'
-      - 'scripts/s4/s4n_real_water_63cells_original_probe.py'
-      - 'docs/plans/ISSUE40_S4N_ORIGINAL_WATER_63CELLS_SIX_HOURS_20261021.md'
-      - '.github/workflows/issue40-s4m-real-2ss1us-water-source-route.yml'
-      - 'scripts/s4/s4m_real_water_original_route_audit.py'
-      - 'docs/plans/ISSUE40_S4M_REAL_WATER_NOWSTA0_ORIGINAL_ROUTE_20261021.md'
-      - '.github/workflows/issue40-s4j-real-2ss1us-water-original-baseline.yml'
-      - 'docs/plans/ISSUE40_S4J_REAL_2SS1US_WATER_ORIGINAL_CALMET_20261021.md'
-      - 'docs/plans/ISSUE40_S4I_REAL_2SS1US_ALL_INPUT_G19_20261021.md'
-      - '.github/workflows/issue40-s4h-real-2ss-large-grid-p3-science.yml'
-      - 'docs/plans/ISSUE40_S4H_REAL_2SS_LARGE_GRID_P3_ORIGINAL_20261021.md'
-      - 'native_cpp/orchestration/p3_case_handoff.py'
-      - 'native_cpp/orchestration/p2a_case_producer.py'
-      - 'scripts/s3f/verify_real_noaa_2022_2023_station_selection.py'
-      - 'scripts/s2g/issue42_s3_b1_true_srtm_window.py'
   workflow_dispatch:
 permissions:
   contents: read
