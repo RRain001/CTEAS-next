@@ -83,6 +83,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage02_uncommitted=false;
     std::size_t hour2_live_g26_thermal_compared_words=0;
     bool hour2_live_g26_stage06_uncommitted=false;
+    std::size_t hour2_live_g26_g24_compared_words=0;
+    bool hour2_live_g26_stage11_uncommitted=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -512,8 +514,98 @@ g65_real_noaa_firsthour_atomic_commit(
             "G65 NOAA second-hour G26A WATER thermal/SLOPE diverged"
             " from detached source-only G39/G22 REAL4 comparator");
 
-    // No hour-two commit or new station clock is allowed at stage 6.
-    // G23/G24, COMP and P6F still require separate scoped scientific work.
+    // S4-R1c9a: second-hour source-controlled original stage7..11.
+    // Run native STHEOR/MIXHTST/DIAGI, INTER2 and final WINDBC/SMOOTH/
+    // DIVCEL/W on the SAME live G14 frame and current post-SLOPE wind.
+    // The STHEOR station reads the actual prior-hour COMP memory.
+    for(std::size_t stage=7;stage<=11;++stage) {
+        const auto complete=hour2_diagno.run(
+            p6::kHefeiOriginalStageOrder[stage],live_wind_frame);
+        if(!complete.completed||
+           complete.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 true NOAA hour-two G26A STHEOR/INTER2/G24 failed");
+    }
+    if(hour2_diagno.selected_checkpoints()!=12)
+        throw std::logic_error(
+            "G65 NOAA hour-two G26A DIAGNO checkpoint 12 not reached");
+    const auto& g14_g23=hour2_diagno.selected_station_for_comp(
+        live_wind_frame);
+    const auto& g14_g24=hour2_diagno.selected_wind_for_comp(
+        live_wind_frame);
+
+    // Reconstruct a separate hour-two source-native physics chain from
+    // raw observed G45 WIND1 and independently calculated G21 FRADJ.
+    // This copy inherits exactly the same committed G14 prior state;
+    // NO result is injected into the live actor or G14 frame.
+    auto reference_frame=scheduler.preview_next_hour();
+    if(reference_frame.hour_index!=1||
+       reference_frame.input.end!=live_wind_frame.input.end||
+       !g65_equal_real4_bits(reference_frame.previous.zi_m,committed.zi_m)||
+       !g65_equal_real4_bits(reference_frame.previous.ziconv_m,committed.ziconv_m)||
+       !g65_equal_real4_bits(reference_frame.previous.dptt_k,committed.dptt_k))
+        throw std::logic_error(
+            "G65 detached hour-two source path lost committed COMP prior");
+    auto independent_profiles=g20_source_wind1_profiles_kernel(
+        reference_frame,true,true);
+    const auto independently_thermal=g22_selected_source_thermal_slope(
+        reference_frame,source,
+        {ref_wind.u_mps,ref_wind.v_mps},
+        independent_fradj,true);
+    const auto separately_stheor=g23_source_stheor_diagi_inter2(
+        reference_frame,source,std::move(independent_profiles),
+        independent_fradj,independently_thermal,true);
+    const auto separately_g24=g24_selected_original_wind_tail(
+        reference_frame,source,separately_stheor,true);
+    // G23 site count is determined from the *second* P5 hour, which
+    // can differ from the first hour's source-valid SS selection.
+    std::vector<int> hour2_valid_station_ids;
+    for(std::size_t i=0;i<live_wind_frame.surface.by_station.size();++i)
+        if(live_wind_frame.surface.by_station[i].wind_valid)
+            hour2_valid_station_ids.push_back(
+                live_wind_frame.stations.surface[i].id);
+    const std::size_t g24_words=2U*2U*9U*82U*85U+
+        10U*82U*85U;
+    if(g14_g23.end!=live_wind_frame.input.end||
+       g14_g23.hour_index!=1||
+       hour2_valid_station_ids.empty()||
+       g14_g23.station_diagi.size()!=hour2_valid_station_ids.size()||
+       separately_stheor.station_diagi.size()!=hour2_valid_station_ids.size()||
+       g14_g23.inter2_u.component_mps.size()!=size||
+       g14_g23.inter2_v.component_mps.size()!=size||
+       g14_g24.wind.u_mps.size()!=size||
+       g14_g24.wind.v_mps.size()!=size||
+       g14_g24.wind.w_face_mps.size()!=10U*n||
+       !g65_equal_real4_bits(g14_g23.inter2_u.component_mps,
+                             separately_stheor.inter2_u.component_mps)||
+       !g65_equal_real4_bits(g14_g23.inter2_v.component_mps,
+                             separately_stheor.inter2_v.component_mps)||
+       !g65_equal_real4_bits(g14_g24.wind.u_mps,
+                             separately_g24.wind.u_mps)||
+       !g65_equal_real4_bits(g14_g24.wind.v_mps,
+                             separately_g24.wind.v_mps)||
+       !g65_equal_real4_bits(g14_g24.wind.w_face_mps,
+                             separately_g24.wind.w_face_mps)||
+       !g65_equal_real4_bits(live_wind_frame.fields.u_mps,
+                             separately_g24.wind.u_mps)||
+       !g65_equal_real4_bits(live_wind_frame.fields.v_mps,
+                             separately_g24.wind.v_mps)||
+       !g65_equal_real4_bits(live_wind_frame.fields.w_face_mps,
+                             separately_g24.wind.w_face_mps))
+        throw std::logic_error(
+            "G65 NOAA second-hour original-source STHEOR/INTER2/G24 "
+            "does not match live scheduler-bound G26A at bit level");
+    for(std::size_t i=0;i<hour2_valid_station_ids.size();++i)
+        if(g14_g23.station_diagi[i].surface_id!=hour2_valid_station_ids[i]||
+           separately_stheor.station_diagi[i].surface_id!=
+             hour2_valid_station_ids[i]||
+           g14_g23.station_diagi[i].end!=live_wind_frame.input.end||
+           separately_stheor.station_diagi[i].end!=live_wind_frame.input.end)
+            throw std::logic_error(
+                "G65 NOAA hour-two STHEOR changed source-valid SS ordinal");
+    (void)g24_words;
+    // Stage 11 may hand off final U/V/W for future COMP, but no P6F
+    // or G14 second-hour transaction may commit in this scoped trial.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
        clocks.latest_gamma_hour()!=first_end||
@@ -546,6 +638,9 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_thermal_compared_words=5U*82U*85U+
         2U*9U*82U*85U;
     receipt.hour2_live_g26_stage06_uncommitted=true;
+    receipt.hour2_live_g26_g24_compared_words=
+        4U*9U*82U*85U+10U*82U*85U;
+    receipt.hour2_live_g26_stage11_uncommitted=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
