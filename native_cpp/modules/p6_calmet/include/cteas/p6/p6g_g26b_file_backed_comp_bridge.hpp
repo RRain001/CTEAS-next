@@ -5,7 +5,7 @@
 // G23 per-station DPTT and G24 physically computed final 3D U/V/W.
 // The original SETCOM NEARU grid mapping remains SELECTED TEST-ONLY:
 // independent full-original multicenter 45-field source hour unaccepted.
-// No P6F [16], no G14 committed memory / station-clock publication.
+// Stage16 is precommit-only; no G14 memory or clock publication.
 #include "cteas/p6/p6g_g26_file_backed_g14_diagno_bridge.hpp"
 #include "cteas/p6/p6g_g18d4_comp_stage_adapter.hpp"
 #include "cteas/p6/p6g_g18d5_source_mixht_controls.hpp"
@@ -116,10 +116,11 @@ public:
             // Original G14 stages 12 MIXHT then 13 AVEMIX, from ONE
             // live frame and the same firsthour original WATER identity.
             // AVEMIX is forbidden without the actual preceding MIXHT.
-            // Hour two admits native stages 12..15 in original order,
-            // but stage16 P6F and G14 commit remain fail-closed.
+            // Hour two admits a source-native stage16 precommit candidate;
+            // atomic G14 commit, clock publication and original 45-field
+            // parity remain fail-closed.
             if(!original_noow_water_||frame.hour_index>1||
-               (frame.hour_index==1&&phase_>3)||
+               (frame.hour_index==1&&phase_>4)||
                original_noow_water_->source.original_metinp!=
                    source_.original_metinp)
                 throw std::invalid_argument(

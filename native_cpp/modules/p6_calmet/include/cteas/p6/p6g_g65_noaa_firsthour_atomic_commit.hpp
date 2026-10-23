@@ -1,7 +1,8 @@
 #pragma once
 // S4-R1c8w: one authentic NOAA first-hour G14 atomic transaction.
-// Selected WATER route; hour2 stages 0..15 are research-only and
-// uncommitted. No hour2 P6F, original-hour science, or P6 production.
+// Selected WATER route; hour2 stages 0..16 are research-only and
+// uncommitted. Hour2 P6F is a candidate only: no original-hour
+// Fortran science, state/clock publication, or P6 production.
 // All 17 physics stages run on the SAME scheduler-owned frame; no G54/G59
 // numbers are used as native forcing. Failed precommit cannot publish state.
 #include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
@@ -94,7 +95,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage14_uncommitted=false;
     std::size_t hour2_live_g26_temp3d_compared_words=0;
     bool hour2_live_g26_stage15_uncommitted=false;
-    bool hour2_stage16_rejected=false;
+    bool hour2_stage16_prepared_unpublished=false;
+    std::size_t hour2_p6f_compared_words=0;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -863,31 +865,100 @@ g65_real_noaa_firsthour_atomic_commit(
         if(!std::isfinite(value)||value<180.f||value>350.f)
             throw std::logic_error(
                 "G65 authentic NOAA hour2 TEMP3D nonphysical");
-    // Stage16 P6F is not yet verified for causal secondhour operation.
-    // Reject without publishing G14 memory or station clocks.
-    bool stage16_denied=false;
-    try {
-        hour2_comp.run_selected(
-            p6::kHefeiOriginalStageOrder[16],live_wind_frame,true);
-    }catch(const std::invalid_argument&) {
-        stage16_denied=true;
-    }
-    if(!stage16_denied)
+    // Stage16: preserve a third source-native candidate BEFORE advancing
+    // either actor. This is same-kernel causal replay, NOT an independent
+    // original Fortran science comparator or permission to commit.
+    const auto source_p6f=g64_real_noaa_p6f_from_live_g14(
+        detached_frame,source,separate_mixht,detached_avemix,
+        detached_wstarr,replay_temp3d,true);
+    const auto live_p6f_result=hour2_comp.run(
+        p6::kHefeiOriginalStageOrder[16],live_wind_frame);
+    const auto detached_p6f_result=detached_comp.run(
+        p6::kHefeiOriginalStageOrder[16],detached_frame);
+    if(!live_p6f_result.completed||
+       live_p6f_result.source!=p6::NativeHourSource::NativeCpp||
+       !detached_p6f_result.completed||
+       detached_p6f_result.source!=p6::NativeHourSource::NativeCpp)
+        throw std::logic_error("G65 genuine NOAA hour2 P6F stage16 absent");
+    const auto& live_p6f=hour2_comp.source_water_p6f_stage16(
+        live_wind_frame);
+    const auto& replay_p6f=detached_comp.source_water_p6f_stage16(
+        detached_frame);
+    const auto same_dataset=[&](const cteas::p6f::Calmet21File& lhs,
+                                const cteas::p6f::Calmet21File& rhs) {
+        if(lhs.hourly.size()!=45||rhs.hourly.size()!=45)
+            return false;
+        for(std::size_t k=0;k<45;++k) {
+            const auto& a=lhs.hourly[k];
+            const auto& b=rhs.hourly[k];
+            if(a.label!=b.label||a.integer!=b.integer||
+               cteas::p6f::instant_seconds(a.begin)!=
+                   cteas::p6f::instant_seconds(b.begin)||
+               cteas::p6f::instant_seconds(a.end)!=
+                   cteas::p6f::instant_seconds(b.end))
+                return false;
+            if(a.integer) {
+                if(a.integer_values.size()!=cell_count||
+                   a.integer_values!=b.integer_values)
+                    return false;
+            } else if(a.real_values.size()!=cell_count||
+                      !g65_equal_real4_bits(a.real_values,b.real_values))
+                return false;
+        }
+        return true;
+    };
+    if(!live_p6f.actual_g14_stage16_precommit_validated||
+       !replay_p6f.actual_g14_stage16_precommit_validated||
+       !source_p6f.actual_g14_stage16_precommit_validated||
+       live_p6f.g14_hour_committed||replay_p6f.g14_hour_committed||
+       source_p6f.g14_hour_committed||
+       live_p6f.source_clocks_published||
+       replay_p6f.source_clocks_published||
+       source_p6f.source_clocks_published||
+       live_p6f.ready_for_next_hour||replay_p6f.ready_for_next_hour||
+       source_p6f.ready_for_next_hour||
+       live_p6f.end!=hour2.input.end||
+       replay_p6f.end!=hour2.input.end||
+       source_p6f.end!=hour2.input.end||
+       live_p6f.serialized_prepared_only.empty()||
+       live_p6f.serialized_prepared_only!=
+           replay_p6f.serialized_prepared_only||
+       live_p6f.serialized_prepared_only!=
+           source_p6f.serialized_prepared_only||
+       !same_dataset(live_p6f.candidate_dataset,
+                     replay_p6f.candidate_dataset)||
+       !same_dataset(live_p6f.candidate_dataset,
+                     source_p6f.candidate_dataset)||
+       !g65_equal_real4_bits(live_p6f.candidate_next.zi_m,
+                             replay_p6f.candidate_next.zi_m)||
+       !g65_equal_real4_bits(live_p6f.candidate_next.ziconv_m,
+                             replay_p6f.candidate_next.ziconv_m)||
+       !g65_equal_real4_bits(live_p6f.candidate_next.dptt_k,
+                             replay_p6f.candidate_next.dptt_k)||
+       !g65_equal_real4_bits(live_p6f.candidate_next.zi_m,
+                             source_p6f.candidate_next.zi_m)||
+       !g65_equal_real4_bits(live_p6f.candidate_next.ziconv_m,
+                             source_p6f.candidate_next.ziconv_m)||
+       !g65_equal_real4_bits(live_p6f.candidate_next.dptt_k,
+                             source_p6f.candidate_next.dptt_k))
         throw std::logic_error(
-            "G65 secondhour stage16 escaped source-only fail-closed guard");
-    // Stages12..15 and rejected stage16 must preserve firsthour G14
-    // memory and AA/BB/CGAMMA publication until a full atomic commit.
+            "G65 real NOAA hour2 45-field source P6F precommit mismatch");
+    // The frame carries only an in-flight candidate, while scheduler
+    // memory and public AA/BB/CGAMMA clocks remain at hour one.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
        clocks.latest_gamma_hour()!=first_end||
        !g65_equal_real4_bits(scheduler.committed_memory().zi_m,committed.zi_m)||
        !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,committed.ziconv_m)||
        !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,committed.dptt_k)||
-       !g65_equal_real4_bits(live_wind_frame.next.zi_m,committed.zi_m)||
-       !g65_equal_real4_bits(live_wind_frame.next.ziconv_m,committed.ziconv_m)||
-       !g65_equal_real4_bits(live_wind_frame.next.dptt_k,committed.dptt_k))
+       !g65_equal_real4_bits(live_wind_frame.next.zi_m,
+                             live_p6f.candidate_next.zi_m)||
+       !g65_equal_real4_bits(live_wind_frame.next.ziconv_m,
+                             live_p6f.candidate_next.ziconv_m)||
+       !g65_equal_real4_bits(live_wind_frame.next.dptt_k,
+                             live_p6f.candidate_next.dptt_k))
         throw std::logic_error(
-            "G65 second-hour physical WIND1 changed committed COMP memory/clocks");
+            "G65 second-hour P6F precommit changed committed memory/clocks");
 
     G65NoaaFirstHourCommitReceipt receipt;
     receipt.end=first_end;
@@ -920,7 +991,8 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_stage14_uncommitted=true;
     receipt.hour2_live_g26_temp3d_compared_words=9U*82U*85U;
     receipt.hour2_live_g26_stage15_uncommitted=true;
-    receipt.hour2_stage16_rejected=true;
+    receipt.hour2_stage16_prepared_unpublished=true;
+    receipt.hour2_p6f_compared_words=45U*82U*85U;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
