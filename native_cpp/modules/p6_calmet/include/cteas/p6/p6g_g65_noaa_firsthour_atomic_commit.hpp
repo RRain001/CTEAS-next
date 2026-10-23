@@ -85,6 +85,9 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage06_uncommitted=false;
     std::size_t hour2_live_g26_g24_compared_words=0;
     bool hour2_live_g26_stage11_uncommitted=false;
+    std::size_t hour2_live_g26_mixht_compared_words=0;
+    bool hour2_live_g26_stage12_uncommitted=false;
+    bool hour2_stage13_rejected=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -604,8 +607,97 @@ g65_real_noaa_firsthour_atomic_commit(
             throw std::logic_error(
                 "G65 NOAA hour-two STHEOR changed source-valid SS ordinal");
     (void)g24_words;
-    // Stage 11 may hand off final U/V/W for future COMP, but no P6F
-    // or G14 second-hour transaction may commit in this scoped trial.
+    // S4-R1c9b: enter genuine second-hour G26B MIXHT stage12 on the
+    // SAME G14 frame after authentic original-source stage11 U/V/W.
+    // This candidate consumes previous-hour committed COMP arrays;
+    // its station count must follow this hour's actual P5 wind-valid mask.
+    G26BSourceFileBackedCompBridge hour2_comp(
+        hour2_diagno,source,true,&actual);
+    const auto live_mixht_result=hour2_comp.run(
+        p6::kHefeiOriginalStageOrder[12],live_wind_frame);
+    if(!live_mixht_result.completed||
+       live_mixht_result.source!=p6::NativeHourSource::NativeCpp)
+        throw std::logic_error(
+            "G65 real NOAA secondhour G26B stage12 did not run");
+    const auto& live_mixht=hour2_comp.source_water_mixht_stage12(
+        live_wind_frame);
+    // Detached comparator independently replays current observed G26A
+    // 12-stage DIAGNO from the published previous-hour source clock and
+    // committed scheduler memory, then runs G26B MIXHT on the detached
+    // authentic source frame. No numeric candidate is fed to live G14.
+    auto detached_frame=scheduler.preview_next_hour();
+    G26SourceFileBackedG14DiagnoBridge detached_diagno(
+        scheduler,clocks,source,true);
+    for(std::size_t stage=0;stage<12;++stage) {
+        const auto result=detached_diagno.run(
+            p6::kHefeiOriginalStageOrder[stage],detached_frame);
+        if(!result.completed||
+           result.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 detached secondhour G26A source physics not complete");
+    }
+    G26BSourceFileBackedCompBridge detached_comp(
+        detached_diagno,source,true,&actual);
+    const auto detached_mixht_result=detached_comp.run(
+        p6::kHefeiOriginalStageOrder[12],detached_frame);
+    if(!detached_mixht_result.completed||
+       detached_mixht_result.source!=p6::NativeHourSource::NativeCpp)
+        throw std::logic_error(
+            "G65 detached secondhour G26B MIXHT not complete");
+    const auto& separate_mixht=detached_comp.source_water_mixht_stage12(
+        detached_frame);
+    const auto cell_count=82U*85U;
+    if(live_mixht.end!=live_wind_frame.input.end||
+       separate_mixht.end!=live_wind_frame.input.end||
+       live_mixht.valid_ss!=hour2_valid_station_ids.size()||
+       separate_mixht.valid_ss!=hour2_valid_station_ids.size()||
+       live_mixht.water_cells!=63||
+       live_mixht.land_cells!=6907||
+       separate_mixht.water_cells!=63||
+       separate_mixht.land_cells!=6907||
+       !live_mixht.source_native_comp_mixht_uncommitted||
+       !separate_mixht.source_native_comp_mixht_uncommitted||
+       live_mixht.zi_before_avemix_m.size()!=cell_count||
+       live_mixht.ziconv_before_avemix_m.size()!=cell_count||
+       live_mixht.dptt_before_avemix_k.size()!=cell_count||
+       live_mixht.comp_third_temperature_k.size()!=cell_count||
+       live_mixht.comp_third_qh_wm2.size()!=cell_count||
+       live_mixht.comp_third_density_kgm3.size()!=cell_count||
+       live_mixht.comp_third_ustar_mps.size()!=cell_count||
+       live_mixht.comp_third_el_m.size()!=cell_count||
+       !g65_equal_real4_bits(live_mixht.zi_before_avemix_m,
+                             separate_mixht.zi_before_avemix_m)||
+       !g65_equal_real4_bits(live_mixht.ziconv_before_avemix_m,
+                             separate_mixht.ziconv_before_avemix_m)||
+       !g65_equal_real4_bits(live_mixht.dptt_before_avemix_k,
+                             separate_mixht.dptt_before_avemix_k)||
+       !g65_equal_real4_bits(live_mixht.comp_third_temperature_k,
+                             separate_mixht.comp_third_temperature_k)||
+       !g65_equal_real4_bits(live_mixht.comp_third_qh_wm2,
+                             separate_mixht.comp_third_qh_wm2)||
+       !g65_equal_real4_bits(live_mixht.comp_third_density_kgm3,
+                             separate_mixht.comp_third_density_kgm3)||
+       !g65_equal_real4_bits(live_mixht.comp_third_ustar_mps,
+                             separate_mixht.comp_third_ustar_mps)||
+       !g65_equal_real4_bits(live_mixht.comp_third_el_m,
+                             separate_mixht.comp_third_el_m))
+        throw std::logic_error(
+            "G65 secondhour real G26B MIXHT differs from detached"
+            " causal source-native re-execution of 55760 REAL4 words");
+    // Forensic hour2 stage12 is not a general G26B completion license:
+    // the existing firsthour-only AVEMIX path must explicitly reject.
+    bool stage13_denied=false;
+    try {
+        hour2_comp.run_selected(
+            p6::kHefeiOriginalStageOrder[13],live_wind_frame,true);
+    }catch(const std::invalid_argument&) {
+        stage13_denied=true;
+    }
+    if(!stage13_denied)
+        throw std::logic_error(
+            "G65 real secondhour stage13 escaped its source-only guard");
+    // Stage12 and its rejected stage13 must preserve committed G14 state
+    // and the source AA/BB/CGAMMA publication of hour one only.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
        clocks.latest_gamma_hour()!=first_end||
@@ -641,6 +733,9 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_g24_compared_words=
         4U*9U*82U*85U+10U*82U*85U;
     receipt.hour2_live_g26_stage11_uncommitted=true;
+    receipt.hour2_live_g26_mixht_compared_words=8U*82U*85U;
+    receipt.hour2_live_g26_stage12_uncommitted=true;
+    receipt.hour2_stage13_rejected=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
