@@ -67,6 +67,55 @@ private:
     std::size_t cursor_=0;
 };
 
+// S4-R1c9i: execute a real second-hour 17-stage G14 transaction on the
+// SAME first-hour scheduler. For now this actor is used ONLY in a deliberately
+// failing P6F precommit test. It must not publish hour2 memory or clocks.
+class G65RealNoaaSecondHourRollbackActor final : public MultiHourPhysics {
+public:
+    G65RealNoaaSecondHourRollbackActor(
+        const UnifiedMultistationHourlyScheduler& scheduler,
+        G18D2StationClockAuthority& clocks,
+        const G19FileBackedCase& source,
+        const G41SelectedNoowWaterFirstHourSource& original)
+        :diagno_(scheduler,clocks,source,true),
+         comp_(diagno_,source,true,&original) {}
+
+    [[nodiscard]] p6::NativeHourStageResult run(
+        p6::NativeHourStage stage,MultiHourFrame& frame) override {
+        if(frame.hour_index!=1||cursor_>=p6::kHefeiOriginalStageOrder.size()||
+           stage!=p6::kHefeiOriginalStageOrder[cursor_])
+            throw std::logic_error(
+                "G65 second-hour rollback actor wrong hour/stage");
+        const auto result=(cursor_<12)
+            ?diagno_.run(stage,frame):comp_.run(stage,frame);
+        if(!result.completed||result.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 second-hour rollback actor missing native physics");
+        ++cursor_;
+        return result;
+    }
+
+    [[nodiscard]] const G64RealNoaaP6FPrecommit& precommit(
+        const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=1)
+            throw std::logic_error(
+                "G65 second-hour rollback before all 17 native stages");
+        const auto& candidate=comp_.source_water_p6f_stage16(frame);
+        if(!candidate.actual_g14_stage16_precommit_validated||
+           candidate.g14_hour_committed||candidate.source_clocks_published||
+           candidate.candidate_dataset.hourly.size()!=45||
+           candidate.serialized_prepared_only.empty())
+            throw std::logic_error(
+                "G65 second-hour rollback has invalid P6F candidate");
+        diagno_.require_station_clock_preflight(frame);
+        return candidate;
+    }
+private:
+    G26SourceFileBackedG14DiagnoBridge diagno_;
+    G26BSourceFileBackedCompBridge comp_;
+    std::size_t cursor_=0;
+};
+
 struct G65NoaaFirstHourCommitReceipt {
     std::chrono::sys_seconds end{};
     p6::NativeGridMemory committed_memory;
@@ -96,6 +145,7 @@ struct G65NoaaFirstHourCommitReceipt {
     std::size_t hour2_live_g26_temp3d_compared_words=0;
     bool hour2_live_g26_stage15_uncommitted=false;
     bool hour2_stage16_prepared_unpublished=false;
+    bool hour2_real_g14_full17_rollback_verified=false;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
     std::vector<std::uint8_t> hour2_unpublished_p6f_bytes;
@@ -967,6 +1017,78 @@ g65_real_noaa_firsthour_atomic_commit(
         throw std::logic_error(
             "G65 second-hour P6F precommit changed committed memory/clocks");
 
+    // S4-R1c9i: unlike detached manual stage calls above, exercise the
+    // actual G14 scheduler's full second-hour execute_and_commit_hour path.
+    // Force a P6F precommit failure only AFTER all 17 native stages,
+    // candidate field checks and staged AA/BB/CGAMMA clock preflight.
+    // This must roll back BOTH physical memory and public clock authority.
+    // A successful negative test does not authorize committing hour2.
+    const auto second_before=scheduler.committed_memory();
+    bool second_injection_reached=false;
+    bool second_postcommit_called=false;
+    G65RealNoaaSecondHourRollbackActor* second_actor=nullptr;
+    try {
+        scheduler.advance_with_fresh_physics(
+            [&](const MultiHourFrame& next)
+                ->std::unique_ptr<MultiHourPhysics> {
+                if(next.hour_index!=1||next.input.end!=hour2.input.end||
+                   &next.previous!=&scheduler.committed_memory())
+                    throw std::logic_error(
+                        "G65 second-hour rollback detached G14 scheduler");
+                auto actor=std::make_unique<
+                    G65RealNoaaSecondHourRollbackActor>(
+                        scheduler,clocks,source,actual);
+                second_actor=actor.get();
+                return actor;
+            },
+            [&](const MultiHourFrame& candidate_frame) {
+                if(!second_actor||candidate_frame.hour_index!=1||
+                   candidate_frame.input.end!=hour2.input.end)
+                    throw std::logic_error(
+                        "G65 second-hour rollback precommit clock drift");
+                const auto& candidate=second_actor->precommit(
+                    candidate_frame);
+                if(candidate.serialized_prepared_only!=
+                       live_p6f.serialized_prepared_only||
+                   !g65_equal_real4_bits(
+                       candidate_frame.next.zi_m,
+                       live_p6f.candidate_next.zi_m)||
+                   !g65_equal_real4_bits(
+                       candidate_frame.next.ziconv_m,
+                       live_p6f.candidate_next.ziconv_m)||
+                   !g65_equal_real4_bits(
+                       candidate_frame.next.dptt_k,
+                       live_p6f.candidate_next.dptt_k))
+                    throw std::logic_error(
+                        "G65 second-hour transaction P6F differs from source");
+                second_injection_reached=true;
+                throw std::runtime_error(
+                    "G65_EXPECTED_SECOND_HOUR_PRECOMMIT_ROLLBACK");
+            },
+            [&](MultiHourPhysics&,
+                const UnifiedMultistationHourlyScheduler&) noexcept {
+                second_postcommit_called=true;
+            });
+        throw std::logic_error(
+            "G65 second-hour rollback injection unexpectedly committed");
+    } catch(const std::runtime_error& e) {
+        if(!second_injection_reached||
+           std::string(e.what())!=
+               "G65_EXPECTED_SECOND_HOUR_PRECOMMIT_ROLLBACK")
+            throw;
+    }
+    if(second_postcommit_called||scheduler.completed_hours()!=1||
+       clocks.latest_upper_hour()!=first_end||
+       clocks.latest_gamma_hour()!=first_end||
+       !g65_equal_real4_bits(
+           scheduler.committed_memory().zi_m,second_before.zi_m)||
+       !g65_equal_real4_bits(
+           scheduler.committed_memory().ziconv_m,second_before.ziconv_m)||
+       !g65_equal_real4_bits(
+           scheduler.committed_memory().dptt_k,second_before.dptt_k))
+        throw std::logic_error(
+            "G65 second-hour failed precommit changed physical/clock state");
+
     G65NoaaFirstHourCommitReceipt receipt;
     receipt.end=first_end;
     receipt.committed_memory=committed;
@@ -999,6 +1121,7 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_temp3d_compared_words=9U*82U*85U;
     receipt.hour2_live_g26_stage15_uncommitted=true;
     receipt.hour2_stage16_prepared_unpublished=true;
+    receipt.hour2_real_g14_full17_rollback_verified=true;
     receipt.hour2_p6f_compared_words=45U*82U*85U;
     receipt.hour2_unpublished_p6f_bytes=live_p6f.serialized_prepared_only;
     receipt.hour2_unpublished_mixht_avemix_rows.reserve(4U*82U*85U);

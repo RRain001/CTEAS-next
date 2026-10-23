@@ -54,6 +54,7 @@ int main(int argc,char** argv) {
            !result.hour2_live_g26_stage15_uncommitted||
            result.hour2_live_g26_temp3d_compared_words!=62730||
            !result.hour2_stage16_prepared_unpublished||
+           !result.hour2_real_g14_full17_rollback_verified||
            result.hour2_p6f_compared_words!=313650||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
@@ -171,6 +172,7 @@ int main(int argc,char** argv) {
             <<"S4R1C9F_HOUR2_STAGE16_P6F=PASS_PRECOMMIT_UNPUBLISHED\n"
             <<"S4R1C9F_HOUR2_P6F_45FIELDS_SOURCE_BITWISE=PASS_313650_WORDS\n"
             <<"S4R1C9F_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_P6F_PRECOMMIT\n"
+            <<"S4R1C9I_HOUR2_REAL_G14_17STAGE_FAILED_PRECOMMIT=PASS_ROLLBACK_ONLY\n"
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;
