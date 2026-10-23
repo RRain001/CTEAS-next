@@ -190,6 +190,41 @@ inline bool g65_equal_real4_bits(
     return true;
 }
 
+// Decode serialization ONLY at the G65/P6F boundary. G26A and G66 see
+// typed native prior physical state, never depend on P6F writer linkage.
+inline G66NativeHour2WaterState g65_native_hour2_water_from_p6f(
+    const cteas::p6f::Calmet21File& native,
+    std::chrono::sys_seconds expected_end) {
+    if(native.hourly.size()!=45)
+        throw std::invalid_argument("G65 native hour2 P6F field count");
+    const auto field=[&](const std::string& label)
+        ->const std::vector<float>& {
+        const cteas::p6f::Calmet21Field* found=nullptr;
+        for(const auto& f:native.hourly)
+            if(f.label==label) {
+                if(found)throw std::invalid_argument(
+                    "G65 duplicate native P6F water field");
+                found=&f;
+            }
+        if(!found||found->integer||found->real_values.size()!=6970||
+           cteas::p6f::instant_seconds(found->end)!=
+               expected_end.time_since_epoch().count()||
+           cteas::p6f::instant_seconds(found->begin)!=
+               (expected_end-std::chrono::hours{1})
+                   .time_since_epoch().count())
+            throw std::invalid_argument(
+                "G65 native P6F water field clock/shape invalid");
+        return found->real_values;
+    };
+    G66NativeHour2WaterState prior;
+    prior.begin=expected_end-std::chrono::hours{1};
+    prior.end=expected_end;
+    prior.ustar_mps=field("USTAR   ");
+    prior.el_m=field("EL      ");
+    prior.explicitly_native_p6f_origin=true;
+    return prior;
+}
+
 inline G65NoaaFirstHourCommitReceipt
 g65_real_noaa_firsthour_atomic_commit(
     const G19SourceFilePaths& paths,bool explicitly_forensic_only,
@@ -1164,6 +1199,7 @@ g65_real_noaa_firsthour_atomic_commit(
     bool third_g26a_staged=false;
     bool third_thermal_refused=false;
     G66NoaaHour3G22Trace third_g22_forensic;
+    G66NativeHour2WaterState third_native_prior;
     std::vector<std::uint8_t> third_live_g22_bytes;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
@@ -1307,6 +1343,8 @@ g65_real_noaa_firsthour_atomic_commit(
                 throw std::logic_error(
                     "G65 third-hour unverified G22 thermal was not fail-closed");
             if(opt_in_hour3_g22_trace_only) {
+                third_native_prior=g65_native_hour2_water_from_p6f(
+                    live_p6f.candidate_dataset,hour2.input.end);
                 // This standalone G66 tracer never invokes G26 stage3,
                 // consumes only the NATIVE hour2 P6F result, and cannot
                 // publish an hour3 stage, memory, clocks or MET output.
@@ -1316,7 +1354,7 @@ g65_real_noaa_firsthour_atomic_commit(
                     third_diagno.selected_source_fradj_after_stage(third_frame);
                 third_g22_forensic=g66_native_hour3_g22_trace_only(
                     third_frame,source,native_wind1,native_fradj,
-                    live_p6f.candidate_dataset,true);
+                    third_native_prior,true);
                 if(third_g22_forensic.traced_stages!=5||
                    third_g22_forensic.water_history_values!=126||
                    third_g22_forensic.production_admitted||
@@ -1334,7 +1372,7 @@ g65_real_noaa_firsthour_atomic_commit(
                 auto live_third=scheduler.preview_next_hour();
                 G26SourceFileBackedG14DiagnoBridge live_actor(
                     scheduler,clocks,source,true,
-                    &live_p6f.candidate_dataset,true);
+                    &third_native_prior,true);
                 for(std::size_t stage=0;stage<7;++stage) {
                     const auto step=live_actor.run(
                         p6::kHefeiOriginalStageOrder[stage],live_third);

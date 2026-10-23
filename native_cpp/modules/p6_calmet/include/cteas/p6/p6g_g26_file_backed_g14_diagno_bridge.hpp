@@ -30,7 +30,7 @@ public:
         G18D2StationClockAuthority& clocks,
         const G19FileBackedCase& source,
         bool explicitly_opt_in_normal_trial=false,
-        const cteas::p6f::Calmet21File* native_hour2_p6f=nullptr,
+        const G66NativeHour2WaterState* native_hour2_p6f=nullptr,
         bool explicitly_opt_in_hour3_g22_trial=false)
         :owner_(owner),clocks_(clocks),source_(source),
          prepdi_(owner,clocks,source.original_metinp),
@@ -361,7 +361,7 @@ private:
     const G19FileBackedCase& source_;
     G18E4SelectedPrepdiStageAdapter prepdi_;
     bool normal_trial_=false;
-    const cteas::p6f::Calmet21File* native_hour2_p6f_=nullptr;
+    const G66NativeHour2WaterState* native_hour2_p6f_=nullptr;
     bool hour3_g22_trial_=false;
     std::vector<std::uint8_t> hour3_g22_trace_;
     const MultiHourFrame* live_=nullptr;

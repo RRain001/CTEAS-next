@@ -15,6 +15,14 @@
 
 namespace cteas::calmet::p6g {
 
+// Narrow typed physical state: no P6F serialization dependency leaks
+// into G26A or frozen C1/C2 test translation units.
+struct G66NativeHour2WaterState {
+    std::chrono::sys_seconds begin{},end{};
+    std::vector<float> ustar_mps,el_m;
+    bool explicitly_native_p6f_origin=false;
+};
+
 struct G66NoaaHour3G22Trace {
     // Strictly unpublished native result, eligible only for a separate
     // test-only G26A stage3 actor; NEVER a production stage admission.
@@ -29,7 +37,7 @@ inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
     const MultiHourFrame& frame,const G19FileBackedCase& source,
     const Wind1MultiField& native_wind1,
     const G21SelectedFradjFields& native_fradj,
-    const cteas::p6f::Calmet21File& native_hour2_p6f,
+    const G66NativeHour2WaterState& native_hour2_water,
     bool explicitly_test_only) {
     constexpr std::size_t nx=82,ny=85,nz=9,n=nx*ny;
     if(!explicitly_test_only||frame.hour_index!=2||
@@ -48,33 +56,18 @@ inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
        native_fradj.end!=frame.input.end||
        native_fradj.corrected_wind.u.size()!=nz*n||
        native_fradj.corrected_wind.v.size()!=nz*n||
-       native_hour2_p6f.hourly.size()!=45)
+       !native_hour2_water.explicitly_native_p6f_origin||
+       native_hour2_water.end!=frame.surface.start||
+       native_hour2_water.begin!=frame.surface.start-std::chrono::hours{1}||
+       native_hour2_water.ustar_mps.size()!=n||
+       native_hour2_water.el_m.size()!=n)
         throw std::invalid_argument(
             "G66 requires committed native hour2 and authentic hour3 G26 stage02");
     if(frame.surface.end-frame.surface.start!=std::chrono::hours{1})
         throw std::invalid_argument("G66 NOAA hour3 UTC window drift");
 
-    const auto previous_field=[&](const std::string& label)
-        ->const std::vector<float>& {
-        const cteas::p6f::Calmet21Field* found=nullptr;
-        for(const auto& f:native_hour2_p6f.hourly)
-            if(f.label==label) {
-                if(found)throw std::invalid_argument(
-                    "G66 duplicate prior native P6F field");
-                found=&f;
-            }
-        if(!found||found->integer||found->real_values.size()!=n||
-           cteas::p6f::instant_seconds(found->end)!=
-               frame.surface.start.time_since_epoch().count()||
-           cteas::p6f::instant_seconds(found->begin)!=
-               (frame.surface.start-std::chrono::hours{1})
-                   .time_since_epoch().count())
-            throw std::invalid_argument(
-                "G66 prior native P6F field/clock/shape invalid");
-        return found->real_values;
-    };
-    const auto& previous_ustar=previous_field("USTAR   ");
-    const auto& previous_el=previous_field("EL      ");
+    const auto& previous_ustar=native_hour2_water.ustar_mps;
+    const auto& previous_el=native_hour2_water.el_m;
 
     G17B4TwoPassSurfvar surfvar(
         frame.grid,frame.stations,source.surface,frame.surface,
