@@ -116,12 +116,10 @@ public:
             // Original G14 stages 12 MIXHT then 13 AVEMIX, from ONE
             // live frame and the same firsthour original WATER identity.
             // AVEMIX is forbidden without the actual preceding MIXHT.
-            // Stages 14..16, clock publication and native G14 commit
-            // remain explicitly unaccepted.
+            // Hour two admits native stages 12..15 in original order,
+            // but stage16 P6F and G14 commit remain fail-closed.
             if(!original_noow_water_||frame.hour_index>1||
-               // Hour2 requires MIXHT/AVEMIX before WSTARR.
-               // TEMP3D/P6F and secondhour commit remain fail-closed.
-               (frame.hour_index==1&&phase_>2)||
+               (frame.hour_index==1&&phase_>3)||
                original_noow_water_->source.original_metinp!=
                    source_.original_metinp)
                 throw std::invalid_argument(

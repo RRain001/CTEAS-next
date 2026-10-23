@@ -1,6 +1,7 @@
 #pragma once
 // S4-R1c8w: one authentic NOAA first-hour G14 atomic transaction.
-// Research-only, selected WATER route. NOT hour-2 physics or P6 production.
+// Selected WATER route; hour2 stages 0..15 are research-only and
+// uncommitted. No hour2 P6F, original-hour science, or P6 production.
 // All 17 physics stages run on the SAME scheduler-owned frame; no G54/G59
 // numbers are used as native forcing. Failed precommit cannot publish state.
 #include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
@@ -91,7 +92,9 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage13_uncommitted=false;
     std::size_t hour2_live_g26_wstarr_compared_words=0;
     bool hour2_live_g26_stage14_uncommitted=false;
-    bool hour2_stage15_rejected=false;
+    std::size_t hour2_live_g26_temp3d_compared_words=0;
+    bool hour2_live_g26_stage15_uncommitted=false;
+    bool hour2_stage16_rejected=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -787,19 +790,92 @@ g65_real_noaa_firsthour_atomic_commit(
             throw std::logic_error(
                 "G65 real NOAA hour2 WATER WSTAR nonzero or invalid");
     }
-    // No secondhour TEMP3D physics or G14 commit until separately
-    // accepted. The next stage MUST fail without changing G14 state.
-    bool stage15_denied=false;
+    // S4-R1c9e: authentic hour-two COMP TEMP3D stage15 reuses native
+    // P6E observed upper-air vertical temperature physics on the same
+    // uncommitted G14 frame, after MIXHT/AVEMIX/WSTARR. Independently
+    // rebuild its original-source AA/BB/FACET and surface inputs from
+    // the detached NOAA hour-two G26A/G26B replay. No original Fortran
+    // temperature or previous diagnostic output enters the live actor.
+    const auto temp3d_native_result=hour2_comp.run(
+        p6::kHefeiOriginalStageOrder[15],live_wind_frame);
+    const auto temp3d_replay_result=detached_comp.run(
+        p6::kHefeiOriginalStageOrder[15],detached_frame);
+    if(!temp3d_native_result.completed||
+       temp3d_native_result.source!=p6::NativeHourSource::NativeCpp||
+       !temp3d_replay_result.completed||
+       temp3d_replay_result.source!=p6::NativeHourSource::NativeCpp)
+        throw std::logic_error(
+            "G65 authentic hour2 G26B TEMP3D stage15 missing");
+    const auto& live_temp3d=
+        hour2_comp.source_water_temp3d_stage15(live_wind_frame);
+    const auto& replay_temp3d=
+        detached_comp.source_water_temp3d_stage15(detached_frame);
+    const auto& source_upper=
+        detached_diagno.selected_upper_for_comp(detached_frame);
+    const auto source_faces=g18b5_selected_native_temperature_faces(
+        detached_frame,source_upper);
+    const auto temp_ctrl=g18c3_parse_original_temp3d_controls(
+        source.original_metinp);
+    if(!temp_ctrl.lcalgrd||temp_ctrl.itprog!=0||
+       source_faces.end!=detached_frame.input.end||
+       source_faces.station_ids.size()!=1||
+       source_faces.face_height_m.size()!=10||
+       source_faces.aa_face_k.size()!=10||
+       source_faces.bb_face_k.size()!=10)
+        throw std::logic_error(
+            "G65 NOAA hour2 original-source upper FACET invalid");
+    p6e::Temp3dObservedInput source_temp;
+    source_temp.nx=static_cast<std::size_t>(detached_frame.grid.nx);
+    source_temp.ny=static_cast<std::size_t>(detached_frame.grid.ny);
+    source_temp.nz=9;
+    source_temp.dgrid_m=detached_frame.grid.grid_km*1000.f;
+    source_temp.irad=temp_ctrl.irad;
+    using namespace std::chrono;
+    const auto utc_h=duration_cast<hours>(
+        detached_frame.input.end-floor<days>(detached_frame.input.end)).count();
+    source_temp.current_hour_utc=static_cast<int>(utc_h%12);
+    source_temp.face_z_m=source_faces.face_height_m;
+    source_temp.justa=source_faces.justa;
+    source_temp.past_seconds=source_faces.past_seconds;
+    source_temp.to_go_seconds=source_faces.to_go_seconds;
+    source_temp.aa_face_temp_k=source_faces.aa_face_k;
+    source_temp.bb_face_temp_k=source_faces.bb_face_k;
+    source_temp.surface_temp_k=separate_mixht.comp_third_temperature_k;
+    source_temp.convective_zi_m=source_avemix.ziconv_m;
+    for(const auto& station:detached_frame.stations.upper) {
+        source_temp.station_x_m.push_back(station.local_x_m);
+        source_temp.station_y_m.push_back(station.local_y_m);
+    }
+    const auto source_temp3d=p6e::temp3d_observed_land(source_temp);
+    const auto temp_words=9U*cell_count;
+    if(live_temp3d.size()!=temp_words||
+       replay_temp3d.size()!=temp_words||
+       source_temp3d.size()!=temp_words||
+       !g65_equal_real4_bits(live_temp3d,replay_temp3d)||
+       !g65_equal_real4_bits(live_temp3d,source_temp3d))
+        throw std::logic_error(
+            "G65 authentic hour2 TEMP3D 62730 source REAL4 bit mismatch");
+    for(std::size_t i=0;i<cell_count;++i)
+        if(live_temp3d[i]!=source_temp.surface_temp_k[i])
+            throw std::logic_error(
+                "G65 real NOAA hour2 TEMP3D k1 COMP surface T drift");
+    for(const auto value:live_temp3d)
+        if(!std::isfinite(value)||value<180.f||value>350.f)
+            throw std::logic_error(
+                "G65 authentic NOAA hour2 TEMP3D nonphysical");
+    // Stage16 P6F is not yet verified for causal secondhour operation.
+    // Reject without publishing G14 memory or station clocks.
+    bool stage16_denied=false;
     try {
         hour2_comp.run_selected(
-            p6::kHefeiOriginalStageOrder[15],live_wind_frame,true);
+            p6::kHefeiOriginalStageOrder[16],live_wind_frame,true);
     }catch(const std::invalid_argument&) {
-        stage15_denied=true;
+        stage16_denied=true;
     }
-    if(!stage15_denied)
+    if(!stage16_denied)
         throw std::logic_error(
-            "G65 secondhour stage15 escaped source-only fail-closed guard");
-    // Stages12/13/14 and rejected stage15 must preserve firsthour G14
+            "G65 secondhour stage16 escaped source-only fail-closed guard");
+    // Stages12..15 and rejected stage16 must preserve firsthour G14
     // memory and AA/BB/CGAMMA publication until a full atomic commit.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
@@ -842,7 +918,9 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_stage13_uncommitted=true;
     receipt.hour2_live_g26_wstarr_compared_words=82U*85U;
     receipt.hour2_live_g26_stage14_uncommitted=true;
-    receipt.hour2_stage15_rejected=true;
+    receipt.hour2_live_g26_temp3d_compared_words=9U*82U*85U;
+    receipt.hour2_live_g26_stage15_uncommitted=true;
+    receipt.hour2_stage16_rejected=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g

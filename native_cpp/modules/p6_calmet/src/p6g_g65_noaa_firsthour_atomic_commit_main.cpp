@@ -1,5 +1,6 @@
 // S4-R1c8w genuine NOAA scoped G14 first-hour atomic commit trial.
-// No production CALMET.DAT is emitted and no second-hour physics is claimed.
+// Hour2 stages through TEMP3D are source-only/uncommitted. No production
+// CALMET.DAT or accepted hour2 original Fortran science comparison.
 #include "cteas/p6/p6g_g65_noaa_firsthour_atomic_commit.hpp"
 #include <bit>
 #include <cstdint>
@@ -44,7 +45,9 @@ int main(int argc,char** argv) {
            result.hour2_live_g26_avemix_compared_words!=13940||
            !result.hour2_live_g26_stage14_uncommitted||
            result.hour2_live_g26_wstarr_compared_words!=6970||
-           !result.hour2_stage15_rejected||
+           !result.hour2_live_g26_stage15_uncommitted||
+           result.hour2_live_g26_temp3d_compared_words!=62730||
+           !result.hour2_stage16_rejected||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
         std::cout
@@ -75,8 +78,10 @@ int main(int argc,char** argv) {
             <<"S4R1C9C_HOUR2_AVEMIX_SOURCE_BITWISE=PASS_13940_REAL4\n"
             <<"S4R1C9D_HOUR2_REAL_G26B_STAGE14=PASS_UNCOMMITTED\n"
             <<"S4R1C9D_HOUR2_WSTARR_SOURCE_BITWISE=PASS_6970_REAL4\n"
-            <<"S4R1C9D_HOUR2_STAGE15=REJECTED_UNVERIFIED\n"
-            <<"S4R1C9D_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_WSTARR\n"
+            <<"S4R1C9E_HOUR2_REAL_G26B_STAGE15=PASS_UNCOMMITTED\n"
+            <<"S4R1C9E_HOUR2_TEMP3D_SOURCE_BITWISE=PASS_62730_REAL4\n"
+            <<"S4R1C9E_HOUR2_STAGE16=REJECTED_UNVERIFIED\n"
+            <<"S4R1C9E_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_TEMP3D\n"
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;

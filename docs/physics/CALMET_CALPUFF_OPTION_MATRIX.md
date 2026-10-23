@@ -33,7 +33,7 @@
 | CALMET-14 | 上空稳定度 · `IUPT=-1` | calmet.for :: CGAMMA / PREPDI | [`p6g_g18b9_original_gamma_controls.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18b9_original_gamma_controls.hpp) | 已选分支；只接受限定 IUPT/IDIOPT2=0，其他路径须独立核验 | P2 |
 | CALMET-15 | 混合层高度 · `IMIXH=1` | calmet.for :: MIXHT / MIXHTST | [`p6g_g18a_selected_comp_mixht.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18a_selected_comp_mixht.hpp) | 已选分支；IMIXH=-1/2/-2 及海面混合层未验收 | P1 |
 | CALMET-16 | 混合层平滑 · `IAVEZI=1` | calmet.for :: AVEMIX (COMP approx L4715) | [`p6g_g18c1_avemix.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c1_avemix.hpp) | 已选分支；跨网格尺度/不同平均策略未验收 | P2 |
-| CALMET-17 | 温度场平均 · `IAVET=1` | calmet.for :: SURFVAR / TEMP3D | [`p6g_g17b4_iavet_two_pass.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp) | 已选分支；IAVET=0 和气象强迫广义路径未验收 | P2 |
+| CALMET-17 | 温度场平均 · `IAVET=1` | calmet.for :: SURFVAR / TEMP3D | [`p6g_g17b4_iavet_two_pass.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp) | 已选分支；真实 NOAA 第二小时 G26B TEMP3D stage15 源原生候选仅待运行验收（S4-R1c9e，NOT_RUN），不代表原版 Fortran 第二小时等价；IAVET=0 和广义气象强迫未验收 | P2 |
 | CALMET-18 | 输出数据接口 · `CALMET.DAT 2.1=selected` | calmet.for :: COMP / output writer | [``](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/p6f/) | 已选分支；格式正确不等于所有备选计算分支都有科学等价性 | P1 |
 
 ## CALPUFF — P7（24 项）
