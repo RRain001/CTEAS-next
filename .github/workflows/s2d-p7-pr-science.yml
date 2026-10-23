@@ -1,12 +1,11 @@
 name: S2D P7 scoped 143h frozen-C1 PR science regression
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s2d-p7-pr-science.yml
-      - native_cpp/modules/p7_calpuff/**
-      - docs/plans/STAGE2_2D_NATIVE_P7_EXECUTION_20261017.md
-      - docs/plans/STAGE2_2D_P7_PRODUCTION_EXECUTOR_ACCEPTANCE_20261017.md
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Reviewed exact 40-hex candidate SHA; verify head_sha on completed run"
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
@@ -17,16 +16,16 @@ jobs:
       - name: Checkout exact PR28 native P7 source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ inputs.head_sha }}
           persist-credentials: false
       - name: Verify source and pinned real C1 original MET, deck, concentration
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          test "$(git rev-parse HEAD)" = "${{ inputs.head_sha }}"
           root="$RUNNER_TEMP/s2d"
           mkdir -p "$root/audit" "$root/build"
-          echo "PR28_SOURCE_SHA=${{ github.event.pull_request.head.sha }}" > "$root/audit/source-sha.txt"
+          echo "PR28_SOURCE_SHA=${{ inputs.head_sha }}" > "$root/audit/source-sha.txt"
           case=project/cases/hefei5km_2022_reference_case_20261011
           echo "b1823cda92280888d70b00961ab39486036a3086e18637fff21efb4f4b237d30  $case/run/met/met.dat" | sha256sum --check
           echo "0d51bdb68ff1a5798048bc41067107d3ffe10dc6222f25336df856bcbf48ba10  $case/run/puff/puff.con" | sha256sum --check
