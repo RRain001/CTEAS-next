@@ -1,5 +1,11 @@
 # CTEAS-next agent instructions
 
+## Owner's current CI and merge decision (2026-10-23)
+- Keep automated GitHub Actions `pull_request` / `push` triggers and authorized agent-driven scientific dispatch. Do not apply the canceled `workflow_dispatch`-only proposal (Draft PR #285, closed).
+- Develop and test candidates with Ubuntu Docker before opening/updating PRs; allow GitHub to auto-run its existing scoped CI on the exact PR HEAD without requiring the owner to click Run workflow.
+- Once ALL applicable software tests, original-model/scientific parity, precise input/commit evidence, independent review and required GitHub checks have passed, transition the PR out of Draft and automatically squash merge or enable native GitHub auto-merge; explicit per-PR owner approval is no longer needed. Never activate merge for blocked, NOT_RUN, failed, pending, stale or scope-limited science claims. Enabling repository `allow_auto_merge` alone is not authorization to waive gates.
+
+
 ## Scope and acceptance
 - This is the **partial C++20** reconstruction of selected P1–P7 CALMET/CALPUFF pathways, **not** a whole-option Fortran replacement. Consult `README.md` and `docs/physics/CALMET_CALPUFF_OPTION_MATRIX.{md,csv}` before implementing or changing physics.
 - C1 (2022 143h) and C2 (controlled synthetic 2024 143h) each **PASS_SCOPED**, as audited in `docs/science_acceptance/C1_C2_143H_RERUN_20261017.md`; Issue #6 is closed for these limited cases. **Full science acceptance NOT_READY.** Do not infer generic P6/P7 or `MWET>0` acceptance from these results.
