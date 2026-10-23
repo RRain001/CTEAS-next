@@ -89,7 +89,9 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour2_live_g26_stage12_uncommitted=false;
     std::size_t hour2_live_g26_avemix_compared_words=0;
     bool hour2_live_g26_stage13_uncommitted=false;
-    bool hour2_stage14_rejected=false;
+    std::size_t hour2_live_g26_wstarr_compared_words=0;
+    bool hour2_live_g26_stage14_uncommitted=false;
+    bool hour2_stage15_rejected=false;
     bool hour2_physics_accepted=false;
     bool general_p6_accepted=false;
 };
@@ -738,19 +740,66 @@ g65_real_noaa_firsthour_atomic_commit(
                              source_avemix.ziconv_m))
         throw std::logic_error(
             "G65 real NOAA hour-two AVEMIX source 13940 REAL4 bit mismatch");
-    // Forensic hour2 stage13 is not a general COMP license: WSTARR
-    // stage14 must still explicitly reject without mutating the frame.
-    bool stage14_denied=false;
+    // S4-R1c9d: authentic hour2 WSTARR stage14, after MIXHT stage12
+    // and AVEMIX stage13 on one scheduler-owned G14 frame. A separate
+    // G26B replay and direct original P6E WSTARR calculation are
+    // read-only oracles; neither one feeds the live G26B actor.
+    const auto wstarr_native_result=hour2_comp.run(
+        p6::kHefeiOriginalStageOrder[14],live_wind_frame);
+    const auto wstarr_replay_result=detached_comp.run(
+        p6::kHefeiOriginalStageOrder[14],detached_frame);
+    if(!wstarr_native_result.completed||
+       wstarr_native_result.source!=p6::NativeHourSource::NativeCpp||
+       !wstarr_replay_result.completed||
+       wstarr_replay_result.source!=p6::NativeHourSource::NativeCpp)
+        throw std::logic_error(
+            "G65 NOAA actual hour2 native G26B WSTARR stage14 absent");
+    const auto& live_wstarr=
+        hour2_comp.source_water_wstarr_stage14(live_wind_frame);
+    const auto& detached_wstarr=
+        detached_comp.source_water_wstarr_stage14(detached_frame);
+    p6e::WstarrInput original_wstarr;
+    original_wstarr.nx=static_cast<std::size_t>(live_wind_frame.grid.nx);
+    original_wstarr.ny=static_cast<std::size_t>(live_wind_frame.grid.ny);
+    original_wstarr.water_first=live_wind_frame.grid.iwat1;
+    original_wstarr.water_last=live_wind_frame.grid.iwat2;
+    original_wstarr.landuse=live_wind_frame.grid.landuse;
+    original_wstarr.zi_conv_m=source_avemix.ziconv_m;
+    original_wstarr.heat_flux_wm2=separate_mixht.comp_third_qh_wm2;
+    original_wstarr.temp_k=separate_mixht.comp_third_temperature_k;
+    original_wstarr.rho_kgm3=separate_mixht.comp_third_density_kgm3;
+    original_wstarr.initial_wstar_ms.assign(cell_count,0.f);
+    const auto source_wstarr=p6e::wstarr(original_wstarr);
+    if(live_wstarr.size()!=cell_count||
+       detached_wstarr.size()!=cell_count||
+       source_wstarr.size()!=cell_count||
+       !g65_equal_real4_bits(live_wstarr,detached_wstarr)||
+       !g65_equal_real4_bits(live_wstarr,source_wstarr))
+        throw std::logic_error(
+            "G65 NOAA true hour2 WSTARR mismatches 6970 original-source REAL4");
+    for(std::size_t i=0;i<cell_count;++i) {
+        const auto u=live_wstarr[i];
+        if(!std::isfinite(u)||u<0.f||
+           (live_wind_frame.grid.landuse[i]>=
+               live_wind_frame.grid.iwat1&&
+            live_wind_frame.grid.landuse[i]<=
+               live_wind_frame.grid.iwat2&&u!=0.f))
+            throw std::logic_error(
+                "G65 real NOAA hour2 WATER WSTAR nonzero or invalid");
+    }
+    // No secondhour TEMP3D physics or G14 commit until separately
+    // accepted. The next stage MUST fail without changing G14 state.
+    bool stage15_denied=false;
     try {
         hour2_comp.run_selected(
-            p6::kHefeiOriginalStageOrder[14],live_wind_frame,true);
+            p6::kHefeiOriginalStageOrder[15],live_wind_frame,true);
     }catch(const std::invalid_argument&) {
-        stage14_denied=true;
+        stage15_denied=true;
     }
-    if(!stage14_denied)
+    if(!stage15_denied)
         throw std::logic_error(
-            "G65 real secondhour stage14 escaped its source-only guard");
-    // Stages12/13 and rejected stage14 must preserve firsthour G14
+            "G65 secondhour stage15 escaped source-only fail-closed guard");
+    // Stages12/13/14 and rejected stage15 must preserve firsthour G14
     // memory and AA/BB/CGAMMA publication until a full atomic commit.
     if(scheduler.completed_hours()!=1||
        clocks.latest_upper_hour()!=first_end||
@@ -791,7 +840,9 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour2_live_g26_stage12_uncommitted=true;
     receipt.hour2_live_g26_avemix_compared_words=2U*82U*85U;
     receipt.hour2_live_g26_stage13_uncommitted=true;
-    receipt.hour2_stage14_rejected=true;
+    receipt.hour2_live_g26_wstarr_compared_words=82U*85U;
+    receipt.hour2_live_g26_stage14_uncommitted=true;
+    receipt.hour2_stage15_rejected=true;
     return receipt;
 }
 } // namespace cteas::calmet::p6g
