@@ -1,19 +1,5 @@
 name: Issue46 D2+D3 original Wolsong same-source MAKEGEO numerical science
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/issue46-p3-d2-wolsong-real.yml
-      - native_cpp/include/cteas/geo/ctgproc_original_sampling_lu_writer.hpp
-      - native_cpp/tests/p2_original_sampling_lu_writer_tests.cpp
-      - native_cpp/orchestration/p3_d4_science_handoff.py
-      - native_cpp/orchestration/tests/test_p3_d4_science_handoff.py
-      - native_cpp/reference/compare_p3_makegeo_dynamic.py
-      - native_cpp/reference/tests/test_compare_p3_dynamic.py
-      - native_cpp/orchestration/p3_case_handoff.py
-      - native_cpp/orchestration/p2c_case_producer.py
-      - native_cpp/p3/**
-      - docs/plans/ISSUE46_P3_D2_WOLSONG_REAL_SOURCE_20261020.md
   workflow_dispatch:
 permissions:
   contents: read
