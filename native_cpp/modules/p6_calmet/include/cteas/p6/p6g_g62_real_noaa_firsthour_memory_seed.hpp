@@ -13,6 +13,7 @@
 #include "cteas/p6/p6g_g48_real_sparse_stheor.hpp"
 #include "cteas/p6/p6g_g54_real_land_mixht.hpp"
 #include "cteas/p6/p6g_g55_real_comp_wstarr.hpp"
+#include "cteas/p6/p6g_g56_real_comp_temp3d.hpp"
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -38,6 +39,7 @@ struct G62RealNoaaFirstHourMemorySeed {
     bool g14_water_comp_mixht_stage12_bitwise_verified=false;
     bool g14_water_comp_avemix_stage13_bitwise_verified=false;
     bool g14_water_comp_wstarr_stage14_bitwise_verified=false;
+    bool g14_water_comp_temp3d_stage15_bitwise_verified=false;
     bool g14_17_stage_transaction_committed=false;
     bool station_clocks_published=false;
     bool second_hour_prior_state_consumed=false;
@@ -298,20 +300,40 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
        frame.next.dptt_k!=frame.previous.dptt_k)
         throw std::logic_error(
             "G26B G14 source NOAA stage14 WSTARR not exact native G55");
-    // Stage 15 TEMP3D is still NOT ADMITTED. No previous/next memory
-    // mutation, stage skipping, clock publish or G14 commit is legal.
-    bool stage15_denied=false;
-    try {
-        g14_comp.run_selected(p6::kHefeiOriginalStageOrder[15],frame,true);
-    } catch(const std::invalid_argument&) {
-        stage15_denied=true;
-    }
-    if(!stage15_denied||
+    // The live G26B stage 15 consumes ONLY same-frame post-AVEMIX
+    // ZICONV and COMP third surface temperature plus original PREPDI
+    // AA/BB FACET, with no standalone G56 numbers as physics inputs.
+    g14_comp.run_selected(p6::kHefeiOriginalStageOrder[15],frame,true);
+    const auto& actual_temp3d=g14_comp.source_water_temp3d_stage15(frame);
+    const auto separate_temp3d=g56_real_source_comp_temp3d(paths,true);
+    if(!separate_temp3d.firsthour_temp3d_forensic_only||
+       separate_temp3d.native_g26_45field_ready||
+       separate_temp3d.six_hour_comp_causal_ready||
+       separate_temp3d.end!=frame.input.end||
+       separate_temp3d.source_upper_stations!=1||
+       separate_temp3d.original_water_cells!=63||
+       separate_temp3d.temperature_k.size()!=9*n||
+       actual_temp3d.size()!=9*n||
+       !real4_equal(actual_temp3d,separate_temp3d.temperature_k)||
        frame.next.zi_m!=frame.previous.zi_m||
        frame.next.ziconv_m!=frame.previous.ziconv_m||
        frame.next.dptt_k!=frame.previous.dptt_k)
         throw std::logic_error(
-            "G26B unverified G14 stage15 TEMP3D was inadvertently admitted");
+            "G26B actual G14 NOAA stage15 TEMP3D differs from independent G56");
+    // Stage 16 P6F is unaccepted. It must not emit output or commit
+    // either G14 grid memory or source AA/BB/CGAMMA clocks.
+    bool stage16_denied=false;
+    try {
+        g14_comp.run_selected(p6::kHefeiOriginalStageOrder[16],frame,true);
+    } catch(const std::invalid_argument&) {
+        stage16_denied=true;
+    }
+    if(!stage16_denied||
+       frame.next.zi_m!=frame.previous.zi_m||
+       frame.next.ziconv_m!=frame.previous.ziconv_m||
+       frame.next.dptt_k!=frame.previous.dptt_k)
+        throw std::logic_error(
+            "G26B native G14 source P6F stage16 bypassed science gate");
     if(frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.source.surface.hourly.size()!=6||
@@ -398,6 +420,7 @@ inline G62RealNoaaFirstHourMemorySeed g62_real_noaa_firsthour_memory_seed(
     result.g14_water_comp_mixht_stage12_bitwise_verified=true;
     result.g14_water_comp_avemix_stage13_bitwise_verified=true;
     result.g14_water_comp_wstarr_stage14_bitwise_verified=true;
+    result.g14_water_comp_temp3d_stage15_bitwise_verified=true;
     return result;
 }
 } // namespace cteas::calmet::p6g
