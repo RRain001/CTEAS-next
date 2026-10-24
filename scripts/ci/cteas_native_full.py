@@ -50,8 +50,11 @@ def digest(path: Path) -> str:
 
 def commands(worktree: Path, build: Path, jobs: int, python: str) -> list[tuple[str, list[str]]]:
     return [
+        # Ubuntu's default g++ 9 cannot compile mandatory C++20 <span>.
+        # Pin the same tested GCC 12 compiler as validate_ubuntu.py.
         ("cmake-configure", ["cmake", "-S", str(worktree / "native_cpp"), "-B", str(build),
-                             "-DCMAKE_BUILD_TYPE=Release"]),
+                             "-DCMAKE_BUILD_TYPE=Release",
+                             "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12"]),
         ("cmake-build", ["cmake", "--build", str(build), "--parallel", str(jobs)]),
         ("ctest-all", ["ctest", "--test-dir", str(build), "--output-on-failure",
                        "--parallel", str(jobs)]),
