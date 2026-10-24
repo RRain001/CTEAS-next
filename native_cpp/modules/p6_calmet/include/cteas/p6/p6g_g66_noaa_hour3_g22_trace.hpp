@@ -44,7 +44,8 @@ inline G66NoaaHour3G22Trace g66_native_noaa_g22_trace_only(
     bool explicitly_test_only) {
     constexpr std::size_t nx=82,ny=85,nz=9,n=nx*ny;
     if(!explicitly_test_only||
-       (expected_hour_index!=2&&expected_hour_index!=3)||
+       (expected_hour_index!=2&&expected_hour_index!=3&&
+        expected_hour_index!=4)||
        frame.hour_index!=expected_hour_index||
        !frame.source_controls||frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
@@ -233,5 +234,17 @@ inline G66NoaaHour3G22Trace g66_native_hour4_g22_trace_only(
     return g66_native_noaa_g22_trace_only(
         frame,source,native_wind1,native_fradj,native_hour3_water,
         3U,explicitly_test_only);
+}
+// Fifth-hour independent forensic G22 requires authentic native hour-four
+// P6F WATER USTAR/EL history; no reference MET enters the native process.
+inline G66NoaaHour3G22Trace g66_native_hour5_g22_trace_only(
+    const MultiHourFrame& frame,const G19FileBackedCase& source,
+    const Wind1MultiField& native_wind1,
+    const G21SelectedFradjFields& native_fradj,
+    const G66NativeHour2WaterState& native_hour4_water,
+    bool explicitly_test_only) {
+    return g66_native_noaa_g22_trace_only(
+        frame,source,native_wind1,native_fradj,native_hour4_water,
+        4U,explicitly_test_only);
 }
 } // namespace cteas::calmet::p6g

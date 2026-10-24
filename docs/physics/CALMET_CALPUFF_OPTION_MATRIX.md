@@ -94,3 +94,5 @@
 **参考证据**：[迁移科学范围](../migration/SCIENTIFIC_RERUN_PLAN.md) · [第三方资产决策](../migration/THIRD_PARTY_ASSETS.md) · [P7 已选干态验收](../reconstruction_cpp/P7_PHASE_STATUS_20261015.md) · [C1/C2 四臂科学对照](../reconstruction_cpp/P7_C1_C2_CALMET_TO_CALPUFF_INTEGRATION_20261015.md) · [P6 原版调用图](../reconstruction_cpp/P6D_CALLGRAPH_COMPLETENESS_AUDIT_20261013.md)
 
 真实 NOAA 第四小时 G64 P6F 的 45 个原版输出字段：**313,650/313,650** 在不变的冻结容差内，0 超差，240,362 逐位一致；第四小时 G65 17 阶段强制回滚、新执行器正向提交与站点时钟发布已通过，提交试验重新生成的 P6F 候选与未提交候选字节相同，第五小时 preview 正确继承状态。见 [S4-R1c9z/aa](../plans/ISSUE40_S4R1C9Z_AA_NOAA_HOUR4_P6F_G14_TRANSACTION_20261024.md)。这些仅为 **第四小时 opt-in 的 DEV_ONLY 限定验证**；第五/六小时、通用 P6、P7、湿沉降及独立科学审查 NOT_ACCEPTED，选项矩阵生产验收范围不变。
+
+真实 NOAA 第五小时（05–06 UTC）G26A stage0–6 使用第四小时 G14 提交的状态、站点时钟和 P6F WATER USTAR/EL；独立 G66 与第五小时实时 G26A trace **逐字节相同**。对固定原版 Fortran 六小时 G22 trace：**181,220/181,220 REAL4** 在原冻结容差内，0 超差，161,162 逐位一致，63 个 WATER 的 USTAR 与 EL 各自全数逐位一致。详见 [S4-R1c9ab/ac/ad](../plans/ISSUE40_S4R1C9AB_AC_AD_NOAA_HOUR5_G22_20261024.md)。此结果只覆盖 **第五小时 stage0–6、DEV_ONLY**，后续 G23/G24、COMP/P6F、G14 提交和第六小时以及通用 P6/P7、湿沉降和独立科学审查都 NOT_RUN/NOT_ACCEPTED。

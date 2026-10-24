@@ -344,6 +344,11 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour4_g14_positive_commit_verified=false;
     bool hour4_station_clocks_published=false;
     bool hour5_preview_inherits_hour4_memory=false;
+    bool hour5_g26a_stage0_2_source_preflight_only=false;
+    bool hour5_g22_production_guard_rejected=false;
+    bool hour5_g22_forensic_trace_only=false;
+    bool hour5_live_g26a_stage3_6_uncommitted=false;
+    std::vector<std::uint8_t> hour5_g22_forensic_trace_bytes;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
@@ -419,7 +424,15 @@ g65_real_noaa_firsthour_atomic_commit(
     bool opt_in_hour4_comp_stage12_trial=false,
     bool opt_in_hour4_comp_stage15_trial=false,
     bool opt_in_hour4_p6f_trial=false,
-    bool opt_in_hour4_g14_transaction=false) {
+    bool opt_in_hour4_g14_transaction=false,
+    bool opt_in_hour5_g26a_preflight=false,
+    bool opt_in_hour5_g22_forensic=false) {
+    if(opt_in_hour5_g22_forensic&&!opt_in_hour5_g26a_preflight)
+        throw std::invalid_argument(
+            "G65 fifth-hour G22 trace requires source preflight");
+    if(opt_in_hour5_g26a_preflight&&!opt_in_hour4_g14_transaction)
+        throw std::invalid_argument(
+            "G65 fifth-hour source preflight requires committed fourth hour");
     if(opt_in_hour4_g14_transaction&&!opt_in_hour4_p6f_trial)
         throw std::invalid_argument(
             "G65 hour4 G14 requires native P6F opt-in");
@@ -548,6 +561,34 @@ g65_real_noaa_firsthour_atomic_commit(
                     "G65 native hour4 MISSFC altered raw wind or precipitation");
         }
         source.surface.hourly[3]=fourth_missfc.original_comp_resolved;
+    }
+    if(opt_in_hour5_g26a_preflight) {
+        // CALMET COMP/MISSFC is a current-hour computation. Preserve the
+        // immutable P5 input and edit only a detached, scoped G14 source copy.
+        const auto& raw=actual.source.surface.hourly.at(4);
+        const auto fifth_missfc=g43_original_comp_missfc_source_only(
+            actual,raw,true);
+        if(!fifth_missfc.source_comp_missfc_complete||
+           fifth_missfc.original_raw.end!=raw.end||
+           fifth_missfc.original_comp_resolved.end!=raw.end||
+           fifth_missfc.original_comp_resolved.by_station.size()!=2)
+            throw std::logic_error(
+                "G65 fifth-hour authentic COMP MISSFC source incomplete");
+        for(std::size_t site=0;site<2;++site) {
+            const auto& a=raw.by_station[site];
+            const auto& b=
+                fifth_missfc.original_comp_resolved.by_station[site];
+            if(!b.pressure_valid||!b.temperature_valid||
+               !b.humidity_valid||!b.cloud_valid||!b.ceiling_valid||
+               a.wind_valid!=b.wind_valid||
+               a.wind_speed_mps!=b.wind_speed_mps||
+               a.wind_direction_deg!=b.wind_direction_deg||
+               a.precip_code!=b.precip_code||
+               a.precipitation_code_valid!=b.precipitation_code_valid)
+                throw std::logic_error(
+                    "G65 fifth-hour MISSFC modified wind/precip or incomplete");
+        }
+        source.surface.hourly[4]=fifth_missfc.original_comp_resolved;
     }
     if(!source.research_noow_water_source_only||
        source.surface.hourly.size()!=6||
@@ -1483,6 +1524,11 @@ g65_real_noaa_firsthour_atomic_commit(
     bool fourth_g14_positive=false;
     bool fourth_station_published=false;
     bool fifth_inherits_fourth=false;
+    bool fifth_g26a_preflight=false;
+    bool fifth_g22_guarded=false;
+    G66NativeHour2WaterState fifth_native_prior;
+    std::vector<std::uint8_t> fifth_g22_bytes;
+    bool fifth_live_g22=false;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -2228,6 +2274,11 @@ g65_real_noaa_firsthour_atomic_commit(
                                         "G65 hour4 P6F prematurely published");
                                 fourth_p6f45_bytes=prepared.serialized_prepared_only;
                                 fourth_trial_next=prepared.candidate_next;
+                                if(opt_in_hour5_g22_forensic)
+                                    fifth_native_prior=
+                                        g65_native_hour2_water_from_p6f(
+                                            prepared.candidate_dataset,
+                                            source.surface.hourly[3].end);
                             }
                         }
                         if(scheduler.completed_hours()!=3||
@@ -2415,6 +2466,131 @@ g65_real_noaa_firsthour_atomic_commit(
                 "G65 fifth-hour preview lost committed fourth-hour state");
     }
 
+    if(opt_in_hour5_g26a_preflight) {
+        // The fifth-hour PREPDI/WIND1/FRADJ must start from the real fourth
+        // G14 commit and published station clocks. No fifth COMP/P6F/G14
+        // commit and no generic production G22 admission are implied.
+        if(!fourth_g14_positive||!fourth_station_published||
+           !fifth_inherits_fourth||scheduler.completed_hours()!=4)
+            throw std::logic_error(
+                "G65 fifth-hour PREPDI missing committed fourth-hour source");
+        auto frame=scheduler.preview_next_hour();
+        G26SourceFileBackedG14DiagnoBridge actor(
+            scheduler,clocks,source,true);
+        for(std::size_t stage=0;stage<3;++stage) {
+            const auto step=actor.run(
+                p6::kHefeiOriginalStageOrder[stage],frame);
+            if(!step.completed||
+               step.source!=p6::NativeHourSource::NativeCpp)
+                throw std::logic_error(
+                    "G65 fifth-hour PREPDI/WIND1/FRADJ incomplete");
+        }
+        const auto fifth_end=source.surface.hourly[4].end;
+        const auto fourth_end=source.surface.hourly[3].end;
+        if(actor.selected_checkpoints()!=3||
+           frame.hour_index!=4||
+           frame.input.end!=fifth_end||
+           frame.surface.start!=fourth_end||
+           frame.surface.end!=fifth_end||
+           &frame.previous!=&scheduler.committed_memory()||
+           !g65_equal_real4_bits(frame.previous.zi_m,
+                                 fourth_trial_next.zi_m)||
+           !g65_equal_real4_bits(frame.previous.ziconv_m,
+                                 fourth_trial_next.ziconv_m)||
+           !g65_equal_real4_bits(frame.previous.dptt_k,
+                                 fourth_trial_next.dptt_k)||
+           !g65_equal_real4_bits(frame.next.zi_m,
+                                 fourth_trial_next.zi_m)||
+           !g65_equal_real4_bits(frame.next.ziconv_m,
+                                 fourth_trial_next.ziconv_m)||
+           !g65_equal_real4_bits(frame.next.dptt_k,
+                                 fourth_trial_next.dptt_k)||
+           clocks.latest_upper_hour()!=fourth_end||
+           clocks.latest_gamma_hour()!=fourth_end||
+           scheduler.completed_hours()!=4)
+            throw std::logic_error(
+                "G65 fifth-hour G26A stage0-2 altered G14 memory or clocks");
+        fifth_g26a_preflight=true;
+        if(opt_in_hour5_g22_forensic) {
+            if(!fifth_native_prior.explicitly_native_p6f_origin||
+               fifth_native_prior.end!=fourth_end||
+               fifth_native_prior.begin!=
+                   source.surface.hourly[2].end||
+               scheduler.completed_hours()!=4)
+                throw std::logic_error(
+                    "G65 fifth-hour G22 missing native committed fourth-hour WATER");
+            const auto forensic=g66_native_hour5_g22_trace_only(
+                frame,source,
+                actor.selected_source_wind1_after_stage(frame),
+                actor.selected_source_fradj_after_stage(frame),
+                fifth_native_prior,true);
+            if(forensic.production_admitted||
+               forensic.traced_stages!=5||
+               forensic.water_history_values!=126||
+               forensic.bytes.empty()||
+               clocks.latest_upper_hour()!=fourth_end||
+               clocks.latest_gamma_hour()!=fourth_end)
+                throw std::logic_error(
+                    "G65 fifth-hour independent G22 trace invalid");
+            fifth_g22_bytes=forensic.bytes;
+        }
+        try {
+            (void)actor.run(p6::kHefeiOriginalStageOrder[3],frame);
+        }catch(const std::invalid_argument& e) {
+            fifth_g22_guarded=(
+                std::string(e.what())==
+                "G22 unvalidated mixed-WATER hour/station/GEO source path");
+        }
+        if(fifth_g22_guarded&&opt_in_hour5_g22_forensic) {
+            // The detached forensic G66 values may NOT supply the G26A
+            // actor. Recompute stage0–6 independently from real G14 frame
+            // and assert byte-exact equality before any fifth-hour commit.
+            auto live=scheduler.preview_next_hour();
+            G26SourceFileBackedG14DiagnoBridge live_actor(
+                scheduler,clocks,source,true,&fifth_native_prior,
+                false,false,false,false,true);
+            for(std::size_t stage=0;stage<7;++stage) {
+                const auto result=live_actor.run(
+                    p6::kHefeiOriginalStageOrder[stage],live);
+                if(!result.completed||
+                   result.source!=p6::NativeHourSource::NativeCpp)
+                    throw std::logic_error(
+                        "G65 fifth-hour native live G26A stage0-6 missing");
+            }
+            const auto& bytes=
+                live_actor.selected_hour5_g22_trace_after_stage(live);
+            fifth_live_g22=(live_actor.selected_checkpoints()==7&&
+                bytes==fifth_g22_bytes&&
+                scheduler.completed_hours()==4&&
+                clocks.latest_upper_hour()==fourth_end&&
+                clocks.latest_gamma_hour()==fourth_end&&
+                g65_equal_real4_bits(
+                    scheduler.committed_memory().zi_m,
+                    fourth_trial_next.zi_m)&&
+                g65_equal_real4_bits(
+                    scheduler.committed_memory().ziconv_m,
+                    fourth_trial_next.ziconv_m)&&
+                g65_equal_real4_bits(
+                    scheduler.committed_memory().dptt_k,
+                    fourth_trial_next.dptt_k));
+            if(!fifth_live_g22)
+                throw std::logic_error(
+                    "G65 fifth-hour live G26A differs from native G66");
+        }
+        if(!fifth_g22_guarded||
+           scheduler.completed_hours()!=4||
+           clocks.latest_upper_hour()!=fourth_end||
+           clocks.latest_gamma_hour()!=fourth_end||
+           !g65_equal_real4_bits(scheduler.committed_memory().zi_m,
+                                 fourth_trial_next.zi_m)||
+           !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,
+                                 fourth_trial_next.ziconv_m)||
+           !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,
+                                 fourth_trial_next.dptt_k))
+            throw std::logic_error(
+                "G65 fifth-hour G22 production guard or state violated");
+    }
+
     G65NoaaFirstHourCommitReceipt receipt;
     receipt.end=first_end;
     receipt.committed_memory=second_before;
@@ -2475,6 +2651,14 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour4_g14_positive_commit_verified=fourth_g14_positive;
     receipt.hour4_station_clocks_published=fourth_station_published;
     receipt.hour5_preview_inherits_hour4_memory=fifth_inherits_fourth;
+    receipt.hour5_g26a_stage0_2_source_preflight_only=fifth_g26a_preflight;
+    receipt.hour5_g22_production_guard_rejected=fifth_g22_guarded;
+    receipt.hour5_live_g26a_stage3_6_uncommitted=fifth_live_g22;
+    receipt.hour5_g22_forensic_trace_only=
+        opt_in_hour5_g22_forensic&&!fifth_g22_bytes.empty();
+    if(receipt.hour5_g22_forensic_trace_only)
+        receipt.hour5_g22_forensic_trace_bytes=
+            std::move(fifth_g22_bytes);
     receipt.hour4_native_g26b_p6f45_trial_only=
         opt_in_hour4_p6f_trial&&!fourth_p6f45_bytes.empty();
     if(receipt.hour4_native_g26b_p6f45_trial_only)
