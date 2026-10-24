@@ -1,19 +1,12 @@
 name: S3-F genuine NOAA P4 P5 2022 2023 multi-station selection only
 
 on:
-  push:
-    branches:
-      - codex/s3f-authentic-multistation-two-year
-    paths:
-      - .github/workflows/s3f-real-noaa-multiyear-station.yml
-      - scripts/s3f/**
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - .github/workflows/s3f-real-noaa-multiyear-station.yml
-      - scripts/s3f/**
   workflow_dispatch:
-
+    inputs:
+      head_sha:
+        description: "Reviewed exact 40-hex candidate SHA; verify head_sha on completed run"
+        required: true
+        type: string
 permissions:
   contents: read
 
@@ -30,7 +23,7 @@ jobs:
       - name: Exact SHA checkout with existing archived original NOAA observations
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ inputs.head_sha }}
           persist-credentials: false
       - name: Install source-preparation-only Python dependencies
         shell: bash

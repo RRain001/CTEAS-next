@@ -5,11 +5,6 @@ name: CTEAS-next SCIENCE C1 143h (manual or agent-request)
 # CTEAS-next P6 meteorology and both P7 solver arms are freshly executed.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - 'automation/science/c1/**'
-    paths:
-      - '.github/science-triggers/c1.request'
 permissions:
   contents: read
 concurrency:

@@ -1,33 +1,5 @@
 name: Issue40 S4-P real original water 63x6 ZI mechanical MIXHMC native parity
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/issue40-s4p-original-water-zi-63x6-source-parity.yml'
-      - 'scripts/s4/s4p_original_water_zi_sixhour_probe.py'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g36_original_noow_water_zi.hpp'
-      - 'native_cpp/modules/p6_calmet/src/p6g_g36_original_noow_water_zi_main.cpp'
-      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
-      - 'docs/plans/ISSUE40_S4P_REAL_WATER_ZI_63x6_SOURCE_PARITY_20261021.md'
-      - '.github/workflows/issue40-s4o-native-nowsta0-water-378-parity.yml'
-      - 'native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g35_original_noow_water_neutral.hpp'
-      - 'native_cpp/modules/p6_calmet/src/p6g_g35_original_noow_water_reference_main.cpp'
-      - 'native_cpp/modules/p6_calmet/CMakeLists.txt'
-      - 'docs/plans/ISSUE40_S4O_NATIVE_NOOW_WATER_378_VALUE_PARITY_20261021.md'
-      - '.github/workflows/issue40-s4n-original-water-63cell-sixhour-probe.yml'
-      - 'scripts/s4/s4n_real_water_63cells_original_probe.py'
-      - 'docs/plans/ISSUE40_S4N_ORIGINAL_WATER_63CELLS_SIX_HOURS_20261021.md'
-      - '.github/workflows/issue40-s4m-real-2ss1us-water-source-route.yml'
-      - 'scripts/s4/s4m_real_water_original_route_audit.py'
-      - 'docs/plans/ISSUE40_S4M_REAL_WATER_NOWSTA0_ORIGINAL_ROUTE_20261021.md'
-      - '.github/workflows/issue40-s4j-real-2ss1us-water-original-baseline.yml'
-      - 'docs/plans/ISSUE40_S4J_REAL_2SS1US_WATER_ORIGINAL_CALMET_20261021.md'
-      - 'docs/plans/ISSUE40_S4I_REAL_2SS1US_ALL_INPUT_G19_20261021.md'
-      - '.github/workflows/issue40-s4h-real-2ss-large-grid-p3-science.yml'
-      - 'docs/plans/ISSUE40_S4H_REAL_2SS_LARGE_GRID_P3_ORIGINAL_20261021.md'
-      - 'native_cpp/orchestration/p3_case_handoff.py'
-      - 'native_cpp/orchestration/p2a_case_producer.py'
-      - 'scripts/s3f/verify_real_noaa_2022_2023_station_selection.py'
-      - 'scripts/s2g/issue42_s3_b1_true_srtm_window.py'
   workflow_dispatch:
 permissions:
   contents: read
