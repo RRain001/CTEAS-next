@@ -14,7 +14,9 @@
 
 int main(int argc,char** argv) {
     try {
-        const bool fifth_g22=(argc==8&&
+        const bool fifth_windtail=(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g26a-windtail-trial-only");
+        const bool fifth_g22=fifth_windtail||(argc==8&&
             std::string(argv[6])=="--fifth-hour-g22-trace-only");
         const bool fifth_preflight=fifth_g22||(argc==8&&
             std::string(argv[6])=="--fifth-hour-g26a-preflight-only");
@@ -72,7 +74,7 @@ int main(int argc,char** argv) {
                 live_third_comp15,live_third_p6f45,positive_hour3,
                 fourth_preflight,fourth_g22_trace,fourth_windtail,
                 fourth_comp12,fourth_comp15,fourth_p6f45,fourth_g14,
-                fifth_preflight,fifth_g22);
+                fifth_preflight,fifth_g22,fifth_windtail);
         if(result.committed_hours!=(fourth_g14?4U:(positive_hour3?3U:(positive_hour2?2U:1U)))||
            result.hour3_g14_rollback_verified!=positive_hour3||
            result.hour3_g14_positive_commit_verified!=positive_hour3||
@@ -95,6 +97,7 @@ int main(int argc,char** argv) {
            result.hour5_g22_production_guard_rejected!=fifth_preflight||
            result.hour5_g22_forensic_trace_only!=fifth_g22||
            result.hour5_live_g26a_stage3_6_uncommitted!=fifth_g22||
+           result.hour5_live_g23_g24_stage11_uncommitted!=fifth_windtail||
            result.hour2_positive_g14_commit_verified!=positive_hour2||
            result.hour2_positive_station_clocks_published!=positive_hour2||
            result.hour3_preview_inherits_hour2_memory!=positive_hour2||
@@ -167,12 +170,14 @@ int main(int argc,char** argv) {
                (fourth_p6f45&&
                 result.hour4_native_g26b_p6f45_bytes.empty())||
                (fifth_g22&&
-                result.hour5_g22_forensic_trace_bytes.empty()))
+                result.hour5_g22_forensic_trace_bytes.empty())||
+               (fifth_windtail&&
+                result.hour5_g23_g24_trace_bytes.empty()))
                 throw std::invalid_argument(
                     "G66 test-only third-hour trace path absent/already exists");
             std::ofstream out(trace_path,std::ios::binary);
             if(!out)throw std::runtime_error("G66 cannot open trace output");
-            const auto& bytes=fifth_g22
+            const auto& prior_bytes=fifth_g22
                 ?result.hour5_g22_forensic_trace_bytes
                 :(fourth_p6f45
                   ?result.hour4_native_g26b_p6f45_bytes
@@ -195,6 +200,9 @@ int main(int argc,char** argv) {
                               :(live_third_g22
                                 ?result.hour3_live_g26a_stage3_trace_bytes
                                 :result.hour3_test_only_native_g22_trace_bytes))))))))));
+            const auto& bytes=fifth_windtail
+                ?result.hour5_g23_g24_trace_bytes
+                :prior_bytes;
             out.write(reinterpret_cast<const char*>(bytes.data()),
                       static_cast<std::streamsize>(bytes.size()));
             out.close();
@@ -367,6 +375,9 @@ int main(int argc,char** argv) {
             <<(fifth_g22
                ?"S4R1C9AC_HOUR5_LIVE_G26A_STAGE3_6=PASS_SCOPED_UNCOMMITTED\n"
                :"S4R1C9AC_HOUR5_LIVE_G26A_STAGE3_6=NOT_RUN\n")
+            <<(fifth_windtail
+               ?"S4R1C9AE_HOUR5_G23_G24_STAGE7_11=PASS_TEST_ONLY_UNCOMMITTED\n"
+               :"S4R1C9AE_HOUR5_G23_G24_STAGE7_11=NOT_RUN\n")
             <<(fifth_preflight
                ?"S4R1C9AB_HOUR5_G22_PRODUCTION_GUARD=PASS_REJECTED\n"
                :"S4R1C9AB_HOUR5_G22_PRODUCTION_GUARD=NOT_RUN\n")

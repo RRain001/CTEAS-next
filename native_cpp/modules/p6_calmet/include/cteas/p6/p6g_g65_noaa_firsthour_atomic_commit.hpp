@@ -348,6 +348,8 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour5_g22_production_guard_rejected=false;
     bool hour5_g22_forensic_trace_only=false;
     bool hour5_live_g26a_stage3_6_uncommitted=false;
+    bool hour5_live_g23_g24_stage11_uncommitted=false;
+    std::vector<std::uint8_t> hour5_g23_g24_trace_bytes;
     std::vector<std::uint8_t> hour5_g22_forensic_trace_bytes;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
@@ -426,7 +428,11 @@ g65_real_noaa_firsthour_atomic_commit(
     bool opt_in_hour4_p6f_trial=false,
     bool opt_in_hour4_g14_transaction=false,
     bool opt_in_hour5_g26a_preflight=false,
-    bool opt_in_hour5_g22_forensic=false) {
+    bool opt_in_hour5_g22_forensic=false,
+    bool opt_in_hour5_windtail_trial=false) {
+    if(opt_in_hour5_windtail_trial&&!opt_in_hour5_g22_forensic)
+        throw std::invalid_argument(
+            "G65 fifth-hour wind-tail requires independently checked G22");
     if(opt_in_hour5_g22_forensic&&!opt_in_hour5_g26a_preflight)
         throw std::invalid_argument(
             "G65 fifth-hour G22 trace requires source preflight");
@@ -1529,6 +1535,7 @@ g65_real_noaa_firsthour_atomic_commit(
     G66NativeHour2WaterState fifth_native_prior;
     std::vector<std::uint8_t> fifth_g22_bytes;
     bool fifth_live_g22=false;
+    std::vector<std::uint8_t> fifth_windtail_bytes;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -2548,8 +2555,9 @@ g65_real_noaa_firsthour_atomic_commit(
             auto live=scheduler.preview_next_hour();
             G26SourceFileBackedG14DiagnoBridge live_actor(
                 scheduler,clocks,source,true,&fifth_native_prior,
-                false,false,false,false,true);
-            for(std::size_t stage=0;stage<7;++stage) {
+                false,false,false,false,true,opt_in_hour5_windtail_trial);
+            for(std::size_t stage=0;
+                stage<(opt_in_hour5_windtail_trial?12U:7U);++stage) {
                 const auto result=live_actor.run(
                     p6::kHefeiOriginalStageOrder[stage],live);
                 if(!result.completed||
@@ -2559,7 +2567,9 @@ g65_real_noaa_firsthour_atomic_commit(
             }
             const auto& bytes=
                 live_actor.selected_hour5_g22_trace_after_stage(live);
-            fifth_live_g22=(live_actor.selected_checkpoints()==7&&
+            fifth_live_g22=(
+                live_actor.selected_checkpoints()==
+                    (opt_in_hour5_windtail_trial?12U:7U)&&
                 bytes==fifth_g22_bytes&&
                 scheduler.completed_hours()==4&&
                 clocks.latest_upper_hour()==fourth_end&&
@@ -2576,6 +2586,28 @@ g65_real_noaa_firsthour_atomic_commit(
             if(!fifth_live_g22)
                 throw std::logic_error(
                     "G65 fifth-hour live G26A differs from native G66");
+            if(opt_in_hour5_windtail_trial) {
+                // Original CALMET wind-tail trace belongs only to the
+                // independent comparator, never the native stage inputs.
+                fifth_windtail_bytes=
+                    live_actor.selected_hour5_windtail_trace_after_stage(live);
+                if(!live_actor.test_only_hour5_windtail_ready()||
+                   fifth_windtail_bytes.empty()||
+                   scheduler.completed_hours()!=4||
+                   clocks.latest_upper_hour()!=fourth_end||
+                   clocks.latest_gamma_hour()!=fourth_end||
+                   !g65_equal_real4_bits(
+                       scheduler.committed_memory().zi_m,
+                       fourth_trial_next.zi_m)||
+                   !g65_equal_real4_bits(
+                       scheduler.committed_memory().ziconv_m,
+                       fourth_trial_next.ziconv_m)||
+                   !g65_equal_real4_bits(
+                       scheduler.committed_memory().dptt_k,
+                       fourth_trial_next.dptt_k))
+                    throw std::logic_error(
+                        "G65 fifth-hour wind-tail mutated G14 authority");
+            }
         }
         if(!fifth_g22_guarded||
            scheduler.completed_hours()!=4||
@@ -2654,6 +2686,11 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour5_g26a_stage0_2_source_preflight_only=fifth_g26a_preflight;
     receipt.hour5_g22_production_guard_rejected=fifth_g22_guarded;
     receipt.hour5_live_g26a_stage3_6_uncommitted=fifth_live_g22;
+    receipt.hour5_live_g23_g24_stage11_uncommitted=
+        opt_in_hour5_windtail_trial&&!fifth_windtail_bytes.empty();
+    if(receipt.hour5_live_g23_g24_stage11_uncommitted)
+        receipt.hour5_g23_g24_trace_bytes=
+            std::move(fifth_windtail_bytes);
     receipt.hour5_g22_forensic_trace_only=
         opt_in_hour5_g22_forensic&&!fifth_g22_bytes.empty();
     if(receipt.hour5_g22_forensic_trace_only)

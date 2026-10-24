@@ -101,10 +101,12 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
     const G22SelectedThermalSlope& g22,
     bool explicitly_test_only,
     bool opt_in_hour3_windtail_science_trial=false,
-    bool opt_in_hour4_windtail_science_trial=false) {
-    if(opt_in_hour3_windtail_science_trial&&
-       opt_in_hour4_windtail_science_trial)
-        throw std::invalid_argument("G23 mutually exclusive hour3/hour4 trial");
+    bool opt_in_hour4_windtail_science_trial=false,
+    bool opt_in_hour5_windtail_science_trial=false) {
+    if(static_cast<unsigned>(opt_in_hour3_windtail_science_trial)+
+       static_cast<unsigned>(opt_in_hour4_windtail_science_trial)+
+       static_cast<unsigned>(opt_in_hour5_windtail_science_trial)>1U)
+        throw std::invalid_argument("G23 mutually exclusive hour3/hour4/hour5 trial");
     const auto& grid=frame.grid;
     const auto nx=static_cast<std::size_t>(grid.nx);
     const auto ny=static_cast<std::size_t>(grid.ny);
@@ -154,10 +156,17 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
         frame.previous.ziconv_m.size()!=n||
         frame.previous.dptt_k.size()!=n))
         throw std::invalid_argument("G23 hour4 wind-tail trial provenance invalid");
+    if(opt_in_hour5_windtail_science_trial&&
+       (!explicitly_test_only||!source.research_noow_water_source_only||
+        frame.hour_index!=4||frame.previous.zi_m.size()!=n||
+        frame.previous.ziconv_m.size()!=n||
+        frame.previous.dptt_k.size()!=n))
+        throw std::invalid_argument("G23 hour5 wind-tail trial provenance invalid");
     if(source.research_noow_water_source_only &&
        ((frame.hour_index>1&&!(opt_in_hour3_windtail_science_trial||
-                               opt_in_hour4_windtail_science_trial))||
-        frame.hour_index>3||grid.nx!=82||grid.ny!=85||
+                               opt_in_hour4_windtail_science_trial||
+                               opt_in_hour5_windtail_science_trial))||
+        frame.hour_index>4||grid.nx!=82||grid.ny!=85||
         frame.stations.surface.size()!=2||
         frame.stations.upper.size()!=1||
         source.source_water_cells.size()!=63||
@@ -169,7 +178,9 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
         (frame.hour_index==2&&
          frame.surface.start!=source.surface.hourly[1].end)||
         (frame.hour_index==3&&
-         frame.surface.start!=source.surface.hourly[2].end)))
+         frame.surface.start!=source.surface.hourly[2].end)||
+        (frame.hour_index==4&&
+         frame.surface.start!=source.surface.hourly[3].end)))
         throw std::invalid_argument(
             "G23 source-scoped NOAA second-hour STHEOR UTC/geometry invalid");
     G17B4TwoPassSurfvar surfvar(
@@ -218,6 +229,8 @@ inline G23SelectedSourceStheorInter2 g23_source_stheor_diagi_inter2(
             (!opt_in_hour3_windtail_science_trial||nvalid==0U))||
            (frame.hour_index==3&&
             (!opt_in_hour4_windtail_science_trial||nvalid==0U))||
+           (frame.hour_index==4&&
+            (!opt_in_hour5_windtail_science_trial||nvalid==0U))||
            candidate.size()!=nvalid)
             throw std::logic_error(
                 "G23 NOAA hourly wind-validity/STHEOR count invalid");

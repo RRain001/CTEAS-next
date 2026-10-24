@@ -21,6 +21,12 @@
 | 新场址 P7 / P1–P7 全链路 | 依赖合格 P6 MET.DAT，原版 CALPUFF 独立同输入 | NOT_RUN |
 | 新集成 HEAD 正式 Docker full 和外部独立科学审查 | 旧 DEV_ONLY 或旧 SHA 不能继承 | NOT_RUN / NOT_ACCEPTED |
 
+## 2026-10-24 S4-A 新增第五小时限定证据
+- 原 s4-r1c9u 未跟踪的第三小时 45 字段独立比较器及对应测试，已逐字节核对后补入统一集成工作树（原工作树和独立备份仍保留）；加入后 S4 Python 定向测试 133/133 PASS。
+
+- 第五小时 G23/G24 stage90/100/110：真实 NOAA 独立原版比较 446080/446080 REAL4 处于冻结 2e-4 m/s 内，0 超差，360924 bitwise；证据详见 docs/plans/ISSUE40_S4R1C9AE_NOAA_HOUR5_G23_G24_20261024.md。本门禁是 test-only PASS_SCOPED，非完整第五小时 P6 PASS。
+- 下一步：COMP stages12–15、P6F stage16 45 字段及 G14 原子提交/回滚；再完整第六小时。此时 exact HEAD Docker full、独立科学审查均未运行。
+
 ## 3. 开发与测试关键路径
 1. S4-0：核对、备份本地科学开发和未提交工作，合并最新 main、GitHub #308、所有需要的本地提交；审查遗留实验文件；更新规范和本计划；执行 L1 定向编译/测试，检查 fast-forward 及唯一活跃工作树，最后由 Ubuntu 推送 PR #308 的现有 head。
 2. S4-A：第五小时同一真实 NOAA G14 状态中完成 G23/G24 stage7–11、COMP stage12–15、P6F stage16 45 字段同源原版独立数值比对、回滚与正向提交。保留所有生产拒绝 guard，失败时定位最早分叉而不是放宽容差。
