@@ -261,6 +261,10 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour4_live_g22_matches_detached=false;
     bool hour4_live_g23_g24_stage11_uncommitted=false;
     std::vector<std::uint8_t> hour4_live_g23_g24_trace_bytes;
+    bool hour4_native_g26b_stage12_trial_only=false;
+    std::vector<std::uint8_t> hour4_native_g26b_stage12_trace_bytes;
+    bool hour4_native_g26b_stage15_trial_only=false;
+    std::vector<std::uint8_t> hour4_native_g26b_stage15_trace_bytes;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
@@ -332,7 +336,15 @@ g65_real_noaa_firsthour_atomic_commit(
     bool opt_in_hour3_g14_transaction=false,
     bool opt_in_hour4_g26a_preflight=false,
     bool opt_in_hour4_g22_trace_only=false,
-    bool opt_in_hour4_windtail_trial=false) {
+    bool opt_in_hour4_windtail_trial=false,
+    bool opt_in_hour4_comp_stage12_trial=false,
+    bool opt_in_hour4_comp_stage15_trial=false) {
+    if(opt_in_hour4_comp_stage15_trial&&!opt_in_hour4_comp_stage12_trial)
+        throw std::invalid_argument(
+            "G65 hour4 COMP stage15 requires stage12");
+    if(opt_in_hour4_comp_stage12_trial&&!opt_in_hour4_windtail_trial)
+        throw std::invalid_argument(
+            "G65 hour4 COMP stage12 requires native G26A windtail");
     if(opt_in_hour4_windtail_trial&&!opt_in_hour4_g22_trace_only)
         throw std::invalid_argument(
             "G65 hour4 G23/G24 requires native G22 opt-in");
@@ -1376,6 +1388,8 @@ g65_real_noaa_firsthour_atomic_commit(
     bool fourth_live_exact=false;
     bool fourth_windtail=false;
     std::vector<std::uint8_t> fourth_windtail_bytes;
+    std::vector<std::uint8_t> fourth_comp_stage12_bytes;
+    std::vector<std::uint8_t> fourth_comp_stage15_bytes;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -2020,6 +2034,103 @@ g65_real_noaa_firsthour_atomic_commit(
                     if(!fourth_windtail)
                         throw std::logic_error(
                             "G65 hour4 wind-tail unexpectedly committed or incomplete");
+                    if(opt_in_hour4_comp_stage12_trial) {
+                        // Test-only G26B consumes the exact live G26A wind,
+                        // committed hour3 memory and same-hour source MISSFC.
+                        // No G64 stage16, G14 commit or clock publication.
+                        G26BSourceFileBackedCompBridge comp(
+                            live_actor,source,true,&actual,false,false,false,
+                            true,opt_in_hour4_comp_stage15_trial);
+                        const auto step=comp.run(
+                            p6::kHefeiOriginalStageOrder[12],live);
+                        if(!step.completed||
+                           step.source!=p6::NativeHourSource::NativeCpp)
+                            throw std::logic_error(
+                                "G65 hour4 COMP stage12 not completed");
+                        constexpr std::size_t n=82U*85U;
+                        const auto& mixed=comp.source_water_mixht_stage12(live);
+                        const std::array<const std::vector<float>*,7> fields{
+                            &mixed.zi_before_avemix_m,
+                            &mixed.ziconv_before_avemix_m,
+                            &mixed.comp_third_qh_wm2,
+                            &mixed.comp_third_temperature_k,
+                            &mixed.comp_third_density_kgm3,
+                            &mixed.p6f_water_reconciled_ustar_mps,
+                            &mixed.p6f_water_reconciled_el_m};
+                        const auto put=[&](std::vector<std::uint8_t>& bytes,
+                                           std::uint32_t value) {
+                            for(unsigned k=0;k<4;++k)
+                                bytes.push_back(
+                                    static_cast<std::uint8_t>(value>>(8*k)));
+                        };
+                        const auto emit=[&](std::vector<std::uint8_t>& bytes,
+                                            int stage,
+                                            const std::vector<
+                                                const std::vector<float>*>& arrays) {
+                            for(int value:{5,stage,82,85,9})
+                                put(bytes,static_cast<std::uint32_t>(value));
+                            const auto extent=stage==15?9U*n:n;
+                            for(const auto* field:arrays) {
+                                if(!field||field->size()!=extent)
+                                    throw std::logic_error(
+                                        "G65 hour4 COMP trace array shape");
+                                for(float value:*field) {
+                                    if(!std::isfinite(value))
+                                        throw std::logic_error(
+                                            "G65 hour4 COMP trace nonfinite");
+                                    put(bytes,std::bit_cast<std::uint32_t>(value));
+                                }
+                            }
+                        };
+                        emit(fourth_comp_stage12_bytes,12,
+                             {fields.begin(),fields.end()});
+                        if(fourth_comp_stage12_bytes.size()!=20U+7U*n*4U)
+                            throw std::logic_error(
+                                "G65 hour4 COMP stage12 incomplete trace");
+                        if(opt_in_hour4_comp_stage15_trial) {
+                            fourth_comp_stage15_bytes=fourth_comp_stage12_bytes;
+                            for(int stage=13;stage<=15;++stage) {
+                                const auto result=comp.run(
+                                    p6::kHefeiOriginalStageOrder[stage],live);
+                                if(!result.completed||
+                                   result.source!=p6::NativeHourSource::NativeCpp)
+                                    throw std::logic_error(
+                                        "G65 hour4 COMP stage13-15 incomplete");
+                                if(stage==13) {
+                                    const auto& avg=
+                                        comp.source_water_avemix_stage13(live);
+                                    emit(fourth_comp_stage15_bytes,13,
+                                         {&avg.zi_m,&avg.ziconv_m});
+                                } else if(stage==14) {
+                                    const auto& wstar=
+                                        comp.source_water_wstarr_stage14(live);
+                                    emit(fourth_comp_stage15_bytes,14,{&wstar});
+                                } else {
+                                    const auto& temp=
+                                        comp.source_water_temp3d_stage15(live);
+                                    emit(fourth_comp_stage15_bytes,15,{&temp});
+                                }
+                            }
+                            if(fourth_comp_stage15_bytes.size()!=
+                                4U*20U+(7U+2U+1U+9U)*n*4U)
+                                throw std::logic_error(
+                                    "G65 hour4 COMP stage12-15 trace incomplete");
+                        }
+                        if(scheduler.completed_hours()!=3||
+                           clocks.latest_upper_hour()!=third_end||
+                           clocks.latest_gamma_hour()!=third_end||
+                           !g65_equal_real4_bits(
+                               scheduler.committed_memory().zi_m,
+                               third_trial_next.zi_m)||
+                           !g65_equal_real4_bits(
+                               scheduler.committed_memory().ziconv_m,
+                               third_trial_next.ziconv_m)||
+                           !g65_equal_real4_bits(
+                               scheduler.committed_memory().dptt_k,
+                               third_trial_next.dptt_k))
+                            throw std::logic_error(
+                                "G65 hour4 COMP changed committed hour3 authority");
+                    }
                 }
             }
         }
@@ -2071,6 +2182,16 @@ g65_real_noaa_firsthour_atomic_commit(
     if(fourth_windtail)
         receipt.hour4_live_g23_g24_trace_bytes=
             std::move(fourth_windtail_bytes);
+    receipt.hour4_native_g26b_stage12_trial_only=
+        opt_in_hour4_comp_stage12_trial&&!fourth_comp_stage12_bytes.empty();
+    if(receipt.hour4_native_g26b_stage12_trial_only)
+        receipt.hour4_native_g26b_stage12_trace_bytes=
+            std::move(fourth_comp_stage12_bytes);
+    receipt.hour4_native_g26b_stage15_trial_only=
+        opt_in_hour4_comp_stage15_trial&&!fourth_comp_stage15_bytes.empty();
+    if(receipt.hour4_native_g26b_stage15_trial_only)
+        receipt.hour4_native_g26b_stage15_trace_bytes=
+            std::move(fourth_comp_stage15_bytes);
     receipt.hour4_g22_forensic_trace_only=
         opt_in_hour4_g22_trace_only&&!fourth_g22_bytes.empty();
     if(receipt.hour4_g22_forensic_trace_only)

@@ -369,6 +369,10 @@ public:
         const MultiHourFrame& frame) const {
         return selected_noaa_windtail_trace_after_stage(frame,3U);
     }
+    [[nodiscard]] bool test_only_hour4_windtail_ready() const noexcept {
+        return hour4_windtail_trial_&&phase_==12&&hour_index_==3&&
+               g23_.has_value()&&g24_.has_value();
+    }
     [[nodiscard]] bool test_only_hour3_windtail_ready() const noexcept {
         return hour3_windtail_trial_&&phase_==12&&hour_index_==2&&
                g23_.has_value()&&g24_.has_value();

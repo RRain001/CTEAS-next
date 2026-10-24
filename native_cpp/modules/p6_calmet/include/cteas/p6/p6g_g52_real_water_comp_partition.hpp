@@ -25,7 +25,8 @@ g26b_real_water_comp_partition_source_only(
     const G41SelectedNoowWaterFirstHourSource& genuine,
     const MultiHourFrame& frame,
     bool explicitly_source_only,
-    bool opt_in_hour3_comp_stage12_trial=false) {
+    bool opt_in_hour3_comp_stage12_trial=false,
+    bool opt_in_hour4_comp_stage12_trial=false) {
     const auto& s=genuine.source;
     const auto nx=static_cast<std::size_t>(s.grid.nx);
     const auto ny=static_cast<std::size_t>(s.grid.ny);
@@ -38,9 +39,12 @@ g26b_real_water_comp_partition_source_only(
        // historical type name says "FirstHour". Admit only hours 0 and
        // 1 with exact current-hour source UTC. Hour-two previous memory
        // remains owned by the validated G14 scheduler, not G41.
-       ((frame.hour_index>1&&!opt_in_hour3_comp_stage12_trial)||
-        frame.hour_index>2||
-        (opt_in_hour3_comp_stage12_trial&&frame.hour_index!=2))||
+       (opt_in_hour3_comp_stage12_trial&&opt_in_hour4_comp_stage12_trial)||
+       ((frame.hour_index>1&&!opt_in_hour3_comp_stage12_trial&&
+         !opt_in_hour4_comp_stage12_trial)||
+        frame.hour_index>3||
+        (opt_in_hour3_comp_stage12_trial&&frame.hour_index!=2)||
+        (opt_in_hour4_comp_stage12_trial&&frame.hour_index!=3))||
        s.surface.hourly.size()!=6||
        frame.input.end!=s.surface.hourly[frame.hour_index].end||
        frame.surface.start!=s.surface.hourly[frame.hour_index].start||
@@ -48,6 +52,8 @@ g26b_real_water_comp_partition_source_only(
         frame.surface.start!=s.surface.hourly[0].end)||
        (frame.hour_index==2&&
         frame.surface.start!=s.surface.hourly[1].end)||
+       (frame.hour_index==3&&
+        frame.surface.start!=s.surface.hourly[2].end)||
        frame.surface.end!=frame.input.end||
        nx<2||ny<2||nx>400||ny>400||
        s.grid.landuse.size()!=n||
