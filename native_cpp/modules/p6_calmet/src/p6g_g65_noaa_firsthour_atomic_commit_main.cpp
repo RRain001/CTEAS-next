@@ -14,7 +14,11 @@
 
 int main(int argc,char** argv) {
     try {
-        const bool fourth_comp15=(argc==8&&
+        const bool fourth_g14=(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g14-commit-trial-only");
+        const bool fourth_p6f45=fourth_g14||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g26b-p6f45-trial-only");
+        const bool fourth_comp15=fourth_p6f45||(argc==8&&
             std::string(argv[6])=="--fourth-hour-g26b-comp15-trial-only");
         const bool fourth_comp12=fourth_comp15||(argc==8&&
             std::string(argv[6])=="--fourth-hour-g26b-comp12-trial-only");
@@ -63,8 +67,8 @@ int main(int argc,char** argv) {
                 live_third_g22,live_third_windtail,live_third_comp12,
                 live_third_comp15,live_third_p6f45,positive_hour3,
                 fourth_preflight,fourth_g22_trace,fourth_windtail,
-                fourth_comp12,fourth_comp15);
-        if(result.committed_hours!=(positive_hour3?3U:(positive_hour2?2U:1U))||
+                fourth_comp12,fourth_comp15,fourth_p6f45,fourth_g14);
+        if(result.committed_hours!=(fourth_g14?4U:(positive_hour3?3U:(positive_hour2?2U:1U)))||
            result.hour3_g14_rollback_verified!=positive_hour3||
            result.hour3_g14_positive_commit_verified!=positive_hour3||
            result.hour3_station_clocks_published!=positive_hour3||
@@ -77,6 +81,11 @@ int main(int argc,char** argv) {
            result.hour4_live_g23_g24_stage11_uncommitted!=fourth_windtail||
            result.hour4_native_g26b_stage12_trial_only!=fourth_comp12||
            result.hour4_native_g26b_stage15_trial_only!=fourth_comp15||
+           result.hour4_native_g26b_p6f45_trial_only!=fourth_p6f45||
+           result.hour4_g14_rollback_verified!=fourth_g14||
+           result.hour4_g14_positive_commit_verified!=fourth_g14||
+           result.hour4_station_clocks_published!=fourth_g14||
+           result.hour5_preview_inherits_hour4_memory!=fourth_g14||
            result.hour2_positive_g14_commit_verified!=positive_hour2||
            result.hour2_positive_station_clocks_published!=positive_hour2||
            result.hour3_preview_inherits_hour2_memory!=positive_hour2||
@@ -121,6 +130,7 @@ int main(int argc,char** argv) {
            result.hour2_p6f_compared_words!=313650||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
+        // Strictly scoped transaction status; no production acceptance.
         // Only opt-in forensic output; never write an accepted hourly
         // CALMET.DAT or overwrite a prior audit input/receipt.
         if(third_trace) {
@@ -144,13 +154,17 @@ int main(int argc,char** argv) {
                (fourth_comp12&&
                 result.hour4_native_g26b_stage12_trace_bytes.empty())||
                (fourth_comp15&&
-                result.hour4_native_g26b_stage15_trace_bytes.empty()))
+                result.hour4_native_g26b_stage15_trace_bytes.empty())||
+               (fourth_p6f45&&
+                result.hour4_native_g26b_p6f45_bytes.empty()))
                 throw std::invalid_argument(
                     "G66 test-only third-hour trace path absent/already exists");
             std::ofstream out(trace_path,std::ios::binary);
             if(!out)throw std::runtime_error("G66 cannot open trace output");
-            const auto& bytes=fourth_comp15
-                ?result.hour4_native_g26b_stage15_trace_bytes
+            const auto& bytes=fourth_p6f45
+                ?result.hour4_native_g26b_p6f45_bytes
+                :(fourth_comp15
+                  ?result.hour4_native_g26b_stage15_trace_bytes
                 :(fourth_comp12
                   ?result.hour4_native_g26b_stage12_trace_bytes
                   :(fourth_windtail
@@ -167,7 +181,7 @@ int main(int argc,char** argv) {
                               ?result.hour3_native_g23_g24_trace_bytes
                               :(live_third_g22
                                 ?result.hour3_live_g26a_stage3_trace_bytes
-                                :result.hour3_test_only_native_g22_trace_bytes))))))));
+                                :result.hour3_test_only_native_g22_trace_bytes)))))))));
             out.write(reinterpret_cast<const char*>(bytes.data()),
                       static_cast<std::streamsize>(bytes.size()));
             out.close();

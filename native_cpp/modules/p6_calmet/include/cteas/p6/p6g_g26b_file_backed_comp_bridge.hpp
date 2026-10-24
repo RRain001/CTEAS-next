@@ -89,7 +89,8 @@ public:
         bool explicitly_opt_in_hour3_comp_stage15_trial=false,
         bool explicitly_opt_in_hour3_p6f_trial=false,
         bool explicitly_opt_in_hour4_comp_stage12_trial=false,
-        bool explicitly_opt_in_hour4_comp_stage15_trial=false)
+        bool explicitly_opt_in_hour4_comp_stage15_trial=false,
+        bool explicitly_opt_in_hour4_p6f_trial=false)
         :diagno_(diagno),source_(source),
          original_noow_water_(original_noow_water),
          normal_trial_(explicitly_opt_in_normal_trial),
@@ -97,11 +98,15 @@ public:
          hour3_comp_stage15_trial_(explicitly_opt_in_hour3_comp_stage15_trial),
          hour3_p6f_trial_(explicitly_opt_in_hour3_p6f_trial),
          hour4_comp_stage12_trial_(explicitly_opt_in_hour4_comp_stage12_trial),
-         hour4_comp_stage15_trial_(explicitly_opt_in_hour4_comp_stage15_trial) {
+         hour4_comp_stage15_trial_(explicitly_opt_in_hour4_comp_stage15_trial),
+         hour4_p6f_trial_(explicitly_opt_in_hour4_p6f_trial) {
         if((hour4_comp_stage12_trial_&&hour3_comp_stage12_trial_)||
            (hour4_comp_stage12_trial_&&hour3_p6f_trial_))
             throw std::invalid_argument(
                 "G26B mixed hour3/hour4 trial flags rejected");
+        if(hour4_p6f_trial_&&!hour4_comp_stage15_trial_)
+            throw std::invalid_argument(
+                "G26B hour4 P6F requires stage15 trial");
         if(hour4_comp_stage15_trial_&&!hour4_comp_stage12_trial_)
             throw std::invalid_argument(
                 "G26B hour4 stage15 requires stage12 trial");
@@ -139,7 +144,8 @@ public:
             !hour3_comp_stage15_trial_)||
            (hour4_comp_stage12_trial_&&phase_>0&&
             !hour4_comp_stage15_trial_)||
-           (hour4_comp_stage15_trial_&&phase_>3)||
+           (hour4_comp_stage15_trial_&&phase_>3&&!hour4_p6f_trial_)||
+           (hour4_p6f_trial_&&phase_>4)||
            (hour3_comp_stage15_trial_&&phase_>3&&!hour3_p6f_trial_)||
            (hour3_p6f_trial_&&phase_>4)||
            phase_>=(source_.research_noow_water_source_only?5U:4U)||
@@ -338,7 +344,7 @@ public:
                     frame,source_,*water_mixht_stage12_,
                     *water_avemix_stage13_,
                     *water_wstarr_stage14_,
-                    *water_temp3d_stage15_,true,hour3_p6f_trial_);
+                    *water_temp3d_stage15_,true,hour3_p6f_trial_,hour4_p6f_trial_);
                 if(!prepared.actual_g14_stage16_precommit_validated||
                    prepared.g14_hour_committed||
                    prepared.source_clocks_published||
@@ -637,6 +643,7 @@ private:
     bool hour3_p6f_trial_=false;
     bool hour4_comp_stage12_trial_=false;
     bool hour4_comp_stage15_trial_=false;
+    bool hour4_p6f_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds end_{};

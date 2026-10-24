@@ -92,3 +92,5 @@
 - 原版源码、第三方许可边界和凭据不应进入本 CSV、文档、CI 构建上下文或重构库 Git 历史；保持对老仓库的固定提交依赖与 SHA256 检查。
 
 **参考证据**：[迁移科学范围](../migration/SCIENTIFIC_RERUN_PLAN.md) · [第三方资产决策](../migration/THIRD_PARTY_ASSETS.md) · [P7 已选干态验收](../reconstruction_cpp/P7_PHASE_STATUS_20261015.md) · [C1/C2 四臂科学对照](../reconstruction_cpp/P7_C1_C2_CALMET_TO_CALPUFF_INTEGRATION_20261015.md) · [P6 原版调用图](../reconstruction_cpp/P6D_CALLGRAPH_COMPLETENESS_AUDIT_20261013.md)
+
+真实 NOAA 第四小时 G64 P6F 的 45 个原版输出字段：**313,650/313,650** 在不变的冻结容差内，0 超差，240,362 逐位一致；第四小时 G65 17 阶段强制回滚、新执行器正向提交与站点时钟发布已通过，提交试验重新生成的 P6F 候选与未提交候选字节相同，第五小时 preview 正确继承状态。见 [S4-R1c9z/aa](../plans/ISSUE40_S4R1C9Z_AA_NOAA_HOUR4_P6F_G14_TRANSACTION_20261024.md)。这些仅为 **第四小时 opt-in 的 DEV_ONLY 限定验证**；第五/六小时、通用 P6、P7、湿沉降及独立科学审查 NOT_ACCEPTED，选项矩阵生产验收范围不变。
