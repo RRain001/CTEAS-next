@@ -49,7 +49,8 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
     const G26SourceFileBackedG14DiagnoBridge& diagno,
     bool explicitly_forensic_only,
     bool opt_in_hour3_comp_stage12_trial=false,
-    bool opt_in_hour4_comp_stage12_trial=false) {
+    bool opt_in_hour4_comp_stage12_trial=false,
+    bool opt_in_hour5_comp_stage12_trial=false) {
     const auto& geo=live.grid;
     const auto n=static_cast<std::size_t>(geo.nx)*
                  static_cast<std::size_t>(geo.ny);
@@ -57,12 +58,16 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
        !source.research_noow_water_source_only||
        !diagno.source_diagno_ready()||
        geo.nx!=82||geo.ny!=85||
-       (opt_in_hour3_comp_stage12_trial&&opt_in_hour4_comp_stage12_trial)||
+       (static_cast<int>(opt_in_hour3_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour4_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour5_comp_stage12_trial)>1)||
        ((live.hour_index>1&&!opt_in_hour3_comp_stage12_trial&&
-         !opt_in_hour4_comp_stage12_trial)||
-        live.hour_index>3||
+         !opt_in_hour4_comp_stage12_trial&&
+         !opt_in_hour5_comp_stage12_trial)||
+        live.hour_index>4||
         (opt_in_hour3_comp_stage12_trial&&live.hour_index!=2)||
-        (opt_in_hour4_comp_stage12_trial&&live.hour_index!=3))||
+        (opt_in_hour4_comp_stage12_trial&&live.hour_index!=3)||
+        (opt_in_hour5_comp_stage12_trial&&live.hour_index!=4))||
        live.stations.surface.size()!=2||live.stations.upper.size()!=1||
        source.source_water_cells.size()!=63||
        original.source.surface.hourly.size()!=6||
@@ -80,6 +85,8 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
         live.surface.start!=source.surface.hourly[1].end)||
        (live.hour_index==3&&
         live.surface.start!=source.surface.hourly[2].end)||
+       (live.hour_index==4&&
+        live.surface.start!=source.surface.hourly[3].end)||
        live.input.end!=live.surface.end||
        live.previous.zi_m.size()!=n||
        live.previous.ziconv_m.size()!=n||
@@ -161,7 +168,8 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
         throw std::logic_error("G63 original third COMP thermal not physical");
     const auto water=g53_real_source_g24_neutral_water_reference(
         original,live,g24,true,opt_in_hour3_comp_stage12_trial,
-        opt_in_hour4_comp_stage12_trial);
+        opt_in_hour4_comp_stage12_trial,
+        opt_in_hour5_comp_stage12_trial);
     if(!water.genuine_firsthour_water_arithmetic_only||
        water.land_mixht_ready||water.original_causal_memory_ready||
        water.water.size()!=63||water.end!=live.input.end)

@@ -1,3 +1,8 @@
+## 2026-10-24 最新 S4 科学进度（比下方原第五小时 G22 的历史文字更新）
+- 第五小时真实 NOAA 82×85×9、2SS/1US、63 WATER：G26B COMP stage12–15 与原版比较 132430/132430 在冻结公差内、0 超差；原生 G64 P6F 45 字段 313650/313650，0 超差，当前记录在 docs/plans/ISSUE40_S4R1C9AF_AG_NOAA_HOUR5_COMP_P6F_G14_20261024.md。
+- 第五小时真实 G14 fresh actor 故意失败回滚、正向提交、站点时钟发布全部原生退出 0；正向提交 P6F 文件 SHA256 与独立原版对照过的 stage16 候选完全一致，第六小时 preview 继承 ZI/ZICONV/DPTT 通过。
+- **全部是 PASS_SCOPED**：第六小时完整 17 阶段/45 字段、本代码统一可配置生产 P6 C1/C2/非合肥重验、P7、独立科学审查和 S4 正式 full 尚 NOT_RUN/NOT_ACCEPTED。研究 #308 保持 Draft。Ubuntu 原生编译/测试、无 Docker full，正式 Docker 交付延至 S5 后。
+
 ## 2026-10-24 最新阶段验收（优先于旧的 Ubuntu Docker/full 要求）
 - 本仓库 S4 以 Ubuntu 原生软件全量测试、Fortran/C++ 独立原版科学验收、精确 SHA 和非 Bot 独立审查作为强制门禁。S5 以原生软件 full、规模/内存/性能回归及物理不退化为门禁。**正式 Docker full 和 AMD64/ARM64 容器交付验收延至 S5 完成之后**；Docker 快速调试自愿使用，不能替代真实物理/原生 full。
 - 项目脚本 scripts/ci/cteas_native_full.py 只在干净冻结 HEAD 运行全 native_cpp CMake build/CTest 及 S4/S2G Python 单元测试，完整记录日志、命令、SHA，verify 成功后对 GitHub 当前 PR HEAD 发布 ubuntu-native-full（或沿用已有 ubuntu-docker-full）。没有正式原生 full 实际结果就保持 NOT_RUN，禁止把 DEV_ONLY 当软件门禁。

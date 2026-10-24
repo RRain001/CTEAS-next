@@ -1,3 +1,8 @@
+## 2026-10-24 最新 S4 科学进度（比下方原第五小时 G22 的历史文字更新）
+- 第五小时真实 NOAA 82×85×9、2SS/1US、63 WATER：G26B COMP stage12–15 与原版比较 132430/132430 在冻结公差内、0 超差；原生 G64 P6F 45 字段 313650/313650，0 超差，当前记录在 docs/plans/ISSUE40_S4R1C9AF_AG_NOAA_HOUR5_COMP_P6F_G14_20261024.md。
+- 第五小时真实 G14 fresh actor 故意失败回滚、正向提交、站点时钟发布全部原生退出 0；正向提交 P6F 文件 SHA256 与独立原版对照过的 stage16 候选完全一致，第六小时 preview 继承 ZI/ZICONV/DPTT 通过。
+- **全部是 PASS_SCOPED**：第六小时完整 17 阶段/45 字段、本代码统一可配置生产 P6 C1/C2/非合肥重验、P7、独立科学审查和 S4 正式 full 尚 NOT_RUN/NOT_ACCEPTED。研究 #308 保持 Draft。Ubuntu 原生编译/测试、无 Docker full，正式 Docker 交付延至 S5 后。
+
 ## 2026-10-24 新版 S4/S5 与 Docker 验收规则
 - S4：Ubuntu 原生 full 软件与 Fortran/C++ 科学验证；S5：原生规模/性能与科学回归；S5 完成后正式 Docker full、AMD64/ARM64 和运行镜像交付。旧的 S4/S5 每研究 PR 强制 Docker full 流程已取消，但独立科学审查及正式原生软件 full 不可跳过。
 - 唯一具体执行合同：docs/ci/S4_S5_NATIVE_POST_S5_DOCKER_POLICY_20261024.md。新状态 ubuntu-native-full 只能来自干净的 exact SHA、scripts/ci/cteas_native_full.py 的全部固定步骤 PASS。GitHub repository-admission 兼容原 ubuntu-docker-full，scientific-admission/auto-merge/required checks 原样保留。

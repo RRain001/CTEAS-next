@@ -275,6 +275,79 @@ private:
     std::size_t cursor_=0;
 };
 
+// Strictly scoped fifth-hour executor: genuine G26A stages0–11 and G26B
+// stages12–16 run on the G14-owned live frame with committed hour3 history.
+// Production defaults remain fail-closed; every retry creates a fresh actor.
+class G65RealNoaaFifthHourTrialActor final : public MultiHourPhysics {
+public:
+    G65RealNoaaFifthHourTrialActor(
+        const UnifiedMultistationHourlyScheduler& owner,
+        G18D2StationClockAuthority& clocks,
+        const G19FileBackedCase& source,
+        const G41SelectedNoowWaterFirstHourSource& original,
+        const G66NativeHour2WaterState& native_prior)
+        :diagno_(owner,clocks,source,true,&native_prior,
+                 false,false,false,false,true,true),
+         source_(source),original_(original) {}
+
+    [[nodiscard]] p6::NativeHourStageResult run(
+        p6::NativeHourStage stage,MultiHourFrame& frame) override {
+        if(frame.hour_index!=4||
+           cursor_>=p6::kHefeiOriginalStageOrder.size()||
+           stage!=p6::kHefeiOriginalStageOrder[cursor_])
+            throw std::logic_error(
+                "G65 fifth-hour trial actor wrong hour/stage");
+        if(cursor_==12)
+            comp_.emplace(diagno_,source_,true,&original_,
+                          false,false,false,false,false,false,
+                          true,true,true);
+        const auto result=(cursor_<12)?diagno_.run(stage,frame)
+                                     :comp_->run(stage,frame);
+        if(!result.completed||
+           result.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 fifth-hour trial missing source-native stage");
+        ++cursor_;
+        return result;
+    }
+
+    [[nodiscard]] const G64RealNoaaP6FPrecommit& precommit(
+        const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=4||!comp_)
+            throw std::logic_error(
+                "G65 fifth-hour precommit before all 17 native stages");
+        const auto& candidate=comp_->source_water_p6f_stage16(frame);
+        if(!candidate.actual_g14_stage16_precommit_validated||
+           candidate.g14_hour_committed||candidate.source_clocks_published||
+           candidate.ready_for_next_hour||
+           candidate.candidate_dataset.hourly.size()!=45||
+           candidate.serialized_prepared_only.empty())
+            throw std::logic_error(
+                "G65 fifth-hour P6F published prematurely or incomplete");
+        diagno_.require_station_clock_preflight(frame);
+        return candidate;
+    }
+
+    void require_station_clock_preflight(
+        const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=4)
+            throw std::logic_error(
+                "G65 fifth-hour clock preflight before native P6F");
+        diagno_.require_station_clock_preflight(frame);
+    }
+
+    [[nodiscard]] bool publish_after_commit_noexcept() noexcept {
+        return cursor_==17&&comp_.has_value()&&
+            diagno_.try_publish_after_selected_g14_commit_noexcept();
+    }
+private:
+    G26SourceFileBackedG14DiagnoBridge diagno_;
+    const G19FileBackedCase& source_;
+    const G41SelectedNoowWaterFirstHourSource& original_;
+    std::optional<G26BSourceFileBackedCompBridge> comp_;
+    std::size_t cursor_=0;
+};
+
 struct G65NoaaFirstHourCommitReceipt {
     std::chrono::sys_seconds end{};
     p6::NativeGridMemory committed_memory;
@@ -350,6 +423,16 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour5_live_g26a_stage3_6_uncommitted=false;
     bool hour5_live_g23_g24_stage11_uncommitted=false;
     std::vector<std::uint8_t> hour5_g23_g24_trace_bytes;
+    bool hour5_native_g26b_stage12_trial_only=false;
+    std::vector<std::uint8_t> hour5_native_g26b_stage12_trace_bytes;
+    bool hour5_native_g26b_stage15_trial_only=false;
+    std::vector<std::uint8_t> hour5_native_g26b_stage15_trace_bytes;
+    bool hour5_native_g26b_p6f45_trial_only=false;
+    std::vector<std::uint8_t> hour5_native_g26b_p6f45_bytes;
+    bool hour5_g14_rollback_verified=false;
+    bool hour5_g14_positive_commit_verified=false;
+    bool hour5_station_clocks_published=false;
+    bool hour6_preview_inherits_hour5_memory=false;
     std::vector<std::uint8_t> hour5_g22_forensic_trace_bytes;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
@@ -429,7 +512,20 @@ g65_real_noaa_firsthour_atomic_commit(
     bool opt_in_hour4_g14_transaction=false,
     bool opt_in_hour5_g26a_preflight=false,
     bool opt_in_hour5_g22_forensic=false,
-    bool opt_in_hour5_windtail_trial=false) {
+    bool opt_in_hour5_windtail_trial=false,
+    bool opt_in_hour5_comp_stage12_trial=false,
+    bool opt_in_hour5_comp_stage15_trial=false,
+    bool opt_in_hour5_p6f_trial=false,
+    bool opt_in_hour5_g14_transaction=false) {
+    if(opt_in_hour5_g14_transaction&&!opt_in_hour5_p6f_trial)
+        throw std::invalid_argument(
+            "G65 fifth-hour G14 requires source-native P6F stage16");
+    if(opt_in_hour5_p6f_trial&&!opt_in_hour5_comp_stage15_trial)
+        throw std::invalid_argument("G65 hour5 P6F requires COMP stage15");
+    if(opt_in_hour5_comp_stage15_trial&&!opt_in_hour5_comp_stage12_trial)
+        throw std::invalid_argument("G65 hour5 COMP stage15 requires stage12");
+    if(opt_in_hour5_comp_stage12_trial&&!opt_in_hour5_windtail_trial)
+        throw std::invalid_argument("G65 hour5 COMP requires native wind-tail");
     if(opt_in_hour5_windtail_trial&&!opt_in_hour5_g22_forensic)
         throw std::invalid_argument(
             "G65 fifth-hour wind-tail requires independently checked G22");
@@ -1536,6 +1632,14 @@ g65_real_noaa_firsthour_atomic_commit(
     std::vector<std::uint8_t> fifth_g22_bytes;
     bool fifth_live_g22=false;
     std::vector<std::uint8_t> fifth_windtail_bytes;
+    std::vector<std::uint8_t> fifth_comp_stage12_bytes;
+    std::vector<std::uint8_t> fifth_comp_stage15_bytes;
+    std::vector<std::uint8_t> fifth_p6f45_bytes;
+    p6::NativeGridMemory fifth_trial_next;
+    bool fifth_g14_rollback=false;
+    bool fifth_g14_positive=false;
+    bool fifth_station_published=false;
+    bool sixth_inherits_fifth=false;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -2607,6 +2711,121 @@ g65_real_noaa_firsthour_atomic_commit(
                        fourth_trial_next.dptt_k))
                     throw std::logic_error(
                         "G65 fifth-hour wind-tail mutated G14 authority");
+                if(opt_in_hour5_comp_stage12_trial) {
+                    // Fifth-hour COMP consumes the same live hour5 G26A frame
+                    // and real hour4 G14 committed memory. Nothing from the
+                    // original Fortran trace enters any C++ physical kernel.
+                    G26BSourceFileBackedCompBridge comp(
+                        live_actor,source,true,&actual,
+                        false,false,false,false,false,false,
+                        true,opt_in_hour5_comp_stage15_trial,
+                        opt_in_hour5_p6f_trial);
+                    auto comp_step=comp.run(
+                        p6::kHefeiOriginalStageOrder[12],live);
+                    if(!comp_step.completed||
+                       comp_step.source!=p6::NativeHourSource::NativeCpp)
+                        throw std::logic_error(
+                            "G65 fifth-hour COMP MIXHT stage12 incomplete");
+                    constexpr std::size_t n=82U*85U;
+                    const auto& mixed=comp.source_water_mixht_stage12(live);
+                    const auto put=[&](std::vector<std::uint8_t>& dst,
+                                       std::uint32_t value) {
+                        for(unsigned i=0;i<4;++i)
+                            dst.push_back(static_cast<std::uint8_t>(
+                                value>>(8*i)));
+                    };
+                    const auto emit=[&](std::vector<std::uint8_t>& dst,
+                                        int stage,
+                                        std::initializer_list<
+                                            const std::vector<float>*> fields) {
+                        for(int header:{6,stage,82,85,9})
+                            put(dst,static_cast<std::uint32_t>(header));
+                        const auto extent=stage==15?9U*n:n;
+                        for(const auto* field:fields) {
+                            if(!field||field->size()!=extent)
+                                throw std::logic_error(
+                                    "G65 fifth-hour COMP trace shape invalid");
+                            for(float val:*field) {
+                                if(!std::isfinite(val))
+                                    throw std::logic_error(
+                                        "G65 fifth-hour COMP nonfinite");
+                                put(dst,std::bit_cast<std::uint32_t>(val));
+                            }
+                        }
+                    };
+                    emit(fifth_comp_stage12_bytes,12,
+                         {&mixed.zi_before_avemix_m,
+                          &mixed.ziconv_before_avemix_m,
+                          &mixed.comp_third_qh_wm2,
+                          &mixed.comp_third_temperature_k,
+                          &mixed.comp_third_density_kgm3,
+                          &mixed.p6f_water_reconciled_ustar_mps,
+                          &mixed.p6f_water_reconciled_el_m});
+                    if(fifth_comp_stage12_bytes.size()!=20U+7U*n*4U)
+                        throw std::logic_error(
+                            "G65 fifth-hour MIXHT trace extent invalid");
+                    if(opt_in_hour5_comp_stage15_trial) {
+                        fifth_comp_stage15_bytes=fifth_comp_stage12_bytes;
+                        for(int stage=13;stage<=15;++stage) {
+                            comp_step=comp.run(
+                                p6::kHefeiOriginalStageOrder[stage],live);
+                            if(!comp_step.completed||
+                               comp_step.source!=p6::NativeHourSource::NativeCpp)
+                                throw std::logic_error(
+                                    "G65 fifth-hour COMP stage13-15 incomplete");
+                            if(stage==13) {
+                                const auto& avg=
+                                    comp.source_water_avemix_stage13(live);
+                                emit(fifth_comp_stage15_bytes,13,
+                                     {&avg.zi_m,&avg.ziconv_m});
+                            }else if(stage==14) {
+                                emit(fifth_comp_stage15_bytes,14,
+                                     {&comp.source_water_wstarr_stage14(live)});
+                            }else {
+                                emit(fifth_comp_stage15_bytes,15,
+                                     {&comp.source_water_temp3d_stage15(live)});
+                            }
+                        }
+                        if(fifth_comp_stage15_bytes.size()!=
+                            4U*20U+(7U+2U+1U+9U)*n*4U)
+                            throw std::logic_error(
+                                "G65 fifth-hour COMP stage12-15 trace extent");
+                        if(opt_in_hour5_p6f_trial) {
+                            comp_step=comp.run(
+                                p6::kHefeiOriginalStageOrder[16],live);
+                            if(!comp_step.completed||
+                               comp_step.source!=p6::NativeHourSource::NativeCpp)
+                                throw std::logic_error(
+                                    "G65 fifth-hour G64 P6F stage16 incomplete");
+                            const auto& ready=
+                                comp.source_water_p6f_stage16(live);
+                            if(!ready.actual_g14_stage16_precommit_validated||
+                               ready.g14_hour_committed||
+                               ready.source_clocks_published||
+                               ready.ready_for_next_hour||
+                               ready.candidate_dataset.hourly.size()!=45||
+                               ready.serialized_prepared_only.empty())
+                                throw std::logic_error(
+                                    "G65 fifth-hour P6F premature commit");
+                            fifth_p6f45_bytes=ready.serialized_prepared_only;
+                            fifth_trial_next=ready.candidate_next;
+                        }
+                    }
+                    if(scheduler.completed_hours()!=4||
+                       clocks.latest_upper_hour()!=fourth_end||
+                       clocks.latest_gamma_hour()!=fourth_end||
+                       !g65_equal_real4_bits(
+                           scheduler.committed_memory().zi_m,
+                           fourth_trial_next.zi_m)||
+                       !g65_equal_real4_bits(
+                           scheduler.committed_memory().ziconv_m,
+                           fourth_trial_next.ziconv_m)||
+                       !g65_equal_real4_bits(
+                           scheduler.committed_memory().dptt_k,
+                           fourth_trial_next.dptt_k))
+                        throw std::logic_error(
+                            "G65 fifth-hour COMP/P6F altered G14 authority");
+                }
             }
         }
         if(!fifth_g22_guarded||
@@ -2621,6 +2840,171 @@ g65_real_noaa_firsthour_atomic_commit(
                                  fourth_trial_next.dptt_k))
             throw std::logic_error(
                 "G65 fifth-hour G22 production guard or state violated");
+    }
+
+    // Explicit fifth-hour G14 rollback then positive retry on fresh actors.
+    // Candidate byte identity is checked against the separate uncommitted
+    // stage16 execution. No Fortran MET is ever passed to native physics.
+    if(opt_in_hour5_g14_transaction) {
+        const auto fourth_end=source.surface.hourly[3].end;
+        const auto fifth_end=source.surface.hourly[4].end;
+        if(fifth_p6f45_bytes.empty()||
+           fifth_trial_next.zi_m.size()!=6970||
+           fifth_native_prior.ustar_mps.size()!=6970||
+           !fifth_native_prior.explicitly_native_p6f_origin||
+           fifth_native_prior.end!=fourth_end||
+           scheduler.completed_hours()!=4||
+           clocks.latest_upper_hour()!=fourth_end||
+           clocks.latest_gamma_hour()!=fourth_end)
+            throw std::logic_error(
+                "G65 fifth-hour G14 cannot use incomplete native P6F");
+        const auto before=scheduler.committed_memory();
+        auto assert_candidate=[&](
+            const G65RealNoaaFifthHourTrialActor& actor,
+            const MultiHourFrame& frame) {
+            if(frame.hour_index!=4||frame.input.end!=fifth_end||
+               frame.surface.start!=fourth_end||
+               &frame.previous!=&scheduler.committed_memory()||
+               scheduler.completed_hours()!=4||
+               clocks.latest_upper_hour()!=fourth_end||
+               clocks.latest_gamma_hour()!=fourth_end)
+                throw std::logic_error(
+                    "G65 fifth-hour candidate detached from hour3");
+            const auto& prepared=actor.precommit(frame);
+            if(prepared.serialized_prepared_only!=fifth_p6f45_bytes||
+               !g65_equal_real4_bits(frame.next.zi_m,
+                                     fifth_trial_next.zi_m)||
+               !g65_equal_real4_bits(frame.next.ziconv_m,
+                                     fifth_trial_next.ziconv_m)||
+               !g65_equal_real4_bits(frame.next.dptt_k,
+                                     fifth_trial_next.dptt_k))
+                throw std::logic_error(
+                    "G65 fifth-hour retry not bitwise same P6F candidate");
+        };
+        G65RealNoaaFifthHourTrialActor* failed_actor=nullptr;
+        bool failed_gate_reached=false;
+        bool failed_published=false;
+        try {
+            scheduler.advance_with_fresh_physics(
+                [&](const MultiHourFrame& next)
+                    ->std::unique_ptr<MultiHourPhysics> {
+                    if(next.hour_index!=4||next.input.end!=fifth_end||
+                       !g65_equal_real4_bits(next.previous.zi_m,before.zi_m)||
+                       !g65_equal_real4_bits(next.previous.ziconv_m,
+                                             before.ziconv_m)||
+                       !g65_equal_real4_bits(next.previous.dptt_k,
+                                             before.dptt_k))
+                        throw std::logic_error(
+                            "G65 hour5 rollback factory lost committed history");
+                    auto actor=std::make_unique<
+                        G65RealNoaaFifthHourTrialActor>(
+                            scheduler,clocks,source,actual,fifth_native_prior);
+                    failed_actor=actor.get();
+                    return actor;
+                },
+                [&](const MultiHourFrame& candidate_frame) {
+                    if(!failed_actor)throw std::logic_error(
+                        "G65 missing fresh hour5 rollback actor");
+                    assert_candidate(*failed_actor,candidate_frame);
+                    failed_gate_reached=true;
+                    throw std::runtime_error(
+                        "G65_EXPECTED_HOUR4_P6F_ROLLBACK");
+                },
+                [&](MultiHourPhysics&,const MultiHourFrame&,
+                    const UnifiedMultistationHourlyScheduler&) {
+                    throw std::logic_error(
+                        "G65 hour5 rollback reached clock preflight");
+                },
+                [&](MultiHourPhysics&,
+                    const UnifiedMultistationHourlyScheduler&) noexcept {
+                    failed_published=true;
+                });
+            throw std::logic_error(
+                "G65 fifth-hour rollback unexpectedly committed");
+        }catch(const std::runtime_error& e) {
+            if(!failed_gate_reached||
+               std::string(e.what())!="G65_EXPECTED_HOUR4_P6F_ROLLBACK")
+                throw;
+        }
+        if(failed_published||scheduler.completed_hours()!=4||
+           clocks.latest_upper_hour()!=fourth_end||
+           clocks.latest_gamma_hour()!=fourth_end||
+           !g65_equal_real4_bits(scheduler.committed_memory().zi_m,
+                                 before.zi_m)||
+           !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,
+                                 before.ziconv_m)||
+           !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,
+                                 before.dptt_k))
+            throw std::logic_error(
+                "G65 hour5 rollback published state or station clocks");
+        fifth_g14_rollback=true;
+
+        G65RealNoaaFifthHourTrialActor* actor=nullptr;
+        bool validated=false,clock_preflight=false;
+        scheduler.advance_with_fresh_physics(
+            [&](const MultiHourFrame& next)
+                ->std::unique_ptr<MultiHourPhysics> {
+                if(next.hour_index!=4||next.input.end!=fifth_end||
+                   &next.previous!=&scheduler.committed_memory())
+                    throw std::logic_error(
+                        "G65 hour5 retry detached from scheduler");
+                auto fresh=std::make_unique<G65RealNoaaFifthHourTrialActor>(
+                    scheduler,clocks,source,actual,fifth_native_prior);
+                actor=fresh.get();
+                return fresh;
+            },
+            [&](const MultiHourFrame& candidate_frame) {
+                if(!actor)throw std::logic_error(
+                    "G65 missing positive hour5 retry actor");
+                assert_candidate(*actor,candidate_frame);
+                validated=true;
+            },
+            [&](MultiHourPhysics& physics,
+                const MultiHourFrame& candidate_frame,
+                const UnifiedMultistationHourlyScheduler& owner) {
+                auto* current=dynamic_cast<
+                    G65RealNoaaFifthHourTrialActor*>(&physics);
+                if(!validated||current!=actor||owner.completed_hours()!=4)
+                    throw std::logic_error(
+                        "G65 hour5 G14 clock preflight order wrong");
+                actor->require_station_clock_preflight(candidate_frame);
+                clock_preflight=true;
+            },
+            [&](MultiHourPhysics& physics,
+                const UnifiedMultistationHourlyScheduler& owner) noexcept {
+                auto* current=dynamic_cast<
+                    G65RealNoaaFifthHourTrialActor*>(&physics);
+                fifth_station_published=(validated&&clock_preflight&&
+                    current!=nullptr&&current==actor&&
+                    current->publish_after_commit_noexcept()&&
+                    owner.completed_hours()==5&&clocks.has_published_hour());
+            });
+        if(!fifth_station_published||scheduler.completed_hours()!=5||
+           clocks.latest_upper_hour()!=fifth_end||
+           clocks.latest_gamma_hour()!=fifth_end||
+           !g65_equal_real4_bits(scheduler.committed_memory().zi_m,
+                                 fifth_trial_next.zi_m)||
+           !g65_equal_real4_bits(scheduler.committed_memory().ziconv_m,
+                                 fifth_trial_next.ziconv_m)||
+           !g65_equal_real4_bits(scheduler.committed_memory().dptt_k,
+                                 fifth_trial_next.dptt_k))
+            throw std::logic_error(
+                "G65 positive hour5 G14 memory/clock commit mismatch");
+        fifth_g14_positive=true;
+        const auto sixth=scheduler.preview_next_hour();
+        sixth_inherits_fifth=(
+            sixth.hour_index==5&&
+            sixth.surface.start==source.surface.hourly[4].end&&
+            &sixth.previous==&scheduler.committed_memory()&&
+            g65_equal_real4_bits(sixth.previous.zi_m,
+                                 fifth_trial_next.zi_m)&&
+            g65_equal_real4_bits(sixth.previous.ziconv_m,
+                                 fifth_trial_next.ziconv_m)&&
+            g65_equal_real4_bits(sixth.previous.dptt_k,
+                                 fifth_trial_next.dptt_k));
+        if(!sixth_inherits_fifth)
+            throw std::logic_error(
+                "G65 sixth-hour preview lost committed fifth-hour memory");
     }
 
     G65NoaaFirstHourCommitReceipt receipt;
@@ -2691,6 +3075,25 @@ g65_real_noaa_firsthour_atomic_commit(
     if(receipt.hour5_live_g23_g24_stage11_uncommitted)
         receipt.hour5_g23_g24_trace_bytes=
             std::move(fifth_windtail_bytes);
+    receipt.hour5_native_g26b_stage12_trial_only=
+        opt_in_hour5_comp_stage12_trial&&!fifth_comp_stage12_bytes.empty();
+    if(receipt.hour5_native_g26b_stage12_trial_only)
+        receipt.hour5_native_g26b_stage12_trace_bytes=
+            std::move(fifth_comp_stage12_bytes);
+    receipt.hour5_native_g26b_stage15_trial_only=
+        opt_in_hour5_comp_stage15_trial&&!fifth_comp_stage15_bytes.empty();
+    if(receipt.hour5_native_g26b_stage15_trial_only)
+        receipt.hour5_native_g26b_stage15_trace_bytes=
+            std::move(fifth_comp_stage15_bytes);
+    receipt.hour5_native_g26b_p6f45_trial_only=
+        opt_in_hour5_p6f_trial&&!fifth_p6f45_bytes.empty();
+    if(receipt.hour5_native_g26b_p6f45_trial_only)
+        receipt.hour5_native_g26b_p6f45_bytes=
+            std::move(fifth_p6f45_bytes);
+    receipt.hour5_g14_rollback_verified=fifth_g14_rollback;
+    receipt.hour5_g14_positive_commit_verified=fifth_g14_positive;
+    receipt.hour5_station_clocks_published=fifth_station_published;
+    receipt.hour6_preview_inherits_hour5_memory=sixth_inherits_fifth;
     receipt.hour5_g22_forensic_trace_only=
         opt_in_hour5_g22_forensic&&!fifth_g22_bytes.empty();
     if(receipt.hour5_g22_forensic_trace_only)

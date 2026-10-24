@@ -1,3 +1,7 @@
+## 2026-10-24 S4-A 第五小时 COMP/P6F 新增受限科学证据
+- 真 NOAA 第五小时 G26B COMP stages12–15：132430/132430 REAL4 冻结公差内、0 超差。G64 P6F stage16 45 字段单小时预提交：313650/313650，0 超差。独立原版/原生比较证据及所有 SHA 见 docs/plans/ISSUE40_S4R1C9AF_AG_NOAA_HOUR5_COMP_P6F_G14_20261024.md。
+- 真 NOAA 第五小时 G14 已完成新 actor 独立回滚与正向提交（原生进程 exit=0）；第五小时 P6F 正向提交候选与独立比较过的源 P6F 候选 SHA256 完全一致，第六小时只读初始状态继承通过。这属于 PASS_SCOPED_TRANSACTION_ONLY；第六小时17个真实计算阶段、生产 P6/P7 和独立科学审查仍 NOT_RUN/NOT_ACCEPTED。
+
 ## 2026-10-24 最新验收节奏（覆盖本计划旧 Docker full 文字）
 - S4 Ubuntu 原生软件 full + 真实原版科学对照与独立审查；S5 规模/性能/原生软件 full + 科学回归；正式 Docker full 和 AMD64/ARM64 交付验收放在 S5 完成后。
 - GitHub repository-admission 要求 exact SHA 的 ubuntu-native-full 或旧 ubuntu-docker-full；scientific-admission、独立同 SHA review、Draft 门禁不变。

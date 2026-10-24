@@ -35,14 +35,16 @@ inline G53ActualWaterCompResult g53_real_source_g24_neutral_water_reference(
     const G24SourceWindTail& wind,
     bool explicitly_research_only,
     bool opt_in_hour3_comp_stage12_trial=false,
-    bool opt_in_hour4_comp_stage12_trial=false) {
+    bool opt_in_hour4_comp_stage12_trial=false,
+    bool opt_in_hour5_comp_stage12_trial=false) {
     if(!explicitly_research_only||source.g14_g26_production_ready||
        source.water_heat_source.g14_g26_production_ready||
        wind.end!=frame.input.end)
         throw std::invalid_argument("G53 original real WATER physics requires source-only opt-in");
     const auto partition=g26b_real_water_comp_partition_source_only(
         source,frame,true,opt_in_hour3_comp_stage12_trial,
-        opt_in_hour4_comp_stage12_trial);
+        opt_in_hour4_comp_stage12_trial,
+        opt_in_hour5_comp_stage12_trial);
     if(partition.source_water_comp_physics_accepted||
        partition.g26_45fields_accepted||
        partition.original_causal_comp_history_accepted)
