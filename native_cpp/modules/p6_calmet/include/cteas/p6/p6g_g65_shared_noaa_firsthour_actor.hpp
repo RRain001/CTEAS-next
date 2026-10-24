@@ -59,4 +59,66 @@ private:
     std::size_t cursor_=0;
 };
 
+// S4-R1c9j: a fresh second-hour 17-stage actor can serve either a forced
+// rollback trial or an explicitly opted-in positive G14 transaction. No
+// general P6 production is enabled, and independent original Fortran science
+// is a separate required gate.
+class G65RealNoaaSecondHourActor final : public MultiHourPhysics {
+public:
+    G65RealNoaaSecondHourActor(
+        const UnifiedMultistationHourlyScheduler& scheduler,
+        G18D2StationClockAuthority& clocks,
+        const G19FileBackedCase& source,
+        const G41SelectedNoowWaterFirstHourSource& original)
+        :diagno_(scheduler,clocks,source,true),
+         comp_(diagno_,source,true,&original) {}
+
+    [[nodiscard]] p6::NativeHourStageResult run(
+        p6::NativeHourStage stage,MultiHourFrame& frame) override {
+        if(frame.hour_index!=1||cursor_>=p6::kHefeiOriginalStageOrder.size()||
+           stage!=p6::kHefeiOriginalStageOrder[cursor_])
+            throw std::logic_error(
+                "G65 second-hour actor wrong hour/stage");
+        const auto result=(cursor_<12)
+            ?diagno_.run(stage,frame):comp_.run(stage,frame);
+        if(!result.completed||result.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 second-hour actor missing native physics");
+        ++cursor_;
+        return result;
+    }
+
+    [[nodiscard]] const G64RealNoaaP6FPrecommit& precommit(
+        const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=1)
+            throw std::logic_error(
+                "G65 second-hour precommit before all 17 native stages");
+        const auto& candidate=comp_.source_water_p6f_stage16(frame);
+        if(!candidate.actual_g14_stage16_precommit_validated||
+           candidate.g14_hour_committed||candidate.source_clocks_published||
+           candidate.candidate_dataset.hourly.size()!=45||
+           candidate.serialized_prepared_only.empty())
+            throw std::logic_error(
+                "G65 second-hour has invalid P6F candidate");
+        diagno_.require_station_clock_preflight(frame);
+        return candidate;
+    }
+
+    void require_station_clock_preflight(const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=1)
+            throw std::logic_error("G65 second-hour clock preflight before P6F");
+        diagno_.require_station_clock_preflight(frame);
+    }
+
+    [[nodiscard]] bool publish_after_commit_noexcept() noexcept {
+        return cursor_==17&&
+               diagno_.try_publish_after_selected_g14_commit_noexcept();
+    }
+private:
+    G26SourceFileBackedG14DiagnoBridge diagno_;
+    G26BSourceFileBackedCompBridge comp_;
+    std::size_t cursor_=0;
+};
+
+
 } // namespace cteas::calmet::p6g
