@@ -6,6 +6,7 @@
 // All 17 physics stages run on the SAME scheduler-owned frame; no G54/G59
 // numbers are used as native forcing. Failed precommit cannot publish state.
 #include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
+#include "cteas/p6/p6g_g65_shared_noaa_firsthour_actor.hpp"
 #include "cteas/p6/p6g_g45_six_hour_water_wind1.hpp"
 #include "cteas/p6/p6g_g66_noaa_hour3_g22_trace.hpp"
 #include <bit>
@@ -20,55 +21,6 @@
 #include <vector>
 
 namespace cteas::calmet::p6g {
-
-class G65RealNoaaFirstHourActor final : public MultiHourPhysics {
-public:
-    G65RealNoaaFirstHourActor(
-        const UnifiedMultistationHourlyScheduler& scheduler,
-        G18D2StationClockAuthority& clocks,
-        const G19FileBackedCase& source,
-        const G41SelectedNoowWaterFirstHourSource& original)
-        :diagno_(scheduler,clocks,source,true),
-         comp_(diagno_,source,true,&original) {}
-
-    [[nodiscard]] p6::NativeHourStageResult run(
-        p6::NativeHourStage stage,MultiHourFrame& frame) override {
-        if(frame.hour_index!=0)
-            throw std::logic_error(
-                "G65 first-hour source actor refuses cross-hour replay");
-        if(cursor_>=p6::kHefeiOriginalStageOrder.size()||
-           stage!=p6::kHefeiOriginalStageOrder[cursor_])
-            throw std::logic_error("G65 17-stage G14 order/phase drift");
-        const auto result=(cursor_<12)
-            ?diagno_.run(stage,frame):comp_.run(stage,frame);
-        if(!result.completed||result.source!=p6::NativeHourSource::NativeCpp)
-            throw std::logic_error("G65 missing native CALMET stage");
-        ++cursor_;
-        return result;
-    }
-
-    [[nodiscard]] const cteas::p6f::Calmet21File& precommit(
-        const MultiHourFrame& frame) const {
-        if(cursor_!=17||frame.hour_index!=0)
-            throw std::logic_error("G65 precommit before full first hour");
-        const auto& candidate=comp_.source_water_p6f_stage16(frame);
-        if(!candidate.actual_g14_stage16_precommit_validated||
-           candidate.serialized_prepared_only.empty()||
-           candidate.candidate_dataset.hourly.size()!=45)
-            throw std::logic_error("G65 P6F native precommit not verified");
-        diagno_.require_station_clock_preflight(frame);
-        return candidate.candidate_dataset;
-    }
-
-    [[nodiscard]] bool publish_after_commit_noexcept() noexcept {
-        return cursor_==17&&
-               diagno_.try_publish_after_selected_g14_commit_noexcept();
-    }
-private:
-    G26SourceFileBackedG14DiagnoBridge diagno_;
-    G26BSourceFileBackedCompBridge comp_;
-    std::size_t cursor_=0;
-};
 
 // S4-R1c9j: a fresh second-hour 17-stage actor can serve either a forced
 // rollback trial or an explicitly opted-in positive G14 transaction. No

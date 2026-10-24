@@ -1,3 +1,8 @@
+## 2026-10-24 S4-C 同一 S4B2 完成真实 NOAA 第一小时 G14/P6F 原版对照（最新）
+- 将 G65 的 **原样** `G65RealNoaaFirstHourActor` 提取为共享头，原 G65 research CLI 与统一 S4B2 都使用该物理 actor；新 S4B2 `--selected-experimental --water-firsthour-g14-trial-only --hours 6 --probe-prefix-hours 1 --out ...` 必须真实 G41/G43 水陆来源、2SS/1US、82×85、63 WATER 与完整 6h 观测时钟，只运行第一小时 17 原生阶段和 G14 原子提交。其它生产与默认 all-land Guard 完全保留。
+- Ubuntu 私有真实 NOAA 2022-06-01 01–02 UTC first-hour native `MET.DAT` 与只读固定原版 Fortran 6h 文件独立对照：45 字段 ×6970 网格=313650 数值，298578 逐位一致，冻结阈值 **0 超差**；本轮原版 Fortran 未重新运行。代码科学报告 `docs/plans/ISSUE40_S4C_SHARED_G65_FIRSTHOUR_G14_20261024.md`，私有文件/对照 JSON `/home/lhy/dev/reports/cteas-s4c-unified-20261024/`。这是 `PASS_SCOPED_S4C_UNIFIED_FIRSTHOUR_FORTRAN_45`，**不意味着 hours2–6、生产 P6/P7 与跨案例已被验收**。
+- 新增水面第一小时显式 opt-in 负向 CTest、原版对比 SHA/来源隔离 Python 测试；未修改任何数值方程、固定容差或独立评审门槛。下一步接 G65 hour2 的 P6F 原生历史、G43 每小时补缺、跨小时 G14/时钟验证，然后 hours3–6、C1/C2 与第二场址。当前源码有新增变更时，旧提交的软件 full 不可自动继承；在 clean 新 SHA 软件 full/PR status 核验后同步新证据。
+
 ## 2026-10-24 S4-C 统一 P6 WATER 来源预检（非物理阶段验收）
 - S4B2 `--selected-experimental --water-source-preflight-only` 在同一可配置入口调用 G19/G38/G14 真实源码入场、六小时 UTC/站点时钟，接受 NOAA 82×85×9、2SS/1US、63 WATER，报告 `PASS_SOURCE_ONLY`，但**不**计算 G26/G26B/P6F、不写 CALMET.DAT、不解除 G65 研究模式，`PRODUCTION_ADMISSION=NOT_ACCEPTED`。现有 S4B2 默认模式对含 WATER 数据仍正确拒绝 `G18D3 all-land HFLUX default branch only`。
 - 增加 CTest 测试选项互斥/无输出/缺失输入 fail-closed；私有实测路径 `/home/lhy/dev/reports/cteas-s4c-unified-20261024/`，文件身份 SHA 与后续物理改造缺口记录在 `docs/plans/ISSUE40_S4C_WATER_SOURCE_PREFLIGHT_20261024.md`。完整软件 full 仅在本次提交 clean 冻结后有效，旧 HEAD 的 `ubuntu-native-full` success **不能继承到新 SHA**。
