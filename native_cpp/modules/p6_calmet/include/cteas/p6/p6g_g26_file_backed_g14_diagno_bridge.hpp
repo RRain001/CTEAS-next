@@ -32,13 +32,20 @@ public:
         bool explicitly_opt_in_normal_trial=false,
         const G66NativeHour2WaterState* native_hour2_p6f=nullptr,
         bool explicitly_opt_in_hour3_g22_trial=false,
-        bool explicitly_opt_in_hour3_windtail_trial=false)
+        bool explicitly_opt_in_hour3_windtail_trial=false,
+        bool explicitly_opt_in_hour4_g22_trial=false)
         :owner_(owner),clocks_(clocks),source_(source),
          prepdi_(owner,clocks,source.original_metinp),
          normal_trial_(explicitly_opt_in_normal_trial),
          native_hour2_p6f_(native_hour2_p6f),
          hour3_g22_trial_(explicitly_opt_in_hour3_g22_trial),
-         hour3_windtail_trial_(explicitly_opt_in_hour3_windtail_trial) {
+         hour3_windtail_trial_(explicitly_opt_in_hour3_windtail_trial),
+         hour4_g22_trial_(explicitly_opt_in_hour4_g22_trial) {
+        if(hour4_g22_trial_&&
+           (!normal_trial_||!native_hour2_p6f_||hour3_g22_trial_||
+            hour3_windtail_trial_))
+            throw std::invalid_argument(
+                "G26 hour4 G22 trial requires native hour3 P6F only");
         if(hour3_windtail_trial_&&!hour3_g22_trial_)
             throw std::invalid_argument(
                 "G26 hour3 wind-tail requires prior native G22 trial");
@@ -131,20 +138,28 @@ public:
         case 3:
             // G22 is physically ordered inside this one source-bound
             // kernel; 3..6 are NOT independently committed callbacks.
-            if(hour3_g22_trial_) {
-                if(frame.hour_index!=2||!source_.research_noow_water_source_only||
+            if(hour3_g22_trial_||hour4_g22_trial_) {
+                if(frame.hour_index!=(hour4_g22_trial_?3U:2U)||
+                   !source_.research_noow_water_source_only||
                    !native_hour2_p6f_||!wind_||!g21_)
                     throw std::logic_error(
                         "G26 hour3 test-only G22 provenance invalid");
-                auto native=g66_native_hour3_g22_trace_only(
-                    frame,source_,wind_->selected_result().first_guess,
-                    *g21_,*native_hour2_p6f_,true);
+                auto native=hour4_g22_trial_
+                    ?g66_native_hour4_g22_trace_only(
+                        frame,source_,wind_->selected_result().first_guess,
+                        *g21_,*native_hour2_p6f_,true)
+                    :g66_native_hour3_g22_trace_only(
+                        frame,source_,wind_->selected_result().first_guess,
+                        *g21_,*native_hour2_p6f_,true);
                 if(native.production_admitted||native.traced_stages!=5||
                    native.water_history_values!=126)
                     throw std::logic_error(
                         "G26 third-hour G22 trial unexpectedly admitted");
                 g22_.emplace(std::move(native.thermal));
-                hour3_g22_trace_=std::move(native.bytes);
+                if(hour4_g22_trial_)
+                    hour4_g22_trace_=std::move(native.bytes);
+                else
+                    hour3_g22_trace_=std::move(native.bytes);
             } else {
                 // Default unchanged: G22 itself rejects hour_index>1.
                 g22_.emplace(g22_selected_source_thermal_slope(
@@ -275,6 +290,15 @@ public:
                 "G26 third-hour G22 trial trace not stage6-complete");
         verify_frame(frame);
         return hour3_g22_trace_;
+    }
+    [[nodiscard]] const std::vector<std::uint8_t>&
+    selected_hour4_g22_trace_after_stage(const MultiHourFrame& frame) const {
+        if(!hour4_g22_trial_||phase_<7||!g22_||
+           hour4_g22_trace_.empty()||frame.hour_index!=3)
+            throw std::logic_error(
+                "G26 fourth-hour G22 test-only stage6 was not completed");
+        verify_frame(frame);
+        return hour4_g22_trace_;
     }
     // Read-only, unpublished forensic stages. Original Fortran trace is
     // NEVER passed into this actor; compare in an independent Python tool.
@@ -422,7 +446,9 @@ private:
     const G66NativeHour2WaterState* native_hour2_p6f_=nullptr;
     bool hour3_g22_trial_=false;
     bool hour3_windtail_trial_=false;
+    bool hour4_g22_trial_=false;
     std::vector<std::uint8_t> hour3_g22_trace_;
+    std::vector<std::uint8_t> hour4_g22_trace_;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds source_end_{};

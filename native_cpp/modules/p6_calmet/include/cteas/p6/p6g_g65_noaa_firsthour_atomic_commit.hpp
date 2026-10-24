@@ -255,6 +255,10 @@ struct G65NoaaFirstHourCommitReceipt {
     bool hour4_preview_inherits_hour3_memory=false;
     bool hour4_g26a_stage0_2_source_preflight_only=false;
     bool hour4_g22_production_guard_rejected=false;
+    bool hour4_g22_forensic_trace_only=false;
+    std::vector<std::uint8_t> hour4_g22_forensic_trace_bytes;
+    bool hour4_live_g26a_stage3_6_uncommitted=false;
+    bool hour4_live_g22_matches_detached=false;
     p6::NativeGridMemory hour2_committed_memory;
     std::size_t hour2_p6f_compared_words=0;
     // Explicit forensic handoff only: NOT a committed model output.
@@ -324,7 +328,11 @@ g65_real_noaa_firsthour_atomic_commit(
     bool opt_in_hour3_comp_stage15_trial=false,
     bool opt_in_hour3_p6f_trial=false,
     bool opt_in_hour3_g14_transaction=false,
-    bool opt_in_hour4_g26a_preflight=false) {
+    bool opt_in_hour4_g26a_preflight=false,
+    bool opt_in_hour4_g22_trace_only=false) {
+    if(opt_in_hour4_g22_trace_only&&!opt_in_hour4_g26a_preflight)
+        throw std::invalid_argument(
+            "G65 hour4 G22 forensic trace requires hour4 source preflight");
     if(opt_in_hour4_g26a_preflight&&!opt_in_hour3_g14_transaction)
         throw std::invalid_argument(
             "G65 hour4 PREPDI requires committed hour3 trial");
@@ -402,6 +410,39 @@ g65_real_noaa_firsthour_atomic_commit(
                     "G66 MISSFC cannot repair P5 wind or precip");
         }
         source.surface.hourly[2]=third_missfc.original_comp_resolved;
+    }
+    if(opt_in_hour4_g22_trace_only) {
+        // Original CALMET COMP calls source MISSFC EACH hour before
+        // DIAGNO (calmet.for COMP ~L3986, MISSFC ~L9762). Raw station #1
+        // in the fourth NOAA hour has missing T/P/RH, not a zero-value
+        // measurement. Preserve the raw immutable P5 series; only the
+        // detached internal G14 source-hour copy receives the source's
+        // five nonwind replacements. Wind/precip cannot be invented.
+        const auto& raw=actual.source.surface.hourly.at(3);
+        const auto fourth_missfc=g43_original_comp_missfc_source_only(
+            actual,raw,true);
+        if(!fourth_missfc.source_comp_missfc_complete||
+           fourth_missfc.original_raw.end!=raw.end||
+           fourth_missfc.original_comp_resolved.end!=raw.end||
+           fourth_missfc.original_comp_resolved.by_station.size()!=2)
+            throw std::logic_error("G65 native hour4 MISSFC source incomplete");
+        for(std::size_t site=0;site<2;++site) {
+            const auto& before=raw.by_station[site];
+            const auto& after=
+                fourth_missfc.original_comp_resolved.by_station[site];
+            if(!after.pressure_valid||!after.temperature_valid||
+               !after.humidity_valid||!after.cloud_valid||
+               !after.ceiling_valid||
+               before.wind_valid!=after.wind_valid||
+               before.wind_speed_mps!=after.wind_speed_mps||
+               before.wind_direction_deg!=after.wind_direction_deg||
+               before.precip_code!=after.precip_code||
+               before.precipitation_code_valid!=
+                   after.precipitation_code_valid)
+                throw std::logic_error(
+                    "G65 native hour4 MISSFC altered raw wind or precipitation");
+        }
+        source.surface.hourly[3]=fourth_missfc.original_comp_resolved;
     }
     if(!source.research_noow_water_source_only||
        source.surface.hourly.size()!=6||
@@ -1323,6 +1364,10 @@ g65_real_noaa_firsthour_atomic_commit(
     bool fourth_inherits_third=false;
     bool fourth_g26a_staged=false;
     bool fourth_g22_guarded=false;
+    G66NativeHour2WaterState fourth_native_prior;
+    std::vector<std::uint8_t> fourth_g22_bytes;
+    bool fourth_live_g22=false;
+    bool fourth_live_exact=false;
     p6::NativeGridMemory second_committed;
     if(opt_in_positive_hour2_transaction) {
         G65RealNoaaSecondHourActor* positive_actor=nullptr;
@@ -1707,6 +1752,9 @@ g65_real_noaa_firsthour_atomic_commit(
                                      third_trial_next.dptt_k))
                 throw std::logic_error(
                     "G65 hour3 committed candidate differs from unpublished G64");
+            if(opt_in_hour4_g22_trace_only)
+                fourth_native_prior=g65_native_hour2_water_from_p6f(
+                    prepared.candidate_dataset,third_end);
         };
         G65RealNoaaThirdHourTrialActor* failed_actor=nullptr;
         bool failed_gate_reached=false;
@@ -1870,6 +1918,25 @@ g65_real_noaa_firsthour_atomic_commit(
                 throw std::logic_error(
                     "G65 hour4 G26A preflight changed hour3 committed state");
             fourth_g26a_staged=true;
+            if(opt_in_hour4_g22_trace_only) {
+                if(!fourth_native_prior.explicitly_native_p6f_origin||
+                   fourth_native_prior.end!=third_end||
+                   fourth_native_prior.begin!=second_end)
+                    throw std::logic_error(
+                        "G65 hour4 WATER history not sourced from committed G64");
+                const auto forensic=g66_native_hour4_g22_trace_only(
+                    frame,source,
+                    fourth_actor.selected_source_wind1_after_stage(frame),
+                    fourth_actor.selected_source_fradj_after_stage(frame),
+                    fourth_native_prior,true);
+                if(forensic.production_admitted||
+                   forensic.water_history_values!=126||
+                   forensic.traced_stages!=5||forensic.bytes.empty()||
+                   scheduler.completed_hours()!=3)
+                    throw std::logic_error(
+                        "G65 hour4 G22 trace lacked native history or published state");
+                fourth_g22_bytes=forensic.bytes;
+            }
             try {
                 (void)fourth_actor.run(
                     p6::kHefeiOriginalStageOrder[3],frame);
@@ -1889,6 +1956,41 @@ g65_real_noaa_firsthour_atomic_commit(
                                      third_trial_next.dptt_k))
                 throw std::logic_error(
                     "G65 hour4 production G22 guard or history violated");
+            if(opt_in_hour4_g22_trace_only) {
+                // Explicitly opt-in the REAL G26A stage3–6 actor only after
+                // the default production path rejected hour4 stage3.
+                // The independent detached G66 path is retained as a strict
+                // byte-for-byte cross-check and never supplies model values.
+                auto live=scheduler.preview_next_hour();
+                G26SourceFileBackedG14DiagnoBridge live_actor(
+                    scheduler,clocks,source,true,&fourth_native_prior,
+                    false,false,true);
+                for(std::size_t stage=0;stage<7;++stage) {
+                    const auto result=live_actor.run(
+                        p6::kHefeiOriginalStageOrder[stage],live);
+                    if(!result.completed||
+                       result.source!=p6::NativeHourSource::NativeCpp)
+                        throw std::logic_error(
+                            "G65 native hour4 live G26A stage0-6 missing");
+                }
+                fourth_live_exact=(
+                    live_actor.selected_hour4_g22_trace_after_stage(live)==
+                    fourth_g22_bytes);
+                fourth_live_g22=live_actor.selected_checkpoints()==7&&
+                    scheduler.completed_hours()==3&&
+                    clocks.latest_upper_hour()==third_end&&
+                    clocks.latest_gamma_hour()==third_end&&
+                    g65_equal_real4_bits(scheduler.committed_memory().zi_m,
+                                         third_trial_next.zi_m)&&
+                    g65_equal_real4_bits(
+                        scheduler.committed_memory().ziconv_m,
+                        third_trial_next.ziconv_m)&&
+                    g65_equal_real4_bits(scheduler.committed_memory().dptt_k,
+                                         third_trial_next.dptt_k);
+                if(!fourth_live_exact||!fourth_live_g22)
+                    throw std::logic_error(
+                        "G65 hour4 live G26A differed from G66 or advanced G14");
+            }
         }
     }
 
@@ -1932,6 +2034,13 @@ g65_real_noaa_firsthour_atomic_commit(
     receipt.hour4_preview_inherits_hour3_memory=fourth_inherits_third;
     receipt.hour4_g26a_stage0_2_source_preflight_only=fourth_g26a_staged;
     receipt.hour4_g22_production_guard_rejected=fourth_g22_guarded;
+    receipt.hour4_live_g26a_stage3_6_uncommitted=fourth_live_g22;
+    receipt.hour4_live_g22_matches_detached=fourth_live_exact;
+    receipt.hour4_g22_forensic_trace_only=
+        opt_in_hour4_g22_trace_only&&!fourth_g22_bytes.empty();
+    if(receipt.hour4_g22_forensic_trace_only)
+        receipt.hour4_g22_forensic_trace_bytes=
+            std::move(fourth_g22_bytes);
     receipt.hour3_native_g26b_p6f45_trial_only=
         opt_in_hour3_p6f_trial&&!third_p6f45_bytes.empty();
     if(receipt.hour3_native_g26b_p6f45_trial_only)

@@ -14,7 +14,9 @@
 
 int main(int argc,char** argv) {
     try {
-        const bool fourth_preflight=(argc==8&&
+        const bool fourth_g22_trace=(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g22-trace-only");
+        const bool fourth_preflight=fourth_g22_trace||(argc==8&&
             std::string(argv[6])=="--fourth-hour-g26a-preflight-only");
         const bool positive_hour3=fourth_preflight||(argc==8&&
             std::string(argv[6])=="--third-hour-g14-commit-trial-only");
@@ -54,7 +56,7 @@ int main(int argc,char** argv) {
                 paths,true,positive_hour2,third_hour_diagno,third_trace,
                 live_third_g22,live_third_windtail,live_third_comp12,
                 live_third_comp15,live_third_p6f45,positive_hour3,
-                fourth_preflight);
+                fourth_preflight,fourth_g22_trace);
         if(result.committed_hours!=(positive_hour3?3U:(positive_hour2?2U:1U))||
            result.hour3_g14_rollback_verified!=positive_hour3||
            result.hour3_g14_positive_commit_verified!=positive_hour3||
@@ -62,6 +64,9 @@ int main(int argc,char** argv) {
            result.hour4_preview_inherits_hour3_memory!=positive_hour3||
            result.hour4_g26a_stage0_2_source_preflight_only!=fourth_preflight||
            result.hour4_g22_production_guard_rejected!=fourth_preflight||
+           result.hour4_g22_forensic_trace_only!=fourth_g22_trace||
+           result.hour4_live_g26a_stage3_6_uncommitted!=fourth_g22_trace||
+           result.hour4_live_g22_matches_detached!=fourth_g22_trace||
            result.hour2_positive_g14_commit_verified!=positive_hour2||
            result.hour2_positive_station_clocks_published!=positive_hour2||
            result.hour3_preview_inherits_hour2_memory!=positive_hour2||
@@ -121,13 +126,17 @@ int main(int argc,char** argv) {
                (live_third_comp15&&
                 result.hour3_native_g26b_stage15_trace_bytes.empty())||
                (live_third_p6f45&&
-                result.hour3_native_g26b_p6f45_bytes.empty()))
+                result.hour3_native_g26b_p6f45_bytes.empty())||
+               (fourth_g22_trace&&
+                result.hour4_g22_forensic_trace_bytes.empty()))
                 throw std::invalid_argument(
                     "G66 test-only third-hour trace path absent/already exists");
             std::ofstream out(trace_path,std::ios::binary);
             if(!out)throw std::runtime_error("G66 cannot open trace output");
-            const auto& bytes=live_third_p6f45
-                ?result.hour3_native_g26b_p6f45_bytes
+            const auto& bytes=fourth_g22_trace
+                ?result.hour4_g22_forensic_trace_bytes
+                :(live_third_p6f45
+                  ?result.hour3_native_g26b_p6f45_bytes
                 :(live_third_comp15
                   ?result.hour3_native_g26b_stage15_trace_bytes
                   :(live_third_comp12
@@ -136,7 +145,7 @@ int main(int argc,char** argv) {
                   ?result.hour3_native_g23_g24_trace_bytes
                   :(live_third_g22
                   ?result.hour3_live_g26a_stage3_trace_bytes
-                  :result.hour3_test_only_native_g22_trace_bytes))));
+                  :result.hour3_test_only_native_g22_trace_bytes)))));
             out.write(reinterpret_cast<const char*>(bytes.data()),
                       static_cast<std::streamsize>(bytes.size()));
             out.close();
@@ -291,6 +300,12 @@ int main(int argc,char** argv) {
             <<(fourth_preflight
                ?"S4R1C9V_HOUR4_G22_GUARD=PASS_REJECTED\n"
                :"S4R1C9V_HOUR4_G22_GUARD=NOT_RUN\n")
+            <<(fourth_g22_trace
+               ?"S4R1C9W_HOUR4_NATIVE_G22=PASS_TEST_ONLY_UNPUBLISHED\n"
+               :"S4R1C9W_HOUR4_NATIVE_G22=NOT_RUN\n")
+            <<(fourth_g22_trace
+               ?"S4R1C9W_HOUR4_G26A_STAGE3_6=PASS_SCOPED_PRECOMMIT_ONLY\n"
+               :"S4R1C9W_HOUR4_G26A_STAGE3_6=NOT_RUN\n")
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;

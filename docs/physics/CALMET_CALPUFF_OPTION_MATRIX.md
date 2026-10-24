@@ -36,6 +36,10 @@
 | CALMET-17 | 温度场平均 · `IAVET=1` | calmet.for :: SURFVAR / TEMP3D | [`p6g_g17b4_iavet_two_pass.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp) | 已选分支；真实 NOAA 第二小时 G26B TEMP3D stage15 同 SHA 源原生 62,730 REAL4 数值已 PASS_SCOPED（S4-R1c9e，Actions 39918760666）；S4-R1c9f 第16阶段 P6F 预提交候选仍 NOT_RUN，不代表原版 Fortran 第二小时等价；IAVET=0 和广义气象强迫未验收 | P2 |
 | CALMET-18 | 输出数据接口 · `CALMET.DAT 2.1=selected` | calmet.for :: COMP / output writer | [``](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/p6f/) | 已选分支；S4-R1c9h Ubuntu 原版 NOAA 第二小时 313650 数值对照超差 0（LOCAL_PASS_SCOPED）；GitHub exact-SHA/独立审查、第二小时提交和 3–6 小时仍 NOT_ACCEPTED；格式正确不等于所有备选计算分支都有科学等价性 | P1 |
 
+### 2026-10-24 S4-R1c9w：新增第四小时限定对照（并非生产验收）
+
+对于本矩阵 CALMET-09（ISLOPE=1）、CALMET-17（IAVET=1）以及 CALMET-02（缺测站点内生补缺），真实 NOAA 2SS/1US、82×85×9 第四小时的 G22/SURFVAR/HEATFX/AIRDEN/ELUSTR/SLOPE 已取得 **181,220/181,220 REAL4 原版/原生限定对照，0 个冻结阈值超差，156,712 逐位一致**。原版每小时 `COMP→MISSFC→DIAGNO` 的第四小时缺测非风变量仅在测试专用副本里由 G43 源等价补缺；原始 P5 观测不改，WATER 63/63 的 USTAR 与 EL 历史传递逐位吻合。详见 [S4-R1c9w 私有源审与限定数值验收说明](../plans/ISSUE40_S4R1C9W_NOAA_HOUR4_G22_STAGE3_6_20261024.md)。**此证据只覆盖第四小时的第 0–6 阶段，G23/G24、COMP、P6F、第四小时 G14 提交以及后续小时均未验收，独立科学审查 NOT_RUN；不修改上表选项的通用生产验收状态。**
+
 ## CALPUFF — P7（24 项）
 
 | 编号 | 物理功能 / 控制选择（2022 冻结） | 原版 Fortran 入口线索 | C++ 实现入口 | 当前范围及缺口 | 优先级 |
