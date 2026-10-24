@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Third–fifth hour native WATER G14 research-only CLI mode guards.
+"""Third–sixth hour native WATER G14 research-only CLI mode guards.
 
 No original NOAA material or Fortran oracle is needed by this negative test.
 """
@@ -11,9 +11,9 @@ import tempfile
 
 
 def test_cli(binary:Path,hour:int=3)->None:
-    if hour not in (3,4,5):
-        raise ValueError('S4C supported CLI guard hours 3, 4 or 5 only')
-    name={3:'thirdhour',4:'fourthhour',5:'fifthhour'}[hour]
+    if hour not in (3,4,5,6):
+        raise ValueError('S4C supported CLI guard hours 3..6 only')
+    name={3:'thirdhour',4:'fourthhour',5:'fifthhour',6:'sixthhour'}[hour]
     with tempfile.TemporaryDirectory(prefix=f's4c-noaa-{name}-') as temp:
         root=Path(temp);fake=root/'nonexistent';out=root/'no.met.dat';trace=root/'no.trace'
         base=['--selected-experimental',f'--water-{name}-g14-trial-only',
@@ -29,7 +29,8 @@ def test_cli(binary:Path,hour:int=3)->None:
             ([f'--water-{name}-g14-trial-only'],'duplicate research hour'),
             *[( [f'--water-{name_other}-g14-trial-only'],
                 'research hour mutually exclusive') for hour_other,name_other in
-              ((3,'thirdhour'),(4,'fourthhour'),(5,'fifthhour'))
+              ((3,'thirdhour'),(4,'fourthhour'),(5,'fifthhour'),
+               (6,'sixthhour'))
               if hour_other!=hour],
         )
         for flags,label in forbidden:
@@ -59,7 +60,7 @@ def test_cli(binary:Path,hour:int=3)->None:
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--binary',required=True,type=Path)
-    parser.add_argument('--research-hour',type=int,choices=(3,4,5),default=3)
+    parser.add_argument('--research-hour',type=int,choices=(3,4,5,6),default=3)
     args=parser.parse_args()
     if not args.binary.is_file():parser.error('shared native S4B2 binary absent')
     test_cli(args.binary,args.research_hour)

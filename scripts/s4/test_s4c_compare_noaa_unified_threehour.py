@@ -45,6 +45,14 @@ class ThreeHourAuditGates(unittest.TestCase):
                 audit(a,b,digest(a),'0'*64,report,5)
             self.assertFalse(report.exists())
 
+    def test_sixhour_sha_rejects_before_decode(self):
+        with tempfile.TemporaryDirectory() as work:
+            r=Path(work);a=r/'orig';b=r/'native';report=r/'result'
+            a.write_bytes(b'original');b.write_bytes(b'native')
+            with self.assertRaisesRegex(ValueError,'frozen original/native SHA'):
+                audit(a,b,digest(a),'0'*64,report,6)
+            self.assertFalse(report.exists())
+
     def test_invalid_native_three_hour_format(self):
         with tempfile.TemporaryDirectory() as work:
             p=Path(work)/'bad.met';p.write_bytes(b'garbage')
