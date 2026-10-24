@@ -1,3 +1,7 @@
+## 2026-10-24 最新：S4 第六小时真实 NOAA 科研限定验收（覆盖下文第五小时状态）
+- 第六小时 82×85×9 / 2SS+1US / 63 WATER：G22 181220、风场尾段 446080、COMP stage12–15 132430、P6F 45 字段 313650，原版/原生冻结容差 0 超差；G14 新 actor 回滚与正向提交实测退出 0，候选 P6F 字节一致。详情：`docs/plans/ISSUE40_S4R1C9AH_NOAA_HOUR6_G14_20261024.md`。
+- 仅 PASS_SCOPED、研究 opt-in。可配置生产 P6、P7、exact-SHA Ubuntu 原生 full、独立科学审查和 GitHub 研究准入仍 NOT_ACCEPTED/NOT_RUN。PR #308 保持 Draft，正式 Docker full 延至 S5 后。
+
 ## 2026-10-24 最新 S4 科学进度（比下方原第五小时 G22 的历史文字更新）
 - 第五小时真实 NOAA 82×85×9、2SS/1US、63 WATER：G26B COMP stage12–15 与原版比较 132430/132430 在冻结公差内、0 超差；原生 G64 P6F 45 字段 313650/313650，0 超差，当前记录在 docs/plans/ISSUE40_S4R1C9AF_AG_NOAA_HOUR5_COMP_P6F_G14_20261024.md。
 - 第五小时真实 G14 fresh actor 故意失败回滚、正向提交、站点时钟发布全部原生退出 0；正向提交 P6F 文件 SHA256 与独立原版对照过的 stage16 候选完全一致，第六小时 preview 继承 ZI/ZICONV/DPTT 通过。
