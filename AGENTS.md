@@ -1,3 +1,7 @@
+## 2026-10-24 S4-C 统一 P6 WATER 来源预检（非物理阶段验收）
+- S4B2 `--selected-experimental --water-source-preflight-only` 在同一可配置入口调用 G19/G38/G14 真实源码入场、六小时 UTC/站点时钟，接受 NOAA 82×85×9、2SS/1US、63 WATER，报告 `PASS_SOURCE_ONLY`，但**不**计算 G26/G26B/P6F、不写 CALMET.DAT、不解除 G65 研究模式，`PRODUCTION_ADMISSION=NOT_ACCEPTED`。现有 S4B2 默认模式对含 WATER 数据仍正确拒绝 `G18D3 all-land HFLUX default branch only`。
+- 增加 CTest 测试选项互斥/无输出/缺失输入 fail-closed；私有实测路径 `/home/lhy/dev/reports/cteas-s4c-unified-20261024/`，文件身份 SHA 与后续物理改造缺口记录在 `docs/plans/ISSUE40_S4C_WATER_SOURCE_PREFLIGHT_20261024.md`。完整软件 full 仅在本次提交 clean 冻结后有效，旧 HEAD 的 `ubuntu-native-full` success **不能继承到新 SHA**。
+
 ## 2026-10-24 S4 软件全量门禁修复候选（未冻结时为 DEV_ONLY）
 - 修复 `scripts/ci/cteas_native_full.py`，使用 GCC12 / Python3.11+，在同一提交下额外构建并 CTest P1/P3 独立 CMake，然后用其真实二进制执行全量 S2G Python；manifest 强制验证二进制环境路径、命令、日志、SHA。
 - 已本地预检 S2G 190 tests：188 PASS / 2 原有 skip，0 fail/error；P1 CTest 3/3，P3 CTest 1/1。修复已退役 P2-B workflow 检查、仅限 WGS84 浮点投影舍入误差（1e-12 deg；UTM 网格/文件 SHA 不变）、P1 scratch GCC12。

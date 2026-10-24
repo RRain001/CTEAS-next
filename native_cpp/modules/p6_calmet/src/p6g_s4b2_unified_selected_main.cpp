@@ -32,6 +32,7 @@ struct S4B2Options {
     std::size_t max_retained_field_bytes=0;
     bool experimental=false;
     bool g26_normal_entry_trial=false;
+    bool water_source_preflight_only=false;
 };
 
 static S4B2Options parse_args(int argc, char** argv) {
@@ -47,6 +48,12 @@ static S4B2Options parse_args(int argc, char** argv) {
             if(o.g26_normal_entry_trial)
                 throw std::invalid_argument("duplicate G26 normal entry trial flag");
             o.g26_normal_entry_trial=true;
+            continue;
+        }
+        if (key=="--water-source-preflight-only") {
+            if(o.water_source_preflight_only)
+                throw std::invalid_argument("duplicate S4C water preflight flag");
+            o.water_source_preflight_only=true;
             continue;
         }
         if(i+1>=argc)throw std::invalid_argument("S4B2 key missing argument");
@@ -88,13 +95,23 @@ static S4B2Options parse_args(int argc, char** argv) {
         } else throw std::invalid_argument("S4B2 unknown/repeated argument: "+key);
     }
     if(!o.experimental||o.met.empty()||o.geo.empty()||o.surf.empty()||
-       o.up.empty()||o.output.empty()||o.hours==0)
+       o.up.empty()||o.hours==0||
+       (!o.water_source_preflight_only&&o.output.empty()))
         throw std::invalid_argument(
             "S4B2 experimental ONLY: --selected-experimental --met met.inp "
             "--geo GEO.DAT --surf SURF.DAT --up UP1.DAT [--up UP2.DAT ...] "
             "--hours N [--probe-prefix-hours K] [--max-retained-field-bytes N] "
             "[--g26-normal-entry-trial] [--native-comp-trace native-state.csv] "
-            "--out candidate-met.dat; no production mode");
+            "--out candidate-met.dat; OR --water-source-preflight-only "
+            "without --out; no production mode");
+    // S4C source-only admission must NEVER be capable of emitting MET.DAT,
+    // changing a physical-stage toggle or probing only some input hours.
+    if(o.water_source_preflight_only&&
+       (!o.output.empty()||!o.native_comp_trace.empty()||
+        o.g26_normal_entry_trial||o.probe_prefix_hours!=0||
+        o.max_retained_field_bytes!=0))
+        throw std::invalid_argument(
+            "S4C WATER preflight forbids output, trace and every physical trial flag");
     if(o.probe_prefix_hours>o.hours)
         throw std::invalid_argument("S4B3 prefix exceeds complete declared G14 hours");
     return o;
@@ -154,6 +171,44 @@ static void require_exact_native_state_carry(
 int main(int argc, char** argv) {
     try {
         const auto opt=parse_args(argc,argv);
+        if(opt.water_source_preflight_only) {
+            // Genuine original G19 + G14 UTC/shape checks, with the already
+            // source-audited G38 neutral-water HFLUX inputs. No G26/G26B,
+            // G14 transaction, P6F construction, or output path is available.
+            const p6g::G19SourceFilePaths paths{
+                opt.met,opt.geo,opt.surf,opt.up
+            };
+            const auto source=p6g::g19_load_original_source_case(paths,true);
+            const auto scheduler=source.make_scheduler();
+            if(scheduler.planned_hours()!=opt.hours||
+               !scheduler.has_original_controls()||
+               !source.research_noow_water_source_only)
+                throw std::invalid_argument(
+                    "S4C WATER preflight requires full original G19/G14 source interval");
+            const auto admitted=p6g::s4b1_admit_source_only({
+                static_cast<std::size_t>(source.grid.nx),
+                static_cast<std::size_t>(source.grid.ny),
+                9,source.stations.surface.size(),
+                source.stations.upper.size(),scheduler.planned_hours(),true,true
+            });
+            const auto water=source.source_water_cells.size();
+            if(water==0||water>admitted.cells_per_layer)
+                throw std::invalid_argument(
+                    "S4C WATER preflight requires authentic G38 water cells");
+            std::cout<<"S4C_G19_WATER_SOURCE_PREFLIGHT=PASS_SOURCE_ONLY"
+                     <<" HOURS="<<scheduler.planned_hours()
+                     <<" SS="<<source.stations.surface.size()
+                     <<" US="<<source.stations.upper.size()
+                     <<" NX="<<source.grid.nx<<" NY="<<source.grid.ny
+                     <<" WATER_CELLS="<<water
+                     <<" LAND_CELLS="<<admitted.cells_per_layer-water
+                     <<" G14_UTC=ADMITTED"
+                     <<" G26_G26B_P6F=NOT_RUN"
+                     <<" MET_DAT=NOT_WRITTEN"
+                     <<" ORIGINAL_PARITY=NOT_RUN"
+                     <<" PRODUCTION_ADMISSION=NOT_ACCEPTED\n";
+            return 0;
+        }
         if(std::filesystem::exists(opt.output))
             throw std::invalid_argument("S4B2 refuses to overwrite existing output");
         if(!opt.native_comp_trace.empty()) {

@@ -1061,6 +1061,18 @@ add_test(NAME p6g_s4b2_no_implicit_production
          COMMAND cteas_p6g_s4b2_unified_selected --met missing.met)
 set_tests_properties(p6g_s4b2_no_implicit_production PROPERTIES WILL_FAIL TRUE)
 
+# S4-C: test the SAME configured S4B2 CLI. Input-only WATER G19 source
+# preflight must reject MET output, G26/P6F trial flags, trace and partial
+# windows before opening input. This is no claim of WATER physics parity.
+if(NOT Python3_Interpreter_FOUND)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+endif()
+add_test(NAME p6g_s4c_water_source_cli_fail_closed
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_source_preflight_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>)
+set_tests_properties(p6g_s4c_water_source_cli_fail_closed PROPERTIES TIMEOUT 60)
+
 # S4-B4: read the frozen original C1 MET (143h), produce a separate 1h
 # original subset for independent P6E 45-field comparison. No native
 # forecast values are injected into this reference-only utility.
