@@ -1129,6 +1129,15 @@ add_test(NAME p6g_s4c_water_shared_sixthhour_no_implicit_production
 set_tests_properties(p6g_s4c_water_shared_sixthhour_no_implicit_production
   PROPERTIES TIMEOUT 60)
 
+# S4-D: one six-hour source case uses a single prefix-parameterized
+# research-only entry; older 1..6 flags are frozen backwards-compatible gates.
+add_test(NAME p6g_s4d_configured_noaa_shared_g14_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4d_water_noaa_configured_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>)
+set_tests_properties(p6g_s4d_configured_noaa_shared_g14_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
 # S4-B4: read the frozen original C1 MET (143h), produce a separate 1h
 # original subset for independent P6E 45-field comparison. No native
 # forecast values are injected into this reference-only utility.

@@ -36,6 +36,9 @@ struct S4B2Options {
     bool experimental=false;
     bool g26_normal_entry_trial=false;
     bool water_source_preflight_only=false;
+    // One research-only, prefix-parameterized NOAA entry instead of future
+    // per-hour switches. Legacy hour flags are retained for frozen regression.
+    bool water_noaa_g14_trial_only=false;
     bool water_firsthour_g14_trial_only=false;
     bool water_secondhour_g14_trial_only=false;
     bool water_thirdhour_g14_trial_only=false;
@@ -57,6 +60,12 @@ static S4B2Options parse_args(int argc, char** argv) {
             if(o.g26_normal_entry_trial)
                 throw std::invalid_argument("duplicate G26 normal entry trial flag");
             o.g26_normal_entry_trial=true;
+            continue;
+        }
+        if (key=="--water-noaa-g14-trial-only") {
+            if(o.water_noaa_g14_trial_only)
+                throw std::invalid_argument("duplicate S4D unified NOAA WATER trial");
+            o.water_noaa_g14_trial_only=true;
             continue;
         }
         if (key=="--water-source-preflight-only") {
@@ -154,7 +163,8 @@ static S4B2Options parse_args(int argc, char** argv) {
             "for original NOAA prefix=3 only, or --water-fourthhour-g14-trial-only "
             "for original NOAA prefix=4 only, or --water-fifthhour-g14-trial-only "
             "for original NOAA prefix=5 only, or --water-sixthhour-g14-trial-only "
-            "for original NOAA prefix=6 only; no production mode");
+            "for original NOAA prefix=6 only; single --water-noaa-g14-trial-only "
+            "requires full NOAA 6h with configurable prefix 1..6; no production mode");
     // S4C source-only admission must NEVER be capable of emitting MET.DAT,
     // changing a physical-stage toggle or probing only some input hours.
     if(o.water_source_preflight_only&&
@@ -163,6 +173,29 @@ static S4B2Options parse_args(int argc, char** argv) {
         o.max_retained_field_bytes!=0))
         throw std::invalid_argument(
             "S4C WATER preflight forbids output, trace and every physical trial flag");
+    if(o.water_noaa_g14_trial_only) {
+        const bool mixed=o.water_source_preflight_only||o.g26_normal_entry_trial||
+            o.water_firsthour_g14_trial_only||o.water_secondhour_g14_trial_only||
+            o.water_thirdhour_g14_trial_only||o.water_fourthhour_g14_trial_only||
+            o.water_fifthhour_g14_trial_only||o.water_sixthhour_g14_trial_only||
+            !o.native_comp_trace.empty();
+        if(mixed||o.hours!=6||o.probe_prefix_hours<1||
+           o.probe_prefix_hours>6||o.output.empty())
+            throw std::invalid_argument(
+                "S4D unified NOAA WATER requires exact 6h original source, "
+                "explicit 1..6 native prefix, no legacy/mixed modes or trace");
+        // Use the exact already validated G65 native actor path for each
+        // prefix; no physics or original source data are manufactured here.
+        switch(o.probe_prefix_hours) {
+            case 1:o.water_firsthour_g14_trial_only=true;break;
+            case 2:o.water_secondhour_g14_trial_only=true;break;
+            case 3:o.water_thirdhour_g14_trial_only=true;break;
+            case 4:o.water_fourthhour_g14_trial_only=true;break;
+            case 5:o.water_fifthhour_g14_trial_only=true;break;
+            case 6:o.water_sixthhour_g14_trial_only=true;break;
+            default:throw std::logic_error("unreachable S4D prefix");
+        }
+    }
     if(o.water_firsthour_g14_trial_only&&
        (o.water_secondhour_g14_trial_only||
         o.water_thirdhour_g14_trial_only||
@@ -889,6 +922,8 @@ int main(int argc, char** argv) {
                  <<(opt.water_fourthhour_g14_trial_only?"YES":"NO")
                  <<" S4C_SHARED_G65_WATER_FIFTHHOUR="
                  <<(opt.water_fifthhour_g14_trial_only?"YES":"NO")
+                 <<" S4D_CONFIGURED_NOAA_G14_TRIAL="
+                 <<(opt.water_noaa_g14_trial_only?"YES":"NO")
                  <<" S4C_SHARED_G65_WATER_SIXTHHOUR="
                  <<(opt.water_sixthhour_g14_trial_only?"YES":"NO")
                  <<" PRODUCTION_ADMISSION=NOT_ACCEPTED\n";
