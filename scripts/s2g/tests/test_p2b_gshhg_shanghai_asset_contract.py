@@ -62,17 +62,22 @@ class TestManualOnlyWorkflows(unittest.TestCase):
             import yaml
         except ModuleNotFoundError:
             self.skipTest("PyYAML unavailable in bare local Python")
-        paths=[".github/workflows/issue53-gshhg-publish-project-release.yml",
-               ".github/workflows/issue46-p2b-shanghai-real-coastal-2022.yml"]
-        for p in paths:
-            doc=yaml.safe_load((ROOT/p).read_text())
-            events=doc.get("on",doc.get(True))
-            self.assertEqual(events,{"workflow_dispatch":None})
+        # The Shanghai P2-B EXACT_AREA_V1 workflow was deliberately retired
+        # on 2026-10-17. Verify the retained GSHHG publish workflow is
+        # dispatch-only and that the retired job has not been resurrected.
+        retained = ROOT / ".github/workflows/issue53-gshhg-publish-project-release.yml"
+        self.assertTrue(retained.is_file())
+        doc = yaml.safe_load(retained.read_text())
+        events = doc.get("on", doc.get(True))
+        self.assertEqual(events, {"workflow_dispatch": None})
+        self.assertFalse((ROOT / ".github/workflows/issue46-p2b-shanghai-real-coastal-2022.yml").exists())
     def test_no_secret_earth_engine_in_ci(self):
-        text=(ROOT/".github/workflows/issue46-p2b-shanghai-real-coastal-2022.yml").read_text()
-        self.assertNotIn("ee.Initialize",text)
-        self.assertNotIn("secrets.",text)
-        self.assertIn("BLOCKED_REAL_SHANGHAI_GLC2022_NOT_PRESENT",text)
+        retained = ROOT / ".github/workflows/issue53-gshhg-publish-project-release.yml"
+        text = retained.read_text()
+        self.assertNotIn("ee.Initialize", text)
+        self.assertNotIn("secrets.", text)
+        self.assertIn("GSHHG", text)
+        self.assertFalse((ROOT / ".github/workflows/issue46-p2b-shanghai-real-coastal-2022.yml").exists())
 
 if __name__=="__main__":
     unittest.main()

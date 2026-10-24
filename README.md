@@ -1,3 +1,8 @@
+## 2026-10-24 S4 软件全量门禁修复候选（未冻结时为 DEV_ONLY）
+- 修复 `scripts/ci/cteas_native_full.py`，使用 GCC12 / Python3.11+，在同一提交下额外构建并 CTest P1/P3 独立 CMake，然后用其真实二进制执行全量 S2G Python；manifest 强制验证二进制环境路径、命令、日志、SHA。
+- 已本地预检 S2G 190 tests：188 PASS / 2 原有 skip，0 fail/error；P1 CTest 3/3，P3 CTest 1/1。修复已退役 P2-B workflow 检查、仅限 WGS84 浮点投影舍入误差（1e-12 deg；UTM 网格/文件 SHA 不变）、P1 scratch GCC12。
+- 必须先在 clean committed exact SHA 执行完整 native full，通过后才可向 GitHub PR #308 头 SHA 发布 `ubuntu-native-full`；此节不是科学 P6/P7 通用验收，独立科学审查仍 NOT_RUN。`docs/ci/S4_S5_NATIVE_POST_S5_DOCKER_POLICY_20261024.md` 为执行细则。
+
 ## 2026-10-24 最新：S4 第六小时真实 NOAA 科研限定验收（覆盖下文第五小时状态）
 - 第六小时 82×85×9 / 2SS+1US / 63 WATER：G22 181220、风场尾段 446080、COMP stage12–15 132430、P6F 45 字段 313650，原版/原生冻结容差 0 超差；G14 新 actor 回滚与正向提交实测退出 0，候选 P6F 字节一致。详情：`docs/plans/ISSUE40_S4R1C9AH_NOAA_HOUR6_G14_20261024.md`。
 - 仅 PASS_SCOPED、研究 opt-in。可配置生产 P6、P7、exact-SHA Ubuntu 原生 full、独立科学审查和 GitHub 研究准入仍 NOT_ACCEPTED/NOT_RUN。PR #308 保持 Draft，正式 Docker full 延至 S5 后。

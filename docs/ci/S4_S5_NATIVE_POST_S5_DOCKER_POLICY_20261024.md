@@ -16,9 +16,13 @@ Docker 可以在开发期用于自愿的快速诊断，但不再是 S4/S5 的强
 
 只在完整功能批次冻结且工作树 clean 后，从 Ubuntu 当前 CTEAS-next 开发工作树运行：
 
-    python3 scripts/ci/cteas_native_full.py run --worktree "$PWD" --output-root /home/lhy/dev/reports/cteas-native-full --jobs 8
+    /home/lhy/dev/infra/s4-noaa-env/bin/python scripts/ci/cteas_native_full.py run --worktree "$PWD" --output-root /home/lhy/dev/reports/cteas-native-full --jobs 8
 
-该脚本使用本机 CMake Release 配置、构建完整 native_cpp、运行所有 CTest、执行 S4 和 S2G Python 测试。它在项目外保存隔离的每步日志、SHA256、exit code 和 manifest；测试不通过就拒绝发布任何成功状态。依赖需要在主机上真实安装，缺依赖不算通过。
+脚本要求 Python 3.11+ 和原生 GCC 12。当前 Ubuntu Python 3.11 环境位于 `/home/lhy/dev/infra/s4-noaa-env`，需实际具备适配的 `GDAL==3.4.1`、`rasterio==1.4.4`、`pyproj==3.7.2`、PyYAML 等 S2G 依赖。不能把系统默认 GCC 9/Python 3.10 作为受检工具链。
+
+该脚本执行 11 个强制步骤：native_cpp CMake Release 编译、CTest、S4 Python；另在**同一冻结 SHA** 中独立构建 `native_cpp/p1` 和 `native_cpp/p3` 并分别运行 CTest，给 S2G 全部 Python 测试提供编译产物（`P1_CASE_BINARY`、`P2_D3_GLCC`、`P12_OLD_ADAPTER`、`P2_GLCC_TEST_DRIVER`、`P2_GEN_CLI`）；最后执行 S2G Python。禁止通过缺省路径、预留历史二进制或跳过测试伪造软件 full。
+
+日志和 manifest 记录所有步骤、环境中的受检二进制路径、命令、SHA256 和退出码，`verify` 校对每一步固定命令与环境配置。成功仅代表原生软件 PASS_SOFTWARE_SCOPED；缺依赖或任何失败均不可发布成功状态。
 
 逐项复核：
 
@@ -45,4 +49,4 @@ scientific-admission 未改动：科学源码/测试 PR 必须离开 Draft、具
 - 原版源码与真实私有数据仅在 Ubuntu 留存，禁止上传 GitHub 公共仓库。
 - 历史受限 PASS_SCOPED 不自动升级为通用生产或 Docker 交付 PASS。
 
-本次变动为流程与门禁实现，没有对当前 S4 HEAD 实际执行原生全量软件测试，也没有进行 S5 或最终 Docker 验收。
+更新记录：2026-10-24 复现并修复 S2G 原生 full 的缺失编译产物、Ubuntu 默认 GCC9/Python3.10 与旧 P2-B 工作流契约。源码在 PR #308 受限科学试验分支提交；正式 exact-SHA full 结论须引用本次修复后具体 manifest，不能沿用先前失败或 DEV_ONLY 证据。S5 与最终 Docker 交付尚未运行。

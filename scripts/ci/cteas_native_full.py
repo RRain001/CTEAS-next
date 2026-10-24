@@ -15,9 +15,13 @@ from pathlib import Path
 import subprocess
 import sys
 
-PROFILE = "CTEAS_NEXT_NATIVE_FULL_V1"
+PROFILE = "CTEAS_NEXT_NATIVE_FULL_V2"
 CONTEXT = "ubuntu-native-full"
-REQUIRED = ("cmake-configure", "cmake-build", "ctest-all", "s4-python", "s2g-python")
+REQUIRED = (
+    "cmake-configure", "cmake-build", "ctest-all", "s4-python",
+    "p1-configure", "p1-build", "p1-ctest",
+    "p3-configure", "p3-build", "p3-ctest", "s2g-python",
+)
 
 
 def call(argv: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess:
@@ -49,6 +53,9 @@ def digest(path: Path) -> str:
 
 
 def commands(worktree: Path, build: Path, jobs: int, python: str) -> list[tuple[str, list[str]]]:
+    p1_build = build.parent / "build-p1"
+    p3_build = build.parent / "build-p3"
+    compiler = "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12"
     return [
         # Ubuntu's default g++ 9 cannot compile mandatory C++20 <span>.
         # Pin the same tested GCC 12 compiler as validate_ubuntu.py.
@@ -60,9 +67,36 @@ def commands(worktree: Path, build: Path, jobs: int, python: str) -> list[tuple[
                        "--parallel", str(jobs)]),
         ("s4-python", [python, "-m", "unittest", "discover", "-s", "scripts/s4",
                        "-p", "test_*.py", "-q"]),
+        # S2G tests depend on three independent CMake modules. Build the
+        # genuine native programs instead of silently skipping test contracts.
+        ("p1-configure", ["cmake", "-S", str(worktree / "native_cpp/p1"),
+                          "-B", str(p1_build), "-DCMAKE_BUILD_TYPE=Release", compiler]),
+        ("p1-build", ["cmake", "--build", str(p1_build), "--parallel", str(jobs)]),
+        ("p1-ctest", ["ctest", "--test-dir", str(p1_build),
+                      "--output-on-failure", "--parallel", str(jobs)]),
+        ("p3-configure", ["cmake", "-S", str(worktree / "native_cpp/p3"),
+                          "-B", str(p3_build), "-DCMAKE_BUILD_TYPE=Release", compiler,
+                          "-DPython3_EXECUTABLE=" + python]),
+        ("p3-build", ["cmake", "--build", str(p3_build), "--parallel", str(jobs)]),
+        ("p3-ctest", ["ctest", "--test-dir", str(p3_build),
+                      "--output-on-failure", "--parallel", str(jobs)]),
         ("s2g-python", [python, "-m", "unittest", "discover", "-s", "scripts/s2g/tests",
                         "-p", "test_*.py", "-q"]),
     ]
+
+
+def step_environment(name: str, build: Path) -> dict[str, str]:
+    if name != "s2g-python":
+        return {}
+    # All executables come from this same frozen source commit and run.
+    return {
+        "P1_CASE_BINARY": str(build.parent / "build-p1/cteas_p1_terrain_case"),
+        "P2_D3_GLCC": str(build / "cteas_p2_glcc_lu_dat"),
+        "P12_OLD_ADAPTER": str(build.parent / "build-p3/cteas_p12_to_p3_dat"),
+        "P2_GLCC_TEST_DRIVER": str(build / "cteas_p2_glcc_gen_test_driver"),
+        "P2_GEN_CLI": str(build / "cteas_p2_gen_fraction"),
+        "CXX": "/usr/bin/g++-12",
+    }
 
 
 def save(manifest_file: Path, data: dict) -> None:
@@ -76,6 +110,8 @@ def run(worktree: Path, output_root: Path, jobs: int) -> int:
     if not 1 <= jobs <= 32:
         raise ValueError("jobs must be 1..32")
     sha = clean_sha(worktree)
+    if sys.version_info < (3, 11):
+        raise ValueError("S4/S5 native Python 3.11+ is required; use the Ubuntu acceptance venv")
     if output_root.resolve() == worktree or worktree in output_root.resolve().parents:
         raise ValueError("Reports must not be inside the source worktree")
     now = dt.datetime.now(dt.timezone.utc)
@@ -105,14 +141,23 @@ def run(worktree: Path, output_root: Path, jobs: int) -> int:
             raise ValueError("Worktree changed during native full run")
         print("RUN", name, flush=True)
         log = report / (name + ".log")
+        configured = step_environment(name, build)
+        env = dict(os.environ)
+        if configured:
+            env.update(configured)
+            # This dedicated S2G acceptance suite is required to test the
+            # binaries compiled in the same exact-SHA full build.
+            if any(not Path(path).is_file() for key, path in configured.items()
+                   if key != "CXX"):
+                raise ValueError("Missing native S2G test binary from frozen build")
         with log.open("w", encoding="utf-8") as output:
             output.write("$ " + " ".join(command) + "\n")
             output.flush()
-            p = subprocess.run(command, cwd=worktree, stdout=output,
+            p = subprocess.run(command, cwd=worktree, env=env, stdout=output,
                                stderr=subprocess.STDOUT, check=False)
         record["steps"].append({
             "name": name, "command": command, "exit_code": p.returncode,
-            "log_sha256": digest(log),
+            "environment": configured, "log_sha256": digest(log),
         })
         save(manifest, record)
         if p.returncode:
@@ -160,6 +205,8 @@ def verify(manifest: Path, expected_sha: str | None = None) -> dict:
     for step, (_, expected_cmd) in zip(steps, expected, strict=True):
         if step.get("command") != expected_cmd:
             raise ValueError("Native full command list was modified")
+        if step.get("environment") != step_environment(step["name"], manifest.parent / "build"):
+            raise ValueError("Native full source-built S2G environment drift")
         if step.get("exit_code") != 0:
             raise ValueError("Failed test step")
         logfile = manifest.parent / (step["name"] + ".log")
