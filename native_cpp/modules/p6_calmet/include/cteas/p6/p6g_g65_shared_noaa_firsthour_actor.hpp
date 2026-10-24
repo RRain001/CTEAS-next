@@ -6,6 +6,7 @@
 // G41/G43 and source shape before constructing this actor.
 #include "cteas/p6/p6g_g26b_file_backed_comp_bridge.hpp"
 #include "cteas/p6/p6g_g41_real_water_first_hour_source.hpp"
+#include "cteas/p6/p6g_g66_noaa_hour3_g22_trace.hpp"
 #include <cstddef>
 #include <stdexcept>
 
@@ -117,6 +118,77 @@ public:
 private:
     G26SourceFileBackedG14DiagnoBridge diagno_;
     G26BSourceFileBackedCompBridge comp_;
+    std::size_t cursor_=0;
+};
+
+
+// S4-R1c9v: fresh, strictly scoped real NOAA hour-three G14 executor.
+// Stages0..11 are G26A, stages12..16 are the same G26B source-native
+// physics used by the independently compared unpublished G64 candidate.
+// This actor is created afresh on EVERY rollback/retry. It does not remove
+// the default G22/G26B/G64 hour_index>1 production guards.
+class G65RealNoaaThirdHourTrialActor final : public MultiHourPhysics {
+public:
+    G65RealNoaaThirdHourTrialActor(
+        const UnifiedMultistationHourlyScheduler& owner,
+        G18D2StationClockAuthority& clocks,
+        const G19FileBackedCase& source,
+        const G41SelectedNoowWaterFirstHourSource& original,
+        const G66NativeHour2WaterState& native_prior)
+        :diagno_(owner,clocks,source,true,&native_prior,true,true),
+         source_(source),original_(original) {}
+
+    [[nodiscard]] p6::NativeHourStageResult run(
+        p6::NativeHourStage stage,MultiHourFrame& frame) override {
+        if(frame.hour_index!=2||cursor_>=p6::kHefeiOriginalStageOrder.size()||
+           stage!=p6::kHefeiOriginalStageOrder[cursor_])
+            throw std::logic_error(
+                "G65 third-hour trial actor wrong hour/stage");
+        if(cursor_==12)
+            comp_.emplace(diagno_,source_,true,&original_,true,true,true);
+        const auto result=(cursor_<12)?diagno_.run(stage,frame)
+                                     :comp_->run(stage,frame);
+        if(!result.completed||result.source!=p6::NativeHourSource::NativeCpp)
+            throw std::logic_error(
+                "G65 third-hour trial actor missing source-native stage");
+        ++cursor_;
+        return result;
+    }
+
+    [[nodiscard]] const G64RealNoaaP6FPrecommit& precommit(
+        const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=2||!comp_)
+            throw std::logic_error(
+                "G65 third-hour trial P6F before all 17 native stages");
+        const auto& candidate=comp_->source_water_p6f_stage16(frame);
+        if(!candidate.actual_g14_stage16_precommit_validated||
+           candidate.g14_hour_committed||candidate.source_clocks_published||
+           candidate.ready_for_next_hour||
+           candidate.candidate_dataset.hourly.size()!=45||
+           candidate.serialized_prepared_only.empty())
+            throw std::logic_error(
+                "G65 third-hour trial P6F already published or incomplete");
+        diagno_.require_station_clock_preflight(frame);
+        return candidate;
+    }
+
+    void require_station_clock_preflight(
+        const MultiHourFrame& frame) const {
+        if(cursor_!=17||frame.hour_index!=2)
+            throw std::logic_error(
+                "G65 third-hour trial clock preflight before G64 P6F");
+        diagno_.require_station_clock_preflight(frame);
+    }
+
+    [[nodiscard]] bool publish_after_commit_noexcept() noexcept {
+        return cursor_==17&&comp_.has_value()&&
+            diagno_.try_publish_after_selected_g14_commit_noexcept();
+    }
+private:
+    G26SourceFileBackedG14DiagnoBridge diagno_;
+    const G19FileBackedCase& source_;
+    const G41SelectedNoowWaterFirstHourSource& original_;
+    std::optional<G26BSourceFileBackedCompBridge> comp_;
     std::size_t cursor_=0;
 };
 

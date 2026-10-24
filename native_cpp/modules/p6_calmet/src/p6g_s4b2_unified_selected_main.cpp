@@ -5,6 +5,7 @@
 // G14 owns PREPDI -> DIAGNO -> COMP -> P6F and every historical state commit.
 #include "cteas/p6/p6g_s4b2_selected_hour.hpp"
 #include "cteas/p6/p6g_g65_shared_noaa_firsthour_actor.hpp"
+#include "cteas/p6/p6g_g65_shared_native_water_history.hpp"
 #include "cteas/p6/p6g_g43_comp_missfc_source.hpp"
 #include "cteas/p6/p6g_s4b1_admission.hpp"
 #include <cstddef>
@@ -37,6 +38,7 @@ struct S4B2Options {
     bool water_source_preflight_only=false;
     bool water_firsthour_g14_trial_only=false;
     bool water_secondhour_g14_trial_only=false;
+    bool water_thirdhour_g14_trial_only=false;
 };
 
 static S4B2Options parse_args(int argc, char** argv) {
@@ -70,6 +72,12 @@ static S4B2Options parse_args(int argc, char** argv) {
             if(o.water_secondhour_g14_trial_only)
                 throw std::invalid_argument("duplicate S4C WATER G14 secondhour trial");
             o.water_secondhour_g14_trial_only=true;
+            continue;
+        }
+        if (key=="--water-thirdhour-g14-trial-only") {
+            if(o.water_thirdhour_g14_trial_only)
+                throw std::invalid_argument("duplicate S4C WATER G14 thirdhour trial");
+            o.water_thirdhour_g14_trial_only=true;
             continue;
         }
         if(i+1>=argc)throw std::invalid_argument("S4B2 key missing argument");
@@ -121,7 +129,8 @@ static S4B2Options parse_args(int argc, char** argv) {
             "--out candidate-met.dat; OR --water-source-preflight-only "
             "without --out; optional --water-firsthour-g14-trial-only "
             "for original NOAA prefix=1 only, or --water-secondhour-g14-trial-only "
-            "for original NOAA prefix=2 only; no production mode");
+            "for original NOAA prefix=2 only, or --water-thirdhour-g14-trial-only "
+            "for original NOAA prefix=3 only; no production mode");
     // S4C source-only admission must NEVER be capable of emitting MET.DAT,
     // changing a physical-stage toggle or probing only some input hours.
     if(o.water_source_preflight_only&&
@@ -131,7 +140,8 @@ static S4B2Options parse_args(int argc, char** argv) {
         throw std::invalid_argument(
             "S4C WATER preflight forbids output, trace and every physical trial flag");
     if(o.water_firsthour_g14_trial_only&&
-       (o.water_secondhour_g14_trial_only||o.water_source_preflight_only||
+       (o.water_secondhour_g14_trial_only||
+        o.water_thirdhour_g14_trial_only||o.water_source_preflight_only||
         o.g26_normal_entry_trial||o.probe_prefix_hours!=1||o.hours!=6||
         o.output.empty()||!o.native_comp_trace.empty()))
         throw std::invalid_argument(
@@ -139,11 +149,20 @@ static S4B2Options parse_args(int argc, char** argv) {
             "one fresh output and no normal G26/COMP trace/preflight mixing");
     if(o.water_secondhour_g14_trial_only&&
        (o.water_source_preflight_only||o.water_firsthour_g14_trial_only||
-        o.g26_normal_entry_trial||o.probe_prefix_hours!=2||o.hours!=6||
+        o.water_thirdhour_g14_trial_only||o.g26_normal_entry_trial||
+        o.probe_prefix_hours!=2||o.hours!=6||
         o.output.empty()||!o.native_comp_trace.empty()))
         throw std::invalid_argument(
             "S4C NOAA WATER secondhour requires full 6h source, "
             "exactly 2 committed G14 hours and no mixed trials/trace");
+    if(o.water_thirdhour_g14_trial_only&&
+       (o.water_source_preflight_only||o.water_firsthour_g14_trial_only||
+        o.water_secondhour_g14_trial_only||o.g26_normal_entry_trial||
+        o.probe_prefix_hours!=3||o.hours!=6||o.output.empty()||
+        !o.native_comp_trace.empty()))
+        throw std::invalid_argument(
+            "S4C NOAA WATER thirdhour requires full 6h source, "
+            "exactly 3 committed G14 hours and no mixed trials/trace");
     if(o.probe_prefix_hours>o.hours)
         throw std::invalid_argument("S4B3 prefix exceeds complete declared G14 hours");
     return o;
@@ -263,7 +282,8 @@ int main(int argc, char** argv) {
         // MISSFC source snapshot; no oracle or MET.DAT fields enter physics.
         const bool scoped_water_physics=(
             opt.water_firsthour_g14_trial_only||
-            opt.water_secondhour_g14_trial_only);
+            opt.water_secondhour_g14_trial_only||
+            opt.water_thirdhour_g14_trial_only);
         std::optional<p6g::G41SelectedNoowWaterFirstHourSource> water_original;
         auto source=p6g::g19_load_original_source_case(
             paths,scoped_water_physics);
@@ -302,7 +322,8 @@ int main(int argc, char** argv) {
             // Raw P5 source remains immutable in G41. The G14-specific
             // detached input copies only CALMET COMP's five nonwind fields.
             source.surface.hourly.front()=repaired.original_comp_resolved;
-            if(opt.water_secondhour_g14_trial_only) {
+            if(opt.water_secondhour_g14_trial_only||
+               opt.water_thirdhour_g14_trial_only) {
                 // Second hour must use genuine unmodified P5 observations,
                 // the same as G65's accepted positive second-hour G14 actor.
                 // G43 is model-internal diagnostics ONLY at this stage; the
@@ -325,6 +346,31 @@ int main(int argc, char** argv) {
                         throw std::logic_error(
                             "S4C secondhour source G43 changed P5 wind/precip");
                 }
+            }
+            if(opt.water_thirdhour_g14_trial_only) {
+                // Preserve raw P5; only detached G14 COMP model fields may
+                // use G43's five nonwind nearest-station replacements.
+                const auto& raw=water_original->source.surface.hourly.at(2);
+                const auto resolved=p6g::g43_original_comp_missfc_source_only(
+                    *water_original,raw,true);
+                if(!resolved.source_comp_missfc_complete||
+                   resolved.original_comp_resolved.by_station.size()!=2)
+                    throw std::logic_error("S4C thirdhour genuine G43 incomplete");
+                for(std::size_t i=0;i<2;++i) {
+                    const auto& before=raw.by_station[i];
+                    const auto& after=resolved.original_comp_resolved.by_station[i];
+                    if(!after.pressure_valid||!after.temperature_valid||
+                       !after.humidity_valid||!after.cloud_valid||
+                       !after.ceiling_valid||
+                       before.wind_valid!=after.wind_valid||
+                       before.wind_speed_mps!=after.wind_speed_mps||
+                       before.wind_direction_deg!=after.wind_direction_deg||
+                       before.precip_code!=after.precip_code||
+                       before.precipitation_code_valid!=after.precipitation_code_valid)
+                        throw std::logic_error(
+                            "S4C thirdhour G43 damaged P5 wind/precip");
+                }
+                source.surface.hourly.at(2)=resolved.original_comp_resolved;
             }
         }
         auto scheduler=source.make_scheduler();
@@ -364,10 +410,12 @@ int main(int argc, char** argv) {
             native_trace<<"hour_index,end_epoch_s,stage,i,j,zi_m,ziconv_m,dptt_k\n";
         p6g::G18D2StationClockAuthority clocks;
         std::optional<cteas::p6f::Calmet21File> all_hours;
+        std::optional<p6g::G66NativeHour2WaterState> third_native_prior;
         for(std::size_t hour=0;hour<executed_hours;++hour) {
             p6::NativeGridMemory before_native_comp;
             if(!opt.native_comp_trace.empty()||
-               opt.water_secondhour_g14_trial_only) {
+               opt.water_secondhour_g14_trial_only||
+               opt.water_thirdhour_g14_trial_only) {
                 before_native_comp=scheduler.committed_memory();
                 if(hour>0)require_exact_native_state_carry(
                     last_native_post,before_native_comp);
@@ -376,6 +424,7 @@ int main(int argc, char** argv) {
             G34BSelectedOnlyHour* land_active=nullptr;
             p6g::G65RealNoaaFirstHourActor* water_active=nullptr;
             p6g::G65RealNoaaSecondHourActor* water_second_active=nullptr;
+            p6g::G65RealNoaaThirdHourTrialActor* water_third_active=nullptr;
             bool published=false;
             scheduler.advance_with_fresh_physics(
                 [&](const p6g::MultiHourFrame& live)
@@ -383,8 +432,10 @@ int main(int argc, char** argv) {
                     if(live.hour_index!=hour||scheduler.completed_hours()!=hour)
                         throw std::logic_error("S4B2 duplicated/omitted real source hour");
                     if(scoped_water_physics) {
-                        if(!water_original||hour>1||
-                           (hour==1&&!opt.water_secondhour_g14_trial_only))
+                        if(!water_original||hour>2||
+                           (hour>0&&!opt.water_secondhour_g14_trial_only&&
+                            !opt.water_thirdhour_g14_trial_only)||
+                           (hour==2&&!opt.water_thirdhour_g14_trial_only))
                             throw std::logic_error(
                                 "S4C G65 WATER actor outside admitted hour");
                         if(hour==0) {
@@ -398,10 +449,25 @@ int main(int argc, char** argv) {
                            !clocks.has_published_hour())
                             throw std::logic_error(
                                 "S4C secondhour cannot inherit uncommitted G14 memory");
+                        if(hour==1) {
+                            auto current=std::make_unique<
+                                p6g::G65RealNoaaSecondHourActor>(
+                                    scheduler,clocks,source,*water_original);
+                            water_second_active=current.get();
+                            return current;
+                        }
+                        if(!third_native_prior||
+                           !third_native_prior->explicitly_native_p6f_origin||
+                           third_native_prior->end!=source.surface.hourly.at(1).end||
+                           third_native_prior->ustar_mps.size()!=6970||
+                           third_native_prior->el_m.size()!=6970)
+                            throw std::logic_error(
+                                "S4C hour3 missing native hour2 P6F water history");
                         auto current=std::make_unique<
-                            p6g::G65RealNoaaSecondHourActor>(
-                                scheduler,clocks,source,*water_original);
-                        water_second_active=current.get();
+                            p6g::G65RealNoaaThirdHourTrialActor>(
+                                scheduler,clocks,source,*water_original,
+                                *third_native_prior);
+                        water_third_active=current.get();
                         return current;
                     }
                     auto current=std::make_unique<G34BSelectedOnlyHour>(
@@ -413,6 +479,8 @@ int main(int argc, char** argv) {
                     if(water_active)accepted=water_active->precommit(frame);
                     else if(water_second_active)
                         accepted=water_second_active->precommit(frame).candidate_dataset;
+                    else if(water_third_active)
+                        accepted=water_third_active->precommit(frame).candidate_dataset;
                     else if(land_active)accepted=land_active->precommit(frame);
                     else throw std::logic_error("S4B2 actor missing");
                     if(!accepted||accepted->hourly.size()!=45)
@@ -421,7 +489,8 @@ int main(int argc, char** argv) {
                 [&](p6g::MultiHourPhysics&,
                     const p6g::MultiHourFrame& frame,
                     const p6g::UnifiedMultistationHourlyScheduler& owner) {
-                    if((!land_active&&!water_active&&!water_second_active)||
+                    if((!land_active&&!water_active&&!water_second_active&&
+                        !water_third_active)||
                        owner.completed_hours()!=hour||
                        frame.hour_index!=hour)
                         throw std::logic_error("S4B2 causality/UTC boundary changed");
@@ -438,6 +507,11 @@ int main(int argc, char** argv) {
                             p6g::G65RealNoaaSecondHourActor*>(&physics);
                         published=actor==water_second_active&&
                                   actor->publish_after_commit_noexcept();
+                    } else if(water_third_active) {
+                        auto* actor=dynamic_cast<
+                            p6g::G65RealNoaaThirdHourTrialActor*>(&physics);
+                        published=actor==water_third_active&&
+                                  actor->publish_after_commit_noexcept();
                     } else {
                         auto* actor=dynamic_cast<G34BSelectedOnlyHour*>(&physics);
                         published=actor==land_active&&
@@ -447,8 +521,18 @@ int main(int argc, char** argv) {
             if(!published||!accepted||scheduler.completed_hours()!=hour+1||
                !clocks.has_published_hour())
                 throw std::runtime_error("S4B2 AA/BB/CGAMMA/COMP commit incomplete");
+            if(opt.water_thirdhour_g14_trial_only&&hour==1) {
+                const auto expected_end=source.surface.hourly.at(1).end;
+                if(clocks.latest_upper_hour()!=expected_end||
+                   clocks.latest_gamma_hour()!=expected_end)
+                    throw std::logic_error(
+                        "S4C hour2 committed clocks disagree with native P6F");
+                third_native_prior.emplace(p6g::g65_native_hour2_water_from_p6f(
+                    *accepted,expected_end));
+            }
             if(!opt.native_comp_trace.empty()||
-               opt.water_secondhour_g14_trial_only) {
+               opt.water_secondhour_g14_trial_only||
+               opt.water_thirdhour_g14_trial_only) {
                 const auto& post=scheduler.committed_memory();
                 const auto end=source.surface.hourly.at(hour).end;
                 if(source.surface.hourly.at(hour).start+
@@ -565,6 +649,8 @@ int main(int argc, char** argv) {
                  <<(opt.water_firsthour_g14_trial_only?"YES":"NO")
                  <<" S4C_SHARED_G65_WATER_SECONDHOUR="
                  <<(opt.water_secondhour_g14_trial_only?"YES":"NO")
+                 <<" S4C_SHARED_G65_WATER_THIRDHOUR="
+                 <<(opt.water_thirdhour_g14_trial_only?"YES":"NO")
                  <<" PRODUCTION_ADMISSION=NOT_ACCEPTED\n";
         return 0;
     } catch(const std::exception& e) {

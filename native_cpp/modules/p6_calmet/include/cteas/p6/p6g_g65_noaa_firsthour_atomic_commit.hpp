@@ -7,6 +7,7 @@
 // numbers are used as native forcing. Failed precommit cannot publish state.
 #include "cteas/p6/p6g_g62_real_noaa_firsthour_memory_seed.hpp"
 #include "cteas/p6/p6g_g65_shared_noaa_firsthour_actor.hpp"
+#include "cteas/p6/p6g_g65_shared_native_water_history.hpp"
 #include "cteas/p6/p6g_g45_six_hour_water_wind1.hpp"
 #include "cteas/p6/p6g_g66_noaa_hour3_g22_trace.hpp"
 #include <bit>
@@ -21,77 +22,6 @@
 #include <vector>
 
 namespace cteas::calmet::p6g {
-
-// S4-R1c9v: fresh, strictly scoped real NOAA hour-three G14 executor.
-// Stages0..11 are G26A, stages12..16 are the same G26B source-native
-// physics used by the independently compared unpublished G64 candidate.
-// This actor is created afresh on EVERY rollback/retry. It does not remove
-// the default G22/G26B/G64 hour_index>1 production guards.
-class G65RealNoaaThirdHourTrialActor final : public MultiHourPhysics {
-public:
-    G65RealNoaaThirdHourTrialActor(
-        const UnifiedMultistationHourlyScheduler& owner,
-        G18D2StationClockAuthority& clocks,
-        const G19FileBackedCase& source,
-        const G41SelectedNoowWaterFirstHourSource& original,
-        const G66NativeHour2WaterState& native_prior)
-        :diagno_(owner,clocks,source,true,&native_prior,true,true),
-         source_(source),original_(original) {}
-
-    [[nodiscard]] p6::NativeHourStageResult run(
-        p6::NativeHourStage stage,MultiHourFrame& frame) override {
-        if(frame.hour_index!=2||cursor_>=p6::kHefeiOriginalStageOrder.size()||
-           stage!=p6::kHefeiOriginalStageOrder[cursor_])
-            throw std::logic_error(
-                "G65 third-hour trial actor wrong hour/stage");
-        if(cursor_==12)
-            comp_.emplace(diagno_,source_,true,&original_,true,true,true);
-        const auto result=(cursor_<12)?diagno_.run(stage,frame)
-                                     :comp_->run(stage,frame);
-        if(!result.completed||result.source!=p6::NativeHourSource::NativeCpp)
-            throw std::logic_error(
-                "G65 third-hour trial actor missing source-native stage");
-        ++cursor_;
-        return result;
-    }
-
-    [[nodiscard]] const G64RealNoaaP6FPrecommit& precommit(
-        const MultiHourFrame& frame) const {
-        if(cursor_!=17||frame.hour_index!=2||!comp_)
-            throw std::logic_error(
-                "G65 third-hour trial P6F before all 17 native stages");
-        const auto& candidate=comp_->source_water_p6f_stage16(frame);
-        if(!candidate.actual_g14_stage16_precommit_validated||
-           candidate.g14_hour_committed||candidate.source_clocks_published||
-           candidate.ready_for_next_hour||
-           candidate.candidate_dataset.hourly.size()!=45||
-           candidate.serialized_prepared_only.empty())
-            throw std::logic_error(
-                "G65 third-hour trial P6F already published or incomplete");
-        diagno_.require_station_clock_preflight(frame);
-        return candidate;
-    }
-
-    void require_station_clock_preflight(
-        const MultiHourFrame& frame) const {
-        if(cursor_!=17||frame.hour_index!=2)
-            throw std::logic_error(
-                "G65 third-hour trial clock preflight before G64 P6F");
-        diagno_.require_station_clock_preflight(frame);
-    }
-
-    [[nodiscard]] bool publish_after_commit_noexcept() noexcept {
-        return cursor_==17&&comp_.has_value()&&
-            diagno_.try_publish_after_selected_g14_commit_noexcept();
-    }
-private:
-    G26SourceFileBackedG14DiagnoBridge diagno_;
-    const G19FileBackedCase& source_;
-    const G41SelectedNoowWaterFirstHourSource& original_;
-    std::optional<G26BSourceFileBackedCompBridge> comp_;
-    std::size_t cursor_=0;
-};
-
 
 // Strictly scoped fourth-hour executor: genuine G26A stages0–11 and G26B
 // stages12–16 run on the G14-owned live frame with committed hour3 history.
@@ -430,41 +360,6 @@ inline bool g65_equal_real4_bits(
         if(std::bit_cast<std::uint32_t>(a[i])!=
            std::bit_cast<std::uint32_t>(b[i]))return false;
     return true;
-}
-
-// Decode serialization ONLY at the G65/P6F boundary. G26A and G66 see
-// typed native prior physical state, never depend on P6F writer linkage.
-inline G66NativeHour2WaterState g65_native_hour2_water_from_p6f(
-    const cteas::p6f::Calmet21File& native,
-    std::chrono::sys_seconds expected_end) {
-    if(native.hourly.size()!=45)
-        throw std::invalid_argument("G65 native hour2 P6F field count");
-    const auto field=[&](const std::string& label)
-        ->const std::vector<float>& {
-        const cteas::p6f::Calmet21Field* found=nullptr;
-        for(const auto& f:native.hourly)
-            if(f.label==label) {
-                if(found)throw std::invalid_argument(
-                    "G65 duplicate native P6F water field");
-                found=&f;
-            }
-        if(!found||found->integer||found->real_values.size()!=6970||
-           cteas::p6f::instant_seconds(found->end)!=
-               expected_end.time_since_epoch().count()||
-           cteas::p6f::instant_seconds(found->begin)!=
-               (expected_end-std::chrono::hours{1})
-                   .time_since_epoch().count())
-            throw std::invalid_argument(
-                "G65 native P6F water field clock/shape invalid");
-        return found->real_values;
-    };
-    G66NativeHour2WaterState prior;
-    prior.begin=expected_end-std::chrono::hours{1};
-    prior.end=expected_end;
-    prior.ustar_mps=field("USTAR   ");
-    prior.el_m=field("EL      ");
-    prior.explicitly_native_p6f_origin=true;
-    return prior;
 }
 
 inline G65NoaaFirstHourCommitReceipt
