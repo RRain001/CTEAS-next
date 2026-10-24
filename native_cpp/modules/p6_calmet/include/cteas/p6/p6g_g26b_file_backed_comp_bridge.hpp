@@ -86,12 +86,38 @@ public:
         bool explicitly_opt_in_normal_trial=false,
         const G41SelectedNoowWaterFirstHourSource* original_noow_water=nullptr,
         bool explicitly_opt_in_hour3_comp_stage12_trial=false,
-        bool explicitly_opt_in_hour3_comp_stage15_trial=false)
+        bool explicitly_opt_in_hour3_comp_stage15_trial=false,
+        bool explicitly_opt_in_hour3_p6f_trial=false,
+        bool explicitly_opt_in_hour4_comp_stage12_trial=false,
+        bool explicitly_opt_in_hour4_comp_stage15_trial=false,
+        bool explicitly_opt_in_hour4_p6f_trial=false)
         :diagno_(diagno),source_(source),
          original_noow_water_(original_noow_water),
          normal_trial_(explicitly_opt_in_normal_trial),
          hour3_comp_stage12_trial_(explicitly_opt_in_hour3_comp_stage12_trial),
-         hour3_comp_stage15_trial_(explicitly_opt_in_hour3_comp_stage15_trial) {
+         hour3_comp_stage15_trial_(explicitly_opt_in_hour3_comp_stage15_trial),
+         hour3_p6f_trial_(explicitly_opt_in_hour3_p6f_trial),
+         hour4_comp_stage12_trial_(explicitly_opt_in_hour4_comp_stage12_trial),
+         hour4_comp_stage15_trial_(explicitly_opt_in_hour4_comp_stage15_trial),
+         hour4_p6f_trial_(explicitly_opt_in_hour4_p6f_trial) {
+        if((hour4_comp_stage12_trial_&&hour3_comp_stage12_trial_)||
+           (hour4_comp_stage12_trial_&&hour3_p6f_trial_))
+            throw std::invalid_argument(
+                "G26B mixed hour3/hour4 trial flags rejected");
+        if(hour4_p6f_trial_&&!hour4_comp_stage15_trial_)
+            throw std::invalid_argument(
+                "G26B hour4 P6F requires stage15 trial");
+        if(hour4_comp_stage15_trial_&&!hour4_comp_stage12_trial_)
+            throw std::invalid_argument(
+                "G26B hour4 stage15 requires stage12 trial");
+        if(hour4_comp_stage12_trial_&&
+           (!normal_trial_||!original_noow_water_||
+            !diagno_.test_only_hour4_windtail_ready()))
+            throw std::invalid_argument(
+                "G26B hour4 COMP requires live source-native G26A wind-tail");
+        if(hour3_p6f_trial_&&!hour3_comp_stage15_trial_)
+            throw std::invalid_argument(
+                "G26B hour3 P6F requires stage15 trial");
         if(hour3_comp_stage15_trial_&&!hour3_comp_stage12_trial_)
             throw std::invalid_argument(
                 "G26B hour3 stage15 requires prior stage12 trial");
@@ -116,7 +142,12 @@ public:
         if(!explicitly_test_only||
            (hour3_comp_stage12_trial_&&phase_>0&&
             !hour3_comp_stage15_trial_)||
-           (hour3_comp_stage15_trial_&&phase_>3)||
+           (hour4_comp_stage12_trial_&&phase_>0&&
+            !hour4_comp_stage15_trial_)||
+           (hour4_comp_stage15_trial_&&phase_>3&&!hour4_p6f_trial_)||
+           (hour4_p6f_trial_&&phase_>4)||
+           (hour3_comp_stage15_trial_&&phase_>3&&!hour3_p6f_trial_)||
+           (hour3_p6f_trial_&&phase_>4)||
            phase_>=(source_.research_noow_water_source_only?5U:4U)||
            stage!=p6::kHefeiOriginalStageOrder[12+phase_]||
            !frame.source_controls||
@@ -136,9 +167,11 @@ public:
             // atomic G14 commit, clock publication and original 45-field
             // parity remain fail-closed.
             if(!original_noow_water_||
-               ((frame.hour_index>1&&!hour3_comp_stage12_trial_)||
-                frame.hour_index>2||
-                (hour3_comp_stage12_trial_&&frame.hour_index!=2))||
+               (frame.hour_index>1&&!hour3_comp_stage12_trial_&&
+                !hour4_comp_stage12_trial_)||
+               frame.hour_index>3||
+               (hour3_comp_stage12_trial_&&frame.hour_index!=2)||
+               (hour4_comp_stage12_trial_&&frame.hour_index!=3)||
                (frame.hour_index==1&&phase_>4)||
                original_noow_water_->source.original_metinp!=
                    source_.original_metinp)
@@ -311,7 +344,7 @@ public:
                     frame,source_,*water_mixht_stage12_,
                     *water_avemix_stage13_,
                     *water_wstarr_stage14_,
-                    *water_temp3d_stage15_,true);
+                    *water_temp3d_stage15_,true,hour3_p6f_trial_,hour4_p6f_trial_);
                 if(!prepared.actual_g14_stage16_precommit_validated||
                    prepared.g14_hour_committed||
                    prepared.source_clocks_published||
@@ -333,7 +366,7 @@ public:
                     "G26B genuine NOAA P6F stage order unsupported");
             auto candidate=g63_real_noaa_g14_comp_mixht_stage12(
                 frame,source_,*original_noow_water_,diagno_,true,
-                hour3_comp_stage12_trial_);
+                hour3_comp_stage12_trial_,hour4_comp_stage12_trial_);
             std::size_t valid_ss=0;
             for(const auto& obs:frame.surface.by_station)
                 if(obs.wind_valid)++valid_ss;
@@ -607,6 +640,10 @@ private:
     bool normal_trial_=false;
     bool hour3_comp_stage12_trial_=false;
     bool hour3_comp_stage15_trial_=false;
+    bool hour3_p6f_trial_=false;
+    bool hour4_comp_stage12_trial_=false;
+    bool hour4_comp_stage15_trial_=false;
+    bool hour4_p6f_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds end_{};

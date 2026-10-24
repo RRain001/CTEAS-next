@@ -16,7 +16,9 @@
 namespace cteas::calmet::p6g {
 
 // Narrow typed physical state: no P6F serialization dependency leaks
-// into G26A or frozen C1/C2 test translation units.
+// into G26A or frozen C1/C2 test translation units. The historical type
+// name is kept for ABI/source compatibility; the test-only hour-four
+// path passes an independently validated native HOUR-THREE P6F state.
 struct G66NativeHour2WaterState {
     std::chrono::sys_seconds begin{},end{};
     std::vector<float> ustar_mps,el_m;
@@ -33,21 +35,25 @@ struct G66NoaaHour3G22Trace {
     bool production_admitted=false;
 };
 
-inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
+inline G66NoaaHour3G22Trace g66_native_noaa_g22_trace_only(
     const MultiHourFrame& frame,const G19FileBackedCase& source,
     const Wind1MultiField& native_wind1,
     const G21SelectedFradjFields& native_fradj,
-    const G66NativeHour2WaterState& native_hour2_water,
+    const G66NativeHour2WaterState& native_previous_water,
+    std::size_t expected_hour_index,
     bool explicitly_test_only) {
     constexpr std::size_t nx=82,ny=85,nz=9,n=nx*ny;
-    if(!explicitly_test_only||frame.hour_index!=2||
+    if(!explicitly_test_only||
+       (expected_hour_index!=2&&expected_hour_index!=3&&
+        expected_hour_index!=4)||
+       frame.hour_index!=expected_hour_index||
        !frame.source_controls||frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||frame.stations.upper.size()!=1||
        source.surface.hourly.size()!=6||
        source.source_water_cells.size()!=63||
-       frame.input.end!=source.surface.hourly[2].end||
-       frame.surface.start!=source.surface.hourly[1].end||
-       frame.surface.end!=source.surface.hourly[2].end||
+       frame.input.end!=source.surface.hourly[expected_hour_index].end||
+       frame.surface.start!=source.surface.hourly[expected_hour_index-1].end||
+       frame.surface.end!=source.surface.hourly[expected_hour_index].end||
        frame.grid.landuse!=source.grid.landuse||
        frame.grid.terrain_m!=source.grid.terrain_m||
        native_wind1.nx!=82||native_wind1.ny!=85||native_wind1.nz!=9||
@@ -56,18 +62,18 @@ inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
        native_fradj.end!=frame.input.end||
        native_fradj.corrected_wind.u.size()!=nz*n||
        native_fradj.corrected_wind.v.size()!=nz*n||
-       !native_hour2_water.explicitly_native_p6f_origin||
-       native_hour2_water.end!=frame.surface.start||
-       native_hour2_water.begin!=frame.surface.start-std::chrono::hours{1}||
-       native_hour2_water.ustar_mps.size()!=n||
-       native_hour2_water.el_m.size()!=n)
+       !native_previous_water.explicitly_native_p6f_origin||
+       native_previous_water.end!=frame.surface.start||
+       native_previous_water.begin!=frame.surface.start-std::chrono::hours{1}||
+       native_previous_water.ustar_mps.size()!=n||
+       native_previous_water.el_m.size()!=n)
         throw std::invalid_argument(
-            "G66 requires committed native hour2 and authentic hour3 G26 stage02");
+            "G66 requires authentic native previous-hour P6F and source G26 stage02");
     if(frame.surface.end-frame.surface.start!=std::chrono::hours{1})
-        throw std::invalid_argument("G66 NOAA hour3 UTC window drift");
+        throw std::invalid_argument("G66 NOAA UTC hourly window drift");
 
-    const auto& previous_ustar=native_hour2_water.ustar_mps;
-    const auto& previous_el=native_hour2_water.el_m;
+    const auto& previous_ustar=native_previous_water.ustar_mps;
+    const auto& previous_el=native_previous_water.el_m;
 
     G17B4TwoPassSurfvar surfvar(
         frame.grid,frame.stations,source.surface,frame.surface,
@@ -176,7 +182,8 @@ inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
         if(a.size()!=count||(b&&b->size()!=count)||
            (c&&c->size()!=count))
             throw std::logic_error("G66 trace field extent drift");
-        put_int(4);put_int(82);put_int(85);put_int(9);put_int(code);
+        put_int(static_cast<std::int32_t>(expected_hour_index+2));
+        put_int(82);put_int(85);put_int(9);put_int(code);
         for(std::size_t i=0;i<count;++i) {
             put_float(a[i]);
             if(b)put_float((*b)[i]);
@@ -203,5 +210,41 @@ inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
     result.thermal.changed_slope_components=
         original_slope.changed_slope_components;
     return result;
+}
+
+// Preserve the historical source-only hour3 call surface exactly.
+inline G66NoaaHour3G22Trace g66_native_hour3_g22_trace_only(
+    const MultiHourFrame& frame,const G19FileBackedCase& source,
+    const Wind1MultiField& native_wind1,
+    const G21SelectedFradjFields& native_fradj,
+    const G66NativeHour2WaterState& native_hour2_water,
+    bool explicitly_test_only) {
+    return g66_native_noaa_g22_trace_only(
+        frame,source,native_wind1,native_fradj,native_hour2_water,
+        2U,explicitly_test_only);
+}
+
+// Separate, strictly forensic hour4 path; NEVER admits G26A production.
+inline G66NoaaHour3G22Trace g66_native_hour4_g22_trace_only(
+    const MultiHourFrame& frame,const G19FileBackedCase& source,
+    const Wind1MultiField& native_wind1,
+    const G21SelectedFradjFields& native_fradj,
+    const G66NativeHour2WaterState& native_hour3_water,
+    bool explicitly_test_only) {
+    return g66_native_noaa_g22_trace_only(
+        frame,source,native_wind1,native_fradj,native_hour3_water,
+        3U,explicitly_test_only);
+}
+// Fifth-hour independent forensic G22 requires authentic native hour-four
+// P6F WATER USTAR/EL history; no reference MET enters the native process.
+inline G66NoaaHour3G22Trace g66_native_hour5_g22_trace_only(
+    const MultiHourFrame& frame,const G19FileBackedCase& source,
+    const Wind1MultiField& native_wind1,
+    const G21SelectedFradjFields& native_fradj,
+    const G66NativeHour2WaterState& native_hour4_water,
+    bool explicitly_test_only) {
+    return g66_native_noaa_g22_trace_only(
+        frame,source,native_wind1,native_fradj,native_hour4_water,
+        4U,explicitly_test_only);
 }
 } // namespace cteas::calmet::p6g
