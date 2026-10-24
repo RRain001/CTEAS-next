@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Independent fixed original CALMET Fortran vs S4B2 WATER 3h G14 P6F.
+"""Independent fixed Fortran original vs S4B2 WATER G14 scoped prefix.
 
-Original result is read only after the native program finishes, never as
-native forcing. Frozen tolerance and original six-hour SHA are external gates.
+The same frozen reader and field tolerances work for 3..6 hours without
+copying per-hour audit scripts. The 3-hour public API remains compatible.
+Original result is read only after native execution, never as model forcing.
 """
 from __future__ import annotations
 import argparse
@@ -17,7 +18,9 @@ from scripts.s4.s4c_compare_noaa_unified_firsthour import digest
 from scripts.s4.s4r1c9ah_compare_hour6_p6f45 import read_hour
 
 
-def native_three_hours(path: Path) -> tuple[dict[str, bytes], ...]:
+def native_prefix_hours(path: Path, expected_hours: int) -> tuple[dict[str, bytes], ...]:
+    if expected_hours not in (3,4,5,6):
+        raise ValueError('native NOAA scoped audit supports only 3..6h')
     records=fortran_records(path.read_bytes())
     if len(records)<4 or len(records[0])!=96 or (
        records[0][:16].decode('ascii').strip()!='CALMET.DAT'):
@@ -32,8 +35,8 @@ def native_three_hours(path: Path) -> tuple[dict[str, bytes], ...]:
         raise ValueError('native CALMET output header invalid')
     dims=struct.unpack_from('<5i',header,48)
     stations=struct.unpack_from('<4i',header,80)
-    if dims!=(3,1,NX,NY,NZ) or stations!=(1,2,1,0):
-        raise ValueError(f'native 3h grid/time/stations mismatch: {dims}/{stations}')
+    if dims!=(expected_hours,1,NX,NY,NZ) or stations!=(1,2,1,0):
+        raise ValueError(f'native prefix grid/time/stations mismatch: {dims}/{stations}')
     hourly=[]
     for record in records[ncom+3:]:
         if len(record)<24:
@@ -44,10 +47,10 @@ def native_three_hours(path: Path) -> tuple[dict[str, bytes], ...]:
         if len(record)!=24+4*NC:
             raise ValueError('native field is not 6970 REAL4/INTEGER4 cells')
         hourly.append((record[:8].decode('ascii'),clock,record[24:]))
-    if len(hourly)!=135:
-        raise ValueError(f'native 3h needs 135 hourly fields: {len(hourly)}')
+    if len(hourly)!=45*expected_hours:
+        raise ValueError(f'native prefix needs {45*expected_hours} fields: {len(hourly)}')
     results=[]
-    for index in range(3):
+    for index in range(expected_hours):
         group=hourly[45*index:45*(index+1)]
         if [label for label,_,_ in group]!=LABELS:
             raise ValueError(f'native 45 field labels/order invalid at {index+1}')
@@ -58,15 +61,23 @@ def native_three_hours(path: Path) -> tuple[dict[str, bytes], ...]:
     return tuple(results)
 
 
-def audit(original:Path,native:Path,original_sha:str,native_sha:str,report:Path)->dict:
+def native_three_hours(path: Path) -> tuple[dict[str, bytes], ...]:
+    """Backward compatible fixed-three-hour parser and negative tests."""
+    return native_prefix_hours(path,3)
+
+
+def audit(original:Path,native:Path,original_sha:str,native_sha:str,
+          report:Path,native_hours:int=3)->dict:
     if original.resolve()==native.resolve() or report.exists():
         raise ValueError('independent original/native and unoccupied report required')
     if digest(original)!=original_sha or digest(native)!=native_sha:
         raise ValueError('frozen original/native SHA256 mismatch')
-    source=tuple(read_hour(original,6,h) for h in range(3))
-    calculated=native_three_hours(native)
+    if native_hours not in (3,4,5,6):
+        raise ValueError('native NOAA scoped audit requires 3..6 committed hours')
+    source=tuple(read_hour(original,6,h) for h in range(native_hours))
+    calculated=native_prefix_hours(native,native_hours)
     first_differences=[];hours=[];total_bad=0;total_equal=0
-    for hour in range(3):
+    for hour in range(native_hours):
         compare=source[hour];got=calculated[hour]
         fields={};bad=0;equal=0
         for label in LABELS:
@@ -94,12 +105,14 @@ def audit(original:Path,native:Path,original_sha:str,native_sha:str,report:Path)
                       'compared_values':45*NC,'bitwise_equal':equal,
                       'frozen_exceedances':bad,'fields':fields})
         total_equal+=equal;total_bad+=bad
-    result={'status':('PASS_SCOPED_S4C_SHARED_THREEHOUR_FORTRAN_135' if not total_bad
-                      else 'FAIL_S4C_SHARED_THREEHOUR_FORTRAN_135'),
+    human={3:'THREE',4:'FOUR',5:'FIVE',6:'SIX'}[native_hours]
+    label=f'S4C_SHARED_{human}HOUR_FORTRAN_{45*native_hours}'
+    result={'status':('PASS_SCOPED_'+label if not total_bad else 'FAIL_'+label),
             'original_met_sha256':original_sha,'native_met_sha256':native_sha,
-            'original_hours':6,'native_hours':3,'grid':[NX,NY,NZ],
-            'stations':[2,1],'water_cells':63,'compared_fields':135,
-            'compared_values':135*NC,'bitwise_equal':total_equal,
+            'original_hours':6,'native_hours':native_hours,'grid':[NX,NY,NZ],
+            'stations':[2,1],'water_cells':63,
+            'compared_fields':45*native_hours,
+            'compared_values':45*native_hours*NC,'bitwise_equal':total_equal,
             'frozen_exceedances':total_bad,'first_differences':first_differences,
             'hours':hours,'state_carry':'G14_NATIVE_COMMITTED_ZI_ZICONV_DPTT_AND_NATIVE_P6F_WATER',
             'production_P6':'NOT_ACCEPTED','P7':'NOT_RUN',
@@ -115,8 +128,9 @@ def main() -> None:
     p.add_argument('--original-sha256',required=True)
     p.add_argument('--native-sha256',required=True)
     p.add_argument('--report',type=Path,required=True)
+    p.add_argument('--native-hours',type=int,choices=(3,4,5,6),default=3)
     a=p.parse_args();r=audit(a.original,a.native,a.original_sha256,
-                             a.native_sha256,a.report)
+                             a.native_sha256,a.report,a.native_hours)
     print(r['status'],'values',r['compared_values'],
           'bitwise',r['bitwise_equal'],'exceedances',r['frozen_exceedances'])
     if r['frozen_exceedances']:
