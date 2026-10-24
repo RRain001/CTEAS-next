@@ -1109,6 +1109,16 @@ add_test(NAME p6g_s4c_water_shared_fourthhour_no_implicit_production
 set_tests_properties(p6g_s4c_water_shared_fourthhour_no_implicit_production
   PROPERTIES TIMEOUT 60)
 
+# The exact same research-only negative contract also forbids fifth-hour
+# production, incorrect prefix, missing genuine input, and mixed flags.
+add_test(NAME p6g_s4c_water_shared_fifthhour_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_shared_thirdhour_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>
+    --research-hour 5)
+set_tests_properties(p6g_s4c_water_shared_fifthhour_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
 # S4-B4: read the frozen original C1 MET (143h), produce a separate 1h
 # original subset for independent P6E 45-field comparison. No native
 # forecast values are injected into this reference-only utility.

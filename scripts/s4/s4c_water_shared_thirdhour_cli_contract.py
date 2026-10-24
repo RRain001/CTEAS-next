@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Third/fourth-hour native WATER G14 research-only CLI mode guards.
+"""Third–fifth hour native WATER G14 research-only CLI mode guards.
 
 No original NOAA material or Fortran oracle is needed by this negative test.
 """
@@ -11,9 +11,9 @@ import tempfile
 
 
 def test_cli(binary:Path,hour:int=3)->None:
-    if hour not in (3,4):
-        raise ValueError('S4C supported CLI guard hours 3 or 4 only')
-    name={3:'thirdhour',4:'fourthhour'}[hour]
+    if hour not in (3,4,5):
+        raise ValueError('S4C supported CLI guard hours 3, 4 or 5 only')
+    name={3:'thirdhour',4:'fourthhour',5:'fifthhour'}[hour]
     with tempfile.TemporaryDirectory(prefix=f's4c-noaa-{name}-') as temp:
         root=Path(temp);fake=root/'nonexistent';out=root/'no.met.dat';trace=root/'no.trace'
         base=['--selected-experimental',f'--water-{name}-g14-trial-only',
@@ -27,8 +27,10 @@ def test_cli(binary:Path,hour:int=3)->None:
             (['--g26-normal-entry-trial'],'production-like G26'),
             (['--native-comp-trace',str(trace)],'no trace'),
             ([f'--water-{name}-g14-trial-only'],'duplicate research hour'),
-            ([f'--water-{"fourthhour" if hour==3 else "thirdhour"}-g14-trial-only'],
-             'third/fourth mutually exclusive'),
+            *[( [f'--water-{name_other}-g14-trial-only'],
+                'research hour mutually exclusive') for hour_other,name_other in
+              ((3,'thirdhour'),(4,'fourthhour'),(5,'fifthhour'))
+              if hour_other!=hour],
         )
         for flags,label in forbidden:
             p=subprocess.run([str(binary),*base,*flags],
@@ -57,7 +59,7 @@ def test_cli(binary:Path,hour:int=3)->None:
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--binary',required=True,type=Path)
-    parser.add_argument('--research-hour',type=int,choices=(3,4),default=3)
+    parser.add_argument('--research-hour',type=int,choices=(3,4,5),default=3)
     args=parser.parse_args()
     if not args.binary.is_file():parser.error('shared native S4B2 binary absent')
     test_cli(args.binary,args.research_hour)
