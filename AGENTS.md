@@ -1,3 +1,9 @@
+## 2026-10-24 最新阶段验收（优先于旧的 Ubuntu Docker/full 要求）
+- 本仓库 S4 以 Ubuntu 原生软件全量测试、Fortran/C++ 独立原版科学验收、精确 SHA 和非 Bot 独立审查作为强制门禁。S5 以原生软件 full、规模/内存/性能回归及物理不退化为门禁。**正式 Docker full 和 AMD64/ARM64 容器交付验收延至 S5 完成之后**；Docker 快速调试自愿使用，不能替代真实物理/原生 full。
+- 项目脚本 scripts/ci/cteas_native_full.py 只在干净冻结 HEAD 运行全 native_cpp CMake build/CTest 及 S4/S2G Python 单元测试，完整记录日志、命令、SHA，verify 成功后对 GitHub 当前 PR HEAD 发布 ubuntu-native-full（或沿用已有 ubuntu-docker-full）。没有正式原生 full 实际结果就保持 NOT_RUN，禁止把 DEV_ONLY 当软件门禁。
+- GitHub repository-admission 支持 exact SHA 两种软件证据；scientific-admission 及 required checks、不变的 science-validated、他人非 Bot 同 SHA APPROVED review、Draft 和 merge-verified 自动合并防护仍有效。Docker 延期不降低原版数值容差、不放宽生产物理 guards、不授予 P6/P7 科学通过。
+- 唯一权威文档 docs/ci/S4_S5_NATIVE_POST_S5_DOCKER_POLICY_20261024.md。本文下面 2026-10-23/24 提到 S4/S5 每阶段强制 Docker full、ubuntu-docker-full 唯一准入的内容仅为历史约定。只针对本仓库修改，与其他项目无关。
+
 ## S4-0 当前唯一开发基线（2026-10-24）
 - Ubuntu 有效 S4 Git 主工作树：/home/lhy/dev/CTEAS-next/worktrees/s4-integration，分支 codex/s4-integration-20261024；实际 common-dir 是 repo-recovered-91a1fff8/.git。旧 /home/lhy/dev/CTEAS-next/repo 存在 210 项历史删除，禁止用于开发或 reset；/home/lhy/CTEAS-next 已删除。
 - GitHub 集成 Draft PR #308 是唯一 PR；15 个祖先 Draft 已关闭但保留历史。经 Ubuntu 本地编译/定向测试及应有科学原版比对后，只能 fast-forward push 到 PR #308 现有远程 head，不能 force push/main push，不能为每个 G22/G23/G24 等中间阶段新增 PR。

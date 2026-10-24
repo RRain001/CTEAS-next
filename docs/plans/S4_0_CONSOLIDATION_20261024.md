@@ -1,3 +1,8 @@
+## 2026-10-24 最新验收节奏（覆盖本计划旧 Docker full 文字）
+- S4 Ubuntu 原生软件 full + 真实原版科学对照与独立审查；S5 规模/性能/原生软件 full + 科学回归；正式 Docker full 和 AMD64/ARM64 交付验收放在 S5 完成后。
+- GitHub repository-admission 要求 exact SHA 的 ubuntu-native-full 或旧 ubuntu-docker-full；scientific-admission、独立同 SHA review、Draft 门禁不变。
+- 历史“在 S4 末必须 Docker full 才能验收”的要求已经被此新规则替代；不得以 DEV_ONLY/非冻结测试冒充原生 full。具体见 docs/ci/S4_S5_NATIVE_POST_S5_DOCKER_POLICY_20261024.md。
+
 # S4-0：统一开发基线与 S4 后续关键路径（2026-10-24）
 
 ## 1. 权威代码与版本

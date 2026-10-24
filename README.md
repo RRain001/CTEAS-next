@@ -1,3 +1,8 @@
+## 2026-10-24 新版 S4/S5 与 Docker 验收规则
+- S4：Ubuntu 原生 full 软件与 Fortran/C++ 科学验证；S5：原生规模/性能与科学回归；S5 完成后正式 Docker full、AMD64/ARM64 和运行镜像交付。旧的 S4/S5 每研究 PR 强制 Docker full 流程已取消，但独立科学审查及正式原生软件 full 不可跳过。
+- 唯一具体执行合同：docs/ci/S4_S5_NATIVE_POST_S5_DOCKER_POLICY_20261024.md。新状态 ubuntu-native-full 只能来自干净的 exact SHA、scripts/ci/cteas_native_full.py 的全部固定步骤 PASS。GitHub repository-admission 兼容原 ubuntu-docker-full，scientific-admission/auto-merge/required checks 原样保留。
+- S4 仍使用 Ubuntu /home/lhy/dev/CTEAS-next/worktrees/s4-integration，PR #308 仍 Draft；Docker 最终交付 NOT_RUN，新的原生 full 也尚未运行。
+
 # CTEAS-next
 
 ## S4 开发状态与权威入口（2026-10-24）
