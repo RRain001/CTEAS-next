@@ -42,11 +42,28 @@ inline G64RealNoaaP6FPrecommit g64_real_noaa_p6f_from_live_g14(
     const G18C1AvemixOutput& ave,
     const std::vector<float>& wstar,
     const std::vector<float>& temp3d,
-    bool forensic_only) {
+    bool forensic_only,
+    bool opt_in_hour3_p6f_trial=false,
+    bool opt_in_hour4_p6f_trial=false,
+    bool opt_in_hour5_p6f_trial=false,
+    bool opt_in_hour6_p6f_trial=false) {
     const auto n=static_cast<std::size_t>(frame.grid.nx)*
                  static_cast<std::size_t>(frame.grid.ny);
     if(!forensic_only||!source.research_noow_water_source_only||
-       frame.hour_index!=0||n!=6970||
+       (frame.hour_index>5||
+        (frame.hour_index==2&&!opt_in_hour3_p6f_trial)||
+        (frame.hour_index==3&&!opt_in_hour4_p6f_trial)||
+        (frame.hour_index==4&&!opt_in_hour5_p6f_trial)||
+        (frame.hour_index==5&&!opt_in_hour6_p6f_trial)||
+        (opt_in_hour3_p6f_trial&&frame.hour_index!=2)||
+        (opt_in_hour4_p6f_trial&&frame.hour_index!=3)||
+        (opt_in_hour5_p6f_trial&&frame.hour_index!=4)||
+        (opt_in_hour6_p6f_trial&&frame.hour_index!=5)||
+        (static_cast<int>(opt_in_hour3_p6f_trial)+
+         static_cast<int>(opt_in_hour4_p6f_trial)+
+         static_cast<int>(opt_in_hour5_p6f_trial)+
+         static_cast<int>(opt_in_hour6_p6f_trial)>1))||
+       n!=6970||
        frame.grid.nx!=82||frame.grid.ny!=85||
        frame.stations.surface.size()!=2||
        frame.stations.upper.size()!=1||

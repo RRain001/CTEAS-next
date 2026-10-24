@@ -24,7 +24,11 @@ inline G26BRealWaterCompSourcePartition
 g26b_real_water_comp_partition_source_only(
     const G41SelectedNoowWaterFirstHourSource& genuine,
     const MultiHourFrame& frame,
-    bool explicitly_source_only) {
+    bool explicitly_source_only,
+    bool opt_in_hour3_comp_stage12_trial=false,
+    bool opt_in_hour4_comp_stage12_trial=false,
+    bool opt_in_hour5_comp_stage12_trial=false,
+    bool opt_in_hour6_comp_stage12_trial=false) {
     const auto& s=genuine.source;
     const auto nx=static_cast<std::size_t>(s.grid.nx);
     const auto ny=static_cast<std::size_t>(s.grid.ny);
@@ -34,14 +38,36 @@ g26b_real_water_comp_partition_source_only(
        genuine.g14_g26_production_ready||
        genuine.water_heat_source.g14_g26_production_ready||
        // G41 owns all six real NOAA source hours, even though its
-       // historical type name says "FirstHour". Admit only hours 0 and
-       // 1 with exact current-hour source UTC. Hour-two previous memory
-       // remains owned by the validated G14 scheduler, not G41.
-       frame.hour_index>1||s.surface.hourly.size()!=6||
+       // historical type name says "FirstHour". Admit the selected
+       // NOAA hours 0-1 by default, and hours 2-4 only with mutually
+       // exclusive test-only trial flags and exact source UTC. The
+       // previous committed memory is always owned by G14, not G41.
+       (static_cast<int>(opt_in_hour3_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour4_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour5_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour6_comp_stage12_trial)>1)||
+       ((frame.hour_index>1&&!opt_in_hour3_comp_stage12_trial&&
+         !opt_in_hour4_comp_stage12_trial&&
+         !opt_in_hour5_comp_stage12_trial&&
+         !opt_in_hour6_comp_stage12_trial)||
+        frame.hour_index>5||
+        (opt_in_hour3_comp_stage12_trial&&frame.hour_index!=2)||
+        (opt_in_hour4_comp_stage12_trial&&frame.hour_index!=3)||
+        (opt_in_hour5_comp_stage12_trial&&frame.hour_index!=4)||
+        (opt_in_hour6_comp_stage12_trial&&frame.hour_index!=5))||
+       s.surface.hourly.size()!=6||
        frame.input.end!=s.surface.hourly[frame.hour_index].end||
        frame.surface.start!=s.surface.hourly[frame.hour_index].start||
        (frame.hour_index==1&&
         frame.surface.start!=s.surface.hourly[0].end)||
+       (frame.hour_index==2&&
+        frame.surface.start!=s.surface.hourly[1].end)||
+       (frame.hour_index==3&&
+        frame.surface.start!=s.surface.hourly[2].end)||
+       (frame.hour_index==4&&
+        frame.surface.start!=s.surface.hourly[3].end)||
+       (frame.hour_index==5&&
+        frame.surface.start!=s.surface.hourly[4].end)||
        frame.surface.end!=frame.input.end||
        nx<2||ny<2||nx>400||ny>400||
        s.grid.landuse.size()!=n||

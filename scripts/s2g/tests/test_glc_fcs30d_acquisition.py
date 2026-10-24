@@ -34,6 +34,29 @@ class AcquisitionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     inspect(path,geometry()['buffered_bounds_utm_m'])
 
+    def test_projection_corner_roundoff_is_not_grid_drift(self):
+        # Different PROJ versions vary at the last WGS84 decimal places.
+        # A 1e-14 degree change is a coordinate serialization artifact;
+        # it must not weaken the pixel SHA or exact projected UTM grid.
+        with tempfile.TemporaryDirectory() as temp:
+            destination = Path(temp)
+            source = ROOT / DATA
+            (destination / 'hefei_2022_30m.tif').write_bytes(
+                (source / 'hefei_2022_30m.tif').read_bytes())
+            meta = json.loads((source / 'metadata.json').read_text())
+            meta['original_corners_wgs84'][1][1] += 1e-14
+            (destination / 'metadata.json').write_text(json.dumps(meta))
+            self.assertEqual(verify(destination)['nodata_fraction'], 0)
+            meta['original_corners_wgs84'][1][1] += 1e-8
+            (destination / 'metadata.json').write_text(json.dumps(meta))
+            with self.assertRaisesRegex(ValueError, 'original_corners_wgs84'):
+                verify(destination)
+            meta = json.loads((source / 'metadata.json').read_text())
+            meta['grid_sha256'] = '0' * 64
+            (destination / 'metadata.json').write_text(json.dumps(meta))
+            with self.assertRaisesRegex(ValueError, 'grid_sha256'):
+                verify(destination)
+
     def test_reject_metadata_sha_tamper(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)

@@ -1061,6 +1061,83 @@ add_test(NAME p6g_s4b2_no_implicit_production
          COMMAND cteas_p6g_s4b2_unified_selected --met missing.met)
 set_tests_properties(p6g_s4b2_no_implicit_production PROPERTIES WILL_FAIL TRUE)
 
+# S4-C: test the SAME configured S4B2 CLI. Input-only WATER G19 source
+# preflight must reject MET output, G26/P6F trial flags, trace and partial
+# windows before opening input. This is no claim of WATER physics parity.
+if(NOT Python3_Interpreter_FOUND)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+endif()
+add_test(NAME p6g_s4c_water_source_cli_fail_closed
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_source_preflight_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>)
+set_tests_properties(p6g_s4c_water_source_cli_fail_closed PROPERTIES TIMEOUT 60)
+
+# S4-C native 17-stage first-hour G65 actor is opt-in and cannot be used
+# as a production entry, 2–6h executor, or source-only preflight by accident.
+add_test(NAME p6g_s4c_water_shared_firsthour_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_shared_firsthour_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>)
+set_tests_properties(p6g_s4c_water_shared_firsthour_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
+# S4-C: genuine second-hour G65 research G14 remains explicit opt-in;
+# disallow merging first-hour-only/normal G26/trace source branches.
+add_test(NAME p6g_s4c_water_shared_secondhour_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_shared_secondhour_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>)
+set_tests_properties(p6g_s4c_water_shared_secondhour_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
+# S4-C: same native S4B2 executable third-hour WATER research option
+# cannot enter general production, skip hours or mix preflight/trial modes.
+add_test(NAME p6g_s4c_water_shared_thirdhour_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_shared_thirdhour_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>)
+set_tests_properties(p6g_s4c_water_shared_thirdhour_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
+# Hour4 uses the same negative CLI contract; do not clone near-identical tests.
+add_test(NAME p6g_s4c_water_shared_fourthhour_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_shared_thirdhour_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>
+    --research-hour 4)
+set_tests_properties(p6g_s4c_water_shared_fourthhour_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
+# The exact same research-only negative contract also forbids fifth-hour
+# production, incorrect prefix, missing genuine input, and mixed flags.
+add_test(NAME p6g_s4c_water_shared_fifthhour_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_shared_thirdhour_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>
+    --research-hour 5)
+set_tests_properties(p6g_s4c_water_shared_fifthhour_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
+# Complete six-hour original NOAA native G14 remains explicitly research-only.
+# The same negative test rejects production, partial windows, and mixed flags.
+add_test(NAME p6g_s4c_water_shared_sixthhour_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4c_water_shared_thirdhour_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>
+    --research-hour 6)
+set_tests_properties(p6g_s4c_water_shared_sixthhour_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
+# S4-D: one six-hour source case uses a single prefix-parameterized
+# research-only entry; older 1..6 flags are frozen backwards-compatible gates.
+add_test(NAME p6g_s4d_configured_noaa_shared_g14_no_implicit_production
+  COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../scripts/s4/s4d_water_noaa_configured_cli_contract.py"
+    --binary $<TARGET_FILE:cteas_p6g_s4b2_unified_selected>)
+set_tests_properties(p6g_s4d_configured_noaa_shared_g14_no_implicit_production
+  PROPERTIES TIMEOUT 60)
+
 # S4-B4: read the frozen original C1 MET (143h), produce a separate 1h
 # original subset for independent P6E 45-field comparison. No native
 # forecast values are injected into this reference-only utility.
@@ -1441,9 +1518,10 @@ else()
                          PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# S4-R1c8w: research-only REAL NOAA 17-stage G14 first-hour atomic
-# transaction. Both failed-precommit rollback and committed AA/BB/CGAMMA
-# publication are checked; hour2 physics and production remain blocked.
+# S4-R1c9j: research-only REAL NOAA 17-stage G14 transaction.
+# First-hour commit, second-hour failed-precommit rollback and opt-in
+# positive second-hour commit/clock publication are scoped tests only.
+# Original Fortran science and hour3-6 P6/P7 production remain blocked.
 add_executable(cteas_p6g_g65_noaa_firsthour_atomic
                src/p6g_g65_noaa_firsthour_atomic_commit_main.cpp)
 target_link_libraries(cteas_p6g_g65_noaa_firsthour_atomic

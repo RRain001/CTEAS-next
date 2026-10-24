@@ -33,8 +33,20 @@
 | CALMET-14 | 上空稳定度 · `IUPT=-1` | calmet.for :: CGAMMA / PREPDI | [`p6g_g18b9_original_gamma_controls.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18b9_original_gamma_controls.hpp) | 已选分支；只接受限定 IUPT/IDIOPT2=0，其他路径须独立核验 | P2 |
 | CALMET-15 | 混合层高度 · `IMIXH=1` | calmet.for :: MIXHT / MIXHTST | [`p6g_g18a_selected_comp_mixht.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18a_selected_comp_mixht.hpp) | 已选分支；IMIXH=-1/2/-2 及海面混合层未验收 | P1 |
 | CALMET-16 | 混合层平滑 · `IAVEZI=1` | calmet.for :: AVEMIX (COMP approx L4715) | [`p6g_g18c1_avemix.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g18c1_avemix.hpp) | 已选分支；跨网格尺度/不同平均策略未验收 | P2 |
-| CALMET-17 | 温度场平均 · `IAVET=1` | calmet.for :: SURFVAR / TEMP3D | [`p6g_g17b4_iavet_two_pass.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp) | 已选分支；IAVET=0 和气象强迫广义路径未验收 | P2 |
-| CALMET-18 | 输出数据接口 · `CALMET.DAT 2.1=selected` | calmet.for :: COMP / output writer | [``](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/p6f/) | 已选分支；格式正确不等于所有备选计算分支都有科学等价性 | P1 |
+| CALMET-17 | 温度场平均 · `IAVET=1` | calmet.for :: SURFVAR / TEMP3D | [`p6g_g17b4_iavet_two_pass.hpp`](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/include/cteas/p6/p6g_g17b4_iavet_two_pass.hpp) | 已选分支；真实 NOAA 第二小时 G26B TEMP3D stage15 同 SHA 源原生 62,730 REAL4 数值已 PASS_SCOPED（S4-R1c9e，Actions 39918760666）；S4-R1c9f 第16阶段 P6F 预提交候选仍 NOT_RUN，不代表原版 Fortran 第二小时等价；IAVET=0 和广义气象强迫未验收 | P2 |
+| CALMET-18 | 输出数据接口 · `CALMET.DAT 2.1=selected` | calmet.for :: COMP / output writer | [``](https://github.com/RRain001/CTEAS-next/blob/main/native_cpp/modules/p6_calmet/p6f/) | 已选分支；S4-R1c9h Ubuntu 原版 NOAA 第二小时 313650 数值对照超差 0（LOCAL_PASS_SCOPED）；GitHub exact-SHA/独立审查、第二小时提交和 3–6 小时仍 NOT_ACCEPTED；格式正确不等于所有备选计算分支都有科学等价性 | P1 |
+
+### 2026-10-24 S4-R1c9w：新增第四小时限定对照（并非生产验收）
+
+对于本矩阵 CALMET-09（ISLOPE=1）、CALMET-17（IAVET=1）以及 CALMET-02（缺测站点内生补缺），真实 NOAA 2SS/1US、82×85×9 第四小时的 G22/SURFVAR/HEATFX/AIRDEN/ELUSTR/SLOPE 已取得 **181,220/181,220 REAL4 原版/原生限定对照，0 个冻结阈值超差，156,712 逐位一致**。原版每小时 `COMP→MISSFC→DIAGNO` 的第四小时缺测非风变量仅在测试专用副本里由 G43 源等价补缺；原始 P5 观测不改，WATER 63/63 的 USTAR 与 EL 历史传递逐位吻合。详见 [S4-R1c9w 私有源审与限定数值验收说明](../plans/ISSUE40_S4R1C9W_NOAA_HOUR4_G22_STAGE3_6_20261024.md)。**此证据只覆盖第四小时的第 0–6 阶段，G23/G24、COMP、P6F、第四小时 G14 提交以及后续小时均未验收，独立科学审查 NOT_RUN；不修改上表选项的通用生产验收状态。**
+
+### 2026-10-24 S4-R1c9x：第四小时限定风场对照
+
+在 S4-R1c9w 已验证真实 NOAA 第四小时 G22 的基础上，第四小时 G23 STHEOR/INTER2 及 G24 SMOOTH/DIVCEL_W 阶段 7–11 已执行原版和原生各阶段 90/100/110 风场对照：**446,080/446,080 REAL4 均满足不变的 2e-4 m/s 冻结风场容差，0 超差，363,869 逐位一致**。独立诊断及原版代码追溯见 [S4-R1c9x](../plans/ISSUE40_S4R1C9X_NOAA_HOUR4_NATIVE_G23_G24_20261024.md)。**范围仅限 82×85×9、2SS/1US 的第四小时试验分支，不代表 G26B COMP、G64 P6F、第四小时 G14 状态发布、后续小时或其它物理选项获得生产准入。**
+
+### 2026-10-24 S4-R1c9y：第四小时 COMP MIXHT/AVEMIX/WSTARR/TEMP3D 限定数值对照
+
+真实 NOAA 2SS/1US、82×85×9 第四小时的 G26B COMP 阶段 12–15 已由同一原生 G14 第四小时 preview 依次执行，使用只读、固定 SHA 的原版六小时 COMP trace 独立比较，**132,430 / 132,430 REAL4 满足已有冻结容差，0 个超差，108,484 逐位一致**。源 G52/G53/G63 的第四小时许可仅限 hour_index=3 显式试验，G14 已提交第三小时状态和站点时钟在本试验中保持不变。详见 [S4-R1c9y](../plans/ISSUE40_S4R1C9Y_NOAA_HOUR4_NATIVE_G26B_COMP_STAGE12_15_20261024.md)。**该 DEV_ONLY 对照不是第四小时 P6F、G14 正向提交、第五至六小时、通用 P6/P7 或独立科学审查的准入证据。**
 
 ## CALPUFF — P7（24 项）
 
@@ -80,3 +92,7 @@
 - 原版源码、第三方许可边界和凭据不应进入本 CSV、文档、CI 构建上下文或重构库 Git 历史；保持对老仓库的固定提交依赖与 SHA256 检查。
 
 **参考证据**：[迁移科学范围](../migration/SCIENTIFIC_RERUN_PLAN.md) · [第三方资产决策](../migration/THIRD_PARTY_ASSETS.md) · [P7 已选干态验收](../reconstruction_cpp/P7_PHASE_STATUS_20261015.md) · [C1/C2 四臂科学对照](../reconstruction_cpp/P7_C1_C2_CALMET_TO_CALPUFF_INTEGRATION_20261015.md) · [P6 原版调用图](../reconstruction_cpp/P6D_CALLGRAPH_COMPLETENESS_AUDIT_20261013.md)
+
+真实 NOAA 第四小时 G64 P6F 的 45 个原版输出字段：**313,650/313,650** 在不变的冻结容差内，0 超差，240,362 逐位一致；第四小时 G65 17 阶段强制回滚、新执行器正向提交与站点时钟发布已通过，提交试验重新生成的 P6F 候选与未提交候选字节相同，第五小时 preview 正确继承状态。见 [S4-R1c9z/aa](../plans/ISSUE40_S4R1C9Z_AA_NOAA_HOUR4_P6F_G14_TRANSACTION_20261024.md)。这些仅为 **第四小时 opt-in 的 DEV_ONLY 限定验证**；第五/六小时、通用 P6、P7、湿沉降及独立科学审查 NOT_ACCEPTED，选项矩阵生产验收范围不变。
+
+真实 NOAA 第五小时（05–06 UTC）G26A stage0–6 使用第四小时 G14 提交的状态、站点时钟和 P6F WATER USTAR/EL；独立 G66 与第五小时实时 G26A trace **逐字节相同**。对固定原版 Fortran 六小时 G22 trace：**181,220/181,220 REAL4** 在原冻结容差内，0 超差，161,162 逐位一致，63 个 WATER 的 USTAR 与 EL 各自全数逐位一致。详见 [S4-R1c9ab/ac/ad](../plans/ISSUE40_S4R1C9AB_AC_AD_NOAA_HOUR5_G22_20261024.md)。此结果只覆盖 **第五小时 stage0–6、DEV_ONLY**，后续 G23/G24、COMP/P6F、G14 提交和第六小时以及通用 P6/P7、湿沉降和独立科学审查都 NOT_RUN/NOT_ACCEPTED。

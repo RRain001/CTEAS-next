@@ -47,14 +47,31 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
     const G19FileBackedCase& source,
     const G41SelectedNoowWaterFirstHourSource& original,
     const G26SourceFileBackedG14DiagnoBridge& diagno,
-    bool explicitly_forensic_only) {
+    bool explicitly_forensic_only,
+    bool opt_in_hour3_comp_stage12_trial=false,
+    bool opt_in_hour4_comp_stage12_trial=false,
+    bool opt_in_hour5_comp_stage12_trial=false,
+    bool opt_in_hour6_comp_stage12_trial=false) {
     const auto& geo=live.grid;
     const auto n=static_cast<std::size_t>(geo.nx)*
                  static_cast<std::size_t>(geo.ny);
     if(!explicitly_forensic_only||
        !source.research_noow_water_source_only||
        !diagno.source_diagno_ready()||
-       geo.nx!=82||geo.ny!=85||live.hour_index>1||
+       geo.nx!=82||geo.ny!=85||
+       (static_cast<int>(opt_in_hour3_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour4_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour5_comp_stage12_trial)+
+        static_cast<int>(opt_in_hour6_comp_stage12_trial)>1)||
+       ((live.hour_index>1&&!opt_in_hour3_comp_stage12_trial&&
+         !opt_in_hour4_comp_stage12_trial&&
+         !opt_in_hour5_comp_stage12_trial&&
+         !opt_in_hour6_comp_stage12_trial)||
+        live.hour_index>5||
+        (opt_in_hour3_comp_stage12_trial&&live.hour_index!=2)||
+        (opt_in_hour4_comp_stage12_trial&&live.hour_index!=3)||
+        (opt_in_hour5_comp_stage12_trial&&live.hour_index!=4)||
+        (opt_in_hour6_comp_stage12_trial&&live.hour_index!=5))||
        live.stations.surface.size()!=2||live.stations.upper.size()!=1||
        source.source_water_cells.size()!=63||
        original.source.surface.hourly.size()!=6||
@@ -68,6 +85,14 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
        original.source.surface.hourly[live.hour_index].start!=live.surface.start||
        (live.hour_index==1&&
         live.surface.start!=source.surface.hourly[0].end)||
+       (live.hour_index==2&&
+        live.surface.start!=source.surface.hourly[1].end)||
+       (live.hour_index==3&&
+        live.surface.start!=source.surface.hourly[2].end)||
+       (live.hour_index==4&&
+        live.surface.start!=source.surface.hourly[3].end)||
+       (live.hour_index==5&&
+        live.surface.start!=source.surface.hourly[4].end)||
        live.input.end!=live.surface.end||
        live.previous.zi_m.size()!=n||
        live.previous.ziconv_m.size()!=n||
@@ -148,7 +173,10 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
        elustr.el_m.size()!=n)
         throw std::logic_error("G63 original third COMP thermal not physical");
     const auto water=g53_real_source_g24_neutral_water_reference(
-        original,live,g24,true);
+        original,live,g24,true,opt_in_hour3_comp_stage12_trial,
+        opt_in_hour4_comp_stage12_trial,
+        opt_in_hour5_comp_stage12_trial,
+        opt_in_hour6_comp_stage12_trial);
     if(!water.genuine_firsthour_water_arithmetic_only||
        water.land_mixht_ready||water.original_causal_memory_ready||
        water.water.size()!=63||water.end!=live.input.end)
@@ -191,7 +219,19 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
         if(k>=n||encountered[k]++)
             throw std::invalid_argument("G63 duplicate original WATER ordinal");
         mix.initial_zi[k]=water_cell.mixing.zi_m;
-        mix.initial_ziconv[k]=water_cell.mixing.ziconv_m;
+        // Original CALMET v6.5.0 WATER() L32964-33030 computes a
+        // *local scalar* ZICONV and stores its result in ZICOLD(I,J).
+        // It does NOT write the global gridded ZICONV(I,J). Following
+        // MIXHT() skips WATER cells, so the global grid retains the
+        // previous hour's AVEMIX ZICONV at these cells until the next
+        // AVEMIX call. Preserve G14 committed memory here, rather than
+        // overwriting it with G36's source-local neutral ZICONV=0.
+        // This distinction is invisible during cold hour one (prior=0),
+        // but affects real sixhour WSTAR and TEMP3D starting hour two.
+        if(!std::isfinite(live.previous.ziconv_m[k])||
+           live.previous.ziconv_m[k]<0.f)
+            throw std::invalid_argument(
+                "G63 invalid previous global WATER ZICONV");
         mix.qh[k]=water_cell.neutral.qh_buoyancy_wm2;
         mix.ustar[k]=water_cell.neutral.ustar_mps;
         mix.el[k]=water_cell.neutral.el_m;
@@ -208,8 +248,10 @@ inline G63RealNoaaG14MixhtStage12 g63_real_noaa_g14_comp_mixht_stage12(
         throw std::logic_error("G63 genuine native mixed WATER+LAND MIXHT incomplete");
     for(const auto& w:water.water)
         if(physical.zi[w.source_index]!=w.mixing.zi_m||
-           physical.ziconv[w.source_index]!=w.mixing.ziconv_m)
-            throw std::logic_error("G63 LAND MIXHT destroyed source WATER ZI");
+           physical.ziconv[w.source_index]!=
+               live.previous.ziconv_m[w.source_index])
+            throw std::logic_error(
+                "G63 MIXHT corrupted water ZI or inherited global ZICONV");
     // Original G14 frame remains untouched until all 17 physical stages
     // and a valid source-native P6F precommit succeed atomically.
     if(live.next.zi_m!=live.previous.zi_m||

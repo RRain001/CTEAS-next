@@ -70,8 +70,22 @@ def inspect(path: Path, bounds: list[float]) -> dict:
 def verify(directory: Path) -> dict:
     meta = json.loads((directory/'metadata.json').read_text())
     geo = geometry()
-    for k,v in geo.items():
-        if meta[k] != v:
+    for k, v in geo.items():
+        # pyproj/PROJ revisions can differ by ~1e-14 degree for transformed
+        # WGS84 corners. Keep integer UTM grid, grid SHA and all metadata
+        # exact; only tolerate below-1e-12 degree roundoff in projected
+        # coordinate provenance. Reject any actual geographic grid drift.
+        if k in ('original_corners_wgs84', 'buffered_corners_wgs84'):
+            equal = (isinstance(meta.get(k), list) and len(meta[k]) == len(v)
+                     and all(isinstance(row, list) and len(row) == len(expected)
+                             and all(type(item) in (float, int)
+                                     and math.isfinite(item)
+                                     and abs(item - target) <= 1e-12
+                                     for item, target in zip(row, expected))
+                             for row, expected in zip(meta[k], v)))
+        else:
+            equal = meta.get(k) == v
+        if not equal:
             raise ValueError('grid geometry/provenance mismatch: '+k)
     result = inspect(directory/'hefei_2022_30m.tif',geo['buffered_bounds_utm_m'])
     for k,v in result.items():

@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify exact-head Ubuntu Docker evidence for code PRs
+      - name: Verify exact-head Ubuntu native or legacy Docker software evidence for code PRs
         uses: actions/github-script@v7
         with:
           script: |
@@ -42,12 +42,22 @@ jobs:
             const statuses = await github.paginate(github.rest.repos.listCommitStatusesForRef, {
               owner, repo, ref: pr.head.sha, per_page: 100
             });
-            const exact = statuses.find(s => s.context === 'ubuntu-docker-full');
-            if (!exact || exact.state !== 'success') {
-              core.setFailed(`Missing successful ubuntu-docker-full status at ${pr.head.sha}. Run and verify Ubuntu Docker full, then publish signed-off exact-head status and rerun this gate.`);
+            // S4/S5 technical acceptance runs natively on Ubuntu. Docker
+            // delivery verification is a separate, post-S5 release milestone.
+            // Retain old exact-SHA Docker status as a compatible alternative.
+            const trusted = ['ubuntu-native-full', 'ubuntu-docker-full'];
+            const evidence = trusted.map(context => ({
+              context,
+              latest: statuses.find(s => s.context === context)
+            }));
+            const passing = evidence.find(e => e.latest && e.latest.state === 'success');
+            if (!passing) {
+              core.setFailed('Missing successful exact-head Ubuntu software evidence at '+pr.head.sha+
+                '. Require audited ubuntu-native-full (S4/S5) or legacy ubuntu-docker-full; Docker deferral never waives science gates.');
               return;
             }
-            core.info(`Ubuntu Docker exact-head status accepted at ${pr.head.sha}: ${exact.description || ''}`);
+            core.info('Ubuntu software evidence accepted: '+passing.context+
+              ' at '+pr.head.sha+': '+(passing.latest.description || ''));
 
   scientific-admission:
     name: scientific-admission

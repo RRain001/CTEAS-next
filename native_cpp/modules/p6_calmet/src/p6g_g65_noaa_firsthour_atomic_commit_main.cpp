@@ -1,16 +1,83 @@
-// S4-R1c8w genuine NOAA scoped G14 first-hour atomic commit trial.
-// No production CALMET.DAT is emitted and no second-hour physics is claimed.
+// S4-R1c9j genuine NOAA scoped G14 first/second-hour transaction trials.
+// Default mode retains the rollback-only second-hour gate; explicit opt-in
+// commits hour two and publishes clocks, but never writes production MET.DAT.
+// Original Fortran parity is audited by a separate independent comparator.
 #include "cteas/p6/p6g_g65_noaa_firsthour_atomic_commit.hpp"
 #include <bit>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
 int main(int argc,char** argv) {
     try {
-        if(argc!=6||
+        const bool sixth_g14=(argc==8&&
+            std::string(argv[6])=="--sixth-hour-g14-commit-trial-only");
+        const bool sixth_p6f45=sixth_g14||(argc==8&&
+            std::string(argv[6])=="--sixth-hour-g26b-p6f45-trial-only");
+        const bool sixth_comp15=sixth_p6f45||(argc==8&&
+            std::string(argv[6])=="--sixth-hour-g26b-comp15-trial-only");
+        const bool sixth_comp12=sixth_comp15||(argc==8&&
+            std::string(argv[6])=="--sixth-hour-g26b-comp12-trial-only");
+        const bool sixth_windtail=sixth_comp12||(argc==8&&
+            std::string(argv[6])=="--sixth-hour-g26a-windtail-trial-only");
+        const bool sixth_g22=sixth_windtail||(argc==8&&
+            std::string(argv[6])=="--sixth-hour-g22-trace-only");
+        const bool sixth_preflight=sixth_g22||(argc==8&&
+            std::string(argv[6])=="--sixth-hour-g26a-preflight-only");
+        const bool fifth_g14=sixth_preflight||(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g14-commit-trial-only");
+        const bool fifth_p6f45=fifth_g14||(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g26b-p6f45-trial-only");
+        const bool fifth_comp15=fifth_p6f45||(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g26b-comp15-trial-only");
+        const bool fifth_comp12=fifth_comp15||(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g26b-comp12-trial-only");
+        const bool fifth_windtail=fifth_comp12||(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g26a-windtail-trial-only");
+        const bool fifth_g22=fifth_windtail||(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g22-trace-only");
+        const bool fifth_preflight=fifth_g22||(argc==8&&
+            std::string(argv[6])=="--fifth-hour-g26a-preflight-only");
+        const bool fourth_g14=fifth_preflight||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g14-commit-trial-only");
+        const bool fourth_p6f45=fourth_g14||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g26b-p6f45-trial-only");
+        const bool fourth_comp15=fourth_p6f45||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g26b-comp15-trial-only");
+        const bool fourth_comp12=fourth_comp15||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g26b-comp12-trial-only");
+        const bool fourth_windtail=fourth_comp12||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g26a-windtail-trial-only");
+        const bool fourth_g22_trace=fourth_windtail||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g22-trace-only");
+        const bool fourth_preflight=fourth_g22_trace||(argc==8&&
+            std::string(argv[6])=="--fourth-hour-g26a-preflight-only");
+        const bool positive_hour3=fourth_preflight||(argc==8&&
+            std::string(argv[6])=="--third-hour-g14-commit-trial-only");
+        const bool live_third_p6f45=positive_hour3||(argc==8&&
+            std::string(argv[6])=="--third-hour-g26b-p6f45-trial-only");
+        const bool live_third_comp15=live_third_p6f45||(argc==8&&
+            std::string(argv[6])=="--third-hour-g26b-comp15-trial-only");
+        const bool live_third_comp12=live_third_comp15||(argc==8&&
+            std::string(argv[6])=="--third-hour-g26b-comp12-trial-only");
+        const bool live_third_windtail=live_third_comp12||(argc==8&&
+            std::string(argv[6])=="--third-hour-g26a-windtail-trial-only");
+        const bool live_third_g22=live_third_windtail||(argc==8&&
+            std::string(argv[6])=="--third-hour-g26a-g22-trial-only");
+        const bool third_trace=live_third_g22||(argc==8&&
+            std::string(argv[6])=="--third-hour-g22-trace-only");
+        if((argc!=6&&argc!=7&&argc!=8&&argc!=10&&argc!=12&&argc!=14)||
+           (argc==7&&std::string(argv[6])!="--positive-hour2-g14-transaction"&&
+            std::string(argv[6])!="--third-hour-g26a-preflight-only")||
+           (argc>=8&&!third_trace&&
+            std::string(argv[6])!="--forensic-hour2-precommit")||
+           (argc>=10&&std::string(argv[8])!="--forensic-stage14-inputs")||
+           (argc>=12&&std::string(argv[10])!="--forensic-stage12-13-mixht")||
+           (argc==14&&std::string(argv[12])!="--forensic-hour1-committed")||
            std::string(argv[1])!="--real-noaa-firsthour-g14-atomic"||
            sizeof(float)!=4||sizeof(std::int32_t)!=4||
            std::endian::native!=std::endian::little)
@@ -18,10 +85,77 @@ int main(int argc,char** argv) {
                 "G65 requires: --real-noaa-firsthour-g14-atomic met.inp GEO.DAT SURF.DAT UP.DAT");
         const cteas::calmet::p6g::G19SourceFilePaths paths{
             argv[2],argv[3],argv[4],{argv[5]}};
+        const bool positive_hour2=(argc==7||third_trace);
+        const bool third_hour_diagno=third_trace||
+            (argc==7&&
+             std::string(argv[6])=="--third-hour-g26a-preflight-only");
         const auto result=
             cteas::calmet::p6g::g65_real_noaa_firsthour_atomic_commit(
-                paths,true);
-        if(result.committed_hours!=1||
+                paths,true,positive_hour2,third_hour_diagno,third_trace,
+                live_third_g22,live_third_windtail,live_third_comp12,
+                live_third_comp15,live_third_p6f45,positive_hour3,
+                fourth_preflight,fourth_g22_trace,fourth_windtail,
+                fourth_comp12,fourth_comp15,fourth_p6f45,fourth_g14,
+                fifth_preflight,fifth_g22,fifth_windtail,
+                fifth_comp12,fifth_comp15,fifth_p6f45,fifth_g14,
+                sixth_preflight,sixth_g22,sixth_windtail,
+                sixth_comp12,sixth_comp15,sixth_p6f45,sixth_g14);
+        if(result.committed_hours!=(sixth_g14?6U:(fifth_g14?5U:(fourth_g14?4U:(positive_hour3?3U:(positive_hour2?2U:1U)))))||
+           result.hour3_g14_rollback_verified!=positive_hour3||
+           result.hour3_g14_positive_commit_verified!=positive_hour3||
+           result.hour3_station_clocks_published!=positive_hour3||
+           result.hour4_preview_inherits_hour3_memory!=positive_hour3||
+           result.hour4_g26a_stage0_2_source_preflight_only!=fourth_preflight||
+           result.hour4_g22_production_guard_rejected!=fourth_preflight||
+           result.hour4_g22_forensic_trace_only!=fourth_g22_trace||
+           result.hour4_live_g26a_stage3_6_uncommitted!=fourth_g22_trace||
+           result.hour4_live_g22_matches_detached!=fourth_g22_trace||
+           result.hour4_live_g23_g24_stage11_uncommitted!=fourth_windtail||
+           result.hour4_native_g26b_stage12_trial_only!=fourth_comp12||
+           result.hour4_native_g26b_stage15_trial_only!=fourth_comp15||
+           result.hour4_native_g26b_p6f45_trial_only!=fourth_p6f45||
+           result.hour4_g14_rollback_verified!=fourth_g14||
+           result.hour4_g14_positive_commit_verified!=fourth_g14||
+           result.hour4_station_clocks_published!=fourth_g14||
+           result.hour5_preview_inherits_hour4_memory!=fourth_g14||
+           result.hour5_g26a_stage0_2_source_preflight_only!=fifth_preflight||
+           result.hour5_g22_production_guard_rejected!=fifth_preflight||
+           result.hour5_g22_forensic_trace_only!=fifth_g22||
+           result.hour5_live_g26a_stage3_6_uncommitted!=fifth_g22||
+           result.hour5_live_g23_g24_stage11_uncommitted!=fifth_windtail||
+           result.hour5_native_g26b_stage12_trial_only!=fifth_comp12||
+           result.hour5_native_g26b_stage15_trial_only!=fifth_comp15||
+           result.hour5_native_g26b_p6f45_trial_only!=fifth_p6f45||
+           result.hour5_g14_rollback_verified!=fifth_g14||
+           result.hour5_g14_positive_commit_verified!=fifth_g14||
+           result.hour5_station_clocks_published!=fifth_g14||
+           result.hour6_preview_inherits_hour5_memory!=fifth_g14||
+           result.hour6_g26a_stage0_2_source_preflight_only!=sixth_preflight||
+           result.hour6_g22_production_guard_rejected!=sixth_preflight||
+           result.hour6_g22_forensic_trace_only!=sixth_g22||
+           result.hour6_live_g26a_stage3_6_uncommitted!=sixth_g22||
+           result.hour6_live_g23_g24_stage11_uncommitted!=sixth_windtail||
+           result.hour6_native_g26b_stage12_trial_only!=sixth_comp12||
+           result.hour6_native_g26b_stage15_trial_only!=sixth_comp15||
+           result.hour6_native_g26b_p6f45_trial_only!=sixth_p6f45||
+           result.hour6_g14_rollback_verified!=sixth_g14||
+           result.hour6_g14_positive_commit_verified!=sixth_g14||
+           result.hour6_station_clocks_published!=sixth_g14||
+           result.hour2_positive_g14_commit_verified!=positive_hour2||
+           result.hour2_positive_station_clocks_published!=positive_hour2||
+           result.hour3_preview_inherits_hour2_memory!=positive_hour2||
+           result.hour3_real_g26a_stage02_preflight_only!=third_hour_diagno||
+           result.hour3_g22_thermal_guard_remains_rejected!=third_hour_diagno||
+           result.hour3_test_only_native_g22_trace_ready!=third_trace||
+           result.hour3_live_g26a_stage3_trial_only!=live_third_g22||
+           result.hour3_native_g23_g24_stage11_trial_only!=live_third_windtail||
+           result.hour3_native_g26b_stage12_trial_only!=live_third_comp12||
+           result.hour3_native_g26b_stage15_trial_only!=live_third_comp15||
+           result.hour3_native_g26b_p6f45_trial_only!=live_third_p6f45||
+           (positive_hour2&&
+            (result.hour2_committed_memory.zi_m.size()!=6970||
+             result.hour2_committed_memory.ziconv_m.size()!=6970||
+             result.hour2_committed_memory.dptt_k.size()!=6970))||
            result.g59_bitwise_compared_words!=313650||
            result.hidden_bitwise_compared_words!=20910||
            !result.rejected_precommit_rolled_back||
@@ -44,9 +178,190 @@ int main(int argc,char** argv) {
            result.hour2_live_g26_avemix_compared_words!=13940||
            !result.hour2_live_g26_stage14_uncommitted||
            result.hour2_live_g26_wstarr_compared_words!=6970||
-           !result.hour2_stage15_rejected||
+           !result.hour2_live_g26_stage15_uncommitted||
+           result.hour2_live_g26_temp3d_compared_words!=62730||
+           !result.hour2_stage16_prepared_unpublished||
+           !result.hour2_real_g14_full17_rollback_verified||
+           result.hour2_p6f_compared_words!=313650||
            result.hour2_physics_accepted||result.general_p6_accepted)
             throw std::logic_error("G65 scope or committed-hour claim drift");
+        // Strictly scoped transaction status; no production acceptance.
+        // Only opt-in forensic output; never write an accepted hourly
+        // CALMET.DAT or overwrite a prior audit input/receipt.
+        if(third_trace) {
+            const std::filesystem::path trace_path(argv[7]);
+            if(trace_path.empty()||std::filesystem::exists(trace_path)||
+               result.hour3_test_only_native_g22_trace_bytes.empty()||
+               (live_third_g22&&
+                result.hour3_live_g26a_stage3_trace_bytes.empty())||
+               (live_third_windtail&&
+                result.hour3_native_g23_g24_trace_bytes.empty())||
+               (live_third_comp12&&
+                result.hour3_native_g26b_stage12_trace_bytes.empty())||
+               (live_third_comp15&&
+                result.hour3_native_g26b_stage15_trace_bytes.empty())||
+               (live_third_p6f45&&
+                result.hour3_native_g26b_p6f45_bytes.empty())||
+               (fourth_g22_trace&&
+                result.hour4_g22_forensic_trace_bytes.empty())||
+               (fourth_windtail&&
+                result.hour4_live_g23_g24_trace_bytes.empty())||
+               (fourth_comp12&&
+                result.hour4_native_g26b_stage12_trace_bytes.empty())||
+               (fourth_comp15&&
+                result.hour4_native_g26b_stage15_trace_bytes.empty())||
+               (fourth_p6f45&&
+                result.hour4_native_g26b_p6f45_bytes.empty())||
+               (fifth_g22&&
+                result.hour5_g22_forensic_trace_bytes.empty())||
+               (fifth_windtail&&
+                result.hour5_g23_g24_trace_bytes.empty())||
+               (fifth_comp12&&
+                result.hour5_native_g26b_stage12_trace_bytes.empty())||
+               (fifth_comp15&&
+                result.hour5_native_g26b_stage15_trace_bytes.empty())||
+               (fifth_p6f45&&
+                result.hour5_native_g26b_p6f45_bytes.empty())||
+               (sixth_g22&&
+                result.hour6_g22_forensic_trace_bytes.empty())||
+               (sixth_windtail&&
+                result.hour6_g23_g24_trace_bytes.empty())||
+               (sixth_comp12&&
+                result.hour6_native_g26b_stage12_trace_bytes.empty())||
+               (sixth_comp15&&
+                result.hour6_native_g26b_stage15_trace_bytes.empty())||
+               (sixth_p6f45&&
+                result.hour6_native_g26b_p6f45_bytes.empty()))
+                throw std::invalid_argument(
+                    "G66 test-only third-hour trace path absent/already exists");
+            std::ofstream out(trace_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G66 cannot open trace output");
+            const auto& prior_bytes=fifth_g22
+                ?result.hour5_g22_forensic_trace_bytes
+                :(fourth_p6f45
+                  ?result.hour4_native_g26b_p6f45_bytes
+                :(fourth_comp15
+                  ?result.hour4_native_g26b_stage15_trace_bytes
+                :(fourth_comp12
+                  ?result.hour4_native_g26b_stage12_trace_bytes
+                  :(fourth_windtail
+                    ?result.hour4_live_g23_g24_trace_bytes
+                    :(fourth_g22_trace
+                      ?result.hour4_g22_forensic_trace_bytes
+                      :(live_third_p6f45
+                        ?result.hour3_native_g26b_p6f45_bytes
+                        :(live_third_comp15
+                          ?result.hour3_native_g26b_stage15_trace_bytes
+                          :(live_third_comp12
+                            ?result.hour3_native_g26b_stage12_trace_bytes
+                            :(live_third_windtail
+                              ?result.hour3_native_g23_g24_trace_bytes
+                              :(live_third_g22
+                                ?result.hour3_live_g26a_stage3_trace_bytes
+                                :result.hour3_test_only_native_g22_trace_bytes))))))))));
+            const auto& bytes=fifth_p6f45
+                ?result.hour5_native_g26b_p6f45_bytes
+                :(fifth_comp15
+                  ?result.hour5_native_g26b_stage15_trace_bytes
+                  :(fifth_comp12
+                    ?result.hour5_native_g26b_stage12_trace_bytes
+                    :(fifth_windtail
+                      ?result.hour5_g23_g24_trace_bytes
+                      :prior_bytes)));
+            const auto& sixth_bytes=sixth_p6f45
+                ?result.hour6_native_g26b_p6f45_bytes
+                :(sixth_comp15
+                  ?result.hour6_native_g26b_stage15_trace_bytes
+                  :(sixth_comp12
+                    ?result.hour6_native_g26b_stage12_trace_bytes
+                    :(sixth_windtail
+                      ?result.hour6_g23_g24_trace_bytes
+                      :(sixth_g22
+                        ?result.hour6_g22_forensic_trace_bytes:bytes))));
+            out.write(reinterpret_cast<const char*>(sixth_bytes.data()),
+                      static_cast<std::streamsize>(sixth_bytes.size()));
+            out.close();
+            if(!out)throw std::runtime_error("G66 incomplete trace write");
+        }
+        if(argc>=8&&!third_trace) {
+            const std::filesystem::path candidate_path(argv[7]);
+            if(candidate_path.empty()||
+               std::filesystem::exists(candidate_path)||
+               result.hour2_unpublished_p6f_bytes.empty())
+                throw std::invalid_argument(
+                    "G65 forensic hour2 candidate path absent/already exists");
+            std::ofstream output(candidate_path,std::ios::binary);
+            if(!output)throw std::runtime_error(
+                "G65 cannot open exclusive forensic output path");
+            const auto& bytes=result.hour2_unpublished_p6f_bytes;
+            output.write(reinterpret_cast<const char*>(bytes.data()),
+                         static_cast<std::streamsize>(bytes.size()));
+            output.close();
+            if(!output)throw std::runtime_error(
+                "G65 incomplete forensic secondhour candidate write");
+        }
+        if(argc>=10) {
+            const std::filesystem::path stage_path(argv[9]);
+            const auto& values=result.hour2_unpublished_wstarr_input_rows;
+            if(stage_path.empty()||stage_path==std::filesystem::path(argv[7])||
+               std::filesystem::exists(stage_path)||values.size()!=5U*82U*85U)
+                throw std::invalid_argument(
+                    "G65 stage14 forensic path/shape invalid or already exists");
+            std::ofstream out(stage_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G65 stage14 forensic open failed");
+            // Same [year, Julian-day, UTC-hour, NX, NY] framing as the
+            // scratch-only original Fortran stage probe, never production MET.
+            const std::int32_t header[5]={2022,152,3,82,85};
+            out.write(reinterpret_cast<const char*>(header),sizeof(header));
+            out.write(reinterpret_cast<const char*>(values.data()),
+                      static_cast<std::streamsize>(values.size()*sizeof(float)));
+            out.close();
+            if(!out)throw std::runtime_error("G65 stage14 forensic write incomplete");
+        }
+        if(argc>=12) {
+            const std::filesystem::path mixht_path(argv[11]);
+            const auto& values=result.hour2_unpublished_mixht_avemix_rows;
+            if(mixht_path.empty()||
+               mixht_path==std::filesystem::path(argv[7])||
+               mixht_path==std::filesystem::path(argv[9])||
+               std::filesystem::exists(mixht_path)||
+               values.size()!=4U*82U*85U)
+                throw std::invalid_argument(
+                    "G65 stage12/13 forensic path/shape invalid or already exists");
+            std::ofstream out(mixht_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G65 stage12/13 forensic open failed");
+            const std::int32_t header[5]={2022,152,3,82,85};
+            out.write(reinterpret_cast<const char*>(header),sizeof(header));
+            out.write(reinterpret_cast<const char*>(values.data()),
+                      static_cast<std::streamsize>(values.size()*sizeof(float)));
+            out.close();
+            if(!out)throw std::runtime_error(
+                "G65 stage12/13 forensic write incomplete");
+        }
+        if(argc==14) {
+            const std::filesystem::path state_path(argv[13]);
+            const auto& memory=result.committed_memory;
+            const auto n=82U*85U;
+            if(state_path.empty()||state_path==std::filesystem::path(argv[7])||
+               state_path==std::filesystem::path(argv[9])||
+               state_path==std::filesystem::path(argv[11])||
+               std::filesystem::exists(state_path)||
+               memory.zi_m.size()!=n||memory.ziconv_m.size()!=n||
+               memory.dptt_k.size()!=n)
+                throw std::invalid_argument(
+                    "G65 hour1 committed memory trace path/extent invalid");
+            std::ofstream out(state_path,std::ios::binary);
+            if(!out)throw std::runtime_error("G65 hour1 memory trace open failed");
+            const std::int32_t header[5]={2022,152,2,82,85};
+            out.write(reinterpret_cast<const char*>(header),sizeof(header));
+            for(std::size_t i=0;i<n;++i) {
+                const float row[3]={memory.zi_m[i],memory.ziconv_m[i],
+                                    memory.dptt_k[i]};
+                out.write(reinterpret_cast<const char*>(row),sizeof(row));
+            }
+            out.close();
+            if(!out)throw std::runtime_error("G65 hour1 memory trace incomplete");
+        }
         std::cout
             <<"S4R1C8W_G14_FIRSTHOUR_17STAGE_ATOMIC_COMMIT=PASS_SCOPED\n"
             <<"S4R1C8W_G14_P6F_G59_BITWISE=PASS_313650_WORDS\n"
@@ -75,8 +390,114 @@ int main(int argc,char** argv) {
             <<"S4R1C9C_HOUR2_AVEMIX_SOURCE_BITWISE=PASS_13940_REAL4\n"
             <<"S4R1C9D_HOUR2_REAL_G26B_STAGE14=PASS_UNCOMMITTED\n"
             <<"S4R1C9D_HOUR2_WSTARR_SOURCE_BITWISE=PASS_6970_REAL4\n"
-            <<"S4R1C9D_HOUR2_STAGE15=REJECTED_UNVERIFIED\n"
-            <<"S4R1C9D_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_WSTARR\n"
+            <<"S4R1C9E_HOUR2_REAL_G26B_STAGE15=PASS_UNCOMMITTED\n"
+            <<"S4R1C9E_HOUR2_TEMP3D_SOURCE_BITWISE=PASS_62730_REAL4\n"
+            <<"S4R1C9F_HOUR2_STAGE16_P6F=PASS_PRECOMMIT_UNPUBLISHED\n"
+            <<"S4R1C9F_HOUR2_P6F_45FIELDS_SOURCE_BITWISE=PASS_313650_WORDS\n"
+            <<"S4R1C9F_HOUR2_G14_MEMORY_CLOCKS=UNCHANGED_AFTER_P6F_PRECOMMIT\n"
+            <<"S4R1C9I_HOUR2_REAL_G14_17STAGE_FAILED_PRECOMMIT=PASS_ROLLBACK_ONLY\n"
+            <<(positive_hour2
+               ?"S4R1C9J_HOUR2_G14_POSITIVE_COMMIT=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9J_HOUR2_G14_POSITIVE_COMMIT=NOT_RUN\n")
+            <<(positive_hour2
+               ?"S4R1C9J_HOUR2_AABB_CGAMMA_AFTER_COMMIT=PASS_SCOPED\n"
+               :"S4R1C9J_HOUR2_AABB_CGAMMA_AFTER_COMMIT=NOT_RUN\n")
+            <<(positive_hour2
+               ?"S4R1C9J_HOUR3_PREVIEW_INHERITS_HOUR2=PASS_SCOPED\n"
+               :"S4R1C9J_HOUR3_PREVIEW_INHERITS_HOUR2=NOT_RUN\n")
+            <<(third_hour_diagno
+               ?"S4R1C9K_HOUR3_G26A_STAGE0_2=PASS_PRECOMMIT_ONLY\n"
+               :"S4R1C9K_HOUR3_G26A_STAGE0_2=NOT_RUN\n")
+            <<(third_hour_diagno
+               ?"S4R1C9K_HOUR3_G22_GUARD=PASS_REJECTED\n"
+               :"S4R1C9K_HOUR3_G22_GUARD=NOT_RUN\n")
+            <<(third_trace
+               ?"S4R1C9N_HOUR3_NATIVE_G22_TRACE=PASS_TEST_ONLY_NOT_SCIENCE\n"
+               :"S4R1C9N_HOUR3_NATIVE_G22_TRACE=NOT_RUN\n")
+            <<(live_third_g22
+               ?"S4R1C9O_HOUR3_REAL_G26A_STAGE3_6=PASS_TEST_ONLY_PRECOMMIT\n"
+               :"S4R1C9O_HOUR3_REAL_G26A_STAGE3_6=NOT_RUN\n")
+            <<(positive_hour3
+               ?"S4R1C9V_HOUR3_G14_ROLLBACK=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9V_HOUR3_G14_ROLLBACK=NOT_RUN\n")
+            <<(positive_hour3
+               ?"S4R1C9V_HOUR3_G14_COMMIT_CLOCKS=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9V_HOUR3_G14_COMMIT_CLOCKS=NOT_RUN\n")
+            <<(positive_hour3
+               ?"S4R1C9V_HOUR4_PREVIEW_INHERITS_HOUR3=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9V_HOUR4_PREVIEW_INHERITS_HOUR3=NOT_RUN\n")
+            <<(fourth_preflight
+               ?"S4R1C9V_HOUR4_G26A_STAGE0_2=PASS_PRECOMMIT_ONLY\n"
+               :"S4R1C9V_HOUR4_G26A_STAGE0_2=NOT_RUN\n")
+            <<(fourth_preflight
+               ?"S4R1C9V_HOUR4_G22_GUARD=PASS_REJECTED\n"
+               :"S4R1C9V_HOUR4_G22_GUARD=NOT_RUN\n")
+            <<(fourth_g22_trace
+               ?"S4R1C9W_HOUR4_NATIVE_G22=PASS_TEST_ONLY_UNPUBLISHED\n"
+               :"S4R1C9W_HOUR4_NATIVE_G22=NOT_RUN\n")
+            <<(fourth_g22_trace
+               ?"S4R1C9W_HOUR4_G26A_STAGE3_6=PASS_SCOPED_PRECOMMIT_ONLY\n"
+               :"S4R1C9W_HOUR4_G26A_STAGE3_6=NOT_RUN\n")
+            <<(fourth_windtail
+               ?"S4R1C9X_HOUR4_G23_G24_STAGE7_11=PASS_TEST_ONLY_UNPUBLISHED\n"
+               :"S4R1C9X_HOUR4_G23_G24_STAGE7_11=NOT_RUN\n")
+            <<(fifth_preflight
+               ?"S4R1C9AB_HOUR5_G26A_STAGE0_2=PASS_TEST_ONLY_PRECOMMIT\n"
+               :"S4R1C9AB_HOUR5_G26A_STAGE0_2=NOT_RUN\n")
+            <<(fifth_g22
+               ?"S4R1C9AC_HOUR5_G22_FORENSIC_TRACE=PASS_TEST_ONLY_UNPUBLISHED\n"
+               :"S4R1C9AC_HOUR5_G22_FORENSIC_TRACE=NOT_RUN\n")
+            <<(fifth_g22
+               ?"S4R1C9AC_HOUR5_LIVE_G26A_STAGE3_6=PASS_SCOPED_UNCOMMITTED\n"
+               :"S4R1C9AC_HOUR5_LIVE_G26A_STAGE3_6=NOT_RUN\n")
+            <<(fifth_windtail
+               ?"S4R1C9AE_HOUR5_G23_G24_STAGE7_11=PASS_TEST_ONLY_UNCOMMITTED\n"
+               :"S4R1C9AE_HOUR5_G23_G24_STAGE7_11=NOT_RUN\n")
+            <<(fifth_comp12
+               ?"S4R1C9AF_HOUR5_COMP_STAGE12=PASS_TEST_ONLY_UNCOMMITTED\n"
+               :"S4R1C9AF_HOUR5_COMP_STAGE12=NOT_RUN\n")
+            <<(fifth_comp15
+               ?"S4R1C9AF_HOUR5_COMP_STAGE12_15=PASS_TEST_ONLY_UNCOMMITTED\n"
+               :"S4R1C9AF_HOUR5_COMP_STAGE12_15=NOT_RUN\n")
+            <<(fifth_p6f45
+               ?"S4R1C9AF_HOUR5_P6F45=PASS_PRECOMMIT_ONLY\n"
+               :"S4R1C9AF_HOUR5_P6F45=NOT_RUN\n")
+            <<(fifth_g14
+               ?"S4R1C9AG_HOUR5_G14_ROLLBACK=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9AG_HOUR5_G14_ROLLBACK=NOT_RUN\n")
+            <<(fifth_g14
+               ?"S4R1C9AG_HOUR5_G14_POSITIVE=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9AG_HOUR5_G14_POSITIVE=NOT_RUN\n")
+            <<(fifth_g14
+               ?"S4R1C9AG_HOUR6_PREVIEW_INHERITS_HOUR5=PASS_SOURCE_ONLY\n"
+               :"S4R1C9AG_HOUR6_PREVIEW_INHERITS_HOUR5=NOT_RUN\n")
+            <<(sixth_preflight
+               ?"S4R1C9AH_HOUR6_PREPDI_STAGE0_2=PASS_SCOPED_UNCOMMITTED\n"
+               :"S4R1C9AH_HOUR6_PREPDI_STAGE0_2=NOT_RUN\n")
+            <<(sixth_g22
+               ?"S4R1C9AH_HOUR6_G22_STAGE3_6=PASS_SCOPED_UNCOMMITTED\n"
+               :"S4R1C9AH_HOUR6_G22_STAGE3_6=NOT_RUN\n")
+            <<(sixth_windtail
+               ?"S4R1C9AH_HOUR6_G23_G24_STAGE7_11=PASS_SCOPED_UNCOMMITTED\n"
+               :"S4R1C9AH_HOUR6_G23_G24_STAGE7_11=NOT_RUN\n")
+            <<(sixth_comp12
+               ?"S4R1C9AH_HOUR6_COMP_STAGE12=PASS_SCOPED_PRECOMMIT\n"
+               :"S4R1C9AH_HOUR6_COMP_STAGE12=NOT_RUN\n")
+            <<(sixth_comp15
+               ?"S4R1C9AH_HOUR6_COMP_STAGE12_15=PASS_SCOPED_PRECOMMIT\n"
+               :"S4R1C9AH_HOUR6_COMP_STAGE12_15=NOT_RUN\n")
+            <<(sixth_p6f45
+               ?"S4R1C9AH_HOUR6_P6F45=PASS_PRECOMMIT_ONLY\n"
+               :"S4R1C9AH_HOUR6_P6F45=NOT_RUN\n")
+            <<(sixth_g14
+               ?"S4R1C9AH_HOUR6_G14_ROLLBACK=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9AH_HOUR6_G14_ROLLBACK=NOT_RUN\n")
+            <<(sixth_g14
+               ?"S4R1C9AH_HOUR6_G14_POSITIVE=PASS_SCOPED_TRANSACTION_ONLY\n"
+               :"S4R1C9AH_HOUR6_G14_POSITIVE=NOT_RUN\n")
+            <<(fifth_preflight
+               ?"S4R1C9AB_HOUR5_G22_PRODUCTION_GUARD=PASS_REJECTED\n"
+               :"S4R1C9AB_HOUR5_G22_PRODUCTION_GUARD=NOT_RUN\n")
             <<"S4R1C8W_G14_HOUR2_REAL_PHYSICS=NOT_ACCEPTED\n"
             <<"S4R1C8W_G14_SIXHOUR_45FIELD_AND_P6_P7=NOT_ACCEPTED\n";
         return 0;

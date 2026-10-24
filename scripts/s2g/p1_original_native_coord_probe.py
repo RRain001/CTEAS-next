@@ -71,7 +71,9 @@ def execute_native_diagnostic(*, selected:Path, grid:dict, workspace:Path)->Path
         raise DirectNativeProbeError("GDAL development toolchain absent") from exc
     # Uses the EXACT main native CLI + actual raster reader; only its
     # terrain_grid.cpp translation unit is a scratch instrumented copy.
-    cmd=["g++","-std=c++20","-O3","-DNDEBUG","-Wall","-Wextra",
+    # Ubuntu 22.04 has g++ 9 as default, which lacks C++20 <span>;
+    # match the approved native GCC12 toolchain for this scratch-only probe.
+    cmd=["g++-12","-std=c++20","-O3","-DNDEBUG","-Wall","-Wextra",
          "-Wpedantic","-Werror", "-I"+str(native/"include"),*gdal_cflags,
          str(native/"src/p1_terrain_case_cli.cpp"),
          str(native/"src/geo/terrain.cpp"),str(instrumented),

@@ -496,10 +496,146 @@ static void case_fresh_selected_prepdi_clock(sys_seconds begin) {
     }
     sched.require_complete();
 }
+
+ // S4-R1c9v: explicit third-hour G14 transaction contract. This is a
+ // synthetic six-hour scheduler regression, NOT genuine NOAA physics parity.
+ // It blocks accidental hour-three publication until real G64 stage16 has
+ // its own source-native candidate and independent original-model audit.
+static void case_third_hour_atomic_retry_contract(sys_seconds begin) {
+    p6g::OriginalWindControls deck;
+    deck.bias[0]=-1.f;deck.rmax1_km=100.f;
+    p6g::UnifiedMultistationHourlyScheduler owner(
+        geo(),stations(),surface(begin,6),upper(begin,6),deck);
+    int destroyed=0;
+    std::size_t allocated=0, published=0;
+    auto committed_clock=begin;
+    bool publish_order_ok=true;
+    bool fail_stage=false,fail_p6f=false,fail_clock_preflight=false;
+    bool preflight_ready=false;
+    std::size_t precommit_calls=0, preflight_calls=0;
+    auto factory=[&](const p6g::MultiHourFrame& live)
+        ->std::unique_ptr<p6g::MultiHourPhysics> {
+        check(live.hour_index==owner.completed_hours()&&
+              live.surface.end==live.input.end&&
+              &live.previous==&owner.committed_memory()&&
+              live.source_controls==&owner.original_controls()&&
+              live.previous.ziconv_m[0]==
+                  static_cast<float>(owner.completed_hours()),
+              "hour3 retry factory received detached/stale committed memory");
+        ++allocated;
+        return std::make_unique<FreshOwnedPhysics>(
+            live,destroyed,fail_stage,false);
+    };
+    auto precommit=[&](const p6g::MultiHourFrame& live) {
+        ++precommit_calls;
+        check(live.hour_index==published&&
+              live.previous.ziconv_m[0]==static_cast<float>(published)&&
+              live.previous.dptt_k[0]==
+                  (published==0?0.f:static_cast<float>(published+6))&&
+              live.next.ziconv_m[0]==static_cast<float>(published+1)&&
+              live.next.zi_m[0]==static_cast<float>(published+2)&&
+              live.next.dptt_k[0]==static_cast<float>(published+7)&&
+              owner.completed_hours()==published&&
+              committed_clock==begin+hours{static_cast<int>(published)},
+              "hour3 P6F precommit read a published/stale hour");
+        if(fail_p6f)
+            throw std::runtime_error("EXPECTED_HOUR3_P6F_REJECTION");
+    };
+    auto preflight=[&](p6g::MultiHourPhysics&,
+                       const p6g::MultiHourFrame& live,
+                       const p6g::UnifiedMultistationHourlyScheduler& committed) {
+        ++preflight_calls;
+        check(&committed==&owner&&
+              live.hour_index==published&&
+              committed.completed_hours()==published&&
+              committed_clock==begin+hours{static_cast<int>(published)},
+              "hour3 station clocks advanced ahead of G14");
+        if(fail_clock_preflight)
+            throw std::runtime_error("EXPECTED_HOUR3_CLOCK_REJECTION");
+        preflight_ready=true;
+    };
+    auto publish=[&](p6g::MultiHourPhysics& physics,
+                     const p6g::UnifiedMultistationHourlyScheduler& committed) noexcept {
+        publish_order_ok=publish_order_ok&&preflight_ready&&
+            &committed==&owner&&
+            dynamic_cast<FreshOwnedPhysics*>(&physics)!=nullptr&&
+            committed.completed_hours()==published+1&&
+            committed.committed_memory().ziconv_m[0]==
+                static_cast<float>(published+1)&&
+            committed.committed_memory().zi_m[0]==
+                static_cast<float>(published+2)&&
+            committed.committed_memory().dptt_k[0]==
+                static_cast<float>(published+7)&&
+            committed_clock==begin+hours{static_cast<int>(published)};
+        ++published;
+        committed_clock=begin+hours{static_cast<int>(published)};
+        preflight_ready=false;
+    };
+    auto advance=[&] {
+        owner.advance_with_fresh_physics(factory,precommit,preflight,publish);
+    };
+    advance();
+    advance();
+    check(owner.completed_hours()==2&&published==2&&
+          committed_clock==begin+hours{2}&&
+          owner.committed_memory().ziconv_m[0]==2.f&&
+          destroyed==static_cast<int>(allocated),
+          "hour3 setup failed to commit the first two independent hours");
+    const auto before=owner.committed_memory();
+    const auto ensure_rolled_back=[&](std::size_t attempts) {
+        check(owner.completed_hours()==2&&published==2&&
+              committed_clock==begin+hours{2}&&
+              owner.committed_memory().zi_m==before.zi_m&&
+              owner.committed_memory().ziconv_m==before.ziconv_m&&
+              owner.committed_memory().dptt_k==before.dptt_k&&
+              allocated==attempts&&destroyed==static_cast<int>(attempts)&&
+              !preflight_ready,
+              "hour3 failed transaction published state/clocks or leaked executor");
+        const auto next=owner.preview_next_hour();
+        check(next.hour_index==2&&next.surface.start==begin+hours{2}&&
+              &next.previous==&owner.committed_memory()&&
+              next.next.ziconv_m==before.ziconv_m,
+              "hour3 failed transaction poisoned its retry preview");
+    };
+    fail_stage=true;
+    must_reject(advance,"hour3 COMP stage failure committed G14");
+    fail_stage=false;
+    ensure_rolled_back(3);
+    check(precommit_calls==2&&preflight_calls==2,
+          "hour3 interrupted COMP reached precommit/clock barrier");
+    fail_p6f=true;
+    must_reject(advance,"hour3 G64 precommit failure committed G14");
+    fail_p6f=false;
+    ensure_rolled_back(4);
+    check(precommit_calls==3&&preflight_calls==2,
+          "hour3 rejected P6F was passed to station-clock preflight");
+    fail_clock_preflight=true;
+    must_reject(advance,"hour3 station-clock preflight failure committed G14");
+    fail_clock_preflight=false;
+    ensure_rolled_back(5);
+    check(precommit_calls==4&&preflight_calls==3,
+          "hour3 PREPDI clock failure bypassed P6F candidate validation");
+    advance();
+    check(owner.completed_hours()==3&&published==3&&
+          committed_clock==begin+hours{3}&&
+          owner.committed_memory().ziconv_m[0]==3.f&&
+          owner.preview_next_hour().previous.ziconv_m[0]==3.f&&
+          precommit_calls==5&&preflight_calls==4,
+          "hour3 positive G14 retry failed to publish atomic state");
+    for(std::size_t i=3;i<6;++i)
+        advance();
+    owner.require_complete();
+    check(publish_order_ok&&published==6&&allocated==9&&
+          destroyed==9&&precommit_calls==8&&preflight_calls==7&&
+          committed_clock==begin+hours{6},
+          "hour3 retry contract changed six-hour G14 order or executor lifecycle");
+}
+
 int main(){
     try{
         original_station_cell_real4_boundary();
         case_fresh_owned_physics(sys_days{year{2024}/January/1});
+        case_third_hour_atomic_retry_contract(sys_days{year{2024}/January/1});
         case_fresh_selected_prepdi_clock(sys_days{year{2024}/January/1});
         const auto jan1=sys_days{year{2024}/January/1};
         case_hours(jan1,1);
@@ -750,6 +886,7 @@ int main(){
                      "oracle_rejected WFACE_required "
                      "G18D1_P6F_PRECOMMIT_ROLLBACK_AND_RETRY_PASS "
                      "G18D2_UPPER_CGAMMA_SAME_G14_COMMIT_PASS "
+                     "S4R1C9V_HOUR3_SYNTHETIC_G14_RETRY_PASS "
                      "FULL_MULTI_SITE_PHYSICS=NOT_YET_ACCEPTED\n";
         return 0;
     }catch(const std::exception& e){

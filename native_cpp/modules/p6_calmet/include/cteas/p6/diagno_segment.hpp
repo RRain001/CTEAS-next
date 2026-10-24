@@ -18,7 +18,9 @@ struct FinalWindSegment {
 };
 inline FinalWindSegment original_smooth_divcel_w(
     SmoothInput winds,float dx_m,float dy_m,const std::vector<float>& dz_m,
-    bool obrien_adjustment=false) {
+    bool obrien_adjustment=false,
+    std::vector<float>* test_only_post_smooth_u=nullptr,
+    std::vector<float>* test_only_post_smooth_v=nullptr) {
     if(obrien_adjustment)
         throw std::invalid_argument("DIAGNO selected IOBR=0 only");
     const int nx=winds.nx,ny=winds.ny,nz=winds.nz;
@@ -30,6 +32,12 @@ inline FinalWindSegment original_smooth_divcel_w(
     winds.ub_west_east_mps=ub;
     winds.vb_south_north_mps=vb;
     auto smoothed=smooth_original_scoped(std::move(winds));
+    // Optional observational snapshot at original DIAGNO stage100,
+    // before DIVCEL. No new arithmetic or mutation of the live wind.
+    if(test_only_post_smooth_u)
+        *test_only_post_smooth_u=smoothed.u_mps;
+    if(test_only_post_smooth_v)
+        *test_only_post_smooth_v=smoothed.v_mps;
     const auto plane=std::size_t(nx)*std::size_t(ny);
     DivcelInput divin;
     divin.nx=nx;divin.ny=ny;divin.nz=nz;
