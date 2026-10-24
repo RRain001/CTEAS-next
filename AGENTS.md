@@ -1,3 +1,10 @@
+## S4-0 当前唯一开发基线（2026-10-24）
+- Ubuntu 有效 S4 Git 主工作树：/home/lhy/dev/CTEAS-next/worktrees/s4-integration，分支 codex/s4-integration-20261024；实际 common-dir 是 repo-recovered-91a1fff8/.git。旧 /home/lhy/dev/CTEAS-next/repo 存在 210 项历史删除，禁止用于开发或 reset；/home/lhy/CTEAS-next 已删除。
+- GitHub 集成 Draft PR #308 是唯一 PR；15 个祖先 Draft 已关闭但保留历史。经 Ubuntu 本地编译/定向测试及应有科学原版比对后，只能 fast-forward push 到 PR #308 现有远程 head，不能 force push/main push，不能为每个 G22/G23/G24 等中间阶段新增 PR。
+- GitHub #308 的 workflow_dispatch 修复、当时 main 和七个本地 S4 提交已安全合并；旧 s4-r1c9u 的未提交工作（4 个修改+2 文件）已有本地独立备份，但旧实验 worktrees 不删除。详见 docs/plans/S4_0_CONSOLIDATION_20261024.md。
+- 真实 NOAA 第三/第四小时限定 45 字段对照、G14 transaction 与第五小时 G22 已有历史 scoped 证据，绝不升级成统一生产科学通过。第五小时 G23/G24、COMP/P6F/G14、第六小时、通用 P6/P7、外部独立科学评审仍 NOT_ACCEPTED；科学容差、默认 fail-closed guards 和 restricted vendor 数据保护不变。
+- L1 定向软件测试；L2 冻结源/输入和原版/C++ 数值独立对照；L3 clean exact SHA Ubuntu Docker full + GitHub required checks + 独立审查。未通过 L3 和科学门禁保持 Draft，不加 merge-verified。
+
 # CTEAS-next agent instructions
 
 ## Owner's current CI and merge decision (2026-10-23)

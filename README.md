@@ -1,5 +1,12 @@
 # CTEAS-next
 
+## S4 开发状态与权威入口（2026-10-24）
+- 主开发 worktree：/home/lhy/dev/CTEAS-next/worktrees/s4-integration；Git common-dir：/home/lhy/dev/CTEAS-next/repo-recovered-91a1fff8/.git。旧 repo/ 存在历史删除，不用于 S4。
+- 仅保留 GitHub S4 集成 Draft PR #308：https://github.com/RRain001/CTEAS-next/pull/308。Ubuntu 集成完成本地测试后再推送；详情请阅读 docs/plans/S4_0_CONSOLIDATION_20261024.md。
+- 独立原版：/home/lhy/CTEAS，只读。当前已有小时 3/4 的限定原版 45 字段科学证据，小时 5 G22 已限定通过；完整 P6/P7 科学验收仍 NOT_ACCEPTED。
+- 后续完整功能批次：第五小时后续阶段→第六小时→通用生产 P6 C1/C2/新场址→新场址 P7。测试分为 L1 定向、L2 真正原版科学、L3 冻结 SHA 正式 Docker/独立审查。
+
+
 CTEAS-next is a **partial, option-scoped C++20 reconstruction** of selected CALMET/CALPUFF physics pathways (P6/P7) and P1–P5 inputs. It is **not** a fully equivalent replacement for every original Fortran option.
 
 ## Entry points
