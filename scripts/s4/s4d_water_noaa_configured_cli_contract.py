@@ -58,6 +58,21 @@ def check(binary:Path)->None:
         i=empty_prefix.index('--probe-prefix-hours')
         del empty_prefix[i:i+2]
         fails(empty_prefix,'S4D unified NOAA WATER requires')
+        # Fault injection is research-only: never accepted by ordinary C1/C2,
+        # legacy NOAA modes, or for a nonexistent committed predecessor.
+        for bad in (0,1,7,143):
+            fails([*args,'--noaa-precommit-rollback-retry-hour',str(bad)],
+                  'S4D precommit rollback hour must be 2..6' if bad in (0,1,7,143)
+                  else 'S4D real NOAA precommit retry requires')
+        fails([*args,'--noaa-precommit-rollback-retry-hour','2',
+               '--noaa-precommit-rollback-retry-hour','3'],
+              'S4B2 unknown/repeated argument')
+        small_prefix=args.copy();small_prefix[small_prefix.index('--probe-prefix-hours')+1]='3'
+        fails([*small_prefix,'--noaa-precommit-rollback-retry-hour','5'],
+              'S4D real NOAA precommit retry requires')
+        unrelated=args.copy();unrelated.remove('--water-noaa-g14-trial-only')
+        fails([*unrelated,'--noaa-precommit-rollback-retry-hour','3'],
+              'S4D real NOAA precommit retry requires')
         occupied=Path(out);occupied.write_bytes(b'must-not-touch')
         fails(args,'S4B2 refuses to overwrite existing output',True)
         assert occupied.read_bytes()==b'must-not-touch'

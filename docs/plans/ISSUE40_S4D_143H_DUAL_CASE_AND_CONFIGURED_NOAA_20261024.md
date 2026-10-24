@@ -31,3 +31,32 @@ Fail-closed `scripts/s4/s4d_water_noaa_configured_cli_contract.py` tests missing
 - This patch should run **exact new commit SHA** native full 11-step Ubuntu software validation, and separately repeat both 143-hour C1 and C2 scientific comparisons using the rebuilt exact-head S4B2 binary. Publish `ubuntu-native-full` only on successful exact-SHA manifest verification.
 - Validate independently observed second location/station geometry, nontrivial original native rollback, and non-Bot same-SHA science review. General NOAA/land production case selection/config serialization and arbitrary source data choices remain unimplemented, even though this one fixed NOAA case now has one CLI option.
 - Current PR #308 must remain Draft; `scientific-admission` failure blocks merging. Never attach science-validated/merge-verified for these scoped results, and do not start P7 or claim general 143h P6 acceptance across arbitrary cases.
+
+## 2026-10-24 — actual NOAA precommit rollback + fresh-actor replay
+
+The S4B2 **single explicit research-only NOAA entry** additionally admits
+`--noaa-precommit-rollback-retry-hour N`, strictly N=2..K with K the allowed
+1..6 source prefix. Normal C1/C2, historic hour-scoped flags, default G26,
+source-only preflight and absent/invalid-hour requests all fail closed.
+
+At the specified real NOAA hour, the real G65 actor executes all 17 stages
+and constructs the genuine native P6F 45-field precommit; the research
+precommit callback then intentionally rejects this first attempt **before**
+G14 moves grid state or publishes AA/BB/CGAMMA clocks. The same G14 scheduler
+checks its previously committed hour count, bitwise-exact ZI/ZICONV/DPTT
+memory, and both station clocks unchanged, with no published output file.
+It constructs a *fresh* native hour actor, redoes the entire same physical
+hour, commits it, and continues through all six real NOAA hours. This is an
+in-process tested rollback and retry, NOT an arbitrary process crash
+recovery or persistent checkpoint restart mechanism.
+
+Source-only research cases injected failure/retry at actual hour **2, 5, 6**
+independently, and each complete 6-hour native `MET.DAT` SHA exactly matches
+the original clean 6-hour native output
+`32d9f049b1739e1d568a0f7ba65bf9d3718d8bd1c1b7dcdb147c94d41a4753b3`.
+The tested 5/6 water history thus survives a genuine rejected precommit
+without reference field backfill or timing drift. Private evidence and real
+output remain `/home/lhy/dev/reports/cteas-s4d-rollback-20261024/`.
+The pre-existing negative CLI contract remains a single shared test driver.
+This does **not** prove fault tolerance after the irreversible commit,
+simulation interruption recovery or all production station/site options.

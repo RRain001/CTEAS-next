@@ -27,12 +27,15 @@
 #include <utility>
 #include <vector>
 
+struct S4DExpectedPrecommitFault final {};
+
 struct S4B2Options {
     std::string met, geo, surf, output, native_comp_trace;
     std::vector<std::string> up;
     std::size_t hours=0;
     std::size_t probe_prefix_hours=0;
     std::size_t max_retained_field_bytes=0;
+    std::size_t noaa_precommit_rollback_retry_hour=0;
     bool experimental=false;
     bool g26_normal_entry_trial=false;
     bool water_source_preflight_only=false;
@@ -128,6 +131,15 @@ static S4B2Options parse_args(int argc, char** argv) {
             o.probe_prefix_hours=static_cast<std::size_t>(parsed);
             if(parsed!=o.probe_prefix_hours)throw std::invalid_argument("S4B3 probe hours overflow");
         }
+        else if(key=="--noaa-precommit-rollback-retry-hour" &&
+                o.noaa_precommit_rollback_retry_hour==0) {
+            if(value[0]=='-')throw std::invalid_argument("S4D invalid precommit fault hour");
+            std::size_t consumed=0;
+            const auto parsed=std::stoull(value,&consumed);
+            if(consumed!=value.size()||parsed<2||parsed>6)
+                throw std::invalid_argument("S4D precommit rollback hour must be 2..6");
+            o.noaa_precommit_rollback_retry_hour=static_cast<std::size_t>(parsed);
+        }
         else if(key=="--max-retained-field-bytes" && o.max_retained_field_bytes==0) {
             if(value[0]=='-')
                 throw std::invalid_argument("S4E invalid retained field byte budget");
@@ -173,6 +185,12 @@ static S4B2Options parse_args(int argc, char** argv) {
         o.max_retained_field_bytes!=0))
         throw std::invalid_argument(
             "S4C WATER preflight forbids output, trace and every physical trial flag");
+    if(o.noaa_precommit_rollback_retry_hour!=0&&
+       (!o.water_noaa_g14_trial_only||
+        o.noaa_precommit_rollback_retry_hour>o.probe_prefix_hours))
+        throw std::invalid_argument(
+            "S4D real NOAA precommit retry requires scoped unified research "
+            "and a committed predecessor hour");
     if(o.water_noaa_g14_trial_only) {
         const bool mixed=o.water_source_preflight_only||o.g26_normal_entry_trial||
             o.water_firsthour_g14_trial_only||o.water_secondhour_g14_trial_only||
@@ -618,7 +636,20 @@ int main(int argc, char** argv) {
             p6g::G65RealNoaaFifthHourTrialActor* water_fifth_active=nullptr;
             p6g::G65RealNoaaSixthHourTrialActor* water_sixth_active=nullptr;
             bool published=false;
-            scheduler.advance_with_fresh_physics(
+            const bool retry_research_hour=(
+                opt.noaa_precommit_rollback_retry_hour==hour+1);
+            bool inject_once=retry_research_hour;
+            auto advance_fresh=[&]() {
+                accepted.reset();
+                land_active=nullptr;
+                water_active=nullptr;
+                water_second_active=nullptr;
+                water_third_active=nullptr;
+                water_fourth_active=nullptr;
+                water_fifth_active=nullptr;
+                water_sixth_active=nullptr;
+                published=false;
+                scheduler.advance_with_fresh_physics(
                 [&](const p6g::MultiHourFrame& live)
                     ->std::unique_ptr<p6g::MultiHourPhysics> {
                     if(live.hour_index!=hour||scheduler.completed_hours()!=hour)
@@ -720,6 +751,12 @@ int main(int argc, char** argv) {
                     else throw std::logic_error("S4B2 actor missing");
                     if(!accepted||accepted->hourly.size()!=45)
                         throw std::logic_error("S4B2 non-original-format P6F precommit");
+                    // After all 17 *real* G65 stages and valid native P6F,
+                    // abort BEFORE any G14 memory/clock publication.
+                    if(inject_once) {
+                        inject_once=false;
+                        throw S4DExpectedPrecommitFault{};
+                    }
                 },
                 [&](p6g::MultiHourPhysics&,
                     const p6g::MultiHourFrame& frame,
@@ -769,6 +806,31 @@ int main(int argc, char** argv) {
                                   actor->publish_after_commit_noexcept();
                     }
                 });
+            };
+            if(retry_research_hour) {
+                // Real NOAA input, same scheduler instance. Verify that the
+                // failed native actor cannot advance physical memory, hour
+                // count or AA/BB/CGAMMA clocks. Retry with a fresh actor.
+                const auto previous_upper=clocks.latest_upper_hour();
+                const auto previous_gamma=clocks.latest_gamma_hour();
+                bool rejected=false;
+                try {
+                    advance_fresh();
+                } catch(const S4DExpectedPrecommitFault&) {
+                    rejected=true;
+                }
+                if(!rejected||inject_once||published||
+                   scheduler.completed_hours()!=hour||
+                   clocks.latest_upper_hour()!=previous_upper||
+                   clocks.latest_gamma_hour()!=previous_gamma||
+                   std::filesystem::exists(opt.output))
+                    throw std::logic_error("S4D precommit did not roll back atomically");
+                require_exact_native_state_carry(
+                    before_native_comp,scheduler.committed_memory());
+                advance_fresh();
+            } else {
+                advance_fresh();
+            }
             if(!published||!accepted||scheduler.completed_hours()!=hour+1||
                !clocks.has_published_hour())
                 throw std::runtime_error("S4B2 AA/BB/CGAMMA/COMP commit incomplete");
@@ -898,6 +960,10 @@ int main(int argc, char** argv) {
                      <<" HOURS="<<executed_hours
                      <<" SOURCE="<<"NATIVE_CPP_ONLY"
                      <<" ORIGINAL_6H_PARITY=NOT_RUN\n";
+        if(opt.noaa_precommit_rollback_retry_hour!=0)
+            std::cout<<"S4D_REAL_NOAA_PRECOMMIT_ROLLBACK_FRESH_RETRY=PASS"
+                     <<" HOUR="<<opt.noaa_precommit_rollback_retry_hour
+                     <<" ORIGINAL_REFERENCE_USED_IN_SOLVER=NO\n";
         std::cout<<"S4B2_SELECTED_G14_17_STAGE_CANDIDATE=PRODUCED_UNVERIFIED"
                  <<" HOURS="<<executed_hours
                  <<" DECLARED_SOURCE_HOURS="<<admission.input.hours
