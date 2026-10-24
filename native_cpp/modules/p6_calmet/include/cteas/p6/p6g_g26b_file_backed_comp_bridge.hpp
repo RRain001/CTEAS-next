@@ -86,12 +86,17 @@ public:
         bool explicitly_opt_in_normal_trial=false,
         const G41SelectedNoowWaterFirstHourSource* original_noow_water=nullptr,
         bool explicitly_opt_in_hour3_comp_stage12_trial=false,
-        bool explicitly_opt_in_hour3_comp_stage15_trial=false)
+        bool explicitly_opt_in_hour3_comp_stage15_trial=false,
+        bool explicitly_opt_in_hour3_p6f_trial=false)
         :diagno_(diagno),source_(source),
          original_noow_water_(original_noow_water),
          normal_trial_(explicitly_opt_in_normal_trial),
          hour3_comp_stage12_trial_(explicitly_opt_in_hour3_comp_stage12_trial),
-         hour3_comp_stage15_trial_(explicitly_opt_in_hour3_comp_stage15_trial) {
+         hour3_comp_stage15_trial_(explicitly_opt_in_hour3_comp_stage15_trial),
+         hour3_p6f_trial_(explicitly_opt_in_hour3_p6f_trial) {
+        if(hour3_p6f_trial_&&!hour3_comp_stage15_trial_)
+            throw std::invalid_argument(
+                "G26B hour3 P6F requires stage15 trial");
         if(hour3_comp_stage15_trial_&&!hour3_comp_stage12_trial_)
             throw std::invalid_argument(
                 "G26B hour3 stage15 requires prior stage12 trial");
@@ -116,7 +121,8 @@ public:
         if(!explicitly_test_only||
            (hour3_comp_stage12_trial_&&phase_>0&&
             !hour3_comp_stage15_trial_)||
-           (hour3_comp_stage15_trial_&&phase_>3)||
+           (hour3_comp_stage15_trial_&&phase_>3&&!hour3_p6f_trial_)||
+           (hour3_p6f_trial_&&phase_>4)||
            phase_>=(source_.research_noow_water_source_only?5U:4U)||
            stage!=p6::kHefeiOriginalStageOrder[12+phase_]||
            !frame.source_controls||
@@ -311,7 +317,7 @@ public:
                     frame,source_,*water_mixht_stage12_,
                     *water_avemix_stage13_,
                     *water_wstarr_stage14_,
-                    *water_temp3d_stage15_,true);
+                    *water_temp3d_stage15_,true,hour3_p6f_trial_);
                 if(!prepared.actual_g14_stage16_precommit_validated||
                    prepared.g14_hour_committed||
                    prepared.source_clocks_published||
@@ -607,6 +613,7 @@ private:
     bool normal_trial_=false;
     bool hour3_comp_stage12_trial_=false;
     bool hour3_comp_stage15_trial_=false;
+    bool hour3_p6f_trial_=false;
     const MultiHourFrame* live_=nullptr;
     p6::NativeGridMemory previous_;
     std::chrono::sys_seconds end_{};
